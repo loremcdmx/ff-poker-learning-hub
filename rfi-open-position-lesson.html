@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="assets/poker-kit/decks/decks.css">
   <link rel="stylesheet" href="assets/poker-kit/chips/chips.css">
   <link rel="stylesheet" href="assets/poker-bb-call-defense-lesson/base.css">
-  <link rel="stylesheet" href="assets/poker-rfi-open-lesson/lesson.css?v=20260713-2">
+  <link rel="stylesheet" href="assets/poker-rfi-open-lesson/lesson.css?v=20260713-3">
 </head>
 <body class="rfi-open-lesson">
   <main class="app">
@@ -55,7 +55,7 @@
       <div class="deep-heading"><div><p class="eyebrow">Учебная база со страницы 7</p><h2>Диапазон меняется вместе с позицией</h2></div><p>Смешанные клетки сохранены: закрашенная доля показывает частоту рейза.</p></div>
       <div class="range-layout">
         <article class="panel range-card"><div class="position-tabs" id="positionTabs"></div><div class="range-meta"><div><p class="eyebrow" id="rangeSeat">EP · ранняя</p><h2 id="rangeTitle">Открываем 20%</h2></div><p id="rangeHint"></p></div><div class="matrix-key"><span class="key-open"><i></i>Открываем</span><span class="key-pair"><i></i>Пары в опене</span><span class="key-mix"><i></i>Микс</span><span class="key-fold"><i></i>Пас</span><small>Пары — диагональ · одномастные — сверху · разномастные — снизу</small></div><div class="matrix" id="rangeMatrix" aria-label="Матрица стартовых рук"></div></article>
-        <aside class="panel memory"><p class="eyebrow">Проверка памяти</p><h2>Посмотри 10 секунд — восстанови лестницу</h2><p>После таймера цифры исчезнут. Выбери процент для каждой позиции; промахи попадут в практику чаще.</p><div class="memory-ladder" aria-label="Расширение диапазона от EP к BTN"><span style="--p:20%"><b>EP</b><i></i><strong>20</strong></span><span style="--p:26%"><b>MP</b><i></i><strong>26</strong></span><span style="--p:32%"><b>HJ</b><i></i><strong>32</strong></span><span style="--p:47%"><b>CO</b><i></i><strong>47</strong></span><span style="--p:75%"><b>BTN</b><i></i><strong>75</strong></span></div><button class="primary" id="startRecall">Запомнить за 10 секунд</button><div class="recall" id="recall" hidden></div><div id="recallResult" aria-live="polite"></div></aside>
+        <aside class="panel memory"><p class="eyebrow">Проверка памяти</p><h2>Посмотри 10 секунд — нарисуй чарт сам</h2><p>Выбери позицию сверху, запомни границу и восстанови все 169 клеток. Проверяем сам диапазон, а не процент опена.</p><div class="memory-example" aria-hidden="true"><span>Пас</span><i>→</i><span class="open">Рейз</span><i>→</i><span class="weighted">С весом</span></div><button class="primary" id="startRecall">Запомнить чарт EP за 10 секунд</button><div class="recall" id="recall" hidden></div><div id="recallResult" aria-live="polite"></div></aside>
       </div>
       <p class="source-note">Источник: физическая страница 7 PDF «часть методички для аишки». Частоты внутри клеток перенесены из верхнего ряда RFI-чартов; подпись BTN 75% использует авторскую конвенцию «руки с частотой ≥50% считаются целиком» (взвешенная частота клеток — 68,9%). База рассчитана примерно на 40 BB; в 20–30 BB открывайся на позицию раньше.</p>
     </section>
@@ -77,6 +77,6 @@
     </section>
   </main>
   <footer class="lesson-footer"><a href="/">← Все тренажёры</a><a href="/bb-call-defense-lesson">Следующий урок: защита BB →</a></footer>
-  <script src="assets/poker-kit/decks/deck-library.js"></script><script src="assets/poker-kit/chips/chip-library.js"></script><script src="assets/poker-rfi-open-lesson/data.js?v=20260713-2"></script><script src="assets/poker-rfi-open-lesson/lesson.js?v=20260713-2"></script>
+  <script src="assets/poker-kit/decks/deck-library.js"></script><script src="assets/poker-kit/chips/chip-library.js"></script><script src="assets/poker-rfi-open-lesson/data.js?v=20260713-2"></script><script src="assets/poker-rfi-open-lesson/recall.js?v=20260713-3"></script><script src="assets/poker-rfi-open-lesson/lesson.js?v=20260713-3"></script>
 </body>
 </html>
