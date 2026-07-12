@@ -2,11 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": false,
-  "rewrites": [
-    { "source": "/open-raises", "destination": "/rfi-open-position-lesson.html" },
-    { "source": "/bb-defense", "destination": "/bb-call-defense-lesson.html" },
-    { "source": "/resteal", "destination": "/resteal-lesson.html" }
-  ],
   "headers": [
     {
       "source": "/(.*)",

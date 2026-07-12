@@ -11,9 +11,9 @@ const pages = [
   "poker-simulator.html"
 ];
 const expectedRoutes = new Map([
-  ["/open-raises", "/rfi-open-position-lesson.html"],
-  ["/bb-defense", "/bb-call-defense-lesson.html"],
-  ["/resteal", "/resteal-lesson.html"]
+  ["/rfi-open-position-lesson", "rfi-open-position-lesson.html"],
+  ["/bb-call-defense-lesson", "bb-call-defense-lesson.html"],
+  ["/resteal-lesson", "resteal-lesson.html"]
 ]);
 const requiredDirectories = [
   "assets/poker-kit",
@@ -59,10 +59,9 @@ for (const route of expectedRoutes.keys()) check(hub.includes(`href="${route}"`)
 check(hub.includes("https://github.com/loremcdmx/ff-poker-learning-hub"), "hub includes the public GitHub link");
 
 const vercelConfig = JSON.parse(readFileSync(join(root, "vercel.json"), "utf8"));
-const actualRoutes = new Map((vercelConfig.rewrites || []).map(({ source, destination }) => [source, destination]));
+check(vercelConfig.cleanUrls === true, "Vercel serves HTML entrypoints without extensions");
 for (const [source, destination] of expectedRoutes) {
-  check(actualRoutes.get(source) === destination, `Vercel rewrites ${source} to ${destination}`);
-  check(existsSync(join(root, destination.slice(1))), `${source} rewrite destination exists`);
+  check(existsSync(join(root, destination)), `${source} clean URL entrypoint exists`);
 }
 
 if (failures) {
