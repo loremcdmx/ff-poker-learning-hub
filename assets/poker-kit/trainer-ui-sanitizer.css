@@ -1,0 +1,46 @@
+/*
+ * Player-facing trainer cleanup.
+ *
+ * Trainer telemetry, quality gates and cockpit payloads still stay in runtime
+ * objects and data attributes. This file only removes internal QA/source/audit
+ * panels from the visible product UI.
+ */
+:where(
+  [id$="QualityGate"],
+  [id$="qualityGate"],
+  #qualityGateValue,
+  #river-fold-quality-gate,
+  #answerAuditGrid,
+  #summarySourceGate,
+  [data-answer-audit-state],
+  [data-summary-source-gate],
+  .answer-audit-grid,
+  .summary-source-gate,
+  .combo-summary-source-gate,
+  .combo-audit-grid,
+  .ff-shell-tech-toggle,
+  .ff-shell-tech,
+  .ff-shell-source-audit,
+  .ff-shell-head .ff-shell-kicker,
+  .ff-shell-summary-gate,
+  .ff-shell-weak-tags,
+  .preflop-cockpit,
+  .river-cbet-lab,
+  .river-fold-lab,
+  .combo-cockpit-meta,
+  .combo-lab-source-gate,
+  .combo-lab-checkpoint-gate,
+  .combo-lab-quality-gate,
+  .position-lab,
+  .position-cockpit-meta,
+  .ev-cockpit-head span,
+  .ev-cockpit-head em,
+  .math-cockpit-meta,
+  .math-lab,
+  .flop-cockpit-meta,
+  .flop-lab-card:first-child,
+  .exam-cockpit-meta em,
+  .exam-lab-card:first-child
+) {
+  display: none !important;
+}

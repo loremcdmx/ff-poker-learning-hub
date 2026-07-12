@@ -1,0 +1,183 @@
+{
+  "meta": {
+    "window": "2026-01-01..2026-06-01 (six monthly partitions)",
+    "spot": "resteal: (SB or BB) facing a single CO/BTN open (val_preflop_action_facing=4, is_first_aggressor_co|btn), no limpers, eff stack 25-40bb, project players only",
+    "clean_definition": "is_preflop_could_3bet=1 AND open<=3.0bb (open = preflop_2bet_and_blind_facing_amount_bb)",
+    "actions": "jam=preflop_action R & is_preflop_allin; call=starts with C; r3small=starts with R & not all-in; fold=F",
+    "rank_groups": "g1_8/g9_11/g12_15 = league rang buckets, membership per (user,month) from userlists; ALL=union of the three",
+    "bb_normalization": "chips_* divided by bb_amount",
+    "bust_definition": "(chips_before_player + chips_won)/bb_amount < 0.75",
+    "spot_used": "RAW->CLEAN waterfall",
+    "note": "cleanup_waterfall: steps a..e are cumulative filters over the RAW spot; jam/fold/call pct of n_spots"
+  },
+  "groups": {
+    "g1_8": [
+      {
+        "step": "a",
+        "desc": "raw resteal spot (no could_3bet / no open-size limit)",
+        "n_spots": 1147502,
+        "jam_pct": 0.0864,
+        "call_pct": 0.2609,
+        "fold_pct": 0.5857
+      },
+      {
+        "step": "b",
+        "desc": "+ is_preflop_could_3bet=1",
+        "n_spots": 1133034,
+        "jam_pct": 0.0874,
+        "call_pct": 0.2631,
+        "fold_pct": 0.5817
+      },
+      {
+        "step": "c",
+        "desc": "+ open <= 3.0bb (== CLEAN spot)",
+        "n_spots": 1011743,
+        "jam_pct": 0.0854,
+        "call_pct": 0.2896,
+        "fold_pct": 0.5509
+      },
+      {
+        "step": "d",
+        "desc": "+ open <= 2.2bb (min-raise opens only)",
+        "n_spots": 862803,
+        "jam_pct": 0.087,
+        "call_pct": 0.3037,
+        "fold_pct": 0.5279
+      },
+      {
+        "step": "e",
+        "desc": "+ BTN opener AND BB hero only",
+        "n_spots": 246716,
+        "jam_pct": 0.0971,
+        "call_pct": 0.5424,
+        "fold_pct": 0.2652
+      }
+    ],
+    "g12_15": [
+      {
+        "step": "a",
+        "desc": "raw resteal spot (no could_3bet / no open-size limit)",
+        "n_spots": 1363621,
+        "jam_pct": 0.0427,
+        "call_pct": 0.2668,
+        "fold_pct": 0.6342
+      },
+      {
+        "step": "b",
+        "desc": "+ is_preflop_could_3bet=1",
+        "n_spots": 1332860,
+        "jam_pct": 0.0436,
+        "call_pct": 0.271,
+        "fold_pct": 0.6278
+      },
+      {
+        "step": "c",
+        "desc": "+ open <= 3.0bb (== CLEAN spot)",
+        "n_spots": 1118366,
+        "jam_pct": 0.0399,
+        "call_pct": 0.3112,
+        "fold_pct": 0.5831
+      },
+      {
+        "step": "d",
+        "desc": "+ open <= 2.2bb (min-raise opens only)",
+        "n_spots": 896972,
+        "jam_pct": 0.0394,
+        "call_pct": 0.336,
+        "fold_pct": 0.5513
+      },
+      {
+        "step": "e",
+        "desc": "+ BTN opener AND BB hero only",
+        "n_spots": 266010,
+        "jam_pct": 0.0435,
+        "call_pct": 0.5456,
+        "fold_pct": 0.3378
+      }
+    ],
+    "g9_11": [
+      {
+        "step": "a",
+        "desc": "raw resteal spot (no could_3bet / no open-size limit)",
+        "n_spots": 853711,
+        "jam_pct": 0.07,
+        "call_pct": 0.2599,
+        "fold_pct": 0.6107
+      },
+      {
+        "step": "b",
+        "desc": "+ is_preflop_could_3bet=1",
+        "n_spots": 839330,
+        "jam_pct": 0.0711,
+        "call_pct": 0.2628,
+        "fold_pct": 0.6057
+      },
+      {
+        "step": "c",
+        "desc": "+ open <= 3.0bb (== CLEAN spot)",
+        "n_spots": 729318,
+        "jam_pct": 0.0688,
+        "call_pct": 0.2957,
+        "fold_pct": 0.5682
+      },
+      {
+        "step": "d",
+        "desc": "+ open <= 2.2bb (min-raise opens only)",
+        "n_spots": 602648,
+        "jam_pct": 0.07,
+        "call_pct": 0.3154,
+        "fold_pct": 0.5398
+      },
+      {
+        "step": "e",
+        "desc": "+ BTN opener AND BB hero only",
+        "n_spots": 176368,
+        "jam_pct": 0.077,
+        "call_pct": 0.5493,
+        "fold_pct": 0.2898
+      }
+    ],
+    "ALL": [
+      {
+        "step": "a",
+        "desc": "raw resteal spot (no could_3bet / no open-size limit)",
+        "n_spots": 3364834,
+        "jam_pct": 0.0645,
+        "call_pct": 0.263,
+        "fold_pct": 0.6117
+      },
+      {
+        "step": "b",
+        "desc": "+ is_preflop_could_3bet=1",
+        "n_spots": 3305224,
+        "jam_pct": 0.0656,
+        "call_pct": 0.2662,
+        "fold_pct": 0.6064
+      },
+      {
+        "step": "c",
+        "desc": "+ open <= 3.0bb (== CLEAN spot)",
+        "n_spots": 2859427,
+        "jam_pct": 0.0634,
+        "call_pct": 0.2996,
+        "fold_pct": 0.5679
+      },
+      {
+        "step": "d",
+        "desc": "+ open <= 2.2bb (min-raise opens only)",
+        "n_spots": 2362423,
+        "jam_pct": 0.0646,
+        "call_pct": 0.3189,
+        "fold_pct": 0.5398
+      },
+      {
+        "step": "e",
+        "desc": "+ BTN opener AND BB hero only",
+        "n_spots": 689094,
+        "jam_pct": 0.0713,
+        "call_pct": 0.5454,
+        "fold_pct": 0.2995
+      }
+    ]
+  }
+}

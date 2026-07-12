@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "decks": [
+    {
+      "id": "classic-english-local",
+      "label": "English pattern",
+      "type": "image-fronts",
+      "frontUrlTemplate": "classic-english/{rankKey}{suitKey}.svg",
+      "rankNames": {
+        "A": "ace",
+        "K": "king",
+        "Q": "queen",
+        "J": "jack",
+        "T": "10"
+      },
+      "suitNames": {
+        "h": "hearts",
+        "d": "diamonds",
+        "c": "clubs",
+        "s": "spades"
+      },
+      "source": "https://commons.wikimedia.org/wiki/Category:SVG_English_pattern_playing_cards"
+    },
+    {
+      "id": "bicycle-rider-back",
+      "label": "Bicycle Rider back",
+      "type": "image-back",
+      "backUrl": "backs/bicycle-rider.png",
+      "source": "https://commons.wikimedia.org/wiki/File:USPCC_card_backs_(Bicycle_Rider).png"
+    },
+    {
+      "id": "ornate-red-back",
+      "label": "Ornate red back",
+      "type": "image-back",
+      "backUrl": "backs/ornate-red.svg",
+      "source": "https://commons.wikimedia.org/wiki/File:Card_back_05a.svg"
+    },
+    {
+      "id": "ornate-blue-back",
+      "label": "Ornate blue back",
+      "type": "image-back",
+      "backUrl": "backs/ornate-blue.svg",
+      "source": "https://commons.wikimedia.org/wiki/File:Card_back_05.svg"
+    },
+    {
+      "id": "online-four-color",
+      "label": "Online four-color",
+      "type": "generated",
+      "supportsFourColor": true,
+      "source": "assets/poker-trainer/trainer.css online-card"
+    },
+    {
+      "id": "classic-generated",
+      "label": "Classic generated",
+      "type": "generated",
+      "supportsFourColor": false,
+      "source": "neighbor-chat good-cards trainer"
+    }
+  ]
+}

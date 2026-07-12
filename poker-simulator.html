@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Покерный симулятор столов</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <script>
+    /* Cosmetic framing flag (set before CSS applies, no FOUC). When the
+     * simulator runs inside an iframe — e.g. the hub shell at #simulator — its
+     * topbar drops its own divider/shadow and continues the parent bar as a
+     * single header. Purely visual: independent of the ?embedded storage path. */
+    try { if (window.self !== window.top) document.documentElement.dataset.framed = "1"; }
+    catch (e) { document.documentElement.dataset.framed = "1"; }
+  </script>
+  <link rel="stylesheet" href="assets/poker-kit/decks/decks.css">
+  <link rel="stylesheet" href="assets/poker-kit/chips/chips.css?v=ed4e97084f43">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator.css?v=c861e7702cc6">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-table.css?v=db213746612e">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-dialogs.css?v=ddeb864f65b7">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-polish.css?v=d5b525b07ce0">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-identity.css?v=7b75c0708510">
+  <link rel="stylesheet" href="assets/poker-resteal-lesson/simulator-pack.css?v=f798cf9cf000">
+  <link rel="stylesheet" href="assets/poker-rfi-open-lesson/simulator-pack.css">
+  <script defer src="assets/poker-kit/decks/deck-library.js?v=b03058b680c1"></script>
+  <script defer src="assets/poker-kit/chips/chip-library.js"></script>
+  <script defer src="assets/poker-kit/simulator/bot-strategy-profile.js?v=6388b0e93c2b"></script>
+  <script defer src="assets/poker-kit/simulator/bot-pack-profile.js"></script>
+  <script defer src="assets/poker-kit/simulator/bot-range-realizer.js"></script>
+  <script defer src="assets/poker-kit/simulator/bot-stat-pool.js"></script>
+  <script defer src="assets/poker-kit/simulator/engine-core.js?v=b6f7788e802c"></script>
+  <script defer src="assets/poker-kit/simulator/engine-preflop-policy.js?v=eca78457891a"></script>
+  <script defer src="assets/poker-kit/simulator/engine-runout.js?v=d303921934b3"></script>
+  <script defer src="assets/poker-kit/simulator/engine-tournament-lobby.js?v=cd97ca7491fa"></script>
+  <script defer src="assets/poker-kit/simulator/engine-showdown.js?v=4469d0f13f5f"></script>
+  <script defer src="assets/poker-kit/simulator/engine-postflop-policy.js?v=b0c15c58572f"></script>
+  <script defer src="assets/poker-kit/simulator/simulator-engine.js?v=b290173a89b0"></script>
+  <script defer src="assets/poker-resteal-lesson/advice.js?v=dc4196bbaf02"></script>
+  <script defer src="assets/poker-resteal-lesson/simulator-pack.js?v=74d1ae1e3514"></script>
+  <script defer src="assets/poker-rfi-open-lesson/simulator-pack.js"></script>
+  <script defer src="assets/poker-progress/progress.js?v=c897829879fa"></script>
+  <script defer src="assets/poker-simulator/simulator-timings.js?v=e6528afb294e"></script>
+  <script defer src="assets/poker-simulator/simulator-timing-config.js?v=4d4ff450327d"></script>
+  <script defer src="assets/poker-simulator/simulator-random.js?v=7231b8091c3c"></script>
+  <script defer src="assets/poker-simulator/simulator-state.js?v=f330f3cff0e9"></script>
+  <script defer src="assets/poker-simulator/simulator-leaderboard.js?v=b8a5de21c942"></script>
+  <script defer src="assets/poker-simulator/simulator-session-lock.js?v=603a351bfe09"></script>
+  <script defer src="assets/poker-simulator/simulator-session-leaderboard.js?v=8a845b24fc50"></script>
+  <script defer src="assets/poker-simulator/simulator-session-totals.js?v=e512ed73a754"></script>
+  <script defer src="assets/poker-simulator/simulator-session-archive.js?v=ded5d21a245e"></script>
+  <script defer src="assets/poker-simulator/simulator-session-persistence.js?v=3a5c4fa3b5ad"></script>
+  <script defer src="assets/poker-simulator/simulator-session-store.js?v=007325de8479"></script>
+  <script defer src="assets/poker-simulator/simulator-session-graph.js?v=ba8904b2b618"></script>
+  <script defer src="assets/poker-simulator/simulator-hand-log.js?v=c236fa2797c5"></script>
+  <script defer src="assets/poker-simulator/simulator-hand-completion.js?v=4bd845050965"></script>
+  <script defer src="assets/poker-simulator/simulator-session-metrics.js?v=067a749ce690"></script>
+  <script defer src="assets/poker-simulator/simulator-session-metrics-bridge.js?v=42c72d364022"></script>
+  <script defer src="assets/poker-simulator/simulator-session-export.js?v=d26cea4e6ad3"></script>
+  <script defer src="assets/poker-simulator/simulator-session-bridge.js?v=5c3cb1df4964"></script>
+  <script defer src="assets/poker-simulator/simulator-session-runtime.js?v=b87afd0283e2"></script>
+  <script defer src="assets/poker-simulator/simulator-session-hud.js?v=a3b8633e527b"></script>
+  <script defer src="assets/poker-simulator/simulator-session-hud-bridge.js?v=0245993c32ee"></script>
+  <script defer src="assets/poker-simulator/simulator-session-composition.js?v=17a21f59bcad"></script>
+  <script defer src="assets/poker-simulator/simulator-telemetry.js?v=7fdcf89b9160"></script>
+  <script defer src="assets/poker-simulator/simulator-fold-any.js?v=5170c18fb53c"></script>
+  <script defer src="assets/poker-simulator/simulator-shell-controls.js?v=6445f6f29512"></script>
+  <script defer src="assets/poker-simulator/simulator-simulation-controls.js?v=f4759bcc7cd9"></script>
+  <script defer src="assets/poker-simulator/simulator-simulation-runtime.js?v=a063a7a6549c"></script>
+  <script defer src="assets/poker-simulator/simulator-format.js?v=2f22559a359b"></script>
+  <script defer src="assets/poker-simulator/simulator-render-support.js?v=e8a90181188a"></script>
+  <script defer src="assets/poker-simulator/simulator-audio.js?v=9ee1ac3ddec7"></script>
+  <script defer src="assets/poker-simulator/simulator-seat-slots.js?v=1acc7eb15669"></script>
+  <script defer src="assets/poker-simulator/simulator-geometry.js?v=e7201e1cc2ed"></script>
+  <script defer src="assets/poker-simulator/simulator-betting.js?v=f191b9bdf3ec"></script>
+  <script defer src="assets/poker-simulator/simulator-hero-actions.js?v=72e4ecd74d46"></script>
+  <script defer src="assets/poker-simulator/simulator-action-controls.js?v=17b56c57f6a1"></script>
+  <script defer src="assets/poker-simulator/simulator-action-bridge.js?v=1f528e7c4ec3"></script>
+  <script defer src="assets/poker-simulator/simulator-action-i18n.js?v=36e573775a1a"></script>
+  <script defer src="assets/poker-simulator/simulator-stage.js?v=d30cd5e5b8a3"></script>
+  <script defer src="assets/poker-simulator/simulator-decision-log.js?v=93ccd0d748bb"></script>
+  <script defer src="assets/poker-simulator/simulator-hero-action-runtime.js?v=2ff9f342089d"></script>
+  <script defer src="assets/poker-simulator/simulator-hotkeys.js?v=a431de8532e4"></script>
+  <script defer src="assets/poker-simulator/simulator-start.js?v=cf68d04a4092"></script>
+  <script defer src="assets/poker-simulator/simulator-start-runtime.js?v=2b35639aacfe"></script>
+  <script defer src="assets/poker-simulator/simulator-settings.js?v=a40794046ded"></script>
+  <script defer src="assets/poker-simulator/simulator-boot.js?v=8a67c4e9b53f"></script>
+  <script defer src="assets/poker-simulator/simulator-table-lifecycle.js?v=126fca8921a6"></script>
+  <script defer src="assets/poker-simulator/simulator-replay.js?v=bfa5f1e2ab7c"></script>
+  <script defer src="assets/poker-simulator/simulator-replay-history.js?v=ef5bfa0844e7"></script>
+  <script defer src="assets/poker-simulator/simulator-history-bridge.js?v=4145d23ca553"></script>
+  <script defer src="assets/poker-simulator/simulator-dom.js?v=dd1ab2315884"></script>
+  <script defer src="assets/poker-simulator/simulator-dom-controls.js?v=5269c9ec6416"></script>
+  <script defer src="assets/poker-simulator/simulator-cards.js?v=e331ca71825b"></script>
+  <script defer src="assets/poker-simulator/simulator-replay-ui.js?v=66e6140482a3"></script>
+  <script defer src="assets/poker-simulator/simulator-replay-controller.js?v=223a208d9316"></script>
+  <script defer src="assets/poker-simulator/simulator-auto-deal.js?v=b82e5ddba295"></script>
+  <script defer src="assets/poker-simulator/simulator-action-clock.js?v=99c7cd6c226b"></script>
+  <script defer src="assets/poker-simulator/simulator-hero-turn-live-region.js?v=5bf08a9f2195"></script>
+  <script defer src="assets/poker-simulator/simulator-deal-animations.js?v=618c348b90b2"></script>
+  <script defer src="assets/poker-simulator/simulator-board-render.js?v=cb215df9f7dd"></script>
+  <script defer src="assets/poker-simulator/simulator-tournament-finish.js?v=ab98991699ee"></script>
+  <script defer src="assets/poker-simulator/simulator-action-visuals.js?v=02a1b2dcfe2d"></script>
+  <script defer src="assets/poker-simulator/simulator-table-effects.js?v=775374632083"></script>
+  <script defer src="assets/poker-simulator/simulator-table-effects-bridge.js?v=a4fd24916a98"></script>
+  <script defer src="assets/poker-simulator/simulator-bot-response.js?v=86485c34354a"></script>
+  <script defer src="assets/poker-simulator/simulator-bot-response-runtime.js?v=aaa817fef574"></script>
+  <script defer src="assets/poker-simulator/simulator-action-runtime-composition.js?v=73ff6284a87f"></script>
+  <script defer src="assets/poker-simulator/simulator-bot-lab.js?v=8450b06c364c"></script>
+  <script defer src="assets/poker-simulator/simulator-bot-lab-runtime.js?v=ed38124567b7"></script>
+  <script defer src="assets/poker-simulator/simulator-analytics-ui.js?v=ace30a0ff51e"></script>
+  <script defer src="assets/poker-simulator/simulator-visual-timers.js?v=d8d1095b80cf"></script>
+  <script defer src="assets/poker-simulator/simulator-visual-primer.js?v=8de9e6a91e4c"></script>
+  <script defer src="assets/poker-simulator/simulator-action-reveal.js?v=a01b25cb0587"></script>
+  <script defer src="assets/poker-simulator/simulator-visual-bridge.js?v=eec679521129"></script>
+  <script defer src="assets/poker-simulator/simulator-showdown-timing.js?v=093b84f0af37"></script>
+  <script defer src="assets/poker-simulator/simulator-showdown-visuals.js?v=66b8b552e074"></script>
+  <script defer src="assets/poker-simulator/simulator-seat-visuals.js?v=152acd79fa1a"></script>
+  <script defer src="assets/poker-simulator/simulator-seat-renderer.js?v=fe2184958bf0"></script>
+  <script defer src="assets/poker-simulator/simulator-table-renderer.js?v=876dfddebeb9"></script>
+  <script defer src="assets/poker-simulator/simulator-table-status.js?v=f72b891b55ee"></script>
+  <script defer src="assets/poker-simulator/simulator-table-view-model.js?v=200e4e7fcf9a"></script>
+  <script defer src="assets/poker-simulator/simulator-table-render-adapter.js?v=88e6e8495184"></script>
+  <script defer src="assets/poker-simulator/simulator-visual-state-bridge.js?v=d474a9d5e1c1"></script>
+  <script defer src="assets/poker-simulator/simulator-visual-runtime-facade.js?v=19bbe4c1cc4b"></script>
+  <script defer src="assets/poker-simulator/simulator-visual-core-composition.js?v=69cdf54fadca"></script>
+  <script defer src="assets/poker-simulator/simulator-visual-render-composition.js?v=fd94d663e77d"></script>
+  <script defer src="assets/poker-simulator/simulator-visual-runtime-composition.js?v=7cd7bfe9e556"></script>
+  <script defer src="assets/poker-simulator/simulator-runtime-registry.js?v=2338dcdc62c3"></script>
+  <script defer src="assets/poker-simulator/simulator-runtime-bridge.js?v=9ab7c5acf9cd"></script>
+  <script defer src="assets/poker-simulator/simulator-runtime-bridge-composition.js?v=eb0b6276ef84"></script>
+  <script defer src="assets/poker-simulator/simulator-opponents.js?v=b2a0b4a9ad1d"></script>
+  <script defer src="assets/poker-simulator/simulator-opponent-notes.js?v=300c555822d2"></script>
+  <script defer src="assets/poker-simulator/simulator-bot-inspector.js?v=ff3eb986476b"></script>
+  <script defer src="assets/poker-simulator/simulator-embed-api.js?v=b4c94d0b3bd4"></script>
+  <script defer src="assets/poker-simulator/simulator-smoke-scenarios.js?v=7ccfca7c0801"></script>
+  <script defer src="assets/poker-simulator/simulator-public-api.js?v=39f08a87b5dd"></script>
+  <script defer src="assets/poker-simulator/simulator-app-launch.js?v=ecc83a53fecf"></script>
+  <script defer src="assets/poker-simulator/simulator-event-wiring.js?v=d3618c663de0"></script>
+  <script defer src="assets/poker-simulator/simulator-perf.js?v=11eab5e22de1"></script>
+  <script defer src="assets/poker-simulator/simulator-render-loop.js?v=f6e595a62cb7"></script>
+  <script defer src="assets/poker-simulator/simulator-render-runtime.js?v=ba6feca3d040"></script>
+  <script defer src="assets/poker-simulator/simulator-app-foundation-composition.js?v=58d5857248c4"></script>
+  <script defer src="assets/poker-simulator/simulator-app-primitives-composition.js?v=0d4038ed735d"></script>
+  <script defer src="assets/poker-simulator/simulator-app-session-composition.js?v=6fc4812983c6"></script>
+  <script defer src="assets/poker-simulator/simulator-app-services-composition.js?v=49fdbc4362b5"></script>
+  <script defer src="assets/poker-simulator/simulator-app-ui-composition.js?v=1c3f2a00283f"></script>
+  <script defer src="assets/poker-simulator/simulator-app-runtime-composition.js?v=32c2f72953c7"></script>
+  <script defer src="assets/poker-simulator/simulator-app-feature-base-composition.js?v=b9639f0b6760"></script>
+  <script defer src="assets/poker-simulator/simulator-app-action-visual-composition.js?v=e08d3ea9d9c5"></script>
+  <script defer src="assets/poker-simulator/simulator-app-features-composition.js?v=8011f40d9d23"></script>
+  <script defer src="assets/poker-simulator/simulator-app-shell-composition.js?v=d57c97201d47"></script>
+  <script defer src="assets/poker-simulator/simulator-app-composition.js?v=91785886a3bf"></script>
+  <script defer src="assets/poker-simulator/simulator-dependencies.js?v=e404662459bd"></script>
+  <!-- Deferred online/server multiplayer runtime is loaded by simulator-feature-loader.js. -->
+  <script defer src="assets/poker-simulator/simulator-feature-loader.js?v=bba68391f9bb"></script>
+  <!-- Start-screen login gate (own account system via FFPlayerProgress); inert in server/embed/framed/automation. -->
+  <script defer src="assets/poker-simulator/simulator-identity.js?v=cb22160e2502"></script>
+  <script defer src="assets/poker-simulator/simulator.js?v=b6c1640a6cb0"></script>
+  <link rel="stylesheet" href="assets/4k-scale.css">
+
+</head>
+<body>
+  <div class="simulator-mobile-gate" role="status" aria-live="polite">
+    <div class="simulator-mobile-gate-card">
+      <strong>Открой на большом экране</strong>
+      <p>Покерный симулятор рассчитан на десктоп или планшет — полный стол, бет-слайдер и мультистол. На телефоне он пока недоступен.</p>
+    </div>
+  </div>
+  <main class="app">
+    <header class="topbar">
+      <span class="visually-hidden" id="session-subtitle" aria-hidden="true"></span>
+      <!-- Visible brand block removed from topbar. Legacy smoke marker: <div class="brand-title">Poker Simulator</div> -->
+      <section class="session-hud" id="session-hud" aria-label="Состояние сессии" aria-live="off">
+        <div class="session-hud-scope" role="group" aria-label="Период статистики">
+          <button type="button" data-stats-scope-button="session" aria-pressed="false" title="Статистика текущей сессии">Сессия</button>
+          <button type="button" data-stats-scope-button="allTime" aria-pressed="true" title="Статистика за всё время">Всё время</button>
+        </div>
+        <div class="session-hud-main">
+          <span class="session-hud-kpi">
+            <span>Раздач</span>
+            <b id="session-hud-hands">0</b>
+          </span>
+          <span class="session-hud-kpi is-money">
+            <span>EV BB</span>
+            <b id="session-hud-net-bb">0 BB</b>
+          </span>
+          <span class="session-hud-kpi is-money">
+            <span>EV BB/100</span>
+            <b id="session-hud-bb100">0</b>
+          </span>
+          <span class="session-hud-status" id="session-hud-persistence" role="status" aria-live="polite" aria-atomic="true" data-persistence-tone="ok" title="Сессия сохраняется">Сохранено</span>
+        </div>
+
+        <div class="session-hud-meter" aria-hidden="true">
+          <span class="session-hud-meter-zero"></span>
+          <span class="session-hud-meter-fill" id="session-hud-meter-fill"></span>
+        </div>
+
+        <div class="session-hud-stats">
+          <span>VPIP <b id="session-hud-vpip">—</b></span>
+          <span>PFR <b id="session-hud-pfr">—</b></span>
+          <span>3Bet <b id="session-hud-three-bet">—</b></span>
+          <span>Ср. ход <b id="session-hud-avg-decision">—</b></span>
+          <span>Рук/ч <b id="session-hud-hands-hour">—</b></span>
+        </div>
+      </section>
+
+      <div class="top-actions">
+        <div class="segmented mode-switch" aria-label="Режим симуляции">
+          <button type="button" data-simulation-mode-button="random" aria-pressed="false" title="Рандомные стеки без вылета">Рандом</button>
+          <button type="button" data-simulation-mode-button="tournament" aria-pressed="true" title="MTT: перенос стека, рост блайндов и вылеты">MTT</button>
+        </div>
+        <div class="segmented" aria-label="Количество столов">
+          <button type="button" data-table-count="1">1</button>
+          <button type="button" data-table-count="2">2</button>
+          <button type="button" data-table-count="4">4</button>
+        </div>
+        <button class="ghost-button" type="button" id="analytics-button" data-short="Статы" hidden aria-hidden="true" tabindex="-1">Аналитика</button>
+        <button class="ghost-button" type="button" id="leaderboard-button" data-short="Топ">Топ</button>
+        <button class="ghost-button" type="button" id="settings-button" data-short="Настр.">Настройки</button>
+        <button class="ghost-button pause-button" type="button" id="pause-button" data-short="Пауза" aria-pressed="false" title="Пауза">Пауза</button>
+        <button class="primary-button" type="button" id="deal-all-button" data-short="Старт" aria-label="Старт симуляции" title="Старт симуляции">Старт</button>
+      </div>
+
+      <div class="session-strip" aria-live="off">
+        <div class="stat-pills">
+          <span class="stat-pill">Рук <b id="stat-hands">0</b></span>
+          <span class="stat-pill">Побед <b id="stat-wins">0</b></span>
+          <span class="stat-pill is-secondary">Фолдов <b id="stat-folds">0</b></span>
+          <span class="stat-pill is-secondary">Шоудаун <b id="stat-showdowns">0</b></span>
+          <span class="stat-pill is-secondary">Решений <b id="stat-decisions">0</b></span>
+          <span class="stat-pill is-secondary">Ср. ход <b id="stat-avg-decision">—</b></span>
+          <span class="stat-pill is-secondary">Рук/ч <b id="stat-hands-hour">—</b></span>
+          <span class="stat-pill is-secondary">Хорошо <b id="stat-good">0</b></span>
+          <span class="stat-pill is-secondary">Агро <b id="stat-aggression">0</b></span>
+        </div>
+        <div class="history-strip" id="history-strip"></div>
+        <div class="decision-strip" id="decision-strip"></div>
+        <div class="review-strip" id="review-strip"></div>
+        <div class="hotkey-help" aria-label="Горячие клавиши">
+          <kbd>?</kbd><span>справка</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="workspace" aria-label="Покерные столы">
+      <div class="simulator-stage-shell" id="simulator-stage-shell">
+        <div class="simulator-stage" id="simulator-stage">
+          <div class="table-grid" id="table-grid" data-count="1"></div>
+        </div>
+      </div>
+      <!-- Online lobby: a start-screen sub-tab. Persistent overlay (NOT inside the
+           re-rendered #table-grid), shown only on the idle start screen. Wired by
+           simulator-feature-loader.js + simulator-online-lobby.js; inert in server mode (?room=). -->
+      <div class="sim-start-tabs" id="sim-start-tabs" role="tablist" aria-label="Режим игры">
+        <button type="button" class="sim-start-tab is-active" data-start-view="single" role="tab" aria-selected="true">🎮 Одиночная игра</button>
+        <button type="button" class="sim-start-tab" data-start-view="online" role="tab" aria-selected="false">🌐 Онлайн лобби</button>
+      </div>
+      <section class="online-lobby" id="online-lobby" aria-label="Онлайн лобби"></section>
+    </section>
+  </main>
+
+  <dialog id="settings-dialog" aria-labelledby="settings-dialog-title">
+    <form class="settings-panel" method="dialog">
+      <div class="settings-head">
+        <div class="settings-title">
+          <span class="settings-eyebrow">Стол и игра</span>
+          <h2 id="settings-dialog-title">Настройки симулятора</h2>
+        </div>
+        <button class="ghost-button settings-close-button" type="submit" aria-label="Закрыть настройки">×</button>
+      </div>
+
+      <div class="settings-grid settings-tab-layout">
+        <nav class="settings-tabs" role="tablist" aria-label="Разделы настроек">
+          <button type="button" id="settings-tab-main" role="tab" aria-selected="true" aria-controls="settings-panel-main" data-settings-tab="main">Основное</button>
+          <button type="button" id="settings-tab-stacks" role="tab" aria-selected="false" aria-controls="settings-panel-stacks" data-settings-tab="stacks">Стеки</button>
+          <button type="button" id="settings-tab-sizing" role="tab" aria-selected="false" aria-controls="settings-panel-sizing" data-settings-tab="sizing">Сайзинги</button>
+          <button type="button" id="settings-tab-view" role="tab" aria-selected="false" aria-controls="settings-panel-view" data-settings-tab="view">Вид</button>
+        </nav>
+
+        <div class="settings-tab-panels">
+          <section class="settings-tab-panel" id="settings-panel-main" role="tabpanel" aria-labelledby="settings-tab-main" data-settings-tab-panel="main">
+            <section class="settings-section settings-section-table" aria-labelledby="settings-table-title">
+              <div class="settings-section-head">
+                <span class="settings-section-kicker">Стол</span>
+                <h3 id="settings-table-title">Основное</h3>
+              </div>
+              <div class="settings-section-grid settings-section-grid-table">
+                <div class="field" hidden data-settings-internal="pack">
+                  <label for="pack-select">Сценарий</label>
+                  <select id="pack-select"></select>
+                </div>
+
+                <div class="field settings-choice-field settings-choice-field-stakes">
+                  <div class="settings-choice-head">
+                    <label for="stakes-select">Сложность</label>
+                  </div>
+                  <div class="settings-choice-row settings-choice-row-stakes" role="group" aria-label="Сложность">
+                    <button type="button" class="settings-choice-button" data-settings-select-button="stakes-select" data-settings-select-value="micro">
+                      <strong>Микро</strong>
+                      <span>мягче</span>
+                    </button>
+                    <button type="button" class="settings-choice-button" data-settings-select-button="stakes-select" data-settings-select-value="mid">
+                      <strong>Мид</strong>
+                      <span>баланс</span>
+                    </button>
+                    <button type="button" class="settings-choice-button" data-settings-select-button="stakes-select" data-settings-select-value="high">
+                      <strong>Хай</strong>
+                      <span>жёстче</span>
+                    </button>
+                  </div>
+                  <select class="settings-native-select" id="stakes-select">
+                    <option value="micro">Микролимиты: фиши и средние боты, без топов</option>
+                    <option value="mid">Мидлстейк: 1-2 топа, 1-2 фиша, остальные мид-реги</option>
+                    <option value="high">Хайстейкс: почти все топ-реги, 1-2 нита, до 1 фиша</option>
+                  </select>
+                </div>
+
+                <div class="field settings-field-wide">
+                  <label for="bot-pack-select">Пак оппонентов</label>
+                  <select id="bot-pack-select">
+                    <option value="hidden-archetypes">Скрытые типажи: обычная смесь по сложности</option>
+                    <option value="limping-fish">Лимп-фиши: много limp/call и пассива</option>
+                    <option value="calling-stations">Телефоны: широкие коллы и тонкое вэлью</option>
+                    <option value="nit-regs">Ниты: тайтовые реги и фолды</option>
+                    <option value="aggro-regs">Агро-реги: 3-беты, сквизы, давление</option>
+                    <option value="gto-tough">Tough: самый сильный общий пул</option>
+                    <option value="exploit-auditors">Аудит: жесткие exploit-боты для поиска ошибок</option>
+                  </select>
+                </div>
+
+                <div class="field" hidden data-settings-internal="legacy-composition">
+                  <label for="difficulty-select">Боты</label>
+                  <select class="settings-native-select" id="difficulty-select">
+                    <option value="standard">Средний: стандартная логика</option>
+                    <option value="easy">Легкий: хаотичный любитель</option>
+                    <option value="pro">Топ: pro strategy v0</option>
+                  </select>
+                </div>
+
+                <div class="field" hidden data-settings-internal="legacy-composition">
+                  <label for="lineup-select">Лайн-ап</label>
+                  <select class="settings-native-select" id="lineup-select">
+                    <option value="single">Скрытые типажи + tier-модели</option>
+                    <option value="mixed">Микс v0: тот же скрытый ростер</option>
+                    <option value="soft">Мягкий состав</option>
+                    <option value="tough">Жесткий состав</option>
+                  </select>
+                </div>
+
+                <div class="field" hidden data-settings-internal="legacy-composition">
+                  <label for="bot-strategy-pool-select">Стратегия</label>
+                  <select class="settings-native-select" id="bot-strategy-pool-select">
+                    <option value="auto">Авто: по сложности и лайн-апу</option>
+                    <option value="top">Топ-пул: разные сильные модели</option>
+                    <option value="standard">Standard-пул</option>
+                    <option value="weak">Слабый пул</option>
+                    <option value="mixed">Все модели вперемешку</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label for="player-count-select">Размер стола</label>
+                  <select id="player-count-select">
+                    <option value="2">2-max</option>
+                    <option value="3">3-max</option>
+                    <option value="4">4-max</option>
+                    <option value="5">5-max</option>
+                    <option value="6">6-max</option>
+                    <option value="7">7-max</option>
+                    <option value="8" selected>8-max</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label for="action-timer-seconds-input">Таймбанк</label>
+                  <select id="action-timer-seconds-input">
+                    <option value="0">Выкл</option>
+                    <option value="10">10 сек</option>
+                    <option value="20">20 сек</option>
+                    <option value="30">30 сек</option>
+                    <option value="45">45 сек</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <section class="settings-section settings-section-timer" aria-labelledby="settings-mode-title">
+              <div class="settings-section-head">
+                <span class="settings-section-kicker">Режим</span>
+                <h3 id="settings-mode-title">Во время игры</h3>
+              </div>
+              <div class="settings-section-grid settings-section-grid-timer">
+                <div class="field">
+                  <span class="field-label" id="training-mode-label">Разбор</span>
+                  <label class="toggle-row" aria-labelledby="training-mode-label training-mode-toggle-text">
+                    <input type="checkbox" id="training-mode-toggle">
+                    <span id="training-mode-toggle-text">Фидбек после решения</span>
+                  </label>
+                </div>
+
+                <div class="field">
+                  <span class="field-label" id="reveal-cards-label">Шоудаун</span>
+                  <label class="toggle-row" aria-labelledby="reveal-cards-label reveal-cards-toggle-text">
+                    <input type="checkbox" id="reveal-cards-toggle">
+                    <span id="reveal-cards-toggle-text">Открывать карты</span>
+                  </label>
+                </div>
+              </div>
+            </section>
+          </section>
+
+          <section class="settings-tab-panel" id="settings-panel-stacks" role="tabpanel" aria-labelledby="settings-tab-stacks" data-settings-tab-panel="stacks" hidden>
+            <section class="settings-section settings-section-structure" aria-labelledby="settings-structure-title">
+              <div class="settings-section-head">
+                <span class="settings-section-kicker">Структура</span>
+                <h3 id="settings-structure-title">Стеки</h3>
+              </div>
+              <div class="settings-section-grid settings-section-grid-structure">
+                <div class="field settings-mode-switch-field">
+                  <label for="simulation-mode-select">Тип симуляции</label>
+                  <select class="visually-hidden" id="simulation-mode-select" tabindex="-1">
+                    <option value="random">Рандомные ситуации</option>
+                    <option value="tournament">Турнир</option>
+                  </select>
+                  <div class="settings-mode-switch" role="group" aria-label="Тип симуляции">
+                    <button type="button" data-simulation-mode-button="random" aria-pressed="false">
+                      <strong>Рандом</strong>
+                      <span>диапазон BB</span>
+                    </button>
+                    <button type="button" data-simulation-mode-button="tournament" aria-pressed="true">
+                      <strong>MTT</strong>
+                      <span>уровни</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="field settings-range-field" data-settings-mode-panel="random">
+                  <span class="field-label">Стек, BB</span>
+                  <div class="settings-range-inputs">
+                    <label>
+                      <span>Мин</span>
+                      <input id="random-stack-min-input" type="number" min="1" max="500" step="1" inputmode="numeric">
+                    </label>
+                    <label>
+                      <span>Макс</span>
+                      <input id="random-stack-max-input" type="number" min="1" max="500" step="1" inputmode="numeric">
+                    </label>
+                  </div>
+                </div>
+
+                <div class="field" data-settings-mode-panel="tournament">
+                  <label for="tournament-starting-stack-input">Старт, BB</label>
+                  <input id="tournament-starting-stack-input" type="number" min="5" max="500" step="1" inputmode="numeric">
+                </div>
+
+                <div class="field" data-settings-mode-panel="tournament">
+                  <label for="tournament-level-hands-input">Рук на уровень</label>
+                  <input id="tournament-level-hands-input" type="number" min="1" max="200" step="1" inputmode="numeric">
+                </div>
+
+                <div class="field settings-field-wide" data-settings-mode-panel="tournament">
+                  <label for="tournament-blind-levels-input">Блайнды</label>
+                  <input id="tournament-blind-levels-input" type="text" autocomplete="off" spellcheck="false" placeholder="1,2,3,5,8,12" aria-label="Блайнды, только целые значения">
+                </div>
+              </div>
+            </section>
+          </section>
+
+          <section class="settings-tab-panel" id="settings-panel-sizing" role="tabpanel" aria-labelledby="settings-tab-sizing" data-settings-tab-panel="sizing" hidden>
+            <section class="settings-section settings-section-sizing" aria-labelledby="settings-sizing-title">
+              <div class="settings-section-head">
+                <span class="settings-section-kicker">Беты</span>
+                <h3 id="settings-sizing-title">Сайзинги</h3>
+              </div>
+              <div class="settings-section-grid settings-section-grid-sizing">
+                <div class="field">
+                  <label for="slider-presets-input">Префлоп</label>
+                  <input id="slider-presets-input" type="text" autocomplete="off" spellcheck="false" placeholder="3.5bb,3x,pot,allin">
+                </div>
+
+                <div class="field">
+                  <label for="postflop-bet-percents-input">Постфлоп</label>
+                  <input id="postflop-bet-percents-input" type="text" autocomplete="off" spellcheck="false" placeholder="33,50,75,100,allin">
+                </div>
+              </div>
+            </section>
+          </section>
+
+          <section class="settings-tab-panel" id="settings-panel-view" role="tabpanel" aria-labelledby="settings-tab-view" data-settings-tab-panel="view" hidden>
+            <section class="settings-section settings-section-view" aria-labelledby="settings-view-title">
+              <div class="settings-section-head">
+                <span class="settings-section-kicker">Вид</span>
+                <h3 id="settings-view-title">Стол</h3>
+              </div>
+              <div class="settings-section-grid settings-section-grid-view">
+                <div class="field">
+                  <label for="ui-scale-select">Размер интерфейса</label>
+                  <select id="ui-scale-select">
+                    <option value="auto">Авто: крупнее на 4K до 20%</option>
+                    <option value="compact">Компакт</option>
+                    <option value="standard">Стандарт</option>
+                    <option value="large">Крупный</option>
+                    <option value="xl">XL</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label for="deck-select">Колода</label>
+                  <select id="deck-select">
+                    <option value="color-block">Color block</option>
+                    <option value="online-four-color">Online four-color</option>
+                    <option value="online">Online classic suits</option>
+                    <option value="image">English image deck</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <span class="field-label" id="amount-mode-label">Суммы</span>
+                  <label class="toggle-row" aria-labelledby="amount-mode-label amount-mode-toggle-text">
+                    <input type="checkbox" id="amount-mode-toggle">
+                    <span id="amount-mode-toggle-text">Показывать фишки</span>
+                  </label>
+                </div>
+
+                <div class="field">
+                  <span class="field-label" id="seat-avatars-label">Аватары</span>
+                  <label class="toggle-row" aria-labelledby="seat-avatars-label seat-avatars-toggle-text">
+                    <input type="checkbox" id="seat-avatars-toggle">
+                    <span id="seat-avatars-toggle-text">Показывать аватары</span>
+                  </label>
+                </div>
+
+                <div class="field">
+                  <span class="field-label" id="sound-label">Звук</span>
+                  <label class="toggle-row" aria-labelledby="sound-label sound-toggle-text">
+                    <input type="checkbox" id="sound-toggle">
+                    <span id="sound-toggle-text">Короткие сигналы</span>
+                  </label>
+                </div>
+              </div>
+            </section>
+          </section>
+
+          <div class="settings-internal-controls" hidden aria-hidden="true" data-settings-internal="compat">
+            <label>
+              <input type="checkbox" id="lobby-events-toggle">
+              <span id="lobby-events-toggle-text">Иногда соперники уходят на перерыв или теряют связь</span>
+            </label>
+            <button class="ghost-button" type="button" id="bot-lab-button">Прогнать 320 спотов</button>
+            <button class="ghost-button" type="button" id="export-history-button">JSON</button>
+            <button class="ghost-button" type="button" id="export-hand-log-button">JSONL</button>
+            <button class="ghost-button" type="button" id="export-session-archive-button">Архив</button>
+            <button class="ghost-button" type="button" id="import-history-button">Импорт</button>
+            <input class="visually-hidden" type="file" id="import-history-input" accept="application/json,.json">
+            <span class="field-hint" id="import-history-status">Можно загрузить прошлый экспорт и сравнить с текущей сессией.</span>
+            <div class="bot-lab-output" id="bot-lab-output">Bot lab еще не запускался.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-foot">
+        <button class="ghost-button" type="button" id="reset-session-button">Сбросить сессию</button>
+        <button class="primary-button" type="button" id="settings-new-hand-button">Новая раздача</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="opponent-note-dialog" aria-labelledby="opponent-note-title">
+    <form class="settings-panel opponent-note-panel" method="dialog">
+      <div class="settings-head">
+        <div>
+          <h2 id="opponent-note-title">Нотс на оппонента</h2>
+          <span class="opponent-note-subtitle" id="opponent-note-subtitle"></span>
+        </div>
+        <button class="ghost-button" type="submit">Закрыть</button>
+      </div>
+
+      <div class="opponent-note-grid">
+        <div class="field">
+          <label for="opponent-note-tag">Моя метка</label>
+          <select id="opponent-note-tag">
+            <option value="">Не выбрано</option>
+            <option value="fish">Фиш</option>
+            <option value="reg">Рег</option>
+            <option value="nit">Нит</option>
+            <option value="station">Телефон</option>
+            <option value="aggro">Агро</option>
+          </select>
+        </div>
+
+        <div class="field field-wide">
+          <label for="opponent-note-text">Нотс</label>
+          <textarea id="opponent-note-text" rows="6" maxlength="1200" spellcheck="true" placeholder="Что заметил: лимпы, широкие коллы, редкие 3-беты, баррели, шоудауны..."></textarea>
+        </div>
+      </div>
+
+      <div class="settings-foot">
+        <button class="ghost-button" type="button" id="opponent-note-clear-button">Очистить</button>
+        <button class="primary-button" type="button" id="opponent-note-save-button">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="bot-inspector-dialog" aria-labelledby="bot-inspector-title">
+    <form class="settings-panel bot-inspector-panel" method="dialog">
+      <div class="settings-head">
+        <div>
+          <h2 id="bot-inspector-title">Инфо о боте</h2>
+          <span class="opponent-note-subtitle">Модели, сила и технические идентификаторы</span>
+        </div>
+        <button class="ghost-button" type="submit">Закрыть</button>
+      </div>
+      <div class="bot-inspector-body" id="bot-inspector-body"></div>
+    </form>
+  </dialog>
+
+  <dialog id="table-count-confirm-dialog" class="confirm-dialog" aria-labelledby="table-count-confirm-title">
+    <form class="settings-panel confirm-panel" method="dialog">
+      <div class="settings-head">
+        <div>
+          <h2 id="table-count-confirm-title">Закрыть столы?</h2>
+          <span class="opponent-note-subtitle">Недоигранные раздачи зачтутся как проигрыш</span>
+        </div>
+      </div>
+      <p class="confirm-text" id="table-count-confirm-message"></p>
+      <div class="settings-foot">
+        <button class="ghost-button" type="submit" value="cancel">Отмена</button>
+        <button class="primary-button" type="submit" value="confirm" data-table-count-confirm-accept>Зафиксировать и продолжить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="replay-dialog" aria-labelledby="replay-dialog-title">
+    <form class="replay-panel" method="dialog">
+      <div class="settings-head">
+        <h2 id="replay-dialog-title">Повтор раздачи</h2>
+        <button class="ghost-button" type="submit">Закрыть</button>
+      </div>
+      <div class="replay-body" id="replay-body"></div>
+    </form>
+  </dialog>
+
+  <dialog id="analytics-dialog" aria-labelledby="analytics-dialog-title">
+    <form class="analytics-panel" method="dialog">
+      <div class="settings-head">
+        <h2 id="analytics-dialog-title">Аналитика сессии</h2>
+        <button class="ghost-button" type="submit">Закрыть</button>
+      </div>
+      <div class="analytics-body" id="analytics-body"></div>
+    </form>
+  </dialog>
+
+  <dialog id="leaderboard-dialog" aria-labelledby="leaderboard-dialog-title">
+    <form class="leaderboard-panel" method="dialog">
+      <div class="settings-head">
+        <h2 id="leaderboard-dialog-title">Гонка сезона</h2>
+        <button class="ghost-button" type="submit">Закрыть</button>
+      </div>
+      <div class="leaderboard-body" id="leaderboard-body"></div>
+    </form>
+  </dialog>
+</body>
+</html>

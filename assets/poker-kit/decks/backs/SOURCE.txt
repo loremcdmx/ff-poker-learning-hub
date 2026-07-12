@@ -1,0 +1,10 @@
+Card-back assets used by assets/poker-kit/decks/deck-library.js and manifest.json.
+
+All files are local copies bundled with the project. WISDOM.md requires the
+default deck to ship without external hotlinks.
+
+| file              | source                                                                            | licence / note                                       |
+|-------------------|-----------------------------------------------------------------------------------|------------------------------------------------------|
+| ornate-red.svg    | https://commons.wikimedia.org/wiki/File:Card_back_05a.svg                          | Wikimedia Commons, public domain.                    |
+| ornate-blue.svg   | https://commons.wikimedia.org/wiki/File:Card_back_05.svg                           | Wikimedia Commons, public domain.                    |
+| bicycle-rider.png | https://commons.wikimedia.org/wiki/File:USPCC_card_backs_(Bicycle_Rider).png       | Wikimedia Commons; USPCC trademark, fair-use scope.  |

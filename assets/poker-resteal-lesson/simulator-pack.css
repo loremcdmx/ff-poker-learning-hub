@@ -1,0 +1,328 @@
+html[data-resteal-drill="true"] .topbar {
+  min-height: 60px;
+  padding: 5px 8px;
+}
+
+html[data-resteal-drill="true"] .resteal-drill-hud {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: stretch;
+  gap: 12px;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 223, 81, .24);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .04);
+}
+
+html[data-resteal-drill="true"] .resteal-drill-title {
+  display: grid;
+  align-content: center;
+  flex: 0 0 auto;
+  gap: 1px;
+  min-width: 138px;
+  padding-right: 11px;
+  border-right: 1px solid rgba(255, 255, 255, .09);
+}
+
+html[data-resteal-drill="true"] .resteal-drill-title strong {
+  color: var(--text, #f4f1ec);
+  font-size: 17px;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+html[data-resteal-drill="true"] .resteal-drill-title span {
+  color: var(--muted, #aaa4b0);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+html[data-resteal-drill="true"] .resteal-drill-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(92px, 1fr));
+  flex: 1 1 auto;
+  gap: 6px;
+  min-width: 0;
+}
+
+html[data-resteal-drill="true"] .resteal-drill-stats > span {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  min-width: 0;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .035);
+  text-align: center;
+}
+
+html[data-resteal-drill="true"] .resteal-drill-stats small {
+  overflow: hidden;
+  color: var(--muted, #aaa4b0);
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-resteal-drill="true"] .resteal-drill-stats b {
+  overflow: hidden;
+  color: var(--text, #f4f1ec);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-resteal-drill="true"] .resteal-drill-stats > span:nth-child(3) b,
+html[data-resteal-drill="true"] .resteal-drill-stats b.is-positive {
+  color: #8be8b6;
+}
+
+html[data-resteal-drill="true"] .resteal-drill-stats b.is-negative {
+  color: #ff7f89;
+}
+
+html[data-resteal-drill="true"] .resteal-drill-hud.is-complete {
+  border-color: rgba(87, 214, 154, .48);
+}
+
+html[data-resteal-drill="true"] .top-actions {
+  display: none !important;
+}
+
+html[data-resteal-drill="true"] .client-controls.is-session-complete {
+  border-color: rgba(87, 214, 154, .42);
+  color: #d8ffea;
+  background: rgba(22, 76, 52, .88);
+}
+
+html[data-resteal-drill="true"] .workspace {
+  padding: 2px;
+}
+
+/* The drill already explains the current decision through the table action
+   line and controls. The generic simulator status card ("Ваше слово") only
+   repeats that information and occupies the lower-left felt lane. */
+html[data-resteal-drill="true"] .table-grid[data-count="1"] .action-status {
+  display: none;
+}
+
+/* The practice iframe keeps the simulator's native 1920x1080 scene and scales
+   it down as a whole. The generic 10px action badge therefore landed near 6px
+   on a laptop, while hidden opponent cards were tucked so deeply under the
+   nameplate that only their top edge survived. Counter that only for this
+   single-table drill: keep the stage and seat boxes stable, but restore the
+   readable badge/card proportions around each opponent nameplate. */
+html[data-resteal-drill="true"] .table-grid[data-count="1"] .seat.seat-slot-model:not(.is-hero) .seat-action-badge:not(.is-lobby-state) {
+  min-height: 28px;
+  max-width: calc(var(--seat-w) + 36px);
+  margin-top: 5px;
+  padding: 4px 11px;
+  font-size: clamp(15px, calc(11px * var(--sim-stage-inverse-scale, 1)), 20px);
+  line-height: 1.12;
+}
+
+html[data-resteal-drill="true"] .table-grid[data-count="1"] .seat.seat-slot-model:not(.is-hero) .seat-cards.is-hidden:not(.is-empty) {
+  gap: 3px;
+}
+
+html[data-resteal-drill="true"] .table-grid[data-count="1"] .seat.seat-slot-model:not(.is-hero) .seat-cards.is-hidden:not(.is-empty) .sim-card-back {
+  width: calc(var(--mini-card-width) * 1.2);
+  border-radius: 7px;
+}
+
+html[data-resteal-drill="true"] .table-grid[data-count="1"] .seat.seat-slot-model.seat-zone-top:not(.is-hero) .seat-cards.is-hidden:not(.is-empty) {
+  --seat-cards-ty: 3.4cqh !important;
+  --seat-cards-box-tuck-y: clamp(1px, .8cqh, 3px);
+}
+
+html[data-resteal-drill="true"] .table-grid[data-count="1"] .seat.seat-slot-model:is(.seat-zone-left, .seat-zone-right):not(.is-hero) .seat-cards.is-hidden:not(.is-empty) {
+  --seat-cards-box-tuck-y: clamp(3px, 1.4cqh, 6px);
+}
+
+html[data-resteal-drill="true"] .table-grid[data-count="1"] .seat.seat-slot-model.seat-zone-bottom:not(.is-hero) .seat-cards.is-hidden:not(.is-empty) {
+  --seat-cards-ty: -3.4cqh !important;
+  --seat-cards-box-tuck-y: clamp(2px, 1cqh, 4px);
+}
+
+/* The lesson keeps the simulator's large readable controls, but the hero bet
+   needs its own clear lane above the enlarged hole cards. The slot model still
+   owns the X/Y target; this only adds a small inward visual gutter. */
+html[data-resteal-drill="true"] .table-grid[data-count="1"] .seat.seat-slot-model.is-hero .hero-felt-bet {
+  top: calc(50% + var(--hero-marker-ty, -8px) - var(--hero-card-pocket-y, 0px) - 2.5cqh) !important;
+}
+
+@media (min-width: 621px) {
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .action-bar:has(.client-controls .bet-widget) {
+    grid-template-columns: minmax(0, 1fr) minmax(900px, 980px);
+  }
+
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .action-buttons:has(.client-controls .bet-widget),
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .action-buttons:has(.client-controls .bet-widget) .client-controls {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* The practice dock is intentionally wider than the product default. Its
+     child widget must fill that track too: inheriting the base 340px cap left
+     postflop presets floating as a tiny island above a full-width action row.
+     The slider variables target readable physical sizes after the native
+     1920x1080 stage is scaled into the lesson iframe. */
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls:has(.bet-widget) > .bet-widget {
+    --resteal-slider-track: clamp(10px, calc(6px * var(--sim-stage-inverse-scale, 1)), 12px);
+    --resteal-slider-thumb: clamp(28px, calc(20px * var(--sim-stage-inverse-scale, 1)), 40px);
+    width: 100%;
+    min-width: 0;
+  }
+
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls .bet-widget.is-preflop-amount .bet-preset,
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls .bet-widget.is-postflop-percent .bet-preset {
+    min-width: 0;
+    min-height: 68px;
+    padding-inline: clamp(8px, calc(7px * var(--sim-stage-inverse-scale, 1)), 14px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: clamp(21px, calc(15px * var(--sim-stage-inverse-scale, 1)), 30px);
+    white-space: nowrap;
+  }
+
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls .bet-widget.is-postflop-percent .bet-preset-full,
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls .bet-widget.is-preflop-amount .bet-preset-full {
+    display: inline !important;
+  }
+
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls .bet-widget.is-postflop-percent .bet-preset-short,
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls .bet-widget.is-preflop-amount .bet-preset-short {
+    display: none !important;
+  }
+
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls .bet-stepper {
+    grid-template-columns:
+      clamp(48px, calc(42px * var(--sim-stage-inverse-scale, 1)), 84px)
+      minmax(clamp(112px, calc(140px * var(--sim-stage-inverse-scale, 1)), 280px), 1fr)
+      clamp(48px, calc(42px * var(--sim-stage-inverse-scale, 1)), 84px);
+    min-height: 60px;
+  }
+
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls .bet-stepper button,
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls [data-bet-step] {
+    min-width: clamp(48px, calc(42px * var(--sim-stage-inverse-scale, 1)), 84px);
+    min-height: 56px;
+    font-size: clamp(20px, calc(16px * var(--sim-stage-inverse-scale, 1)), 32px);
+  }
+
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls .bet-stepper-value {
+    font-size: clamp(20px, calc(15px * var(--sim-stage-inverse-scale, 1)), 30px);
+  }
+
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls .bet-slider-row,
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls .bet-widget.is-preflop-amount .bet-slider-row {
+    min-height: 36px;
+  }
+
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls [data-bet-slider] {
+    height: 36px;
+  }
+
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls [data-bet-slider]::-webkit-slider-runnable-track {
+    height: var(--resteal-slider-track);
+  }
+
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls [data-bet-slider]::-webkit-slider-thumb {
+    width: var(--resteal-slider-thumb);
+    height: var(--resteal-slider-thumb);
+    margin-top: clamp(-14px, calc(-7px * var(--sim-stage-inverse-scale, 1)), -9px);
+  }
+
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls [data-bet-slider]::-moz-range-track,
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls [data-bet-slider]::-moz-range-progress {
+    height: var(--resteal-slider-track);
+  }
+
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .client-controls [data-bet-slider]::-moz-range-thumb {
+    width: var(--resteal-slider-thumb);
+    height: var(--resteal-slider-thumb);
+  }
+
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .seat.seat-slot-model .seat-position,
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .seat.seat-slot-model .seat-position.has-avatar,
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .seat.seat-slot-model.seat-zone-top:not(.is-hero) .seat-position,
+  html[data-resteal-drill="true"] .table-grid[data-count="1"] .seat.seat-slot-model.seat-zone-right .seat-position {
+    min-width: 46px;
+    width: auto;
+    height: 28px;
+    padding-inline: 9px;
+    font-size: 14px;
+  }
+}
+
+html[data-resteal-drill="true"] .resteal-wisdom-toast {
+  position: fixed;
+  z-index: 250;
+  top: 76px;
+  right: 18px;
+  width: min(470px, calc(100vw - 36px));
+  padding: 18px 54px 18px 20px;
+  border: 1px solid rgba(255, 223, 81, .5);
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(45, 34, 64, .98), rgba(12, 10, 17, .98));
+  box-shadow: 0 20px 52px rgba(0, 0, 0, .52), inset 0 1px 0 rgba(255, 255, 255, .08);
+  opacity: 0;
+  transform: translateY(-14px) scale(.98);
+  transition: opacity .2s ease, transform .24s ease;
+  pointer-events: none;
+}
+
+html[data-resteal-drill="true"] .resteal-wisdom-toast.is-visible { opacity: 1; transform: none; pointer-events: none; }
+html[data-resteal-drill="true"] .resteal-wisdom-toast .resteal-wisdom-close { position: absolute; top: 8px; right: 9px; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 10px; color: #d7d0dc; background: rgba(255, 255, 255, .06); cursor: pointer; font-size: 24px; pointer-events: auto; }
+html[data-resteal-drill="true"] .resteal-wisdom-toast small,
+html[data-resteal-drill="true"] .resteal-wisdom-toast strong,
+html[data-resteal-drill="true"] .resteal-wisdom-toast p { display: block; }
+html[data-resteal-drill="true"] .resteal-wisdom-toast small { margin-bottom: 5px; color: #ffe278; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+html[data-resteal-drill="true"] .resteal-wisdom-toast strong { color: #fff; font-size: 22px; line-height: 1.12; }
+html[data-resteal-drill="true"] .resteal-wisdom-toast p { margin: 7px 0 0; color: #c9c3cf; font-size: 15px; line-height: 1.42; }
+html[data-resteal-drill="true"] .resteal-wisdom-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-top: 13px; pointer-events: auto; }
+html[data-resteal-drill="true"] .resteal-wisdom-actions[hidden] { display: none; }
+html[data-resteal-drill="true"] .resteal-wisdom-actions button { min-height: 40px; padding: 7px; border: 1px solid rgba(255, 223, 81, .32); border-radius: 10px; color: #fff4bd; background: rgba(255, 223, 81, .08); cursor: pointer; font-size: 15px; font-weight: 900; }
+html[data-resteal-drill="true"] .resteal-wisdom-actions button:hover { border-color: #ffe168; color: #17120a; background: #ffe168; }
+
+@media (max-width: 1180px) {
+  html[data-resteal-drill="true"] .resteal-drill-title {
+    display: none;
+  }
+
+  html[data-resteal-drill="true"] .resteal-drill-stats {
+    grid-template-columns: repeat(5, minmax(78px, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  html[data-resteal-drill="true"] .topbar {
+    min-height: 94px;
+  }
+
+  html[data-resteal-drill="true"] .resteal-drill-stats {
+    grid-template-columns: repeat(3, minmax(82px, 1fr));
+  }
+
+  html[data-resteal-drill="true"] .resteal-drill-stats > span:nth-child(4),
+  html[data-resteal-drill="true"] .resteal-drill-stats > span:nth-child(5) {
+    grid-column: span 1;
+  }
+
+  html[data-resteal-drill="true"] .resteal-wisdom-toast {
+    top: 102px;
+    right: 10px;
+    width: calc(100vw - 20px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-resteal-drill="true"] .resteal-wisdom-toast {
+    transition: none;
+  }
+}

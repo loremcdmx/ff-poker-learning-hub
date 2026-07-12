@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "chips": [
+    {
+      "id": "casino-clay",
+      "label": "Casino clay",
+      "type": "css-generated",
+      "denominations": ["gold", "red", "blue", "green", "black", "purple", "orange"]
+    },
+    {
+      "id": "dealer-button",
+      "label": "Dealer button",
+      "type": "css-generated"
+    }
+  ]
+}

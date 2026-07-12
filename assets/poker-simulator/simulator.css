@@ -1,0 +1,3069 @@
+    :root {
+      color-scheme: dark;
+      /* Palette (--felt/--mint/--text/--surface/etc.) is declared in simulator-polish.css :root, which loads last and WINS; the copies here were dead. Edit the palette there. */
+      --opponent-action-duration: 1550ms;
+      --chip-flight-duration: 1600ms;
+      --action-think-duration: 940ms;
+      --deal-card-duration: 820ms;
+      --deal-shoe-duration: 1180ms;
+      --board-card-duration: 1450ms;
+      --sim-4t-hero-card-min: 46px;
+      --sim-4t-board-card-min: 37px;
+      --sim-4t-mini-card-min: 19px;
+      --sim-4t-seat-w-min: 78px;
+      --sim-4t-seat-w-design: 100px;
+      --sim-4t-seat-h-min: 29px;
+      --sim-4t-seat-h-design: 46px;
+      --sim-4t-seat-name-font: clamp(13px, 2.4cqw, 18px);
+      --sim-4t-seat-stack-font: clamp(14px, 2.6cqw, 19px);
+      --sim-4t-avatar-min: 24px;
+      --sim-4t-avatar-design: 42px;
+      --sim-4t-hero-card-design: 56px;
+      --sim-4t-board-card-design: 48px;
+      --sim-4t-mini-card-design: 30px;
+      --sim-4t-pot-chip: 9px;
+      --sim-4t-pot-min: 18px;
+      --sim-4t-pot-font: 10px;
+      --sim-4t-pot-chip-design: 9px;
+      --sim-4t-pot-min-design: 18px;
+      --sim-4t-pot-font-design: clamp(12px, 1.6cqw, 15px);
+      --sim-4t-marker-chip: 12px;
+      --sim-4t-marker-min: 21px;
+      --sim-4t-marker-gap: 4px;
+      --sim-4t-marker-padding: 2px 7px 2px 4px;
+      --sim-4t-marker-font: 10px;
+      --sim-4t-marker-amount-font: 10px;
+      --sim-4t-marker-chip-design: 12px;
+      --sim-4t-marker-min-design: 21px;
+      --sim-4t-marker-gap-design: 4px;
+      --sim-4t-marker-padding-design: 2px 7px 2px 4px;
+      --sim-4t-marker-font-design: clamp(10px, 1.45cqw, 13px);
+      --sim-4t-marker-amount-font-design: clamp(14px, 2.0cqw, 16px);
+      --sim-4t-hero-marker-chip: 12px;
+      --sim-4t-hero-marker-min: 21px;
+      --sim-4t-hero-marker-font: 10px;
+      --sim-4t-hero-marker-chip-design: 12px;
+      --sim-4t-hero-marker-min-design: 21px;
+      --sim-4t-hero-marker-font-design: clamp(10px, 1.45cqw, 13px);
+      --sim-4t-action-track: minmax(142px, clamp(148px, 18%, 190px));
+      --sim-4t-action-control-min: 24px;
+      --sim-4t-action-control-padding-x: 5px;
+      --sim-4t-action-control-font: 10px;
+      --sim-4t-action-track-design: minmax(142px, clamp(148px, 18%, 190px));
+      --sim-4t-action-control-min-design: 24px;
+      --sim-4t-action-control-padding-x-design: 5px;
+      --sim-4t-action-control-font-design: 10px;
+      --sim-4t-timebank-min: 34px;
+      --sim-4t-timebank-font: 16px;
+      --sim-4t-timebank-min-design: 34px;
+      --sim-4t-timebank-font-design: 16px;
+      --sim-4t-stepper-grid: 40px minmax(58px, auto) 40px;
+      --sim-4t-stepper-min: 30px;
+      --sim-4t-stepper-value-font: 16px;
+      --sim-4t-stepper-grid-design: 40px minmax(58px, auto) 40px;
+      --sim-4t-stepper-min-design: 30px;
+      --sim-4t-stepper-value-font-design: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-width: 320px;
+      overflow: hidden;
+      color: var(--text);
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        radial-gradient(ellipse at 50% 0%, rgba(44, 27, 67, 0.42), transparent 58%),
+        linear-gradient(180deg, #0c0b0e 0%, #060508 52%, #040305 100%);
+      background-size: 36px 36px, 36px 36px, auto, auto;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button,
+    select,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      height: 100%;
+      min-height: 100%;
+    }
+
+    .topbar {
+      position: relative;
+      z-index: 4;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 6px 14px;
+      align-items: center;
+      min-height: 104px;
+      padding: 8px 16px 7px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+      background: rgba(8, 7, 10, 0.78);
+      box-shadow: 0 12px 38px rgba(0, 0, 0, 0.28);
+    }
+
+    .top-actions {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .session-strip {
+      grid-column: 1 / -1;
+      display: none;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+      min-height: 24px;
+    }
+
+    .stat-pills {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 6px;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 23px;
+      padding: 0 7px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      color: rgba(245, 247, 242, 0.64);
+      background: rgba(0, 0, 0, 0.22);
+      font-size: 11px;
+      font-weight: 820;
+      white-space: nowrap;
+    }
+
+    .stat-pill b {
+      color: rgba(245, 247, 242, 0.88);
+      font-size: 11px;
+    }
+
+    .stat-pill.is-secondary {
+      display: none;
+    }
+
+    .history-strip {
+      display: none;
+      gap: 6px;
+      min-width: 0;
+      overflow: hidden;
+      justify-content: flex-end;
+    }
+
+    .history-entry {
+      overflow: hidden;
+      max-width: 190px;
+      min-height: 26px;
+      padding: 5px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(0, 0, 0, 0.24);
+      font-size: 11px;
+      font-weight: 760;
+      line-height: 1.2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .history-entry.is-win {
+      color: #ece1fb;
+      border-color: rgba(135, 88, 201, 0.32);
+      background: rgba(135, 88, 201, 0.12);
+    }
+
+    .history-entry.is-loss {
+      color: #ffe9e9;
+      border-color: rgba(239, 111, 108, 0.28);
+      background: rgba(239, 111, 108, 0.1);
+    }
+
+    .history-entry.is-split {
+      color: #fff4d6;
+      border-color: rgba(224, 182, 93, 0.32);
+      background: rgba(224, 182, 93, 0.12);
+    }
+
+    .decision-strip {
+      grid-column: 1 / 3;
+      display: none;
+      gap: 6px;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .decision-entry {
+      overflow: hidden;
+      max-width: 260px;
+      min-height: 24px;
+      padding: 5px 8px;
+      border: 1px solid rgba(109, 183, 255, 0.18);
+      border-radius: 999px;
+      color: #dbeeff;
+      background: rgba(109, 183, 255, 0.09);
+      font-size: 11px;
+      font-weight: 760;
+      line-height: 1.2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .decision-entry.is-good {
+      color: #ece1fb;
+      border-color: rgba(135, 88, 201, 0.32);
+      background: rgba(135, 88, 201, 0.11);
+    }
+
+    .decision-entry.is-thin {
+      color: #fff6d6;
+      border-color: rgba(231, 199, 86, 0.34);
+      background: rgba(231, 199, 86, 0.12);
+    }
+
+    .decision-entry.is-leak {
+      color: #ffe9e9;
+      border-color: rgba(239, 111, 108, 0.34);
+      background: rgba(239, 111, 108, 0.11);
+    }
+
+    .review-strip {
+      grid-column: 1 / -1;
+      display: none;
+      gap: 6px;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .hotkey-help {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted-2);
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .hotkey-help kbd {
+      min-width: 18px;
+      min-height: 18px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.34);
+      font: inherit;
+    }
+
+    .review-pill {
+      overflow: hidden;
+      max-width: 360px;
+      min-height: 24px;
+      padding: 5px 8px;
+      border: 1px solid rgba(231, 199, 86, 0.22);
+      border-radius: 999px;
+      color: #fff6d6;
+      background: rgba(231, 199, 86, 0.1);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Session ribbon: content that sits directly on the topbar surface — no
+     * nested card chrome. This removes the old "card inside a bar" double
+     * surface and lets the ribbon read as one continuous header with the hub. */
+    .session-hud {
+      position: static;
+      z-index: 1;
+      justify-self: stretch;
+      display: grid;
+      gap: 6px;
+      width: 100%;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: none;
+      box-shadow: none;
+    }
+
+    .app:has(.table-grid.is-idle) .topbar {
+      display: none;
+    }
+
+    /* On the idle start screen the topbar is hidden and the redesign collapses
+       .app to a single viewport row. Keep the workspace in that explicit row;
+       placing it in row 2 creates an implicit row below the fold and leaves the
+       first viewport looking blank. */
+    .app:has(.table-grid.is-idle) .workspace {
+      grid-row: 1;
+      /* Idle start screen fills the viewport (syncStage drops the 16:9 letterbox
+         here); allow a tall stacked panel to scroll on short screens instead of
+         clipping. */
+      overflow-y: auto;
+    }
+
+    /* Idle: drop the table canvas 16:9 lock so the shell can fill the workspace
+       height (syncStage sets shell width+height to 100%). Belt-and-suspenders —
+       explicit inline width+height already override aspect-ratio. */
+    .app:has(.table-grid.is-idle) .simulator-stage-shell {
+      aspect-ratio: auto;
+    }
+
+    .app:has(.table-grid.is-idle) .session-hud,
+    .app:has(.table-grid.is-idle) .top-actions [data-action="start-simulator"],
+    .app:has(.table-grid.is-idle) #deal-all-button {
+      display: none;
+    }
+
+    .session-hud-main {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 3px 0;
+      min-width: 0;
+    }
+
+    /* KPI groups: clean inline "LABEL value" units separated by hairlines,
+     * not bordered tiles. The value is the hero — large, tabular, high
+     * contrast — so net BB / BB100 / win read instantly. */
+    .session-hud-kpi {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 7px;
+      min-width: 0;
+      min-height: 26px;
+      padding: 0 16px;
+      border: 0;
+      border-left: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 0;
+      color: rgba(189, 185, 195, 0.6);
+      background: none;
+      font-size: 9.5px;
+      font-weight: 850;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .session-hud-kpi:first-child {
+      padding-left: 2px;
+      border-left: 0;
+    }
+
+    .session-hud-kpi span {
+      overflow: hidden;
+      min-width: 0;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .session-hud-kpi b {
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 940;
+      line-height: 1;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .session-hud-kpi.is-money b {
+      font-size: 17px;
+    }
+
+    .session-hud-status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      margin-left: 9px;
+      padding: 0 9px;
+      border: 1px solid rgba(66, 214, 162, 0.22);
+      border-radius: 999px;
+      color: rgba(167, 243, 208, 0.92);
+      background: rgba(66, 214, 162, 0.08);
+      font-size: 9.5px;
+      font-weight: 900;
+      line-height: 1;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .session-hud-status[data-persistence-tone="warning"],
+    .session-hud-status[data-persistence-tone="pending"] {
+      border-color: rgba(231, 199, 86, 0.3);
+      color: rgba(255, 235, 163, 0.94);
+      background: rgba(231, 199, 86, 0.09);
+    }
+
+    .session-hud-status[data-persistence-tone="locked"] {
+      border-color: rgba(255, 180, 180, 0.32);
+      color: rgba(255, 205, 205, 0.96);
+      background: rgba(239, 111, 108, 0.1);
+    }
+
+    .session-hud[data-tone="up"] .session-hud-kpi.is-money b {
+      color: #c2a5ea;
+    }
+
+    .session-hud[data-tone="down"] .session-hud-kpi.is-money b {
+      color: #ffb4b4;
+    }
+
+    .session-hud-meter {
+      position: relative;
+      height: 4px;
+      overflow: hidden;
+      border-radius: 999px;
+      background:
+        linear-gradient(90deg, rgba(239, 111, 108, 0.16), rgba(255, 255, 255, 0.08) 50%, rgba(135, 88, 201, 0.16));
+    }
+
+    .session-hud-meter-zero {
+      position: absolute;
+      top: -2px;
+      bottom: -2px;
+      left: 50%;
+      width: 1px;
+      background: rgba(245, 247, 242, 0.34);
+    }
+
+    .session-hud-meter-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, rgba(135, 88, 201, 0.62), rgba(231, 199, 86, 0.92));
+      transition: width 180ms ease, background 180ms ease;
+    }
+
+    .session-hud-meter-fill.is-negative {
+      right: 50%;
+      left: auto;
+      background: linear-gradient(90deg, rgba(239, 111, 108, 0.9), rgba(231, 199, 86, 0.5));
+    }
+
+    .session-hud-stats {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      gap: 4px 5px;
+      min-width: 0;
+    }
+
+    .session-hud-stats span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 19px;
+      padding: 0 7px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+      color: rgba(181, 177, 187, 0.58);
+      background: rgba(0, 0, 0, 0.16);
+      font-size: 9.5px;
+      font-weight: 820;
+      white-space: nowrap;
+    }
+
+    .session-hud-stats b {
+      color: rgba(240, 244, 236, 0.82);
+      font-size: 9.5px;
+      font-weight: 920;
+    }
+
+    .session-hud-scope {
+      display: inline-flex;
+      align-items: center;
+      justify-self: start;
+      gap: 2px;
+      padding: 2px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .session-hud-scope button {
+      min-height: 18px;
+      padding: 0 9px;
+      border: 0;
+      border-radius: 999px;
+      color: rgba(181, 177, 187, 0.62);
+      background: transparent;
+      font-size: 9.5px;
+      font-weight: 860;
+      line-height: 1;
+      cursor: pointer;
+      transition: color 140ms ease, background 140ms ease;
+    }
+
+    .session-hud-scope button:hover {
+      color: rgba(240, 244, 236, 0.9);
+    }
+
+    .session-hud-scope button[aria-pressed="true"] {
+      color: #07110d;
+      background: linear-gradient(135deg, var(--mint), var(--brass));
+    }
+
+    .replay-button {
+      flex: 0 0 auto;
+      min-height: 32px;
+      padding: 0 10px;
+      border: 1px solid rgba(109, 183, 255, 0.22);
+      border-radius: 7px;
+      color: #dbeeff;
+      background: rgba(109, 183, 255, 0.1);
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .replay-button:disabled {
+      cursor: default;
+      opacity: 0.42;
+    }
+
+    .segmented {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .segmented button,
+    .ghost-button,
+    .primary-button,
+    .table-action {
+      min-height: 32px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.08);
+      font-weight: 800;
+      line-height: 1;
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, color 140ms ease;
+    }
+
+    .segmented button {
+      min-width: 34px;
+      padding: 0 9px;
+      color: var(--muted);
+      background: transparent;
+    }
+
+    .mode-switch {
+      border-color: rgba(181, 150, 225, 0.24);
+      background:
+        linear-gradient(90deg, rgba(181, 150, 225, 0.08), rgba(231, 199, 86, 0.055)),
+        rgba(0, 0, 0, 0.18);
+    }
+
+    .mode-switch button {
+      min-width: 66px;
+      color: rgba(232, 229, 238, 0.72);
+      font-size: 11px;
+      font-weight: 860;
+    }
+
+    .mode-switch button[aria-pressed="true"] {
+      color: #090b0c;
+      background: linear-gradient(135deg, #d8c2ff, #f0d66c);
+    }
+
+    .segmented button:hover,
+    .ghost-button:hover,
+    .table-action:hover:not(:disabled) {
+      border-color: rgba(255, 255, 255, 0.24);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .segmented button[aria-pressed="true"] {
+      color: #07110d;
+      background: linear-gradient(135deg, var(--mint), var(--brass));
+    }
+
+    .ghost-button,
+    .primary-button {
+      padding: 0 12px;
+    }
+
+    .primary-button {
+      color: #07110d;
+      background: linear-gradient(135deg, var(--mint), var(--brass));
+      box-shadow: 0 10px 24px rgba(135, 88, 201, 0.16);
+    }
+
+    .pause-button {
+      min-width: 72px;
+      border-color: rgba(253, 221, 106, 0.18);
+      background:
+        linear-gradient(180deg, rgba(253, 221, 106, 0.08), rgba(255, 255, 255, 0.045));
+    }
+
+    .pause-button.is-paused {
+      color: #07110d;
+      border-color: rgba(253, 221, 106, 0.62);
+      background: linear-gradient(135deg, #ffeba3, #b596e1);
+      box-shadow:
+        0 0 0 2px rgba(253, 221, 106, 0.12),
+        0 12px 28px rgba(253, 221, 106, 0.14);
+    }
+
+    .ghost-button:disabled,
+    .primary-button:disabled {
+      cursor: default;
+      opacity: 0.48;
+    }
+
+    .workspace {
+      display: grid;
+      place-items: center;
+      min-height: 0;
+      overflow: hidden;
+      padding: 10px;
+      background: transparent;
+      position: relative;
+    }
+
+    .sim-start-tabs {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 6;
+      display: none;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 999px;
+      background: rgba(12, 10, 16, 0.84);
+      border: 1px solid var(--panel-line, rgba(242, 241, 237, 0.12));
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .app:has(.table-grid.is-idle) .sim-start-tabs {
+      display: inline-flex;
+    }
+
+    html[data-simulator-server-mode="true"] .sim-start-tabs,
+    html[data-simulator-server-mode="true"] .online-lobby {
+      display: none !important;
+    }
+
+    .app:has(.table-grid.is-idle) .table-grid.is-idle .simulator-start-panel {
+      margin-top: 56px;
+    }
+
+    .sim-start-tab {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted, #aba7b0);
+      font: inherit;
+      font-weight: 600;
+      font-size: 13px;
+      padding: 7px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .sim-start-tab:hover {
+      color: var(--text, #f4f6ef);
+    }
+
+    .sim-start-tab:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(139, 95, 202, 0.45);
+    }
+
+    .sim-start-tab.is-active {
+      background: linear-gradient(135deg, var(--mint, #8b5fca), var(--brass, #dec158));
+      color: #120b1d;
+      box-shadow: 0 6px 16px rgba(139, 95, 202, 0.32);
+    }
+
+    .online-lobby {
+      display: none;
+    }
+
+    @media (max-height: 760px) {
+      .app:has(.table-grid.is-idle) .table-grid.is-idle .simulator-start-panel {
+        margin-top: 46px;
+      }
+    }
+
+    .simulator-stage-shell {
+      position: relative;
+      width: min(100%, 1920px);
+      aspect-ratio: 16 / 9;
+      min-width: 1px;
+      min-height: 1px;
+      overflow: visible;
+    }
+
+    .simulator-stage {
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 1920px;
+      height: 1080px;
+      transform-origin: top left;
+    }
+
+    .table-grid {
+      position: relative;
+      display: grid;
+      gap: 10px;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .table-grid[data-count="1"] {
+      grid-template-columns: 1fr;
+    }
+
+    .table-grid[data-count="2"] {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: minmax(460px, 1fr);
+      align-items: stretch;
+      align-content: stretch;
+    }
+
+    .table-grid[data-count="4"] {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: repeat(2, minmax(260px, 1fr));
+      align-items: stretch;
+      align-content: stretch;
+    }
+
+    .table-grid[data-count="2"],
+    .table-grid[data-count="4"] {
+      gap: 7px;
+    }
+
+    /* Vertical (stacked) two-table layout. simulator-stage.js flips the stage to
+       a portrait 1050x1920 design plane and sets data-orient="vertical" on the
+       stage whenever stacking renders the tables larger than side-by-side
+       (portrait / roughly-square workspaces — e.g. a tablet held upright or a
+       tall, narrow window). One full-width column over two stacked rows replaces
+       the two side-by-side columns. Each cell keeps the same ~1050x956 shape as
+       the horizontal plane, so the felt, seat geometry and cqw font/card tokens
+       are unchanged — only the stage scale (hence on-screen size) grows. */
+    .simulator-stage[data-orient="vertical"] .table-grid[data-count="2"]:not(.is-idle) {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: repeat(2, minmax(0, 1fr));
+    }
+
+    .table-grid.is-idle {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto;
+      align-content: center;
+      place-items: center;
+      isolation: isolate;
+    }
+
+    .table-grid.is-idle[data-count] {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto;
+      align-content: center;
+      place-items: center;
+    }
+
+    .table-grid.is-idle::before,
+    .table-grid.is-idle::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .table-grid.is-idle::before {
+      left: 6%;
+      right: 6%;
+      bottom: 12%;
+      height: 73%;
+      border-radius: 999px;
+      border: 22px solid rgba(13, 16, 20, 0.92);
+      background:
+        radial-gradient(ellipse at 50% 45%, rgba(255, 255, 255, 0.08), transparent 19%),
+        radial-gradient(ellipse at 50% 50%, rgba(127, 79, 193, 0.5), rgba(58, 31, 94, 0.95) 58%, rgba(33, 16, 56, 0.96) 100%);
+      box-shadow:
+        inset 0 0 0 14px rgba(255, 255, 255, 0.035),
+        inset 0 0 60px rgba(0, 0, 0, 0.42),
+        0 38px 90px rgba(0, 0, 0, 0.38);
+    }
+
+    .table-grid.is-idle::after {
+      left: 18%;
+      right: 18%;
+      bottom: 42%;
+      height: 16%;
+      border-radius: 999px;
+      background:
+        radial-gradient(circle at 20% 50%, rgba(231, 199, 86, 0.32), transparent 7%),
+        radial-gradient(circle at 36% 52%, rgba(255, 255, 255, 0.28), transparent 6%),
+        radial-gradient(circle at 62% 48%, rgba(109, 183, 255, 0.28), transparent 6%),
+        radial-gradient(circle at 78% 52%, rgba(239, 111, 108, 0.28), transparent 7%);
+      opacity: 0.78;
+      filter: blur(0.2px);
+    }
+
+    /* Belt to the JS cleanup: the idle preview must never paint over live
+       tables even if a render path forgets to remove the orphan node. */
+    .table-grid:not(.is-idle) > .start-felt-preview {
+      display: none;
+    }
+
+    .start-felt-preview {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    /* Energetic branded backdrop behind the start felt: stage-light glows,
+       oversized suit watermarks and a few sparkles. Reads clearly as "poker,
+       lights up" instead of an unexplained empty table. */
+    .start-felt-aura {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .start-aura-glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(70px);
+    }
+
+    .start-aura-glow-violet {
+      left: -10%;
+      top: -18%;
+      width: 60%;
+      height: 76%;
+      opacity: 0.78;
+      background: radial-gradient(circle at 50% 50%, rgba(167, 116, 240, 0.95), rgba(127, 79, 193, 0.42) 46%, transparent 72%);
+    }
+
+    .start-aura-glow-gold {
+      right: -8%;
+      bottom: -20%;
+      width: 56%;
+      height: 70%;
+      opacity: 0.66;
+      background: radial-gradient(circle at 50% 50%, rgba(244, 206, 96, 0.72), rgba(231, 199, 86, 0.24) 46%, transparent 72%);
+    }
+
+    .start-suit {
+      position: absolute;
+      line-height: 1;
+      font-weight: 900;
+      text-shadow: 0 0 42px currentColor;
+    }
+
+    .start-suit-spade {
+      left: 3.5%;
+      top: 5%;
+      font-size: 18vh;
+      color: #c2a6ee;
+      opacity: 0.22;
+      transform: rotate(-14deg);
+    }
+
+    .start-suit-heart {
+      right: 5%;
+      top: 3%;
+      font-size: 14vh;
+      color: #f3aac4;
+      opacity: 0.2;
+      transform: rotate(13deg);
+    }
+
+    .start-suit-club {
+      left: 7%;
+      bottom: 4%;
+      font-size: 13vh;
+      color: #c9b3ec;
+      opacity: 0.18;
+      transform: rotate(10deg);
+    }
+
+    .start-suit-diamond {
+      right: 3%;
+      bottom: 7%;
+      font-size: 16vh;
+      color: #fce68b;
+      opacity: 0.22;
+      transform: rotate(-12deg);
+    }
+
+    .start-aura-spark {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.95), transparent 70%);
+      box-shadow: 0 0 14px rgba(252, 230, 139, 0.85);
+    }
+
+    .start-aura-spark-1 { left: 31%; top: 19%; }
+    .start-aura-spark-2 { right: 27%; top: 28%; width: 4px; height: 4px; opacity: 0.85; }
+    .start-aura-spark-3 { left: 45%; bottom: 22%; width: 5px; height: 5px; opacity: 0.9; }
+
+    .start-felt-preview::before {
+      content: "";
+      position: absolute;
+      left: 4%;
+      right: 4%;
+      bottom: 8%;
+      height: 80%;
+      border-radius: 999px;
+      background:
+        radial-gradient(ellipse at 50% 42%, rgba(255, 255, 255, 0.1), transparent 24%),
+        radial-gradient(ellipse at 50% 50%, rgba(127, 79, 193, 0.5), rgba(45, 24, 74, 0.84) 56%, rgba(18, 9, 30, 0.93) 100%);
+      box-shadow:
+        inset 0 0 0 18px rgba(255, 255, 255, 0.03),
+        inset 0 0 74px rgba(0, 0, 0, 0.48),
+        0 42px 100px rgba(0, 0, 0, 0.44);
+    }
+
+    .start-felt-table {
+      position: absolute;
+      left: 7%;
+      right: 7%;
+      bottom: 12%;
+      height: 73%;
+      border-radius: 999px;
+      border: 22px solid rgba(15, 17, 22, 0.92);
+      background:
+        radial-gradient(ellipse at 50% 44%, rgba(255, 255, 255, 0.1), transparent 18%),
+        radial-gradient(ellipse at 50% 50%, rgba(127, 79, 193, 0.82), rgba(58, 31, 94, 0.98) 58%, rgba(31, 15, 53, 0.98) 100%);
+      box-shadow:
+        inset 0 0 0 2px rgba(255, 255, 255, 0.055),
+        inset 0 0 72px rgba(0, 0, 0, 0.44),
+        0 24px 54px rgba(0, 0, 0, 0.44);
+    }
+
+    .start-preview-pot {
+      position: absolute;
+      left: 50%;
+      top: 77%;
+      display: flex;
+      gap: 0;
+      transform: translate(-50%, -50%);
+    }
+
+    .start-preview-pot span:nth-child(2) {
+      margin: 0 -9px;
+      transform: translateY(-4px);
+      z-index: 1;
+    }
+
+    .start-preview-pot span {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid rgba(252, 230, 139, 0.46);
+      background:
+        radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.5), transparent 28%),
+        linear-gradient(180deg, rgba(231, 199, 86, 0.94), rgba(112, 69, 30, 0.94));
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+    }
+
+    .start-preview-board {
+      position: absolute;
+      left: 50%;
+      top: 86%;
+      display: flex;
+      gap: 7px;
+      transform: translate(-50%, -50%);
+    }
+
+    .start-preview-board span {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 54px;
+      height: 74px;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      color: #1b2433;
+      font-weight: 850;
+      background:
+        linear-gradient(180deg, #fdfdff, #e7e9f1);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        0 12px 20px rgba(0, 0, 0, 0.34);
+    }
+
+    .start-board-card.is-red {
+      color: #d8324b;
+    }
+
+    .start-board-card em {
+      position: absolute;
+      top: 5px;
+      left: 7px;
+      font-style: normal;
+      font-size: 18px;
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+
+    .start-board-card i {
+      font-style: normal;
+      font-size: 31px;
+      line-height: 1;
+    }
+
+    .start-preview-seat {
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      display: grid;
+      grid-template-columns: 34px minmax(0, 64px);
+      gap: 8px;
+      align-items: center;
+      width: 116px;
+      min-height: 42px;
+      padding: 5px 8px 5px 6px;
+      border: 1px solid rgba(242, 241, 237, 0.11);
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
+        rgba(5, 6, 8, 0.78);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 12px 24px rgba(0, 0, 0, 0.32);
+      transform: translate(-50%, -50%) rotate(var(--rot));
+    }
+
+    .start-preview-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px solid rgba(181, 150, 225, 0.34);
+      background:
+        radial-gradient(circle at 35% 24%, rgba(255, 255, 255, 0.4), transparent 22%),
+        radial-gradient(circle at 55% 56%, rgba(120, 202, 255, 0.5), rgba(63, 48, 89, 0.95) 64%, rgba(8, 9, 12, 0.98));
+    }
+
+    /* Seat side: a little chip stack instead of skeleton bars, so each seat
+       reads as a seated player holding chips. */
+    .start-preview-stack {
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      gap: 2px;
+      justify-self: center;
+      min-width: 0;
+    }
+
+    .start-preview-stack i {
+      display: block;
+      width: 26px;
+      height: 6px;
+      border-radius: 7px / 50%;
+      background: linear-gradient(180deg, rgba(246, 212, 110, 0.97), rgba(150, 99, 40, 0.97));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.45),
+        0 1px 1px rgba(0, 0, 0, 0.4);
+    }
+
+    .start-preview-stack i:nth-child(2) { width: 23px; }
+    .start-preview-stack i:nth-child(3) { width: 20px; }
+
+    .simulator-start-panel {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: minmax(240px, 0.74fr) minmax(560px, 1.62fr);
+      grid-template-rows: auto;
+      grid-template-areas:
+        "copy settings";
+      align-items: start;
+      gap: 14px;
+      /* Two-column panel (heading + CTA rail · settings). The launch button moved
+         into the copy rail and the old right-hand action box was dropped, so the
+         settings column absorbs that width and the panel stays compact instead of
+         stretching toward the felt rail. */
+      width: min(1500px, calc(100vw - 72px));
+      min-height: 0;
+      padding: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(181, 150, 225, 0.18);
+      border-radius: 14px;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 72% 22%, rgba(231, 199, 86, 0.12), transparent 42%),
+        radial-gradient(ellipse at 18% 10%, rgba(139, 95, 202, 0.16), transparent 58%),
+        linear-gradient(180deg, rgba(17, 15, 20, 0.94), rgba(5, 5, 6, 0.94));
+      box-shadow:
+        0 28px 70px rgba(0, 0, 0, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    }
+
+    .start-table-rail {
+      position: absolute;
+      inset: 32px 42px 24px;
+      border: 3px solid rgba(87, 96, 108, 0.22);
+      border-radius: 999px;
+      box-shadow:
+        inset 0 0 0 1px rgba(181, 150, 225, 0.08),
+        0 0 0 1px rgba(255, 255, 255, 0.05);
+      opacity: 0.2;
+      pointer-events: none;
+    }
+
+    .start-table-rail span {
+      position: absolute;
+      width: 54px;
+      height: 28px;
+      border-radius: 999px;
+      background: rgba(7, 6, 8, 0.88);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .start-table-rail span:nth-child(1) {
+      top: -15px;
+      left: 24%;
+    }
+
+    .start-table-rail span:nth-child(2) {
+      right: -22px;
+      top: 42%;
+    }
+
+    .start-table-rail span:nth-child(3) {
+      bottom: -16px;
+      left: 47%;
+    }
+
+    .start-panel-copy {
+      position: relative;
+      grid-area: copy;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      align-self: stretch;
+      gap: 9px;
+      min-width: 0;
+      padding: 2px 0;
+    }
+
+    /* Start-panel typography is FLUID across the desktop band. The discrete
+       UHD treatment only engages at min-width:2560px (and needs min-height:1100px
+       for its vars), which left every common 1161–2559px viewport — 1920×1080
+       included — frozen at the tiny base px sizes. Each readable size below ramps
+       clamp(base → standard-UHD ceiling) over ~1280→2000px so the panel scales
+       continuously and lands on the existing UHD values by the time the 2560px
+       block takes over (no jump). poker-trainer-perf-smoke pins the clamp floors. */
+    .start-panel-copy strong {
+      max-width: 11ch;
+      font-size: clamp(44px, calc(26.2px + 1.39vw), 54px);
+      font-weight: 900;
+      line-height: 1.02;
+    }
+
+    .start-panel-copy > span {
+      color: rgba(233, 231, 226, 0.78);
+      font-size: clamp(14px, calc(8.67px + 0.42vw), 17px);
+      font-weight: 760;
+      line-height: 1.36;
+    }
+
+    .start-panel-kicker {
+      max-width: max-content;
+      min-height: 22px;
+      padding: 0 9px;
+      border: 1px solid rgba(181, 150, 225, 0.18);
+      border-radius: 999px;
+      color: rgba(221, 204, 245, 0.82) !important;
+      background: rgba(8, 7, 9, 0.28);
+      font-size: 12px !important;
+      font-weight: 700 !important;
+      line-height: 21px !important;
+      text-transform: none;
+      white-space: nowrap;
+    }
+
+    .start-settings {
+      position: relative;
+      grid-area: settings;
+      z-index: 1;
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+      align-self: stretch;
+      padding: 8px;
+      border: 1px solid rgba(242, 241, 237, 0.08);
+      border-radius: 10px;
+      background: rgba(4, 4, 5, 0.32);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+    }
+
+    .start-mode-group {
+      position: relative;
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+      padding: 9px;
+      overflow: hidden;
+      border: 1px solid rgba(120, 202, 255, 0.18);
+      border-radius: 10px;
+      background:
+        linear-gradient(90deg, rgba(120, 202, 255, 0.08), rgba(181, 150, 225, 0.055) 48%, rgba(231, 199, 86, 0.05)),
+        rgba(5, 7, 9, 0.26);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.045),
+        inset 3px 0 0 rgba(120, 202, 255, 0.34);
+    }
+
+    .start-mode-label {
+      justify-self: start;
+      min-height: 22px;
+      padding: 0 9px;
+      border: 1px solid rgba(120, 202, 255, 0.3);
+      border-radius: 999px;
+      color: rgba(197, 236, 255, 0.95);
+      background: rgba(120, 202, 255, 0.08);
+      font-size: clamp(11px, calc(7.44px + 0.28vw), 13px);
+      font-weight: 780;
+      letter-spacing: 0;
+      line-height: 20px;
+      white-space: nowrap;
+    }
+
+    .start-mode-cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .start-template-group {
+      position: relative;
+      display: grid;
+      gap: 7px;
+      min-width: 0;
+      padding: 9px;
+      overflow: hidden;
+      border: 1px solid rgba(181, 150, 225, 0.22);
+      border-radius: 10px;
+      background:
+        linear-gradient(90deg, rgba(181, 150, 225, 0.11), rgba(231, 199, 86, 0.04) 42%, rgba(0, 0, 0, 0.05)),
+        rgba(7, 6, 9, 0.28);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.045),
+        inset 3px 0 0 rgba(181, 150, 225, 0.34);
+    }
+
+    .start-template-label {
+      justify-self: start;
+      min-height: 22px;
+      padding: 0 9px;
+      border: 1px solid rgba(231, 199, 86, 0.28);
+      border-radius: 999px;
+      color: rgba(248, 232, 167, 0.95);
+      background: rgba(231, 199, 86, 0.085);
+      font-size: clamp(11px, calc(7.44px + 0.28vw), 13px);
+      font-weight: 780;
+      letter-spacing: 0;
+      line-height: 20px;
+      white-space: nowrap;
+    }
+
+    .start-template-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .start-template-row button {
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      min-width: 0;
+      min-height: 54px;
+      padding: 7px 10px;
+      border: 1px solid rgba(242, 241, 237, 0.085);
+      border-radius: 8px;
+      color: rgba(243, 242, 240, 0.84);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.032), rgba(255, 255, 255, 0.012)),
+        rgba(0, 0, 0, 0.18);
+      text-align: left;
+      transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+    }
+
+    .start-template-row button:hover,
+    .start-template-row button:focus-visible {
+      border-color: rgba(181, 150, 225, 0.34);
+      color: rgba(248, 250, 245, 0.96);
+    }
+
+    .start-template-row button.is-selected {
+      border-color: rgba(231, 199, 86, 0.52);
+      background:
+        linear-gradient(180deg, rgba(231, 199, 86, 0.14), rgba(181, 150, 225, 0.052)),
+        rgba(0, 0, 0, 0.18);
+      box-shadow: inset 0 0 0 1px rgba(231, 199, 86, 0.08);
+    }
+
+    .start-template-row strong,
+    .start-template-row small {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .start-template-row strong {
+      font-size: 13px;
+      font-weight: 820;
+      line-height: 1.15;
+    }
+
+    .start-template-row small {
+      color: rgba(205, 201, 211, 0.78);
+      font-size: clamp(11px, calc(7.44px + 0.28vw), 13px);
+      font-weight: 660;
+      line-height: 1.28;
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal;
+    }
+
+    .start-difficulty-group {
+      position: relative;
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+      padding: 9px;
+      overflow: hidden;
+      border: 1px solid rgba(99, 216, 176, 0.2);
+      border-radius: 10px;
+      background:
+        linear-gradient(90deg, rgba(99, 216, 176, 0.09), rgba(181, 150, 225, 0.065) 46%, rgba(231, 199, 86, 0.05)),
+        rgba(5, 8, 7, 0.28);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.045),
+        inset 3px 0 0 rgba(99, 216, 176, 0.34);
+    }
+
+    .start-difficulty-label {
+      justify-self: start;
+      min-height: 22px;
+      padding: 0 9px;
+      border: 1px solid rgba(99, 216, 176, 0.3);
+      border-radius: 999px;
+      color: rgba(191, 244, 226, 0.95);
+      background: rgba(99, 216, 176, 0.08);
+      font-size: clamp(11px, calc(7.44px + 0.28vw), 13px);
+      font-weight: 780;
+      letter-spacing: 0;
+      line-height: 20px;
+      white-space: nowrap;
+    }
+
+    .start-difficulty-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .start-difficulty-button {
+      display: grid;
+      align-content: center;
+      gap: 3px;
+      min-width: 0;
+      min-height: 50px;
+      padding: 7px 9px;
+      border: 1px solid rgba(242, 241, 237, 0.085);
+      border-radius: 8px;
+      color: rgba(243, 242, 240, 0.84);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.032), rgba(255, 255, 255, 0.012)),
+        rgba(0, 0, 0, 0.18);
+      text-align: left;
+      transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+    }
+
+    .start-difficulty-button:hover,
+    .start-difficulty-button:focus-visible {
+      border-color: rgba(99, 216, 176, 0.42);
+      color: rgba(248, 250, 245, 0.96);
+    }
+
+    .start-difficulty-button.is-selected {
+      border-color: rgba(99, 216, 176, 0.56);
+      color: #07110d;
+      background: linear-gradient(180deg, #d0f8eb, #82d9bc 58%, #c9b069);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24);
+    }
+
+    .start-difficulty-button strong,
+    .start-difficulty-button small {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .start-difficulty-button strong {
+      font-size: clamp(13px, calc(9.44px + 0.28vw), 15px);
+      font-weight: 840;
+      line-height: 1.12;
+    }
+
+    .start-difficulty-button small {
+      color: rgba(205, 201, 211, 0.78);
+      font-size: clamp(10px, calc(4.67px + 0.42vw), 13px);
+      font-weight: 680;
+      line-height: 1.2;
+    }
+
+    .start-difficulty-button.is-selected small {
+      color: rgba(7, 17, 13, 0.72);
+    }
+
+    .start-mode-card {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+      min-height: 64px;
+      padding: 9px 10px;
+      border: 1px solid var(--mode-border, rgba(242, 241, 237, 0.095));
+      border-radius: 8px;
+      color: rgba(244, 243, 240, 0.9);
+      background:
+        linear-gradient(180deg, var(--mode-wash, rgba(255, 255, 255, 0.038)), rgba(255, 255, 255, 0.014)),
+        rgba(6, 5, 7, 0.38);
+      text-align: left;
+      transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+    }
+
+    .start-mode-card[data-start-mode-value="random"] {
+      --mode-border: rgba(181, 150, 225, 0.28);
+      --mode-border-hover: rgba(181, 150, 225, 0.46);
+      --mode-border-selected: rgba(181, 150, 225, 0.68);
+      --mode-wash: rgba(181, 150, 225, 0.06);
+      --mode-wash-hover: rgba(181, 150, 225, 0.1);
+      --mode-wash-selected: rgba(181, 150, 225, 0.16);
+      --mode-pill-border: rgba(181, 150, 225, 0.36);
+      --mode-pill-color: rgba(229, 211, 255, 0.96);
+      --mode-pill-bg: rgba(181, 150, 225, 0.095);
+      --mode-shadow: rgba(135, 88, 201, 0.1);
+    }
+
+    .start-mode-card[data-start-mode-value="tournament"] {
+      --mode-border: rgba(231, 199, 86, 0.24);
+      --mode-border-hover: rgba(231, 199, 86, 0.45);
+      --mode-border-selected: rgba(231, 199, 86, 0.64);
+      --mode-wash: rgba(231, 199, 86, 0.045);
+      --mode-wash-hover: rgba(231, 199, 86, 0.09);
+      --mode-wash-selected: rgba(231, 199, 86, 0.15);
+      --mode-pill-border: rgba(231, 199, 86, 0.34);
+      --mode-pill-color: rgba(251, 234, 173, 0.96);
+      --mode-pill-bg: rgba(231, 199, 86, 0.085);
+      --mode-shadow: rgba(231, 199, 86, 0.08);
+    }
+
+    .start-mode-card:hover,
+    .start-mode-card:focus-visible {
+      border-color: var(--mode-border-hover, rgba(181, 150, 225, 0.34));
+      background:
+        linear-gradient(180deg, var(--mode-wash-hover, rgba(181, 150, 225, 0.08)), rgba(255, 255, 255, 0.016)),
+        rgba(0, 0, 0, 0.2);
+    }
+
+    .start-mode-card.is-selected {
+      border-color: var(--mode-border-selected, rgba(181, 150, 225, 0.62));
+      background:
+        linear-gradient(180deg, var(--mode-wash-selected, rgba(181, 150, 225, 0.13)), rgba(255, 255, 255, 0.018)),
+        rgba(10, 8, 12, 0.45);
+      box-shadow:
+        inset 0 0 0 1px var(--mode-wash-selected, rgba(181, 150, 225, 0.12)),
+        0 10px 22px var(--mode-shadow, rgba(135, 88, 201, 0.08));
+    }
+
+    .start-mode-card > span {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .start-mode-card strong {
+      min-width: 0;
+      overflow: hidden;
+      color: rgba(248, 250, 245, 0.96);
+      font-size: 18px;
+      font-weight: 780;
+      line-height: 1.12;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .start-mode-card b {
+      min-height: 23px;
+      padding: 0 8px;
+      border: 1px solid var(--mode-pill-border, rgba(231, 199, 86, 0.28));
+      border-radius: 999px;
+      color: var(--mode-pill-color, rgba(251, 234, 173, 0.94));
+      background: var(--mode-pill-bg, rgba(0, 0, 0, 0.22));
+      font-size: 11px;
+      font-weight: 820;
+      line-height: 21px;
+      white-space: nowrap;
+    }
+
+    .start-mode-card small {
+      color: rgba(205, 201, 211, 0.82);
+      font-size: clamp(13px, calc(9.44px + 0.28vw), 15px);
+      font-weight: 620;
+      line-height: 1.34;
+    }
+
+    .start-settings-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      align-items: stretch;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .start-core-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .start-field {
+      --field-accent-border: rgba(181, 150, 225, 0.18);
+      --field-accent-border-strong: rgba(181, 150, 225, 0.42);
+      --field-accent-soft: rgba(181, 150, 225, 0.055);
+      --field-label-color: rgba(226, 223, 216, 0.82);
+      --field-selected-top: #cfbbec;
+      --field-selected-mid: #ae90d9;
+      --field-selected-bottom: #dabf5e;
+      --field-focus-ring: rgba(181, 150, 225, 0.14);
+      display: grid;
+      align-content: start;
+      gap: 5px;
+      min-width: 0;
+      min-height: 74px;
+      padding: 8px;
+      border: 1px solid var(--field-accent-border);
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, var(--field-accent-soft) 0, var(--field-accent-soft) 4px, transparent 4px),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.013)),
+        rgba(6, 5, 7, 0.34);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+    }
+
+    .start-field.is-wide,
+    .start-field-range,
+    .start-field[data-start-field="tables"],
+    .start-field[data-start-field="format"] {
+      grid-column: span 2;
+    }
+
+    .start-field[data-start-field="mtt-stack"],
+    .start-field[data-start-field="mtt-hands"] {
+      grid-column: span 3;
+    }
+
+    .start-field[data-start-field="mtt-levels"],
+    .start-field[data-start-field="timer"] {
+      grid-column: 1 / -1;
+    }
+
+    .start-field[data-start-field="tables"] {
+      --field-accent-border: rgba(120, 172, 255, 0.28);
+      --field-accent-border-strong: rgba(120, 172, 255, 0.52);
+      --field-accent-soft: rgba(120, 172, 255, 0.075);
+      --field-label-color: rgba(202, 224, 255, 0.9);
+      --field-selected-top: #d3e3ff;
+      --field-selected-mid: #8db9ff;
+      --field-selected-bottom: #72d0c2;
+      --field-focus-ring: rgba(120, 172, 255, 0.15);
+    }
+
+    .start-field[data-start-field="format"] {
+      --field-accent-border: rgba(99, 216, 176, 0.25);
+      --field-accent-border-strong: rgba(99, 216, 176, 0.5);
+      --field-accent-soft: rgba(99, 216, 176, 0.07);
+      --field-label-color: rgba(191, 244, 226, 0.88);
+      --field-selected-top: #d0f8eb;
+      --field-selected-mid: #82d9bc;
+      --field-selected-bottom: #7fb8ff;
+      --field-focus-ring: rgba(99, 216, 176, 0.14);
+    }
+
+    .start-field[data-start-field="random-stack"] {
+      --field-accent-border: rgba(181, 150, 225, 0.32);
+      --field-accent-border-strong: rgba(181, 150, 225, 0.58);
+      --field-accent-soft: rgba(181, 150, 225, 0.085);
+      --field-label-color: rgba(226, 211, 255, 0.92);
+      --field-selected-top: #e0d0ff;
+      --field-selected-mid: #b695e3;
+      --field-selected-bottom: #e2c75c;
+      --field-focus-ring: rgba(181, 150, 225, 0.16);
+    }
+
+    .start-field[data-start-field="mtt-stack"],
+    .start-field[data-start-field="mtt-hands"],
+    .start-field[data-start-field="mtt-levels"] {
+      --field-accent-border: rgba(231, 199, 86, 0.3);
+      --field-accent-border-strong: rgba(231, 199, 86, 0.55);
+      --field-accent-soft: rgba(231, 199, 86, 0.075);
+      --field-label-color: rgba(251, 234, 173, 0.9);
+      --field-selected-top: #f7e9a8;
+      --field-selected-mid: #e0c15c;
+      --field-selected-bottom: #b997f0;
+      --field-focus-ring: rgba(231, 199, 86, 0.15);
+    }
+
+    .start-field[data-start-field="timer"] {
+      --field-accent-border: rgba(255, 130, 116, 0.25);
+      --field-accent-border-strong: rgba(255, 130, 116, 0.5);
+      --field-accent-soft: rgba(255, 130, 116, 0.065);
+      --field-label-color: rgba(255, 207, 199, 0.88);
+      --field-selected-top: #ffd4ce;
+      --field-selected-mid: #ff9284;
+      --field-selected-bottom: #dfc060;
+      --field-focus-ring: rgba(255, 130, 116, 0.13);
+    }
+
+    .start-core-grid .start-field[data-start-field="tables"],
+    .start-core-grid .start-field[data-start-field="format"] {
+      grid-column: auto;
+    }
+
+    .start-field[data-start-field="tempo"] {
+      --field-accent-border: rgba(231, 199, 86, 0.26);
+      --field-accent-border-strong: rgba(231, 199, 86, 0.5);
+      --field-accent-soft: rgba(231, 199, 86, 0.07);
+      --field-label-color: rgba(251, 234, 173, 0.9);
+      --field-selected-top: #f7e9a8;
+      --field-selected-mid: #e0c15c;
+      --field-selected-bottom: #b695e3;
+      --field-focus-ring: rgba(231, 199, 86, 0.15);
+    }
+
+    .start-core-grid .start-field[data-start-field="tempo"] {
+      grid-column: 1 / -1;
+    }
+
+    .start-segmented-tempo {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .start-advanced {
+      display: grid;
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid rgba(242, 241, 237, 0.08);
+      border-radius: 9px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.01)),
+        rgba(0, 0, 0, 0.16);
+    }
+
+    .start-advanced summary {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto 14px;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 0 10px;
+      color: rgba(229, 226, 218, 0.84);
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+    }
+
+    .start-advanced summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .start-advanced summary::after {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid rgba(231, 199, 86, 0.72);
+      border-bottom: 2px solid rgba(231, 199, 86, 0.72);
+      transform: translateY(-2px) rotate(45deg);
+      transition: transform 140ms ease;
+    }
+
+    .start-advanced[open] summary::after {
+      transform: translateY(2px) rotate(225deg);
+    }
+
+    .start-advanced summary span {
+      min-width: 0;
+      overflow: hidden;
+      font-size: 12px;
+      font-weight: 780;
+      line-height: 1.15;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .start-advanced summary b {
+      min-width: 0;
+      overflow: hidden;
+      color: rgba(188, 184, 194, 0.74);
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.15;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .start-advanced-body {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+      padding: 8px;
+      border-top: 1px solid rgba(242, 241, 237, 0.08);
+    }
+
+    .start-advanced:not([open]) .start-advanced-body {
+      display: none;
+    }
+
+    .start-field-stepper,
+    .start-field-choice,
+    .start-field-structures {
+      min-height: 0;
+      padding: 9px 10px;
+    }
+
+    .start-field-structures {
+      gap: 8px;
+    }
+
+    .start-field-label {
+      overflow: hidden;
+      color: var(--field-label-color);
+      font-size: clamp(12px, calc(8.44px + 0.28vw), 14px);
+      font-weight: 720;
+      line-height: 1.2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .start-field select,
+    .start-field input[type="text"],
+    .start-field input[type="number"] {
+      width: 100%;
+      min-width: 0;
+      min-height: 34px;
+      padding: 0 9px;
+      border: 1px solid rgba(242, 241, 237, 0.12);
+      border-radius: 8px;
+      color: rgba(248, 250, 245, 0.94);
+      background:
+        linear-gradient(180deg, rgba(6, 5, 8, 0.98), rgba(14, 12, 17, 0.98));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+      font-size: 14px;
+      font-weight: 760;
+      outline: none;
+    }
+
+    .start-field input[type="number"] {
+      width: min(100%, 92px);
+      text-align: center;
+      font-size: 15px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .start-stepper {
+      display: grid;
+      grid-template-columns: 36px minmax(74px, 1fr) 36px;
+      align-items: stretch;
+      gap: 5px;
+      min-width: 0;
+      padding: 3px;
+      border: 1px solid rgba(242, 241, 237, 0.09);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.24);
+    }
+
+    .start-stepper button {
+      min-width: 0;
+      min-height: 34px;
+      border: 0;
+      border-radius: 6px;
+      color: rgba(251, 234, 173, 0.95);
+      background: rgba(231, 199, 86, 0.09);
+      font-size: 18px;
+      font-weight: 820;
+      line-height: 1;
+    }
+
+    .start-stepper button:hover,
+    .start-stepper button:focus-visible {
+      color: #100d04;
+      background: linear-gradient(180deg, #f7e9a8, #e0c15c);
+    }
+
+    .start-stepper input[type="number"] {
+      width: 100%;
+      min-height: 34px;
+      border-radius: 6px;
+    }
+
+    .start-field select option,
+    .start-field select optgroup {
+      color: #101713;
+      background-color: #f4f7f2;
+      font-weight: 760;
+    }
+
+    .start-field select:focus-visible,
+    .start-field input:focus-visible {
+      border-color: var(--field-accent-border-strong);
+      box-shadow:
+        0 0 0 3px var(--field-focus-ring),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    .start-range {
+      display: grid;
+      grid-template-columns: minmax(68px, 88px) auto minmax(68px, 88px) auto;
+      align-items: center;
+      justify-content: start;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .start-range input[type="number"] {
+      width: 100%;
+    }
+
+    .start-range-separator,
+    .start-range-unit {
+      color: rgba(226, 223, 216, 0.78);
+      font-size: 11px;
+      font-weight: 720;
+      line-height: 1;
+      text-transform: none;
+      white-space: nowrap;
+    }
+
+    .start-range-separator {
+      color: var(--field-label-color);
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    .start-preset-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .start-preset-row-stack {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .start-preset-row button {
+      min-width: 0;
+      min-height: 28px;
+      padding: 0 7px;
+      border: 1px solid rgba(242, 241, 237, 0.09);
+      border-radius: 7px;
+      color: rgba(232, 229, 222, 0.82);
+      background: rgba(0, 0, 0, 0.18);
+      font-size: clamp(12px, calc(8.44px + 0.28vw), 14px);
+      font-weight: 720;
+      line-height: 1.1;
+    }
+
+    .start-preset-row button:hover,
+    .start-preset-row button:focus-visible {
+      border-color: var(--field-accent-border-strong);
+      color: rgba(245, 243, 248, 0.92);
+    }
+
+    .start-preset-row button.is-selected {
+      border-color: var(--field-accent-border-strong);
+      color: var(--field-label-color);
+      background:
+        linear-gradient(180deg, var(--field-accent-soft), rgba(255, 255, 255, 0.018)),
+        rgba(0, 0, 0, 0.18);
+      box-shadow: inset 0 0 0 1px var(--field-accent-soft);
+    }
+
+    .start-blind-structure-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .start-blind-card {
+      display: grid;
+      align-content: center;
+      gap: 5px;
+      min-width: 0;
+      min-height: 58px;
+      padding: 8px 10px;
+      border: 1px solid rgba(231, 199, 86, 0.18);
+      border-radius: 8px;
+      color: rgba(245, 243, 238, 0.9);
+      background:
+        linear-gradient(180deg, rgba(231, 199, 86, 0.06), rgba(255, 255, 255, 0.012)),
+        rgba(0, 0, 0, 0.18);
+      text-align: left;
+      transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+    }
+
+    .start-blind-card:hover,
+    .start-blind-card:focus-visible {
+      border-color: rgba(231, 199, 86, 0.45);
+      color: rgba(255, 251, 234, 0.98);
+    }
+
+    .start-blind-card.is-selected {
+      border-color: rgba(231, 199, 86, 0.64);
+      background:
+        linear-gradient(180deg, rgba(231, 199, 86, 0.16), rgba(181, 150, 225, 0.045)),
+        rgba(0, 0, 0, 0.2);
+      box-shadow:
+        inset 0 0 0 1px rgba(231, 199, 86, 0.12),
+        0 10px 22px rgba(231, 199, 86, 0.06);
+    }
+
+    .start-blind-card-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .start-blind-card strong,
+    .start-blind-card small {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .start-blind-card strong {
+      font-size: clamp(14px, calc(10.44px + 0.28vw), 16px);
+      font-weight: 820;
+      line-height: 1.1;
+    }
+
+    .start-blind-card b {
+      min-height: 22px;
+      padding: 0 7px;
+      border: 1px solid rgba(231, 199, 86, 0.28);
+      border-radius: 999px;
+      color: rgba(251, 234, 173, 0.94);
+      background: rgba(0, 0, 0, 0.2);
+      font-size: 11px;
+      font-weight: 820;
+      line-height: 20px;
+      white-space: nowrap;
+    }
+
+    .start-blind-card small {
+      color: rgba(222, 217, 198, 0.78);
+      font-size: 11px;
+      font-weight: 680;
+      line-height: 1.2;
+    }
+
+    .start-blind-ladder {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      min-width: 0;
+      padding: 6px;
+      border: 1px solid rgba(242, 241, 237, 0.08);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .start-blind-ladder span {
+      min-height: 23px;
+      padding: 0 8px;
+      border: 1px solid rgba(231, 199, 86, 0.18);
+      border-radius: 999px;
+      color: rgba(248, 232, 167, 0.92);
+      background: rgba(231, 199, 86, 0.07);
+      font-size: 11px;
+      font-weight: 760;
+      line-height: 21px;
+      white-space: nowrap;
+    }
+
+    .start-timebank-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .start-timebank-button {
+      display: grid;
+      align-content: center;
+      gap: 3px;
+      min-width: 0;
+      min-height: 50px;
+      padding: 7px 8px;
+      border: 1px solid rgba(255, 130, 116, 0.16);
+      border-radius: 8px;
+      color: rgba(245, 238, 235, 0.88);
+      background:
+        linear-gradient(180deg, rgba(255, 130, 116, 0.055), rgba(255, 255, 255, 0.012)),
+        rgba(0, 0, 0, 0.18);
+      text-align: center;
+      transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+    }
+
+    .start-timebank-button:hover,
+    .start-timebank-button:focus-visible {
+      border-color: rgba(255, 130, 116, 0.42);
+      color: rgba(255, 245, 242, 0.98);
+    }
+
+    .start-timebank-button.is-selected {
+      border-color: rgba(255, 130, 116, 0.55);
+      color: #120806;
+      background: linear-gradient(180deg, #ffd4ce, #ff9284 58%, #dfc060);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.23);
+    }
+
+    .start-timebank-button strong,
+    .start-timebank-button span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .start-timebank-button strong {
+      font-size: clamp(14px, calc(10.44px + 0.28vw), 16px);
+      font-weight: 820;
+      line-height: 1.05;
+    }
+
+    .start-timebank-button span {
+      font-size: 10px;
+      font-weight: 720;
+      line-height: 1.15;
+      opacity: 0.78;
+    }
+
+    .start-segmented {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 4px;
+      min-width: 0;
+      padding: 3px;
+      border: 1px solid rgba(242, 241, 237, 0.09);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.24);
+    }
+
+    .start-segmented button {
+      min-width: 0;
+      min-height: 32px;
+      border: 0;
+      border-radius: 6px;
+      color: rgba(235, 233, 228, 0.82);
+      background: transparent;
+      font-size: 14px;
+      font-weight: 760;
+    }
+
+    .start-segmented button.is-selected {
+      color: #07110d;
+      background: linear-gradient(180deg, var(--field-selected-top), var(--field-selected-mid) 56%, var(--field-selected-bottom));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26);
+    }
+
+    /* Format (table size) reuses the segmented look but holds one button per
+       available player count, so it flows as a single adaptive row rather than
+       the fixed 3-column grid the table-count selector uses. */
+    .start-segmented-format {
+      grid-template-columns: none;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
+    }
+
+    .start-panel-button {
+      position: relative;
+      justify-self: stretch;
+      align-self: end;
+      min-width: 0;
+      min-height: 48px;
+      font-size: 16px;
+    }
+
+    /* CTA sits level with the "Столы" row (the 3rd settings group, a fixed
+       distance below the column top in both Random and MTT modes since the
+       difficulty + mode groups above it are identical). The copy rail and the
+       settings column share the grid-row top, so an absolute offset from the
+       copy top lines the button up with that row; centered, ~half width. */
+    .start-launch {
+      position: absolute;
+      top: var(--start-cta-top, 258px);
+      left: 0;
+      right: 0;
+      z-index: 1;
+      display: grid;
+      width: min(240px, 100%);
+      margin: 0 auto;
+      min-width: 0;
+    }
+
+    .table-grid.is-idle .simulator-start-panel .start-panel-button {
+      min-height: clamp(48px, calc(35.2px + 1vw), 56px);
+      padding: 0 22px;
+      font-size: clamp(15px, calc(6.11px + 0.69vw), 20px);
+    }
+
+    @media (max-width: 1160px) {
+      /* The reflowed (stacked) start panel no longer fits the decorative felt
+         oval; the absolute preview just spills out of the auto-height grid.
+         Drop the idle felt decoration here so the panel reads cleanly. */
+      .table-grid.is-idle::before,
+      .table-grid.is-idle::after,
+      .table-grid.is-idle .start-felt-preview {
+        display: none;
+      }
+
+      .table-grid.is-idle,
+      .table-grid.is-idle[data-count] {
+        min-height: 0;
+        align-content: safe center;
+        place-items: center;
+      }
+
+      .simulator-start-panel {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto auto;
+        grid-template-areas:
+          "copy"
+          "settings";
+        width: min(900px, calc(100vw - 32px));
+        min-height: 0;
+        gap: 12px;
+      }
+
+      .start-panel-copy {
+        padding: 0;
+      }
+
+      .start-panel-copy strong {
+        max-width: none;
+        font-size: 36px;
+        line-height: 1.02;
+      }
+
+      .start-settings-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .start-field[data-start-field="mtt-stack"],
+      .start-field[data-start-field="mtt-hands"] {
+        grid-column: span 2;
+      }
+
+      .start-field[data-start-field="mtt-levels"] {
+        grid-column: 1 / -1;
+      }
+
+      .start-field[data-start-field="timer"] {
+        grid-column: 1 / -1;
+      }
+
+      /* Stacked reflow: copy + settings are separate rows, so the desktop
+         absolute "level with Столы" CTA can't apply — return it to flow under
+         the heading, centered. */
+      .start-launch {
+        position: static;
+        margin: 8px auto 0;
+      }
+
+      .start-panel-button {
+        justify-self: stretch;
+        width: 100%;
+      }
+    }
+
+/* Start screen redesign v2: keep the generated controls wired to the existing
+ * start runtime, but treat the idle state as a single composed simulator scene. */
+.app:has(.table-grid.is-idle) {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.table-grid.is-idle,
+.table-grid.is-idle[data-count] {
+  height: 100%;
+  min-height: 0;
+  align-content: stretch;
+  place-items: stretch;
+  overflow: hidden;
+}
+
+.table-grid.is-idle::before {
+  inset: 0;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  background:
+    radial-gradient(ellipse at 76% 48%, rgba(59, 191, 145, 0.16), transparent 32%),
+    radial-gradient(ellipse at 19% 14%, rgba(181, 150, 225, 0.19), transparent 36%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(13, 12, 17, 0.46), rgba(3, 3, 5, 0.84));
+  background-size: auto, auto, 78px 78px, 78px 78px, auto;
+  box-shadow: none;
+}
+
+.table-grid.is-idle::after {
+  left: 34%;
+  right: -6%;
+  bottom: 50%;
+  height: 34%;
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 48% 47%, rgba(245, 235, 196, 0.16), transparent 14%),
+    radial-gradient(ellipse at 50% 52%, rgba(50, 173, 132, 0.2), rgba(11, 38, 34, 0.08) 61%, transparent 72%);
+  opacity: 0.86;
+  filter: blur(18px);
+}
+
+.start-felt-preview {
+  z-index: 0;
+  overflow: hidden;
+}
+
+.start-felt-preview::before {
+  left: 37%;
+  right: -5%;
+  bottom: 50%;
+  height: 36%;
+  border: 20px solid rgba(12, 19, 21, 0.82);
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 48% 44%, rgba(245, 238, 205, 0.12), transparent 18%),
+    radial-gradient(ellipse at 51% 51%, rgba(58, 158, 124, 0.46), rgba(13, 79, 67, 0.58) 58%, rgba(5, 24, 22, 0.78) 100%);
+  box-shadow:
+    inset 0 0 0 15px rgba(42, 155, 119, 0.1),
+    inset 0 0 82px rgba(0, 0, 0, 0.58),
+    0 38px 92px rgba(0, 0, 0, 0.5);
+}
+
+.start-felt-table {
+  left: 43%;
+  right: 4%;
+  bottom: 45%;
+  height: 30%;
+  border-width: 20px;
+  border-color: rgba(12, 18, 20, 0.94);
+  background:
+    radial-gradient(ellipse at 46% 47%, rgba(246, 238, 198, 0.14), transparent 18%),
+    radial-gradient(ellipse at 50% 50%, rgba(48, 153, 118, 0.96), rgba(14, 93, 76, 0.98) 59%, rgba(4, 30, 27, 0.98) 100%);
+  box-shadow:
+    inset 0 0 0 2px rgba(99, 216, 176, 0.12),
+    inset 0 0 86px rgba(0, 0, 0, 0.5),
+    0 28px 62px rgba(0, 0, 0, 0.44);
+}
+
+.start-preview-board span {
+  width: 51px;
+  height: 72px;
+  border-radius: 7px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent 33%),
+    linear-gradient(180deg, rgba(41, 52, 57, 0.8), rgba(8, 14, 18, 0.88));
+}
+
+.start-preview-seat {
+  grid-template-columns: 34px minmax(0, 62px);
+  width: 114px;
+  min-height: 42px;
+  border-color: rgba(99, 216, 176, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
+    rgba(5, 9, 10, 0.82);
+}
+
+.start-preview-avatar {
+  border-color: rgba(181, 150, 225, 0.46);
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.42), transparent 22%),
+    radial-gradient(circle at 55% 57%, rgba(94, 211, 177, 0.56), rgba(72, 48, 112, 0.95) 62%, rgba(6, 8, 12, 0.98));
+}
+
+.simulator-start-panel {
+  position: absolute;
+  top: 30px;
+  left: 32px;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(224px, 0.42fr) minmax(500px, 0.86fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "copy settings"
+    "action settings";
+  align-items: stretch;
+  gap: 12px 14px;
+  width: min(910px, calc(100% - 64px));
+  max-height: calc(100% - 118px);
+  min-height: 0;
+  padding: 20px;
+  overflow: hidden auto;
+  border: 1px solid rgba(181, 150, 225, 0.2);
+  border-radius: 18px;
+  background:
+    linear-gradient(90deg, rgba(21, 15, 34, 0.88), rgba(8, 8, 10, 0.86) 42%, rgba(6, 10, 9, 0.9)),
+    rgba(5, 5, 7, 0.9);
+  box-shadow:
+    0 32px 86px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px) saturate(118%);
+  scrollbar-width: thin;
+}
+
+.start-table-rail {
+  inset: 36px 32px 26px;
+  border-color: rgba(99, 216, 176, 0.12);
+  opacity: 0.12;
+}
+
+.start-panel-copy {
+  align-content: start;
+  gap: 10px;
+  padding: 0;
+}
+
+.start-panel-copy strong {
+  max-width: 10ch;
+  color: rgba(248, 250, 245, 0.98);
+  text-wrap: balance;
+}
+
+.start-panel-kicker {
+  border-color: rgba(181, 150, 225, 0.28);
+  background: rgba(9, 8, 13, 0.48);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.start-settings {
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.start-difficulty-group,
+.start-mode-group,
+.start-advanced {
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.042), rgba(255, 255, 255, 0.012)),
+    rgba(3, 4, 5, 0.38);
+}
+
+.start-difficulty-group {
+  padding: 9px;
+}
+
+.start-mode-group {
+  padding: 9px;
+}
+
+.start-difficulty-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.start-difficulty-button {
+  min-height: 52px;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.start-difficulty-button.is-selected {
+  color: #07110d;
+  background: linear-gradient(180deg, #d4fff1, #6ed3ad 58%, #ddc45e);
+}
+
+.start-mode-card {
+  min-height: 68px;
+  padding: 10px 11px;
+}
+
+.start-mode-card.is-selected {
+  transform: translateY(-1px);
+}
+
+.start-core-grid {
+  gap: 10px;
+}
+
+.start-field {
+  min-height: 76px;
+  padding: 9px;
+  border-radius: 9px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.038), rgba(255, 255, 255, 0.012)),
+    rgba(3, 4, 5, 0.36);
+}
+
+.start-advanced {
+  border-color: rgba(242, 241, 237, 0.09);
+}
+
+.start-advanced summary {
+  min-height: 40px;
+}
+
+.start-launch {
+  align-self: end;
+  gap: 8px;
+  padding: 11px;
+  border-color: rgba(99, 216, 176, 0.16);
+  border-radius: 11px;
+  background:
+    linear-gradient(180deg, rgba(99, 216, 176, 0.08), rgba(181, 150, 225, 0.04)),
+    rgba(3, 4, 5, 0.42);
+}
+
+.table-grid.is-idle .simulator-start-panel .start-panel-button {
+  min-height: 50px;
+  border-radius: 9px;
+  color: #04150f;
+  background: linear-gradient(135deg, #42d099, #8de3c4 58%, #e1c65d);
+  box-shadow:
+    0 16px 32px rgba(66, 208, 153, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+@media (max-width: 980px) {
+  .simulator-start-panel {
+    top: 64px;
+    left: 16px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "copy"
+      "settings"
+      "action";
+    width: min(760px, calc(100% - 32px));
+    max-height: calc(100% - 96px);
+    padding: 16px;
+  }
+
+  .start-panel-copy strong {
+    max-width: none;
+    font-size: 36px;
+  }
+
+  .start-felt-table {
+    left: 28%;
+    right: -10%;
+    bottom: 5%;
+  }
+}
+
+/* Start quick setup v3: the right rail is intentionally split into a compact
+   header, four large click-first rows, and an advanced disclosure. */
+.table-grid.is-idle::before {
+  background:
+    radial-gradient(ellipse at 77% 47%, rgba(59, 191, 145, 0.08), transparent 30%),
+    radial-gradient(ellipse at 18% 13%, rgba(181, 150, 225, 0.12), transparent 35%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(13, 12, 17, 0.36), rgba(3, 3, 5, 0.88));
+  background-size: auto, auto, 96px 96px, 96px 96px, auto;
+}
+
+.table-grid.is-idle::after {
+  opacity: 0.32;
+  filter: blur(26px);
+}
+
+.start-felt-preview {
+  opacity: 0.44;
+}
+
+.start-felt-preview::before,
+.start-felt-table {
+  opacity: 0.52;
+}
+
+.start-preview-seat,
+.start-preview-board,
+.start-preview-pot {
+  opacity: 0.72;
+}
+
+.simulator-start-panel {
+  grid-template-columns: minmax(236px, 0.43fr) minmax(560px, 0.96fr);
+  width: min(1060px, calc(100% - 64px));
+  max-height: calc(100% - 96px);
+  background:
+    linear-gradient(90deg, rgba(18, 14, 27, 0.92), rgba(7, 8, 10, 0.9) 43%, rgba(5, 11, 9, 0.92)),
+    rgba(5, 5, 7, 0.93);
+}
+
+.start-settings {
+  display: grid;
+  grid-template-rows: auto minmax(356px, 1fr) auto;
+  gap: 12px;
+  min-height: 0;
+}
+
+.start-settings-head {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 15px 16px 14px;
+  border: 1px solid rgba(242, 241, 237, 0.08);
+  border-radius: 13px;
+  background:
+    linear-gradient(135deg, rgba(181, 150, 225, 0.11), rgba(99, 216, 176, 0.06) 58%, rgba(231, 199, 86, 0.045)),
+    rgba(3, 4, 5, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 12px 32px rgba(0, 0, 0, 0.16);
+}
+
+.start-settings-head span {
+  width: max-content;
+  max-width: 100%;
+  min-height: 22px;
+  padding: 0 9px;
+  border: 1px solid rgba(99, 216, 176, 0.24);
+  border-radius: 999px;
+  color: rgba(197, 245, 227, 0.9);
+  background: rgba(99, 216, 176, 0.075);
+  font-size: 12px;
+  font-weight: 780;
+  line-height: 20px;
+}
+
+.start-settings-head h2 {
+  margin: 0;
+  color: rgba(248, 250, 245, 0.98);
+  font-size: clamp(26px, calc(13.2px + 1vw), 34px);
+  font-weight: 920;
+  line-height: 1.02;
+}
+
+.start-settings-head p {
+  max-width: 44ch;
+  margin: 0;
+  color: rgba(223, 220, 214, 0.75);
+  font-size: 13px;
+  font-weight: 620;
+  line-height: 1.34;
+}
+
+.start-quick-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid rgba(242, 241, 237, 0.09);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.042), rgba(255, 255, 255, 0.012)),
+    rgba(3, 4, 5, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.start-quick-row,
+.start-quick-list .start-mode-group,
+.start-quick-list .start-difficulty-group,
+.start-quick-list .start-field {
+  display: grid;
+  align-content: center;
+  grid-template-rows: auto minmax(42px, auto);
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px 16px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.start-quick-row + .start-quick-row {
+  border-top: 1px solid rgba(242, 241, 237, 0.075);
+}
+
+.start-quick-list > .start-quick-row {
+  grid-column: 1 / -1;
+}
+
+.start-quick-list .start-quick-label,
+.start-quick-list .start-field-label,
+.start-quick-list .start-difficulty-label,
+.start-quick-list .start-mode-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  justify-self: start;
+  min-height: 22px;
+  padding: 0;
+  border: 0;
+  color: rgba(245, 244, 238, 0.95);
+  background: transparent;
+  font-size: clamp(16px, calc(10.67px + 0.42vw), 19px);
+  font-weight: 880;
+  line-height: 1.16;
+  white-space: nowrap;
+}
+
+.start-quick-list .start-quick-label::before,
+.start-quick-list .start-field-label::before {
+  content: "";
+  width: 7px;
+  height: 20px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(99, 216, 176, 0.95), rgba(231, 199, 86, 0.92));
+  box-shadow: 0 0 18px rgba(99, 216, 176, 0.2);
+}
+
+.start-quick-list .start-mode-cards,
+.start-quick-list .start-difficulty-row,
+.start-quick-list .start-timebank-grid,
+.start-quick-list .start-segmented {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 3px;
+  border: 1px solid rgba(242, 241, 237, 0.12);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.34);
+}
+
+.start-quick-list .start-mode-cards {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.start-quick-list .start-difficulty-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.start-quick-list .start-timebank-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.start-quick-list .start-mode-card,
+.start-quick-list .start-difficulty-button,
+.start-quick-list .start-timebank-button,
+.start-quick-list .start-segmented button {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  color: rgba(236, 234, 228, 0.86);
+  background: transparent;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.54);
+  text-align: center;
+  transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.start-quick-list .start-mode-card:hover,
+.start-quick-list .start-mode-card:focus-visible,
+.start-quick-list .start-difficulty-button:hover,
+.start-quick-list .start-difficulty-button:focus-visible,
+.start-quick-list .start-timebank-button:hover,
+.start-quick-list .start-timebank-button:focus-visible,
+.start-quick-list .start-segmented button:hover,
+.start-quick-list .start-segmented button:focus-visible {
+  color: rgba(248, 250, 245, 0.98);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.start-quick-list .start-mode-card.is-selected,
+.start-quick-list .start-difficulty-button.is-selected,
+.start-quick-list .start-timebank-button.is-selected,
+.start-quick-list .start-segmented button.is-selected {
+  color: #06120e;
+  background: linear-gradient(180deg, #a7ebd3, #58c497 58%, #c7ad47);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 1px rgba(5, 19, 14, 0.22);
+  text-shadow: none;
+  transform: none;
+}
+
+.start-quick-list .start-mode-card.is-selected strong {
+  color: inherit;
+  text-shadow: none;
+}
+
+.start-quick-list .start-mode-card > span {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+.start-quick-list .start-mode-card strong,
+.start-quick-list .start-difficulty-button strong,
+.start-quick-list .start-timebank-button strong,
+.start-quick-list .start-segmented button {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 860;
+  line-height: 1.08;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.start-quick-list .start-difficulty-button small,
+.start-quick-list .start-timebank-button span {
+  display: none;
+}
+
+.start-advanced {
+  border-radius: 12px;
+}
+
+.start-advanced summary {
+  min-height: 48px;
+  padding-inline: 14px;
+}
+
+.start-advanced summary span {
+  color: rgba(248, 250, 245, 0.94);
+  font-size: 15px;
+  font-weight: 840;
+}
+
+.start-advanced summary b {
+  color: rgba(205, 201, 211, 0.76);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.start-advanced-body {
+  max-height: min(520px, calc(100vh - 260px));
+  overflow: auto;
+}
+
+/* The closed desktop layout deliberately reserves a fixed middle track for the
+   four quick rows. Once Advanced opens, that track must return to intrinsic
+   sizing; otherwise CSS Grid constrains the <details> item to its 48px summary,
+   its overflow:hidden clips the body, and the outer start panel has nothing to
+   scroll. The narrow layout already uses these intrinsic rows unconditionally. */
+.start-settings:has(> .start-advanced[open]) {
+  align-self: start;
+  grid-template-rows: auto auto auto;
+  height: max-content;
+}
+
+@media (max-width: 1160px) {
+  .simulator-start-panel {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "copy"
+      "settings";
+    width: min(900px, calc(100vw - 32px));
+    max-height: calc(100% - 96px);
+  }
+
+  .start-settings {
+    width: 100%;
+  }
+
+  .start-settings {
+    grid-template-rows: auto auto auto;
+  }
+
+  .start-quick-list {
+    grid-template-rows: none;
+  }
+
+  .start-quick-row,
+  .start-quick-list .start-mode-group,
+  .start-quick-list .start-difficulty-group,
+  .start-quick-list .start-field {
+    min-height: 104px;
+  }
+
+  .start-advanced-body {
+    max-height: none;
+  }
+}
+
+@media (max-width: 980px) {
+  .simulator-start-panel {
+    top: 64px;
+    left: 16px;
+    width: min(760px, calc(100% - 32px));
+    max-height: calc(100% - 88px);
+  }
+
+  /* Compact positioning already reserves the start-tab row through top:64px.
+     The generic idle margin added another 46/56px and pushed the panel below
+     the viewport, making its Advanced scroll region appear locked. */
+  .app:has(.table-grid.is-idle) .table-grid.is-idle .simulator-start-panel {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .start-settings-head h2 {
+    font-size: 28px;
+  }
+
+  .start-quick-list .start-mode-cards,
+  .start-quick-list .start-difficulty-row,
+  .start-quick-list .start-timebank-grid,
+  .start-quick-list .start-segmented {
+    grid-template-columns: 1fr;
+  }
+
+  .start-quick-row,
+  .start-quick-list .start-mode-group,
+  .start-quick-list .start-difficulty-group,
+  .start-quick-list .start-field {
+    min-height: 0;
+    padding: 13px;
+  }
+}
+
+/* Bot inspector dialog (double-click a bot seat to see who/why) */
+.bot-inspector-panel {
+  max-width: min(920px, calc(100vw - 32px));
+}
+.bot-inspector-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: min(72vh, 720px);
+  overflow: auto;
+}
+.bot-inspector-body .bi-toolbar {
+  display: flex;
+  justify-content: flex-start;
+  margin: 0 0 2px;
+}
+.bot-inspector-body .bi-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+.bot-inspector-body .bi-tag {
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.bot-inspector-body .bi-tag.bi-style {
+  font-weight: 600;
+}
+.bot-inspector-body .bi-style-fish,
+.bot-inspector-body .bi-style-station {
+  background: rgba(98, 214, 166, 0.18);
+  border-color: rgba(98, 214, 166, 0.4);
+}
+.bot-inspector-body .bi-style-aggro {
+  background: rgba(229, 115, 115, 0.18);
+  border-color: rgba(229, 115, 115, 0.4);
+}
+.bot-inspector-body .bi-style-nit {
+  background: rgba(120, 160, 230, 0.18);
+  border-color: rgba(120, 160, 230, 0.4);
+}
+/* F030 fix (2026-07-01): JS renders six .bi-style-* classes but only
+   fish/station/aggro/nit had tints — passive and reg fell through to the
+   base grey chip and lost their play-style distinction. Passive reads as a
+   muted blue-grey (calm, low-aggression, cooler than the nit blue); reg uses
+   the FunFarm brand violet so the "solid regular" baseline stands apart from
+   the aggro red / fish green without introducing a generic green. Play-style
+   axis only — independent of the bi-strength difficulty tints below. */
+.bot-inspector-body .bi-style-passive {
+  background: rgba(150, 168, 190, 0.16);
+  border-color: rgba(150, 168, 190, 0.38);
+}
+.bot-inspector-body .bi-style-reg {
+  background: rgba(163, 122, 214, 0.18);
+  border-color: rgba(163, 122, 214, 0.4);
+}
+.bot-inspector-body .bi-model {
+  background: rgba(212, 175, 55, 0.16);
+  border-color: rgba(212, 175, 55, 0.4);
+}
+.bot-inspector-body .bi-id,
+.bot-inspector-body .bi-model-cell code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.bot-inspector-body .bi-strength-easy {
+  background: rgba(98, 214, 166, 0.18);
+  border-color: rgba(98, 214, 166, 0.4);
+}
+.bot-inspector-body .bi-strength-standard {
+  background: rgba(120, 160, 230, 0.18);
+  border-color: rgba(120, 160, 230, 0.4);
+}
+.bot-inspector-body .bi-strength-pro {
+  background: rgba(229, 115, 115, 0.18);
+  border-color: rgba(229, 115, 115, 0.4);
+}
+.bot-inspector-body .bi-summary {
+  margin: 0;
+  opacity: 0.9;
+}
+.bot-inspector-body .bi-traits {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 14px;
+  font-size: 13px;
+  opacity: 0.9;
+}
+.bot-inspector-body .bi-traits-empty {
+  margin: 0;
+  opacity: 0.7;
+  font-size: 13px;
+}
+.bot-inspector-body .bi-subhead {
+  margin: 6px 0 2px;
+  font-size: 14px;
+}
+.bot-inspector-body .bi-decisions {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.bot-inspector-body .bi-model-cell {
+  display: grid;
+  gap: 2px;
+}
+.bot-inspector-body .bi-model-cell code {
+  color: rgba(222, 193, 88, 0.92);
+  white-space: nowrap;
+}
+.bot-inspector-body .bi-row-button,
+.bot-inspector-body .bi-back-button {
+  min-height: 26px;
+  padding: 0 9px;
+  font-size: 12px;
+}
+.bot-inspector-body .bi-decisions th {
+  text-align: left;
+  font-weight: 600;
+  opacity: 0.6;
+  padding: 2px 8px 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+.bot-inspector-body .bi-decisions td {
+  padding: 4px 8px 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  vertical-align: top;
+}
+.bot-inspector-body .bi-street {
+  white-space: nowrap;
+  opacity: 0.7;
+}
+.bot-inspector-body .bi-action {
+  white-space: nowrap;
+  font-weight: 600;
+}
+.bot-inspector-body .bi-reason {
+  opacity: 0.85;
+}
+.bot-inspector-body .bi-pot {
+  white-space: nowrap;
+  opacity: 0.6;
+  text-align: right;
+}
+.bot-inspector-body .bi-empty {
+  opacity: 0.6;
+  font-style: italic;
+}
+.bot-inspector-body .bi-hint {
+  margin: 4px 0 0;
+  font-size: 11px;
+  opacity: 0.5;
+}

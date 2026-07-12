@@ -1,0 +1,8 @@
+Medal SVGs: Twemoji 14.0.2 medal assets
+
+Source:
+- https://raw.githubusercontent.com/datawrapper/twemoji-svg/main/svg/1f947.svg
+- https://raw.githubusercontent.com/datawrapper/twemoji-svg/main/svg/1f948.svg
+- https://raw.githubusercontent.com/datawrapper/twemoji-svg/main/svg/1f949.svg
+
+License: CC-BY 4.0, same as the Twemoji artwork package.

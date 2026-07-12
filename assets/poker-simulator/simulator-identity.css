@@ -1,0 +1,269 @@
+/* Account login gate for the simulator start screen — see simulator-identity.js.
+ *
+ * A persistent overlay inside .workspace, shown only on the idle/start screen
+ * via the same `.app:has(.table-grid.is-idle)` gate the lobby/tabs use. Two
+ * sub-states, driven by #sim-identity[data-state] + .app[data-auth]:
+ *   - "out": a blocking, blurred backdrop with a centered login card. Nothing
+ *     behind it (start panel, tabs, lobby) is reachable until a nick is set.
+ *   - "in":  a compact "Играешь как <ник>" chip in the start-screen corner.
+ * Palette uses the shared FunFarm tokens from simulator-polish.css :root
+ * (--mint violet, --brass gold, aubergine felt) so it matches the brand. */
+
+.sim-identity {
+  position: absolute;
+  inset: 0;
+  z-index: 12; /* above the lobby (5) and start-tabs (6) overlays */
+  display: none; /* shown only on the idle/start screen (see :has rule below) */
+  pointer-events: none; /* host is inert; each sub-state opts its own bits back in */
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--text, #f4f6ef);
+}
+
+.app:has(.table-grid.is-idle) #sim-identity {
+  display: block;
+}
+
+/* --- Logged-out gate ------------------------------------------------------- */
+.sim-identity-gate {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  pointer-events: auto; /* swallow every click meant for the start screen */
+  background: radial-gradient(1200px 620px at 50% -8%, rgba(85, 45, 130, 0.42), rgba(7, 6, 9, 0.82));
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+
+.sim-identity[data-state="out"] .sim-identity-gate {
+  display: flex;
+}
+
+.sim-identity-card {
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 26px 26px 22px;
+  border-radius: 18px;
+  border: 1px solid var(--panel-line, rgba(242, 241, 237, 0.12));
+  background:
+    linear-gradient(180deg, rgba(33, 24, 44, 0.96), rgba(12, 10, 16, 0.97));
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.sim-identity-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brass, #dec158);
+}
+
+.sim-identity-card strong {
+  font-size: 22px;
+  line-height: 1.18;
+  font-weight: 880;
+  margin-top: 2px;
+}
+
+.sim-identity-lead {
+  margin: 4px 0 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted, #aba7b0);
+}
+
+.sim-identity-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted, #aba7b0);
+  margin-bottom: 4px;
+}
+
+.sim-identity-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text, #f4f6ef);
+  background: rgba(7, 6, 9, 0.72);
+  border: 1px solid var(--line-strong, rgba(237, 235, 231, 0.2));
+  border-radius: 11px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sim-identity-input::placeholder {
+  color: rgba(171, 167, 176, 0.6);
+  font-weight: 500;
+}
+
+.sim-identity-input:focus {
+  outline: none;
+  border-color: var(--mint, #8b5fca);
+  box-shadow: 0 0 0 3px rgba(139, 95, 202, 0.28);
+}
+
+.sim-identity-error {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--danger, #e76a66);
+}
+
+.sim-identity-login {
+  margin-top: 14px;
+  padding: 12px 16px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #120b1d;
+  cursor: pointer;
+  border: 0;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--mint, #8b5fca), var(--brass, #dec158));
+  box-shadow: 0 12px 26px rgba(139, 95, 202, 0.32);
+  transition: filter 0.15s ease, transform 0.05s ease;
+}
+
+.sim-identity-login:hover {
+  filter: brightness(1.06);
+}
+
+.sim-identity-login:active {
+  transform: translateY(1px);
+}
+
+.sim-identity-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted-2, #a19aa9);
+}
+
+/* Pulse the card when a logged-out player tries to start a session. */
+.sim-identity.is-pulse .sim-identity-card {
+  animation: sim-identity-pulse 0.42s ease;
+}
+
+@keyframes sim-identity-pulse {
+  0% { transform: translateY(0) scale(1); }
+  28% { transform: translateY(-2px) scale(1.018); box-shadow: 0 30px 80px rgba(139, 95, 202, 0.5); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* --- Logged-in chip -------------------------------------------------------- */
+.sim-identity-chip {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  display: none;
+  align-items: center;
+  gap: 9px;
+  max-width: calc(100% - 28px);
+  padding: 7px 10px 7px 8px;
+  pointer-events: auto;
+  border-radius: 999px;
+  border: 1px solid var(--panel-line, rgba(242, 241, 237, 0.12));
+  background: rgba(12, 10, 16, 0.84);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-size: 13px;
+}
+
+.sim-identity[data-state="in"] .sim-identity-chip {
+  display: inline-flex;
+}
+
+.sim-identity-chip-avatar {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 800;
+  color: #120b1d;
+  background: linear-gradient(135deg, var(--mint, #8b5fca), var(--brass, #dec158));
+}
+
+.sim-identity-chip-text {
+  color: var(--muted, #aba7b0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sim-identity-chip-text b {
+  color: var(--text, #f4f6ef);
+  font-weight: 800;
+}
+
+.sim-identity-switch {
+  flex: 0 0 auto;
+  appearance: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--mint, #8b5fca);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 4px 9px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sim-identity-switch:hover {
+  color: var(--text, #f4f6ef);
+  background: rgba(139, 95, 202, 0.18);
+}
+
+/* The logged-in chip and the start-view tabs are separate workspace overlays.
+ * On tablet/laptop widths the centred tabs can therefore slide underneath a
+ * perfectly valid nickname. Keep the identity readable by giving the two
+ * controls separate horizontal lanes; at the narrow edge the nickname text
+ * already owns an ellipsis, while the avatar and switch remain reachable. */
+@media (min-width: 621px) and (max-width: 980px) {
+  .app[data-auth="in"]:has(.table-grid.is-idle) .sim-start-tabs {
+    right: 14px;
+    left: auto;
+    transform: none;
+  }
+
+  .app[data-auth="in"] .sim-identity-chip {
+    max-width: calc(100% - 356px);
+  }
+}
+
+/* Once the tabs return to centre, reserve their left half plus a 12px gap for
+ * the longest accepted (24 character) nickname. */
+@media (min-width: 981px) and (max-width: 1224px) {
+  .app[data-auth="in"] .sim-identity-chip {
+    max-width: calc(50% - 185px);
+  }
+}
+
+@media (max-height: 760px) {
+  .sim-identity-card {
+    padding: 20px 22px 18px;
+  }
+  .sim-identity-card strong { font-size: 20px; }
+  .sim-identity-lead { margin-bottom: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sim-identity.is-pulse .sim-identity-card { animation: none; }
+  .sim-identity-input,
+  .sim-identity-login,
+  .sim-identity-switch { transition: none; }
+}

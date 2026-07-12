@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160" role="img" aria-label="Legenden avatar placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9a8a5e"/>
+      <stop offset="100%" stop-color="#5a5232"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="160" fill="url(#bg)"/>
+  <text x="80" y="102" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="76" font-weight="800" fill="#f4eecf" letter-spacing="-2">Lg</text>
+</svg>

@@ -1,0 +1,30 @@
+Player avatars (referenced from poker-position-trainer.html and
+poker-table-decision-trainer.html).
+
+All files in this directory are local copies bundled with the project to avoid
+hotlink fragility. WISDOM.md treats hotlinked named-player avatars as a recurring
+trap (see "Локальные ассеты").
+
+| file                       | source                                                                                                          | licence / note                                                                  |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| lera-ibillybrown.png       | https://funfarm.pro/en/team/ibillybrown                                                                          | Official FunFarm team page, ambassador photo. Do not replace with stock images. |
+| loremcdmx.jpg              | https://www.gipsyteam.ru/upload/Avatar/default/2/8/0/28041.jpg                                                   | GipsyTeam user avatar (LoremCDMX).                                              |
+| regisser.png               | https://www.gipsyteam.ru/upload/Avatar/default/1/6/0/3/160310.png                                                | GipsyTeam user avatar (regisser).                                               |
+| ibreaku_u.jpg              | https://www.gipsyteam.ru/upload/Avatar/default/9/7/4/97468.jpg                                                   | GipsyTeam user avatar (ibreaku_u).                                              |
+| babyshark14.jpg            | https://www.gipsyteam.ru/upload/Avatar/default/1/1/9/9/119962.jpg                                                | GipsyTeam user avatar (babyshark14).                                            |
+| phil-ivey.jpg              | https://commons.wikimedia.org/wiki/File:Phil_Ivey_Profile.jpg                                                    | Wikimedia Commons, CC BY-SA 4.0. Attribution required if reused outside project. |
+| daniel-negreanu.jpg        | https://commons.wikimedia.org/wiki/File:DNegs_at_2022_WSOP.jpg                                                   | Wikimedia Commons, CC BY-SA 4.0. Attribution required if reused outside project. |
+| legenden.jpg               | https://backing-funds.com/assets/img/team/IlyaLegenden13.jpg                                                     | Local copy for the Legenden seat avatar.                                         |
+| pavel-zanozin.jpg          | https://blefach-poker.ru/wp-content/uploads/2024/10/pavel-zanozin-v-funfarm.jpg                                  | Local copy for the PavelZanozin seat avatar.                                     |
+| legenden.svg (fallback)    | local placeholder                                                                                                | Kept only as a fallback asset, not referenced by the trainer.                    |
+| pavel-zanozin.svg (fallback) | local placeholder                                                                                              | Kept only as a fallback asset, not referenced by the trainer.                    |
+| simulator-avatar-01.svg ... simulator-avatar-12.svg | local generated vector set                                                                    | Generated for Poker Simulator bot seats; no external source or hotlink.          |
+
+To refresh the two real photos, run from project root:
+
+    curl -L -o assets/avatars/legenden.jpg "https://backing-funds.com/assets/img/team/IlyaLegenden13.jpg"
+    curl -L -o assets/avatars/pavel-zanozin.jpg "https://blefach-poker.ru/wp-content/uploads/2024/10/pavel-zanozin-v-funfarm.jpg"
+
+The trainer intentionally points to local files only and should never hotlink
+these URLs directly. If real photos are not available, use stable local fallback
+files instead of external URLs.

@@ -1,0 +1,13 @@
+/* Shared ultra-wide hooks.
+ *
+ * Do not scale the whole document with CSS `zoom`: the hub renders trainers
+ * inside iframes, and document zoom reduces the child viewport before the
+ * trainer can use the real 4K width. Individual tools should opt into
+ * ultra-wide layout in their own stylesheet.
+ */
+
+@media (min-width: 2560px) {
+  :root {
+    --ff-uhd-page-gutter: clamp(18px, 2vw, 72px);
+  }
+}

@@ -1,0 +1,100 @@
+/* Poker hub shared design tokens (dark theme, FunFarm brand).
+ *
+ * This file is the canonical source of dark-theme tokens for trainers
+ * that opt in. It is NOT auto-applied — trainers must explicitly include
+ * it via `<link rel="stylesheet" href="assets/poker-kit/tokens.css">`
+ * BEFORE their own stylesheet, then drop the duplicated `:root` declarations
+ * from their local CSS.
+ *
+ * 2026-05-28 brand retone: the hub moved off the generic felt-green palette
+ * (`--mint #40d2a3`, `--felt #115545`, green-tinted near-blacks) onto the
+ * FunFarm brand — violet + signature yellow on a de-greened near-black, with
+ * a deep aubergine felt. The retone is HUE-based: greens rotate to violet
+ * (the old mint lands almost exactly on brand violet #9a65d6), ambers brighten
+ * to brand yellow #ffdf51, and green-tinted surfaces flatten to neutral
+ * near-black. Legacy token NAMES are kept (`--mint`, `--felt`) so existing
+ * `var(--mint)` references retune in place without renaming every callsite —
+ * the names are historical, the values are brand.
+ *
+ * Correctness signalling is the one deliberate green that stays: trainers use
+ * `--good` (emerald) / `--bad` (red) as a traffic-light on the hot answer path.
+ * That green is functional, not decorative, so it is NOT rotated to violet.
+ *
+ * Trainers currently on a divergent palette by design — DO NOT auto-migrate:
+ *   - poker-combinations/combinations.css  (light theme; brand accents on light)
+ *   - poker-expected-value/lesson.css      (lesson-specific palette)
+ *   - poker-trainer/trainer.css            (decision-signal tokens
+ *                                            --good/--bad/--tech/--panel-glow
+ *                                            that make right/wrong answers
+ *                                            instantly readable on hot path)
+ *
+ * Trainers ready for opt-in migration (all use dark variants of these
+ * tokens already, with minor accidental divergence):
+ *   - poker-trainers-guide
+ *   - poker-first-hand
+ *   - poker-path
+ *   - poker-position-trainer
+ *   - poker-open-first
+ *   - poker-table-decision
+ *   - poker-hand-chart
+ *   - poker-river-cbet-trainer
+ *   - poker-river-fold
+ *   - poker-simulator
+ *
+ * Migration recipe per trainer:
+ *   1. Add `<link rel="stylesheet" href="assets/poker-kit/tokens.css">` to
+ *      the HTML shell BEFORE the trainer's own stylesheet link.
+ *   2. In the trainer's CSS, delete the duplicated tokens from `:root`,
+ *      keep only trainer-specific variables (e.g. `--seat-w`, `--mini-card`).
+ *   3. Run `npm run check` + `npm run browser:smoke` for that trainer.
+ *   4. Visually compare against pre-migration screenshot. Submit per-trainer
+ *      commit so any regression can be bisected.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* FunFarm brand core (source: funfarm.pro). */
+  --brand-violet: #9a65d6;        /* primary brand hue — logo orb, hero */
+  --brand-violet-bright: #b083f0; /* lifted violet for dark-mode accents/text */
+  --brand-lavender: #a397db;      /* soft secondary violet */
+  --brand-yellow: #ffdf51;        /* signature accent — CTA, highlight */
+  --brand-yellow-deep: #f5c518;   /* deeper yellow for gradients / hover */
+  --brand-pink: #e24aa0;          /* magenta gradient partner for the hero ramp */
+  --brand-ink: #08070d;           /* premium near-black (FirstFund plate) */
+
+  /* Surface scale: from page background up through elevated cards.
+   * De-greened — neutral near-black with a faint violet cast. */
+  --bg: #0a0910;
+  --panel: #15131c;
+  --panel-2: #1b1827;
+  --panel-3: #221d33;
+
+  /* Borders and dividers. */
+  --line: rgba(255, 255, 255, 0.12);
+  --line-strong: rgba(255, 255, 255, 0.24);
+
+  /* Text scale: primary, secondary muted, tertiary soft. */
+  --text: #f4f1ec;
+  --muted: #aea7bd;
+  --soft: #837e90;
+
+  /* Felt table palette — deep aubergine (brand violet), not green. */
+  --felt: #3a1f5e;
+  --felt-2: #271343;
+
+  /* Accents. `--mint` is the primary action/accent color (now brand violet,
+   * name kept for compatibility), `--gold` the brand-yellow highlight, `--red`
+   * the error, `--blue` the periwinkle secondary info, folded toward brand. */
+  --mint: var(--brand-violet-bright);
+  --gold: var(--brand-yellow);
+  --red: #f08a7d;
+  --blue: #8e9bf2;
+
+  /* High-contrast text for use ON colored backgrounds (badges, primary
+   * buttons that use --mint / --gold as fill). */
+  --ink: #08070d;
+
+  /* Default elevation shadow for surfaces. */
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.40);
+}

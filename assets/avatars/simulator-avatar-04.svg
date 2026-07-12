@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Simulator avatar 04">
+  <rect width="96" height="96" rx="48" fill="#315074"/>
+  <circle cx="48" cy="38" r="18" fill="#e2c3a9"/>
+  <path d="M15 96c6-21 21-34 33-34s27 13 33 34" fill="#162335"/>
+  <path d="M27 40c2-20 17-27 31-22 8 3 13 11 13 22-11-8-26-8-44 0Z" fill="#20324b"/>
+  <circle cx="41" cy="40" r="3" fill="#101923"/>
+  <circle cx="56" cy="40" r="3" fill="#101923"/>
+</svg>

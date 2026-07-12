@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ff/poker-simulator/bot-pack-schema-v2.json",
+  "title": "Poker Simulator Bot Pack v2",
+  "description": "Runtime contract for opponent packs: product identity, target stats, strategic axes, leaks, and bridgeable model seats.",
+  "type": "object",
+  "required": ["schema", "schemaVersion", "version", "packs"],
+  "properties": {
+    "schema": {
+      "const": "poker-simulator-bot-pack-profile-v2"
+    },
+    "schemaVersion": {
+      "const": 2
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedAt": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "defaultPack": {
+      "type": "string"
+    },
+    "aliases": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "packs": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/pack"
+      }
+    }
+  },
+  "$defs": {
+    "numberRange": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "number"
+      }
+    },
+    "stringList": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "pack": {
+      "type": "object",
+      "required": ["key", "label", "difficultyBand", "productGoal", "runtime", "targetStats", "leaks"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "difficultyBand": {
+          "enum": ["easy", "medium", "hard", "expert", "audit", "mixed"]
+        },
+        "productGoal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "compatibleLineups": {
+          "$ref": "#/$defs/stringList"
+        },
+        "runtime": {
+          "type": "object",
+          "properties": {
+            "legacyLineup": {
+              "type": "boolean"
+            },
+            "seats": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/seat"
+              }
+            }
+          },
+          "additionalProperties": true
+        },
+        "targetStats": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/numberRange"
+          }
+        },
+        "preflop": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "postflop": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "leaks": {
+          "$ref": "#/$defs/stringList"
+        }
+      },
+      "additionalProperties": true
+    },
+    "seat": {
+      "type": "object",
+      "required": ["role", "tier", "style", "difficulty", "weight"],
+      "properties": {
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tier": {
+          "enum": ["top", "standard", "weak"]
+        },
+        "style": {
+          "type": "string",
+          "minLength": 1
+        },
+        "difficulty": {
+          "enum": ["easy", "standard", "pro"]
+        },
+        "weight": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 24
+        },
+        "modelIds": {
+          "$ref": "#/$defs/stringList"
+        },
+        "profile": {
+          "type": "object",
+          "properties": {
+            "focusSkill": {
+              "type": "string"
+            },
+            "leakTags": {
+              "$ref": "#/$defs/stringList"
+            },
+            "production": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number"
+              }
+            },
+            "realizedRanges": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,19 @@
+{
+  "id": "good-cards-trainer",
+  "label": "Тренажер хороших карт",
+  "source": "neighbor-chat: /Users/loremcdmx/Documents/Codex/2026-05-16/50-35-15/poker-trainer.html",
+  "decks": {
+    "defaultFronts": "wikimedia-english",
+    "defaultBack": "ornate-red-back",
+    "alternatives": ["online-four-color", "classic-generated", "bicycle-rider-back", "ornate-blue-back"]
+  },
+  "chips": {
+    "default": "casino-clay",
+    "dealer": "dealer-button"
+  },
+  "notes": [
+    "Classic image deck uses Wikimedia English-pattern faces.",
+    "Online deck is generated locally and can use four-color suits.",
+    "Keep future table layouts in this folder so trainer pages can reuse one kit."
+  ]
+}

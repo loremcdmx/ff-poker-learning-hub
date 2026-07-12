@@ -1,0 +1,74 @@
+{
+  "boards_per_matchup": 200000,
+  "vsrandom_method": "derived exactly from rounded matrix (combo-count weights)",
+  "seed": 20260711,
+  "matrix_secs": 912.9344811439514,
+  "vsrandom_secs": 0.04582500457763672,
+  "benchmarks": [
+    {
+      "hero": "AA",
+      "villain": "KK",
+      "value": 0.8189,
+      "lo": 0.816,
+      "hi": 0.826,
+      "in_window": true
+    },
+    {
+      "hero": "AKs",
+      "villain": "QQ",
+      "value": 0.461,
+      "lo": 0.455,
+      "hi": 0.47,
+      "in_window": true
+    },
+    {
+      "hero": "AKo",
+      "villain": "22",
+      "value": 0.4726,
+      "lo": 0.465,
+      "hi": 0.48,
+      "in_window": true
+    },
+    {
+      "hero": "A5s",
+      "villain": "KQo",
+      "value": 0.6026,
+      "lo": 0.57,
+      "hi": 0.61,
+      "in_window": true
+    },
+    {
+      "hero": "22",
+      "villain": "AKo",
+      "value": 0.5274,
+      "lo": 0.52,
+      "hi": 0.535,
+      "in_window": true
+    }
+  ],
+  "vsrandom_benchmarks": [
+    {
+      "hand": "AA",
+      "value": 0.8521,
+      "lo": 0.849,
+      "hi": 0.856,
+      "in_window": true
+    },
+    {
+      "hand": "KK",
+      "value": 0.824,
+      "lo": 0.82,
+      "hi": 0.828,
+      "in_window": true
+    },
+    {
+      "hand": "32o",
+      "value": 0.323,
+      "lo": 0.318,
+      "hi": 0.328,
+      "in_window": true
+    }
+  ],
+  "diagonal_all_half": true,
+  "max_complement_err": 0.0
+}

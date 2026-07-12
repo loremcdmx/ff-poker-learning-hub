@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Рестил</title>
+  <link rel="stylesheet" href="assets/poker-kit/tokens.css?v=4c5ba88ea3c1">
+  <link rel="stylesheet" href="assets/poker-kit/decks/decks.css?v=0639396cc47c">
+  <link rel="stylesheet" href="assets/poker-kit/chips/chips.css?v=ed4e97084f43">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-table.css?v=db213746612e">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-polish.css?v=d5b525b07ce0">
+  <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=6ac33607ddcb">
+  <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
+  <link rel="stylesheet" href="assets/4k-scale.css">
+  <link rel="stylesheet" href="assets/poker-resteal-lesson/lesson.css?v=a5833851ff8c">
+</head>
+<body>
+  <main class="app">
+    <header class="topline">
+      <div class="lesson-brand">
+        <p class="eyebrow">Префлоп · стек 25–40 BB</p>
+        <h1>Рестил</h1>
+      </div>
+      <nav class="step-tabs" role="tablist" aria-label="Шаги урока">
+        <button class="step-tab" role="tab" type="button" aria-selected="true" aria-controls="ideaScreen" data-step-target="idea">1. Раздача</button>
+        <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="wisdomScreen" data-step-target="wisdom" disabled>2. Главное</button>
+        <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="deepScreen" data-step-target="deep" disabled>3. Подробнее</button>
+        <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="practiceScreen" data-step-target="practice" disabled>4. Практика</button>
+      </nav>
+    </header>
+
+    <section class="screen is-active idea-screen" id="ideaScreen" role="tabpanel" data-step="idea" aria-label="Раздача">
+      <article class="panel lesson-intro" id="lessonIntro">
+        <div class="intro-copy">
+          <p class="eyebrow">Главная мысль урока</p>
+          <h2 id="idea-title">Не отдавай большой блайнд без борьбы</h2>
+          <p class="intro-subtitle">Защищайся рестил-пушами</p>
+          <p class="intro-lead">На блайндах новички часто коллируют, пасуют или делают небольшой 3-бет: стек 25–40 BB кажется слишком глубоким для пуша. Из-за этого они теряют часть ожидания — BTN открывает много слабых рук и не может ответить на большой олл-ин со всеми.</p>
+          <p class="intro-support">Рестил использует это: ты ставишь олл-ин из блайндов и часто забираешь уже собранный банк без флопа. Сейчас увидишь такой спот за обычным столом.</p>
+          <button class="btn primary intro-cta" type="button" id="startLesson">Понятно, сыграть раздачу</button>
+        </div>
+        <div class="intro-table-visual" aria-hidden="true">
+          <div class="intro-felt">
+            <svg class="intro-action-routes" viewBox="0 0 540 350" preserveAspectRatio="none">
+              <defs>
+                <marker id="introOpenArrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 8 4 0 8Z"></path></marker>
+                <marker id="introJamArrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 8 4 0 8Z"></path></marker>
+              </defs>
+              <path class="intro-route intro-route-open" d="M425 54 C402 92 352 130 295 160" marker-end="url(#introOpenArrow)"></path>
+              <path class="intro-route intro-route-jam" d="M270 316 C270 294 270 270 270 245" marker-end="url(#introJamArrow)"></path>
+            </svg>
+            <span class="intro-seat intro-btn"><b>BTN</b><small>Стек 34 BB</small><i class="intro-dealer-host" id="introDealerButton"></i></span>
+            <span class="intro-chip-marker intro-btn-bet"><span id="introBtnChips"></span><strong>Рейз 2 BB</strong></span>
+            <span class="intro-pot"><span id="introPotChips"></span><strong>Банк 4,5 BB</strong></span>
+            <span class="intro-chip-marker intro-bb-jam"><span id="introJamChips"></span><strong>Олл-ин 30 BB</strong></span>
+            <span class="intro-hero-cards" id="introHeroCards"></span>
+            <span class="intro-seat intro-bb"><b>BB · Ты</b><small>Стек 30 BB</small></span>
+          </div>
+        </div>
+      </article>
+
+      <div class="first-encounter" id="firstEncounter" hidden>
+        <div class="section-heading encounter-heading">
+          <div><p class="eyebrow">Сначала решение</p><h2>BTN открыл. Твой ход с QJo</h2></div>
+          <p>Выбери действие под столом. Разбор появится рядом.</p>
+        </div>
+        <div class="encounter-layout">
+          <article class="panel room-stage">
+            <div class="room-stage-head"><span class="live-dot" aria-hidden="true"></span><strong>Учебный стол · 6-max</strong><span>BB ante 1 BB</span></div>
+            <div class="lesson-table-host" id="firstTable" aria-live="polite"></div>
+          </article>
+          <aside class="panel coach-panel" id="firstCoach" aria-live="polite"></aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen wisdom-screen" id="wisdomScreen" role="tabpanel" data-step="wisdom" aria-labelledby="wisdom-title">
+      <div class="wisdom-heading">
+        <div>
+          <p class="eyebrow">Сначала пойми идею</p>
+          <h2 id="wisdom-title">Рестил не только ворует рейз</h2>
+        </div>
+        <p>Ты наказываешь оппонента за широкий опен: он часто выбрасывает сразу, а при колле твоя рука всё ещё может выиграть.</p>
+      </div>
+
+      <div class="wisdom-carousel" data-wisdom-carousel aria-label="Главные мысли о рестиле">
+        <div class="wisdom-carousel-viewport">
+          <div class="wisdom-carousel-track" id="wisdomCarouselTrack">
+      <article class="panel jam-story wisdom-slide" data-wisdom-slide aria-label="Два способа выиграть рестилом">
+        <div class="jam-story-copy">
+          <span class="story-kicker">BTN открыл 2 BB · ты на BB</span>
+          <h3>Один олл-ин — два пути к фишкам</h3>
+          <p>До твоего решения в центре уже 4,5 BB. Чаще всего ты заберёшь банк без вскрытия.</p>
+        </div>
+        <div class="jam-flow">
+          <div class="flow-start"><span>Ты</span><strong>Олл-ин</strong><small>30 BB</small></div>
+          <i class="flow-trunk"></i>
+          <div class="flow-path is-fold"><span>Соперник пас</span><strong id="wisdomFoldRate">≈ 3 из 4</strong><small>берёшь 4,5 BB без флопа</small></div>
+          <div class="flow-path is-call"><span>Соперник колл</span><strong>Есть шанс выиграть</strong><small>даже после колла ты ещё можешь выиграть</small></div>
+        </div>
+      </article>
+
+        <article class="panel objection-card is-risk wisdom-slide" data-wisdom-slide>
+          <div class="objection-icon risk-orbit" aria-hidden="true"><span></span><i></i></div>
+          <p class="eyebrow">«Но я могу вылететь»</p>
+          <h3>Твоя задача — просто принимать более выгодные решения</h3>
+          <p>Возьмём QJo из первой раздачи. BTN открывает около 50% рук, но коллирует рестил только с лучшими 10%. Против этих рук у QJo около <strong id="wisdomEquity">34% эквити</strong>. Из 100 таких пушей примерно в <strong id="wisdomPassRate">80</strong> случаях BTN выбросит сразу. Ещё примерно <strong id="wisdomCallRate">20</strong> раз он заколлирует: в <strong id="wisdomBustRate">13</strong> случаях QJo проиграет выставление, а в <strong id="wisdomDoubleRate">7</strong> — выиграет и удвоится. Средний результат этой модели: <strong id="wisdomJamEv">+1,9 BB</strong>.</p>
+          <div class="mini-risk-dots" id="wisdomRiskDots" aria-hidden="true"></div>
+        </article>
+
+        <article class="panel objection-card is-call wisdom-slide" data-wisdom-slide>
+          <div class="objection-icon fork-icon" aria-hidden="true"><i></i><span></span><b></b></div>
+          <p class="eyebrow">«Почему не просто колл?»</p>
+          <h3>Колл тоже плюсовый, но более сложный</h3>
+          <div class="call-jam-split">
+            <div><span>Колл</span><strong>Флоп без позиции</strong><small>ещё несколько сложных решений</small></div>
+            <div><span>Олл-ин</span><strong>Пас соперника сейчас</strong><small>плюс можем выиграть олл-ин</small></div>
+          </div>
+          <p>Колл тоже может быть плюсовым, но оставляет тебя без позиции и создаёт ещё несколько сложных решений. Для начинающего игрока это лишний риск ошибки и внимание, которое отвлекает от других столов, хотя EV колла нередко ниже. В подходящем рестил-споте проще сразу поставить олл-ин, реализовать ожидание и вернуться к другим столам — часто это ещё и лучшая стратегия.</p>
+        </article>
+
+        <article class="panel objection-card is-pot wisdom-slide" data-wisdom-slide>
+          <div class="objection-icon pot-icon" aria-hidden="true"><span>4,5</span><i>BB</i></div>
+          <p class="eyebrow">«Зачем рисковать 30 BB ради 4,5?»</p>
+          <h3>Ты не даришь 30 BB каждый раз</h3>
+          <p>В большинстве случаев ты заберёшь раздачу на префлопе без какой-либо дисперсии.</p>
+          <div class="risk-balance" aria-hidden="true"><span><i style="width:75%"></i></span><b>Чаще — пас без вскрытия</b></div>
+          <small>Широкий опен содержит намного больше рук, чем соперник готов коллировать. Игроки нередко выбрасывают даже руки, которые по стратегии должны рейз-коллить. Если после долгого решения удаётся увидеть такую руку, запомни её: это сильный сигнал, что для соперника она пограничная, и подсказка о его реальном диапазоне колла.</small>
+        </article>
+
+      <article class="panel spot-map wisdom-slide" data-wisdom-slide>
+        <div class="spot-map-copy">
+          <p class="eyebrow">Играй не по карте, а по ситуации</p>
+          <h3>Не ставь бездумно алыны</h3>
+          <p>Базовый спот — один поздний опен, эффективный стек 25–40 BB и ты на большом блайнде. Если экшен другой, остановись и перечитай стол.</p>
+          <div class="hand-compass" aria-label="Примеры рук для первого ориентира">
+            <span class="is-green"><b>77 · A5s</b><small>частые кандидаты на пуш</small></span>
+            <span class="is-yellow"><b>QJo</b><small>в нашей первой раздаче — хороший пуш</small></span>
+            <span class="is-red"><b>65s</b><small>часто можно оставить в колле — подробнее о будущей подстройке на следующем слайде</small></span>
+          </div>
+        </div>
+        <div class="traffic-spots">
+          <div class="traffic-spot is-green"><i></i><div><strong>Можно искать рестил</strong><span>Один опен CO или BTN · 25–40 BB</span></div></div>
+          <div class="traffic-spot is-yellow"><i></i><div><strong>Пушь осторожнее</strong><span>Большой сайз · тайтовый игрок · любит коллировать</span></div></div>
+          <div class="traffic-spot is-red"><i></i><div><strong>Это уже другой спот</strong><span>Ранний опен · лимп · рейз и колл · близко к крупным выплатам или финальному столу (ICM)</span></div></div>
+        </div>
+      </article>
+
+      <article class="panel fgs-slide wisdom-slide" data-wisdom-slide aria-label="FGS и будущая подстройка соперника">
+        <div class="fgs-copy">
+          <p class="eyebrow">Продвинутый концепт · FGS</p>
+          <h3>А если соперник начнёт подстраиваться?</h3>
+          <p><strong>FGS (future game simulation)</strong> напоминает: игра не заканчивается после этой раздачи. Если соперник заметит твои широкие рестилы, в следующих встречах он может открываться осторожнее и коллировать олл-ин шире.</p>
+          <p class="fgs-takeaway">Не перестраивай весь диапазон заранее. Учитывай FGS, когда действительно видишь повторные споты или признаки подстройки.</p>
+        </div>
+        <div class="fgs-board">
+          <div class="fgs-adjustments" aria-label="Возможная подстройка соперника">
+            <div><span>Его подстройка</span><strong>Опен ↓</strong><small>открывается тайтовее</small></div>
+            <div><span>Его подстройка</span><strong>Колл ↑</strong><small>отвечает на рестил шире</small></div>
+          </div>
+          <div class="fgs-pool">
+            <strong>2–3</strong>
+            <div><b>окна для рестила</b><span>в среднем за полным столом; за коротким столом — чаще</span></div>
+            <small>Большой пул означает редкие повторные встречи. Из-за пары широких рестилов на тебя вряд ли сразу начнут писать нотс.</small>
+          </div>
+          <div class="fgs-choice">
+            <div class="fgs-hand"><strong>65s</strong><span>→ чаще колл</span></div>
+            <p><b>Если ждёшь подстройку,</b> 65s — очевидная рука, которую можно убрать из пуша: она нормально защищается коллом и уязвима против широких ответов вроде KJs.</p>
+          </div>
+        </div>
+      </article>
+          </div>
+        </div>
+        <div class="wisdom-carousel-controls">
+          <button class="wisdom-arrow" type="button" data-wisdom-prev aria-label="Предыдущая мысль">←</button>
+          <div class="wisdom-carousel-status">
+            <span id="wisdomStoryCounter" aria-live="polite">1 из 6</span>
+            <div class="wisdom-story-dots" id="wisdomStoryDots" aria-label="Выбор мысли"></div>
+          </div>
+          <button class="wisdom-arrow" type="button" data-wisdom-next aria-label="Следующая мысль">→</button>
+        </div>
+      </div>
+
+      <div class="wisdom-actions">
+        <div><strong>Главное:</strong><span>замечай поздний широкий опен и не отдавай BB автоматически.</span></div>
+        <button class="btn primary" type="button" data-step-link="practice">Попробовать за столом</button>
+        <button class="btn secondary" type="button" data-step-link="deep">Разобраться в цифрах</button>
+      </div>
+    </section>
+
+    <section class="screen deep-screen" id="deepScreen" role="tabpanel" data-step="deep" aria-labelledby="deep-title">
+      <div class="deep-heading">
+        <div><p class="eyebrow">Необязательное продолжение</p><h2 id="deep-title">Если хочется разобрать механику глубже</h2></div>
+        <p>Эта часть нужна для самостоятельной проработки или занятия с тренером. Для понимания основной идеи её можно пропустить.</p>
+      </div>
+      <div class="deep-panel math-screen" id="deepMathPanel" aria-labelledby="math-title">
+      <div class="section-heading compact-heading">
+        <div><p class="eyebrow">Меняй условия и нажимай на руки</p><h2 id="math-title">Когда олл-ин приносит фишки</h2></div>
+        <div class="range-summary" aria-live="polite"><span>Диапазон олл-ина</span><strong id="pushPct">—</strong></div>
+      </div>
+      <section class="panel opponent-picker" aria-labelledby="opponent-picker-title">
+        <div class="opponent-picker-heading">
+          <div><p class="eyebrow">Один выбор для всей матрицы</p><h3 id="opponent-picker-title">Профиль соперника</h3></div>
+          <p>Выбери готовый профиль или настрой частоты вручную — матрица сразу пересчитается.</p>
+        </div>
+        <div class="opponent-tabs" id="opponentTabs" role="tablist" aria-label="Тип оппонента"></div>
+      </section>
+      <div class="solver-layout">
+        <aside class="panel controls" aria-label="Параметры спота">
+          <span hidden>BB ante · Всегда включён · 1 BB</span>
+          <fieldset><legend>Эффективный стек <button class="info-button" type="button" data-info="effectiveStack" aria-label="Почему эффективный стек меняет рестил?">i</button></legend><div class="segments" data-control="stack"></div></fieldset>
+          <fieldset><legend>Размер опена BTN <button class="info-button" type="button" data-info="openSize" aria-label="Как размер опена меняет банк?">i</button></legend><div class="segments" data-control="openSize"></div></fieldset>
+          <div class="range-control"><div class="range-control-head">BTN открывает <output id="openPctOut">50%</output><button class="info-button" type="button" data-info="openRange" aria-label="Показать диапазон открытия">i</button></div><input id="openPct" class="auto-range" type="range" min="8" max="80" value="50" aria-label="Как часто BTN открывает"></div>
+          <div class="range-control"><div class="range-control-head">Продолжает с лучшими <output id="callPctOut">12% рук</output><button class="info-button" type="button" data-info="callRange" aria-label="Показать диапазон продолжения">i</button></div><input id="callPct" class="auto-range" type="range" min="4" max="25" value="12" aria-label="С каким процентом рук BTN продолжает"></div>
+          <p class="fold-summary" id="foldSummary">После опена выбросит примерно 76 раз из 100.</p>
+          <div class="range-control threshold-control"><div class="range-control-head">Показывать руки от <output id="thresholdOut">+0,5 BB</output><button class="info-button" type="button" data-info="threshold" aria-label="Что значит минимальный плюс?">i</button></div><input id="threshold" class="auto-range" type="range" min="0" max="2" step="0.1" value="0.5" aria-label="Минимальный плюс в больших блайндах"></div>
+        </aside>
+        <article class="panel matrix-panel">
+          <div class="matrix-status" id="matrixStatus" role="status">Загружаем матрицу рук…</div>
+          <div class="matrix-scroll" tabindex="0"><div class="matrix is-loading" id="handMatrix" aria-label="Матрица стартовых рук 13 на 13"></div></div>
+          <div class="legend"><span><i class="good"></i>уверенный плюс</span><span><i class="thin"></i>тонкий плюс</span><span><i class="bad"></i>пас</span></div>
+        </article>
+        <aside class="panel hand-detail" id="handDetail" aria-live="polite">
+          <p class="eyebrow">Нажми на руку в матрице</p><h3>Например, 77</h3><p>Здесь появятся шанс паса, шанс выиграть колл и формула — без скрытых блоков.</p>
+        </aside>
+      </div>
+      <article class="panel pko-card pko-card-under-matrix"><div><p class="eyebrow">Турнир с нокаутами</p><h3>Если покрываешь соперника</h3></div><div class="segments bounty-segments" id="bountySegments" aria-label="Учебная стоимость баунти"></div><p>Выбор сразу обновляет матрицу выше. Это учебное приближение.</p></article>
+      </div>
+
+      <div class="deep-panel field-insights" id="deepFieldPanel">
+      <div class="field-grid field-grid-single">
+        <article class="panel comparison-panel">
+          <div class="comparison-heading"><div><p class="eyebrow">Реальные раздачи · январь–июнь 2026</p><h3>Сколько олл-ин и колл выигрывали относительно паса</h3></div><span>Не солвер</span></div>
+          <p class="comparison-note">Пас на большом блайнде принят за 0. Его реальная цена — −1,12 BB: большой блайнд и среднее анте уже вложены. Поэтому здесь показано, сколько каждая линия сохраняла или выигрывала сверх паса.</p>
+          <div class="comparison-method" aria-label="Откуда взялись числа">
+            <div><span>Выборка</span><strong>Игроки проекта с известными картами</strong><small>База трекера; группы 1–15; руки без распознанных карт исключены.</small></div>
+            <div><span>Один фильтр спота</span><strong>SB/BB против одного CO/BTN</strong><small>25–40 BB · без лимперов · опен не больше 3 BB · можно было сыграть 3-бет.</small></div>
+            <div><span>Одна шкала</span><strong>EV относительно паса</strong><small>Из среднего chips_ev ÷ BB вычитаем −1,12 BB. Например, +0,13 становится +1,25 BB относительно паса.</small></div>
+          </div>
+          <div class="comparison-caveat"><strong>Важно:</strong><span>это не две линии одной и той же раздачи. Игроки сами выбирали действие, поэтому внутри категории могли отличаться конкретные руки, позиции и соперники. Исходная выборка объединяет SB и BB, а учебная шкала приведена к цене паса именно с BB.</span></div>
+          <div class="bars" id="outcomeBars"></div>
+          <p class="comparison-footnote"><strong>Значение линии</strong> = средний chips_ev ÷ BB − (−1,12 BB паса). <strong>Олл-ин − колл</strong> рассчитан до округления; общая поправка за пас сокращается и не меняет эту разницу. У каждой линии показан размер выборки. Разницы около 0,1 BB считаем «примерно одинаково»: в выгрузке нет дисперсии и доверительных интервалов.</p>
+        </article>
+      </div>
+      </div>
+    </section>
+
+    <section class="screen practice-screen" id="practiceScreen" role="tabpanel" data-step="practice" aria-labelledby="practice-title">
+      <div class="section-heading compact-heading practice-heading">
+        <div><p class="eyebrow">Полный симулятор</p><h2 id="practice-title">Отработай навык на симуляторе</h2></div>
+        <p>Большинство раздач — CO или BTN против твоего BB. Каждая четвёртая проверяет внимание: ранний рейз, коллер или лимп.</p>
+      </div>
+      <aside class="panel practice-disclaimer" aria-label="Честность симулятора и сила ботов">
+        <div class="practice-fair-play">
+          <p class="eyebrow">Честная игра</p>
+          <strong>Боты не поддаются, ГСЧ честный</strong>
+          <p>Боты играют настолько хорошо, насколько нам удалось обучить их с помощью современных AI-технологий. В будущем они могут стать сильнее. Карты раздаются честно и результат не подкручивается под ученика.</p>
+        </div>
+        <div class="bot-strength-legend" aria-label="Цвета силы ботов относительно текущей топ-модели">
+          <span class="is-red"><i aria-hidden="true"></i><b>Красный</b><small>близко к топ-модели</small></span>
+          <span class="is-blue"><i aria-hidden="true"></i><b>Синий</b><small>средняя сила</small></span>
+          <span class="is-green"><i aria-hidden="true"></i><b>Зелёный</b><small>слабый бот</small></span>
+        </div>
+      </aside>
+      <div class="panel practice-launch" aria-label="Настройка тренировочной сессии">
+        <div class="practice-launch-copy"><strong>Сколько раздач сыграть?</strong><span>Сначала читай экшен. Сверху стола считаются пуши, пасы на пуш и результат — по факту и по эквити.</span><small class="practice-outcome-note" id="practiceOutcomeNote">Результат банка — не оценка решения: хорошая игра иногда проигрывает.</small></div>
+        <p class="practice-device-note">Сам стол работает на планшете или компьютере шириной от 621 px.</p>
+        <div class="session-lengths" role="group" aria-label="Количество раздач">
+          <button type="button" data-session-hands="10" aria-pressed="true">10</button>
+          <button type="button" data-session-hands="25" aria-pressed="false">25</button>
+          <button type="button" data-session-hands="50" aria-pressed="false">50</button>
+          <button type="button" data-session-hands="100" aria-pressed="false">100</button>
+        </div>
+        <button class="btn primary practice-start" type="button" id="startPracticeSession">Начать 10 раздач</button>
+        <button class="btn secondary practice-exit" type="button" id="exitPractice">К уроку</button>
+      </div>
+      <div class="practice-simulator-shell" id="practiceSimulatorShell" hidden>
+        <div class="practice-simulator-loading" id="practiceSimulatorLoading" role="status" hidden>Загружаем настоящий стол…</div>
+        <iframe id="restealSimulator" title="Полный симулятор рестила" aria-describedby="practiceOutcomeNote" loading="eager" allow="autoplay"></iframe>
+      </div>
+    </section>
+  </main>
+
+  <aside class="info-popover" id="infoPopover" role="dialog" aria-modal="false" aria-labelledby="infoTitle" hidden>
+    <button class="info-close" type="button" id="infoClose" aria-label="Закрыть пояснение">×</button>
+    <p class="eyebrow" id="infoEyebrow">Короткое пояснение</p>
+    <h3 id="infoTitle">—</h3>
+    <div class="info-visual" id="infoVisual"></div>
+    <p id="infoCopy"></p>
+  </aside>
+
+  <script defer src="assets/poker-kit/decks/deck-library.js?v=b03058b680c1"></script>
+  <script defer src="assets/poker-kit/chips/chip-library.js?v=eab58b025e92"></script>
+  <script defer src="assets/poker-simulator/simulator-board-render.js?v=cb215df9f7dd"></script>
+  <script defer src="assets/poker-simulator/simulator-seat-slots.js?v=1acc7eb15669"></script>
+  <script defer src="assets/poker-simulator/simulator-seat-renderer.js?v=fe2184958bf0"></script>
+  <script defer src="assets/poker-simulator/simulator-table-renderer.js?v=876dfddebeb9"></script>
+  <script defer src="assets/poker-trainer-shell/simulator-snapshot.js?v=5a1febca1a73"></script>
+  <script defer src="assets/poker-resteal-lesson/data/browser-bundle.js?v=63cee47708b4"></script>
+  <script defer src="assets/poker-resteal-lesson/data.js?v=0bf36db75b14"></script>
+  <script defer src="assets/poker-resteal-lesson/engine.js?v=4073eeae5aa3"></script>
+  <script defer src="assets/poker-resteal-lesson/lesson.js?v=a4e76e1b5086"></script>
+</body>
+</html>

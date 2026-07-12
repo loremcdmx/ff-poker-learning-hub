@@ -1,0 +1,3021 @@
+/* Hide internal QA/telemetry readouts (quality-bar codenames, gate labels)
+   from the UI. Elements stay in the DOM for telemetry and contract smoke tests. */
+[id$="QualityGate"],
+[id="qualityGateValue"],
+.review-action-card > div:first-child > span {
+  display: none !important;
+}
+
+:root {
+  color-scheme: dark;
+  --shell-bg: #08070d;
+  --shell-panel: #15131c;
+  --shell-panel-2: #1b1827;
+  --shell-panel-3: #0d0c12;
+  --shell-ink: #f4f1ec;
+  --shell-muted: #aea7bd;
+  --shell-soft: rgba(244, 241, 236, 0.68);
+  --shell-line: rgba(255, 255, 255, 0.13);
+  --shell-line-strong: rgba(255, 223, 81, 0.48);
+  --shell-mint: #b083f0;
+  --shell-good: #6ee0aa;
+  --shell-blue: #8e9bf2;
+  --shell-amber: #ffdf51;
+  --shell-coral: #f08a7d;
+  --shell-violet: #9a65d6;
+  --shell-shadow: 0 18px 48px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+  overflow-x: hidden;
+  color: var(--shell-ink);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px),
+    linear-gradient(180deg, #0c0a12 0%, #060509 100%);
+  background-size: 34px 34px, 34px 34px, auto;
+  font-family: Bahnschrift, Aptos, "Segoe UI", system-ui, sans-serif;
+  letter-spacing: 0;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.ff-shell-lab {
+  height: 100svh;
+  min-height: 100svh;
+  overflow: hidden;
+}
+
+.ff-shell {
+  --shell-outer-pad: 12px;
+  --shell-gap: 12px;
+  --shell-panel-pad: 14px;
+  --shell-table-height: clamp(330px, calc(100svh - 330px), 480px);
+  --shell-option-height: clamp(46px, 5.8svh, 58px);
+  height: 100svh;
+  min-height: 100svh;
+  overflow: hidden;
+  padding: 12px;
+}
+
+.ff-shell-grid {
+  width: min(1780px, 100%);
+  height: calc(100svh - 24px);
+  min-height: 0;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(350px, 0.45fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.ff-shell-grid:not(.has-lab) {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.ff-shell-grid.has-lab {
+  grid-template-columns: minmax(0, 1fr) minmax(350px, 0.45fr);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.ff-shell-grid.is-live-clean,
+.ff-shell-grid.has-lab.is-live-clean {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ff-shell-grid.is-live-clean .ff-shell-board {
+  grid-column: 1 / -1;
+}
+
+.ff-shell:has(.ff-shell-simulator-snapshot),
+.ff-shell-lab:has(.ff-shell-simulator-snapshot) {
+  height: 100svh;
+  min-height: 100svh;
+  overflow: hidden;
+}
+
+.ff-shell-grid:has(.ff-shell-simulator-snapshot) {
+  height: calc(100svh - 24px);
+  min-height: 0;
+  align-content: stretch;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.ff-shell-grid:not(.has-lab):has(.ff-shell-simulator-snapshot) {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.ff-shell-grid.has-lab:has(.ff-shell-simulator-snapshot) {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.ff-shell-grid:has(.ff-shell-simulator-snapshot) .ff-shell-board {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ff-shell-lab-bar {
+  grid-column: 1 / -1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--shell-line);
+  border-radius: 8px;
+  padding: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.018)),
+    rgba(7, 13, 14, 0.78);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+}
+
+.ff-shell-tech-toggle {
+  min-width: 136px;
+  min-height: 42px;
+  border: 1px solid rgba(232, 200, 107, 0.35);
+  border-radius: 8px;
+  padding: 0 14px;
+  color: var(--shell-amber);
+  background: rgba(232, 200, 107, 0.08);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.ff-shell-tech-toggle:hover,
+.ff-shell-tech-toggle.is-active {
+  border-color: rgba(232, 200, 107, 0.62);
+  background: rgba(232, 200, 107, 0.14);
+  transform: translateY(-1px);
+}
+
+.ff-shell-board,
+.ff-shell-card-panel,
+.ff-shell-tech {
+  min-width: 0;
+  border: 1px solid var(--shell-line);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.018)),
+    var(--shell-panel);
+  box-shadow: var(--shell-shadow);
+}
+
+.ff-shell-board {
+  --shell-board-table-height: var(--shell-table-height);
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, var(--shell-board-table-height)) min-content min-content;
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
+  padding: 14px;
+}
+
+.ff-shell-board::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 42px 42px;
+  opacity: 0.22;
+}
+
+.ff-shell-board > * {
+  position: relative;
+  z-index: 1;
+}
+
+.ff-shell-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ff-shell-kicker,
+.ff-shell-decision-top span,
+.ff-shell-model span,
+.ff-shell-action-map small,
+.ff-shell-gate span,
+.ff-shell-metric small,
+.ff-shell-editor-head span,
+.ff-shell-contract small,
+.ff-shell-summary-gate small {
+  display: block;
+  color: var(--shell-amber);
+  font-size: 0.68rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.ff-shell h1,
+.ff-shell h2,
+.ff-shell p {
+  margin: 0;
+}
+
+.ff-shell h1 {
+  margin-top: 6px;
+  max-width: 980px;
+  color: var(--shell-ink);
+  font-size: 2.35rem;
+  font-weight: 950;
+  line-height: 0.98;
+}
+
+.ff-shell h2 {
+  color: var(--shell-ink);
+  font-size: 1.42rem;
+  font-weight: 920;
+  line-height: 1.08;
+}
+
+.ff-shell p {
+  color: var(--shell-muted);
+  font-size: 0.94rem;
+  line-height: 1.42;
+}
+
+.ff-shell-score {
+  flex: none;
+  min-width: 86px;
+  display: grid;
+  justify-items: end;
+  gap: 3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ff-shell-score span {
+  color: var(--shell-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.ff-shell-score strong {
+  color: var(--shell-good);
+  font-size: 1.85rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.ff-shell-score strong:empty {
+  display: none;
+}
+
+.ff-shell-progress {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ff-shell-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--shell-mint), var(--shell-amber));
+  transition: width 180ms ease;
+}
+
+.ff-shell-table {
+  grid-row: 3;
+  position: relative;
+  height: var(--shell-board-table-height);
+  min-height: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+  background:
+    linear-gradient(120deg, rgba(115, 184, 232, 0.12), transparent 38%),
+    linear-gradient(240deg, rgba(232, 200, 107, 0.12), transparent 44%),
+    repeating-linear-gradient(34deg, rgba(255, 255, 255, 0.032) 0 1px, transparent 1px 10px),
+    radial-gradient(ellipse at center, #173a34 0%, #102824 54%, #091012 100%);
+  box-shadow: inset 0 0 48px rgba(0, 0, 0, 0.34);
+}
+
+.ff-shell-theme-analysis .ff-shell-table {
+  background:
+    linear-gradient(120deg, rgba(232, 200, 107, 0.13), transparent 38%),
+    linear-gradient(240deg, rgba(163, 131, 216, 0.13), transparent 44%),
+    repeating-linear-gradient(34deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 10px),
+    radial-gradient(ellipse at center, #243142 0%, #151e27 58%, #090c10 100%);
+}
+
+.ff-shell-simulator-snapshot {
+  grid-row: 2;
+  --trainer-table-plane-height: min(calc(100% - var(--shell-action-gutter)), calc(100cqw * 9 / 16), var(--shell-table-plane-height-cap));
+  height: 100%;
+  min-height: 0;
+  container-type: size;
+  isolation: isolate;
+}
+
+.ff-shell-board:has(.ff-shell-simulator-snapshot) {
+  --shell-table-plane-height-cap: 776px;
+  --shell-action-gutter: clamp(146px, 15svh, 154px);
+  --shell-table-plane-height: min(calc(100% - var(--shell-action-gutter)), var(--shell-table-plane-height-cap));
+  --shell-board-table-height: calc(var(--shell-table-plane-height) + var(--shell-action-gutter));
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content: stretch;
+  gap: 10px;
+}
+
+.ff-shell-board:has(.ff-shell-simulator-snapshot.is-concept-spot) {
+  --shell-action-gutter: clamp(196px, 23svh, 224px);
+}
+
+.ff-shell-grid.has-lab .ff-shell-board:has(.ff-shell-simulator-snapshot) {
+  --shell-table-plane-height-cap: 576px;
+  --shell-action-gutter: clamp(96px, 12svh, 126px);
+}
+
+.ff-shell-board:has(.ff-shell-simulator-snapshot) .ff-shell-head {
+  align-items: center;
+}
+
+.ff-shell-board:has(.ff-shell-simulator-snapshot) .ff-shell-kicker {
+  display: none;
+}
+
+/* Keep the per-spot question as a compact one-line context cue (the "what am I
+   solving" step of the pipeline) — the sim path has no decision panel while live. */
+.ff-shell-board:has(.ff-shell-simulator-snapshot) .ff-shell-head p {
+  margin: 3px 0 0;
+  font-size: 0.92rem;
+  line-height: 1.25;
+  color: rgba(235, 243, 232, 0.64);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* The count in the header is enough on the compact simulator scene. Keeping a
+   second progress rail creates an implicit third grid row under the controls. */
+.ff-shell-board:has(.ff-shell-simulator-snapshot) .ff-shell-progress {
+  display: none;
+}
+
+.ff-shell-board:has(.ff-shell-simulator-snapshot) .ff-shell-score strong {
+  font-size: 1.02rem;
+}
+
+.ff-shell-board:has(.ff-shell-simulator-snapshot) h1 {
+  margin-top: 0;
+  font-size: 1.68rem;
+  line-height: 1.04;
+}
+
+.ff-shell-board:has(.ff-shell-simulator-snapshot) .ff-shell-score {
+  min-width: auto;
+}
+
+.ff-shell-board:has(.ff-shell-simulator-snapshot) .ff-shell-score span {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 6px 9px;
+  background: rgba(255, 255, 255, 0.055);
+  color: rgba(235, 243, 232, 0.78);
+}
+
+.ff-shell-grid:has(.ff-shell-simulator-snapshot) .ff-shell-decision {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-shell {
+  /* Trainer hero cards are readable but not oversized, so villain bet markers on
+     the bottom bet-ring (UTG/BB adjacent seats) clear them instead of landing on
+     the hole cards. Base was the full-simulator ~140-166px which crowded the felt. */
+  --hero-card-width: clamp(92px, 10.5vh, 128px);
+  --hero-card-cap: clamp(92px, 10.5vh, 128px);
+  --board-card-width: var(--sim-1t-board-card, 78px);
+  --mini-card-width: var(--sim-1t-mini-card, 42px);
+  --seat-w: var(--sim-1t-seat-w, 180px);
+  --seat-h: max(var(--sim-1t-seat-h, 66px), 42px);
+  --avatar: var(--sim-1t-avatar, 64px);
+  display: block;
+  position: relative;
+  width: min(100%, 1380px);
+  height: var(--trainer-table-plane-height);
+  min-height: 0;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  border-radius: 8px;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+  contain: layout;
+  justify-self: center;
+  align-self: start;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-shell::after {
+  box-shadow: none;
+}
+
+.ff-shell-grid.has-lab .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-shell {
+  width: min(100%, 1024px);
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt {
+  position: absolute;
+  inset: auto;
+  inset: 7.578% 4.847% 8.077%;
+  --pot-y: 41%;
+  --pot-y-bottom: 48%;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  align-self: auto;
+  justify-self: auto;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt.has-board {
+  --pot-y: 27.5%;
+  --pot-y-bottom: 58%;
+}
+
+/* Postflop the landscape (single-column tablet + desktop) felt packs pot +
+   community board + hero cards into a short centre band; on short-height
+   viewports the large hero cards collide with the board. Give them vertical
+   separation: lift the board and shrink both board and hero cards (the hero
+   lift is derived from the width, so smaller cards also sit lower and clear the
+   board). Portrait mobile (≤620) stacks these with room already and has its own
+   tuned card sizes, so this is scoped to ≥621 to avoid overriding them. */
+@media (min-width: 621px) {
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt.has-board {
+    --pot-y: 20%;
+    --pot-y-bottom: 63%;
+    /* Slightly smaller than the preflop base so the board (which shares the
+       centre band) sits clear of the hero cards. */
+    --hero-card-width: clamp(84px, 9.5vh, 118px);
+    --hero-card-cap: clamp(84px, 9.5vh, 118px);
+    --board-card-width: clamp(50px, 6.4vh, 74px);
+  }
+}
+
+.ff-shell-grid.has-lab .ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt {
+  --pot-y: 21%;
+  --pot-y-bottom: 50%;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-bar,
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-bar:has(.client-controls[data-trainer-simulator-actions]) {
+  position: absolute;
+  left: 9px;
+  right: 9px;
+  top: calc(100% + 12px);
+  bottom: auto;
+  /* Stack: the hero-turn readout (against whom / what action) as a full-width
+     strip above the controls. The shared sim rule forces a 2-col grid whose
+     controls column claims a 560-620px min that starved a side-by-side readout
+     to a 60px sliver; match its :has specificity to reclaim a single column. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 9px;
+  align-items: stretch;
+  min-height: 0;
+  pointer-events: auto;
+}
+
+/* Show the hero-turn readout in the action bar's empty left column: whose turn,
+   the street, what the hero faces (к коллу / ставка), and the action sequence
+   that led here (e.g. "UTG рейз 2 BB · UTG+1 пас"). This is the "против кого /
+   какой экшн" cue — previously hidden, which left the decision context implicit. */
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-status {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  align-self: stretch;
+  justify-self: stretch;
+  order: -1;
+  min-width: 0;
+  max-width: none;
+  width: 100%;
+  min-height: 38px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(8, 7, 13, 0.74);
+  box-shadow: none;
+  font-size: 0.86rem;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-status strong {
+  color: rgba(244, 214, 120, 0.96);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-status span {
+  color: rgba(238, 244, 235, 0.95);
+  font-weight: 700;
+}
+
+/* The action recap — who did what before the hero. This is the key
+   "против кого / какой экшн" line, so keep it visible (was display:none). */
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-status em {
+  display: block;
+  font-style: normal;
+  color: rgba(224, 232, 224, 0.62);
+  font-size: 0.78rem;
+  flex: 1 1 420px;
+}
+
+.ff-shell-simulator-snapshot.table-grid.is-concept-spot[data-count="1"] .action-status.is-concept {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+
+.ff-shell-simulator-snapshot.table-grid.is-concept-spot[data-count="1"] .action-status.is-concept span {
+  font-size: 0.82rem;
+  line-height: 1.3;
+  white-space: normal;
+}
+
+.ff-shell-simulator-snapshot.table-grid.is-concept-spot[data-count="1"] .client-controls > .client-row .table-action {
+  min-height: 74px;
+  padding: 9px 12px;
+  justify-content: flex-start;
+  font-size: 0.82rem;
+  line-height: 1.22;
+  text-align: left;
+  white-space: normal;
+}
+
+.ff-shell-simulator-snapshot.table-grid.is-concept-spot[data-count="1"] .table-action-label,
+.ff-shell-simulator-snapshot.table-grid.is-concept-spot[data-count="1"] .table-action-verb {
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+}
+
+.ff-shell-simulator-snapshot.table-grid.has-zero-pot[data-count="1"] .pot {
+  display: none;
+}
+
+.ff-shell-simulator-snapshot.table-grid.is-concept-spot[data-count="1"] .seat:not(.is-hero) .seat-stack,
+.ff-shell-simulator-snapshot.table-grid.is-concept-spot[data-count="1"] .seat.is-hero .seat-position {
+  display: none;
+}
+
+.ff-shell-simulator-snapshot .table-replay-button {
+  display: none;
+}
+
+.ff-shell-simulator-snapshot .seat-action-badge {
+  display: none;
+}
+
+/* The single-column action bar wants the controls full-width. The shared sim
+   caps .action-buttons via :has() width clamps + justify-self:end (tuned for the
+   full simulator's right-docked controls); match those :has() variants with the
+   extra .ff-shell-simulator-snapshot ancestor so the trainer controls span the
+   whole bar and 4-option rows (e.g. "Изолейт 3 · 4 BB") don't truncate. */
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-buttons,
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-buttons:has(.bet-widget),
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-buttons:has(.bet-widget.is-preflop-amount),
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-buttons:has(.client-controls.is-facing-raise),
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-buttons:has(.client-controls.is-facing-raise .bet-widget.is-preflop-amount) {
+  width: 100%;
+  min-width: 0;
+  grid-column: 1;
+  justify-self: stretch;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls {
+  display: block;
+  min-height: 0;
+  padding: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(8, 7, 13, 0.78);
+  box-shadow: none;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(var(--trainer-option-count, 2), minmax(0, 1fr));
+  gap: 6px;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action {
+  position: relative;
+  min-height: 48px;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
+  color: var(--shell-ink);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.07));
+  font-size: 0.94rem;
+  font-weight: 850;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action:hover:not(:disabled) {
+  border-color: rgba(176, 131, 240, 0.56);
+  background: rgba(176, 131, 240, 0.14);
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action:focus-visible {
+  outline: 2px solid var(--shell-amber);
+  outline-offset: 2px;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls:has(.bet-widget) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 7px;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls:has(.bet-widget) > .bet-widget,
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls:has(.bet-widget) > .client-row {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls:has(.bet-widget) > .client-row .table-action {
+  min-height: 48px;
+  font-size: 0.96rem;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .bet-readout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: rgba(7, 9, 12, 0.42);
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .bet-readout span {
+  color: rgba(245, 242, 232, 0.58);
+  font-size: 0.74rem;
+  font-weight: 850;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .bet-readout output {
+  color: var(--shell-ink);
+  font-size: 0.95rem;
+  font-weight: 950;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-shell {
+  --ff-shell-snapshot-chip-size: 18px;
+  --sim-1t-pot-chip: var(--ff-shell-snapshot-chip-size);
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .pot,
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .hero-felt-bet,
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .bet-marker {
+  --poker-chip-size: var(--ff-shell-snapshot-chip-size);
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .pot .pot-chip-stack {
+  width: calc(var(--ff-shell-snapshot-chip-size) * 1.32);
+  height: calc(var(--ff-shell-snapshot-chip-size) * 1.4);
+  transform: translate(-28%, -50%) rotate(-5deg);
+}
+
+/* Compact trainer chips keep one stable upright face, but still need enough
+   clay detail to read as casino chips instead of blank discs. Preserve the
+   edge spots, add a shallow physical edge, and keep the denomination in a
+   high-contrast centre. Extra stack slices stay hidden so markers remain clear. */
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .poker-chip {
+  --chip-tilt: 0deg;
+  transform: translateX(-50%);
+  border-color: color-mix(in srgb, var(--poker-chip-edge) 62%, #ffffff 38%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.24),
+    0 2px 0 var(--poker-chip-edge),
+    0 4px 5px rgba(0, 0, 0, 0.38),
+    inset 0 1px 2px rgba(255, 255, 255, 0.36),
+    inset 0 -1px 2px rgba(18, 10, 4, 0.42);
+}
+
+/* A trainer opens on an already-resolved decision point. Do not replay the
+   simulator's chip-arrival animation, which briefly shrinks otherwise equal
+   denominations and makes the paused hand look unfinished. */
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .bet-marker,
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .bet-marker .poker-chip {
+  animation: none;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .poker-chip:nth-child(n+2) {
+  display: none;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .poker-chip::after {
+  inset: 19%;
+  display: grid;
+  border-color: color-mix(in srgb, var(--poker-chip-edge) 76%, #ffffff 24%);
+  color: var(--poker-chip-text);
+  font-size: max(6px, calc(var(--poker-chip-size) * 0.3));
+  font-variant-numeric: tabular-nums;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.46),
+    0 0 0 1px rgba(0, 0, 0, 0.14);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.52);
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .poker-chip--one {
+  --poker-chip-edge: #496172;
+  --poker-chip-accent: #eef3f6;
+  --poker-chip-light: #294760;
+  --poker-chip-text: #ffffff;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .poker-chip--one::after {
+  border-color: rgba(207, 221, 230, 0.88);
+  background: radial-gradient(circle at 38% 28%, #547087, #243e54 64%, #112434 100%);
+  color: #ffffff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.72);
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .poker-chip--half::after {
+  content: "½";
+  border-color: rgba(255, 226, 148, 0.76);
+  background: radial-gradient(circle at 38% 28%, #a76718, #6f3f0d 68%, #3f2105 100%);
+  color: #fff4c7;
+}
+
+/* Single flat token has no multi-chip stack, so the "+N" overflow badge is
+   inconsistent — the amount is already shown as text beside the chip. */
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .chip-overflow {
+  display: none;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"]:not([data-marker-geometry="simulator-slot-v1"]) .hero-felt-bet {
+  min-height: 30px;
+  padding: 2px 9px 2px 6px;
+  font-size: 12px;
+}
+
+/* Hide the HERO's own felt-bet chip in the trainer. It is anchored to the
+   transformed hero-card box, so on the compact felt it lands on top of the large
+   hero hole cards with no clean gap (pot above, nameplate below). It is also the
+   least informative chip — the pot pill and the villains' bet markers convey what
+   the hero faces, and the hero's own posted blind is implied by position. Villain
+   bet markers (.bet-marker) are untouched. Snapshot-scoped; bare simulator intact. */
+.ff-shell-simulator-snapshot.table-grid[data-count="1"]:not([data-marker-geometry="simulator-slot-v1"]) .seat.is-hero .hero-felt-bet {
+  display: none;
+}
+
+/* Make the decision counterpart — raiser, limper, bettor, or checker — stand out
+   so "against whom" reads at a glance (the bare-sim halo is too subtle here). */
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .seat.is-aggressor:not(.is-hero) .seat-panel {
+  border-color: rgba(244, 202, 100, 0.9);
+  box-shadow:
+    0 0 0 2px rgba(244, 202, 100, 0.52),
+    0 0 18px rgba(244, 202, 100, 0.3),
+    0 12px 24px rgba(0, 0, 0, 0.5);
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"]:not([data-marker-geometry="simulator-slot-v1"]) .bet-marker {
+  min-height: 30px;
+}
+
+/* Keep both nameplate rows inside the slot-model box. The simulator's generous
+   panel padding assumes a taller gameplay seat; in the compact trainer it left
+   the stack below the border. A small height floor and compact insets preserve
+   the slot centre while containing both rows at laptop and tablet scales. */
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .seat-panel {
+  height: auto;
+  min-height: var(--seat-h);
+  grid-template-rows: auto auto;
+  align-content: center;
+  padding: 2px 10px 3px;
+  row-gap: 1px;
+  overflow: hidden;
+}
+
+/* The stack row is a grid item with overflow:hidden, which gives it an
+   automatic minimum size of 0 — so the grid squeezes the "NN BB" line to a
+   sliver instead of letting the plate grow. Restore visible overflow (and a
+   min-content floor) in the snapshot so both rows keep their natural height. */
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .seat-stack {
+  overflow: visible;
+  min-height: min-content;
+}
+
+/* Opponent seats never reveal hole cards in the trainer, yet the shared seat
+   renderer paints two card-backs at the slot `cards` rect — they overlap the
+   SB/BB plates and clip on the felt top edge. Suppress at every width (the old
+   rule only fired ≤920px, so desktop/tablet still showed them). */
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .seat:not(.is-hero) .seat-cards {
+  display: none !important;
+}
+
+/* De-duplicate the position. In the trainer an opponent's "name" IS its
+   position, so the .seat-position pill and the plate title both read e.g. "SB".
+   The pill also hangs outside the felt (its rail-straddle geometry is tuned for
+   the full-size simulator). Drop the opponent pill: the plate title carries the
+   position, the plate stays inside the felt. Hero keeps its pill (its plate
+   title is "Hero", so the pill is the only place hero's position shows). */
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .seat:not(.is-hero) .seat-position {
+  display: none;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .seat.is-hero .seat-position {
+  left: -34px;
+  top: 50%;
+  z-index: 28;
+  transform: translateY(-50%);
+}
+
+.ff-shell-board:has(.ff-shell-simulator-snapshot) .ff-shell-training-dock {
+  display: none;
+  max-height: 120px;
+  min-height: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px;
+}
+
+.ff-shell-board:has(.ff-shell-simulator-snapshot) .ff-shell-practice-card {
+  gap: 6px;
+  padding: 8px;
+}
+
+.ff-shell-board:has(.ff-shell-simulator-snapshot) .ff-shell-practice-card p,
+.ff-shell-board:has(.ff-shell-simulator-snapshot) .ff-shell-teaching-notes p {
+  overflow: hidden;
+  display: -webkit-box;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+
+.ff-shell-board:has(.ff-shell-simulator-snapshot) .ff-shell-thinking-steps {
+  gap: 4px;
+}
+
+.ff-shell-board:has(.ff-shell-simulator-snapshot) .ff-shell-thinking-steps li {
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 2px 6px;
+  padding: 5px 6px;
+}
+
+.ff-shell-board:has(.ff-shell-simulator-snapshot) .ff-shell-thinking-steps small {
+  display: none;
+}
+
+.ff-shell-simulator-snapshot .action-status em {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 740;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ff-shell-simulator-snapshot .table-action.is-picked {
+  border-color: rgba(255, 255, 255, 0.48);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action.is-correct {
+  color: #06140e;
+  border-color: rgba(134, 244, 190, 0.9);
+  background: linear-gradient(180deg, #aaf5d0, #4ed9a7);
+  box-shadow: 0 0 0 1px rgba(78, 217, 167, 0.25), 0 8px 22px rgba(78, 217, 167, 0.16);
+  opacity: 1;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action.is-wrong {
+  color: #fff4f2;
+  border-color: rgba(255, 132, 123, 0.92);
+  background: linear-gradient(180deg, rgba(231, 89, 82, 0.94), rgba(158, 50, 51, 0.98));
+  box-shadow: 0 0 0 1px rgba(239, 118, 109, 0.22), 0 8px 22px rgba(174, 52, 52, 0.18);
+  opacity: 1;
+}
+
+.ff-shell-simulator-snapshot .table-action:disabled {
+  opacity: 0.56;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action.is-correct:disabled,
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action.is-wrong:disabled {
+  opacity: 1;
+}
+
+.ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action[data-answer-state] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 4px;
+  padding-inline: 6px !important;
+}
+
+.ff-shell-simulator-snapshot .table-action-result-mark {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 3px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-size: 7px;
+  font-weight: 950;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.ff-shell-simulator-snapshot .table-action-hotkey,
+.ff-shell-simulator-snapshot .pot-total {
+  display: none;
+}
+
+.ff-shell-simulator-snapshot .seat.is-folded:not(.is-hero) {
+  opacity: 0.42;
+  filter: saturate(0.62);
+}
+
+.ff-shell-table::before {
+  content: "";
+  position: absolute;
+  inset: 11%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.ff-shell-street-badge {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 7;
+  max-width: min(270px, 38%);
+  display: grid;
+  gap: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(3, 7, 8, 0.82);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.28);
+}
+
+.ff-shell-street-badge span {
+  color: var(--shell-amber);
+  font-size: 0.64rem;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.ff-shell-street-badge strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--shell-ink);
+  font-size: 0.72rem;
+  font-weight: 850;
+  line-height: 1.16;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ff-shell-table-tools {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  z-index: 8;
+  transform: translateY(-50%);
+}
+
+.ff-shell-range-tool {
+  position: relative;
+}
+
+.ff-shell-logic-tool {
+  position: relative;
+}
+
+.ff-shell-range-tool summary {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(110, 224, 170, 0.45);
+  border-radius: 999px;
+  color: var(--shell-mint);
+  background:
+    linear-gradient(180deg, rgba(110, 224, 170, 0.18), rgba(110, 224, 170, 0.06)),
+    rgba(2, 8, 8, 0.86);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.32);
+  cursor: pointer;
+  list-style: none;
+}
+
+.ff-shell-range-tool summary::-webkit-details-marker {
+  display: none;
+}
+
+.ff-shell-range-tool summary span {
+  font-size: 1.12rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ff-shell-range-tool summary:hover,
+.ff-shell-range-tool[open] summary {
+  border-color: rgba(232, 200, 107, 0.64);
+  color: var(--shell-amber);
+}
+
+.ff-shell-range-popover {
+  position: absolute;
+  left: 50px;
+  top: 50%;
+  width: min(390px, calc(100vw - 92px));
+  min-width: min(280px, calc(100vw - 92px));
+  max-height: min(560px, calc(100svh - 72px));
+  opacity: 0;
+  pointer-events: none;
+  display: grid;
+  gap: 10px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  transform: translateY(-50%) translateX(-8px);
+  border: 1px solid rgba(110, 224, 170, 0.34);
+  border-radius: 8px;
+  padding: 12px;
+  color: var(--shell-ink);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(110, 224, 170, 0.16), transparent 44%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.022)),
+    rgba(5, 10, 11, 0.94);
+  box-shadow: 0 22px 46px rgba(0, 0, 0, 0.46);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.ff-shell-logic-popover {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(110, 224, 170, 0.5) rgba(255, 255, 255, 0.08);
+}
+
+.ff-shell-range-tool:hover .ff-shell-range-popover,
+.ff-shell-range-tool:focus-within .ff-shell-range-popover,
+.ff-shell-range-tool[open] .ff-shell-range-popover {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-50%) translateX(0);
+}
+
+.ff-shell-range-popover header,
+.ff-shell-range-rows {
+  display: grid;
+  gap: 7px;
+}
+
+.ff-shell-range-popover header span {
+  color: var(--shell-amber);
+  font-size: 0.66rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.ff-shell-range-popover header b {
+  color: var(--shell-ink);
+  font-size: 0.94rem;
+  font-weight: 900;
+  line-height: 1.12;
+}
+
+.ff-shell-range-popover header small,
+.ff-shell-range-popover p {
+  margin: 0;
+  color: var(--shell-muted);
+  font-size: 0.74rem;
+  font-weight: 660;
+  line-height: 1.28;
+}
+
+.ff-shell-logic-section {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
+    rgba(0, 0, 0, 0.2);
+}
+
+.ff-shell-logic-section > span {
+  color: var(--shell-amber);
+  font-size: 0.64rem;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.ff-shell-logic-section > b {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--shell-ink);
+  font-size: 0.9rem;
+  font-weight: 930;
+  line-height: 1.12;
+}
+
+.ff-shell-logic-objective {
+  border-color: rgba(110, 224, 170, 0.34);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(110, 224, 170, 0.13), transparent 52%),
+    rgba(0, 0, 0, 0.2);
+}
+
+.ff-shell-logic-warning {
+  border-color: rgba(232, 200, 107, 0.32);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(232, 200, 107, 0.12), transparent 52%),
+    rgba(0, 0, 0, 0.18);
+}
+
+.ff-shell-logic-factors {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.ff-shell-logic-factors small {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 7px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.ff-shell-logic-factors b,
+.ff-shell-logic-factors strong,
+.ff-shell-logic-factors em {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ff-shell-logic-factors b {
+  color: var(--shell-amber);
+  font-size: 0.62rem;
+  font-weight: 930;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.ff-shell-logic-factors strong {
+  color: var(--shell-ink);
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.ff-shell-logic-factors em {
+  color: var(--shell-muted);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 690;
+  line-height: 1.1;
+}
+
+.ff-shell-logic-range {
+  border-color: rgba(115, 184, 232, 0.28);
+}
+
+.ff-shell-range-decision {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.ff-shell-range-decision small {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  padding: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.014)),
+    rgba(0, 0, 0, 0.18);
+}
+
+.ff-shell-range-decision small.is-target,
+.ff-shell-range-decision small.is-good {
+  border-color: rgba(110, 224, 170, 0.32);
+}
+
+.ff-shell-range-decision small.is-warn {
+  border-color: rgba(232, 200, 107, 0.42);
+  background:
+    radial-gradient(circle at 14% 0%, rgba(232, 200, 107, 0.13), transparent 58%),
+    rgba(0, 0, 0, 0.2);
+}
+
+.ff-shell-range-decision em,
+.ff-shell-range-decision strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ff-shell-range-decision em {
+  color: var(--shell-muted);
+  font-size: 0.58rem;
+  font-style: normal;
+  font-weight: 850;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.ff-shell-range-decision strong {
+  color: var(--shell-ink);
+  font-size: 0.74rem;
+  font-weight: 930;
+  line-height: 1.05;
+}
+
+.ff-shell-range-rows span {
+  position: relative;
+  overflow: hidden;
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 10px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.ff-shell-range-rows i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--range-pct);
+  background: linear-gradient(90deg, rgba(110, 224, 170, 0.18), rgba(115, 184, 232, 0.08));
+  pointer-events: none;
+}
+
+.ff-shell-range-rows em,
+.ff-shell-range-rows strong,
+.ff-shell-range-rows b {
+  position: relative;
+  z-index: 1;
+}
+
+.ff-shell-range-rows em {
+  color: var(--shell-ink);
+  font-size: 0.8rem;
+  font-style: normal;
+  font-weight: 820;
+}
+
+.ff-shell-range-rows strong {
+  color: var(--shell-amber);
+  font-size: 0.88rem;
+  font-weight: 950;
+  font-variant-numeric: tabular-nums;
+}
+
+.ff-shell-range-rows b {
+  grid-column: 1 / -1;
+  color: var(--shell-mint);
+  font-size: 0.66rem;
+  font-weight: 860;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.ff-shell-range-rows span.is-target {
+  border-color: rgba(110, 224, 170, 0.46);
+}
+
+.ff-shell-range-rows span.is-current:not(.is-target) {
+  border-color: rgba(232, 200, 107, 0.5);
+}
+
+.ff-shell-seat-track {
+  position: absolute;
+  inset: 0;
+}
+
+.ff-shell-seat {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 82px;
+  min-height: 34px;
+  display: grid;
+  gap: 3px;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: var(--shell-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.02)),
+    rgba(5, 8, 10, 0.82);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.26);
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ff-shell-seat strong,
+.ff-shell-seat-action {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ff-shell-seat strong {
+  color: inherit;
+  font-size: 0.78rem;
+  line-height: 1;
+}
+
+.ff-shell-seat-action {
+  display: none;
+  color: var(--shell-amber);
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 920;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.ff-shell-seat.has-action {
+  min-height: 43px;
+  border-color: rgba(232, 200, 107, 0.48);
+}
+
+.ff-shell-seat.has-action .ff-shell-seat-action {
+  display: block;
+}
+
+.ff-shell-seat.has-fold {
+  opacity: 0.5;
+}
+
+.ff-shell-seat.has-aggressive {
+  border-color: rgba(110, 224, 170, 0.54);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.26), 0 0 0 1px rgba(110, 224, 170, 0.12);
+}
+
+.ff-shell-seat.is-hero {
+  color: #07100b;
+  border-color: rgba(238, 255, 230, 0.75);
+  background: linear-gradient(180deg, #c9ffd7, var(--shell-mint));
+}
+
+.ff-shell-seat.is-villain,
+.ff-shell-seat.is-limper {
+  border-color: rgba(232, 200, 107, 0.48);
+  color: var(--shell-ink);
+}
+
+.ff-shell-seat.is-folded {
+  opacity: 0.42;
+}
+
+.ff-shell-pot {
+  position: absolute;
+  left: 50%;
+  top: 20%;
+  min-width: 96px;
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(232, 200, 107, 0.36);
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: rgba(3, 7, 8, 0.78);
+}
+
+.ff-shell-pot span {
+  color: var(--shell-muted);
+  font-size: 0.68rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.ff-shell-pot strong {
+  color: var(--shell-amber);
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.ff-shell-board-cards {
+  position: absolute;
+  left: 50%;
+  top: 39%;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transform: translate(-50%, -50%);
+}
+
+.ff-shell-board-cards.is-empty {
+  min-width: 120px;
+  border: 1px dashed rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  color: rgba(245, 242, 232, 0.48);
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.ff-shell-hero {
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  transform: translateX(-50%);
+}
+
+.ff-shell-hero-cards,
+.ff-shell-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ff-shell-hero-cards {
+  gap: 8px;
+}
+
+.ff-shell-card {
+  width: 72px;
+  aspect-ratio: 0.715;
+  overflow: hidden;
+  border-radius: 7px;
+  transform: rotate(var(--tilt));
+  box-shadow: 0 18px 28px rgba(0, 0, 0, 0.34);
+}
+
+.ff-shell-card.is-board {
+  width: 58px;
+  border-radius: 6px;
+}
+
+.ff-shell-card img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.ff-shell-hero-meta {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  border: 1px solid rgba(110, 224, 170, 0.42);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: rgba(2, 8, 8, 0.82);
+}
+
+.ff-shell-hero-meta span,
+.ff-shell-hero-meta small {
+  color: var(--shell-muted);
+  font-size: 0.7rem;
+  font-weight: 820;
+}
+
+.ff-shell-hero-meta strong {
+  color: var(--shell-ink);
+  font-size: 0.96rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.ff-shell-action-line,
+.ff-shell-hero-cue {
+  position: absolute;
+  z-index: 6;
+  display: grid;
+  gap: 5px;
+}
+
+.ff-shell-action-line {
+  left: 14px;
+  bottom: 14px;
+  width: min(270px, 34%);
+}
+
+.ff-shell-action-line span,
+.ff-shell-hero-cue {
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.068), rgba(255, 255, 255, 0.018)),
+    rgba(1, 6, 7, 0.8);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.24);
+}
+
+.ff-shell-action-line span {
+  min-height: 30px;
+  display: grid;
+  grid-template-columns: minmax(42px, auto) minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 8px;
+}
+
+.ff-shell-action-line span.is-aggressive {
+  border-color: rgba(110, 224, 170, 0.38);
+}
+
+.ff-shell-action-line span.is-fold {
+  opacity: 0.62;
+}
+
+.ff-shell-action-line b,
+.ff-shell-action-line strong,
+.ff-shell-action-line em {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ff-shell-action-line b {
+  color: var(--shell-muted);
+  font-size: 0.62rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.ff-shell-action-line strong {
+  color: var(--shell-ink);
+  font-size: 0.72rem;
+  font-weight: 920;
+  line-height: 1;
+}
+
+.ff-shell-action-line em {
+  color: var(--shell-amber);
+  font-size: 0.64rem;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.ff-shell-hero-cue {
+  right: 14px;
+  bottom: 14px;
+  width: min(250px, 32%);
+  padding: 9px 10px;
+  border-color: rgba(110, 224, 170, 0.38);
+  background:
+    radial-gradient(circle at 14% 0%, rgba(110, 224, 170, 0.13), transparent 56%),
+    rgba(1, 7, 8, 0.84);
+}
+
+.ff-shell-hero-cue span {
+  color: var(--shell-mint);
+  font-size: 0.62rem;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.ff-shell-hero-cue strong,
+.ff-shell-hero-cue small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ff-shell-hero-cue strong {
+  color: var(--shell-ink);
+  font-size: 0.82rem;
+  font-weight: 940;
+  line-height: 1.08;
+}
+
+.ff-shell-hero-cue small {
+  color: var(--shell-muted);
+  font-size: 0.66rem;
+  font-weight: 760;
+  line-height: 1.1;
+}
+
+.ff-shell-line {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(120px, 0.24fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--shell-line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.24);
+}
+
+.ff-shell-line span {
+  color: var(--shell-amber);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.ff-shell-line strong {
+  color: var(--shell-ink);
+  font-size: 0.92rem;
+  font-weight: 780;
+  line-height: 1.28;
+}
+
+.ff-shell-metrics,
+.ff-shell-gates,
+.ff-shell-action-map,
+.ff-shell-answer-audit,
+.ff-shell-summary-gate,
+.ff-shell-contract {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.ff-shell-metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ff-shell-metric,
+.ff-shell-gate,
+.ff-shell-action-map span,
+.ff-shell-answer-audit small,
+.ff-shell-summary-gate span,
+.ff-shell-contract span {
+  min-width: 0;
+  min-height: 64px;
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.ff-shell-metric b,
+.ff-shell-gate b,
+.ff-shell-action-map b,
+.ff-shell-answer-audit span,
+.ff-shell-summary-gate b,
+.ff-shell-contract b {
+  color: var(--shell-ink);
+  font-size: 0.9rem;
+  font-weight: 900;
+  line-height: 1.16;
+  overflow-wrap: anywhere;
+}
+
+.ff-shell-gates {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ff-shell-gate small,
+.ff-shell-answer-audit em,
+.ff-shell-summary-gate em {
+  color: var(--shell-muted);
+  font-size: 0.72rem;
+  font-style: normal;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.is-good,
+.is-passed {
+  border-color: rgba(110, 224, 170, 0.42) !important;
+}
+
+.is-warn,
+.is-open {
+  border-color: rgba(232, 200, 107, 0.44) !important;
+}
+
+.is-bad,
+.is-danger,
+.is-failed {
+  border-color: rgba(239, 118, 109, 0.5) !important;
+}
+
+.ff-shell-decision {
+  min-width: 0;
+  position: sticky;
+  top: 12px;
+}
+
+.ff-shell-card-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.ff-shell-decision-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ff-shell-decision-top b {
+  max-width: 180px;
+  color: var(--shell-muted);
+  font-size: 0.76rem;
+  font-weight: 850;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.ff-shell-model {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(115, 184, 232, 0.26);
+  border-radius: 8px;
+  padding: 12px;
+  background:
+    linear-gradient(135deg, rgba(115, 184, 232, 0.1), rgba(110, 224, 170, 0.05)),
+    rgba(0, 0, 0, 0.2);
+}
+
+.ff-shell-model b {
+  color: var(--shell-ink);
+  font-size: 0.94rem;
+  line-height: 1.32;
+}
+
+.ff-shell-model small,
+.ff-shell-model em {
+  color: var(--shell-muted);
+  font-size: 0.82rem;
+  font-style: normal;
+  line-height: 1.32;
+}
+
+.ff-shell-action-map {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ff-shell-action-map span {
+  min-height: 58px;
+}
+
+.ff-shell-options {
+  display: grid;
+  gap: 8px;
+}
+
+.ff-shell-table-actions {
+  grid-row: 4;
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  align-self: start;
+}
+
+.ff-shell-table-actions .ff-shell-options {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ff-shell-option,
+.ff-shell-next,
+.ff-shell-pack-switch button,
+.ff-shell-editor-actions button {
+  min-width: 0;
+  border: 1px solid var(--shell-line);
+  border-radius: 8px;
+  color: var(--shell-ink);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.045);
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.ff-shell-option {
+  height: var(--shell-option-height);
+  min-height: 0;
+  max-height: var(--shell-option-height);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  gap: 0;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.ff-shell-option b {
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  color: var(--shell-ink);
+  font-size: 0.9rem;
+  font-weight: 760;
+  line-height: 1.08;
+  text-overflow: ellipsis;
+  text-wrap: balance;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.ff-shell-option span {
+  display: none;
+}
+
+.ff-shell-option:hover,
+.ff-shell-next:hover,
+.ff-shell-pack-switch button:hover,
+.ff-shell-editor-actions button:hover {
+  border-color: var(--shell-line-strong);
+  transform: translateY(-1px);
+}
+
+.ff-shell-option:disabled {
+  cursor: default;
+  transform: none;
+}
+
+.ff-shell-option.is-good {
+  background:
+    linear-gradient(90deg, rgba(110, 224, 170, 0.13), transparent 58%),
+    rgba(255, 255, 255, 0.045);
+}
+
+.ff-shell-option.is-warn {
+  background:
+    linear-gradient(90deg, rgba(232, 200, 107, 0.13), transparent 58%),
+    rgba(255, 255, 255, 0.045);
+}
+
+.ff-shell-option.is-bad {
+  background:
+    linear-gradient(90deg, rgba(239, 118, 109, 0.12), transparent 58%),
+    rgba(255, 255, 255, 0.045);
+}
+
+.ff-shell-option.is-picked {
+  box-shadow: inset 0 0 0 1px rgba(232, 200, 107, 0.34);
+}
+
+.ff-shell-option.is-correct {
+  border-color: rgba(110, 224, 170, 0.72) !important;
+  background: rgba(110, 224, 170, 0.15);
+}
+
+.ff-shell-option.is-wrong {
+  border-color: rgba(239, 118, 109, 0.72) !important;
+  background: rgba(239, 118, 109, 0.15);
+}
+
+.ff-shell-training-dock {
+  grid-row: 5;
+  position: relative;
+  min-width: 0;
+  min-height: 156px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(190px, 0.95fr) minmax(220px, 1.05fr) minmax(190px, 0.95fr);
+  gap: 8px;
+  align-self: start;
+  border: 1px solid rgba(115, 184, 232, 0.16);
+  border-radius: 8px;
+  padding: 10px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(110, 224, 170, 0.12), transparent 36%),
+    radial-gradient(circle at 86% 18%, rgba(232, 200, 107, 0.1), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+    rgba(6, 10, 12, 0.44);
+}
+
+.ff-shell-training-dock.is-answered {
+  border-color: rgba(110, 224, 170, 0.28);
+}
+
+.ff-shell-practice-card {
+  min-width: 0;
+  min-height: 0;
+  align-self: start;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 10px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.014)),
+    rgba(12, 17, 20, 0.68);
+}
+
+.ff-shell-practice-card > span,
+.ff-shell-answer-choice em {
+  color: var(--shell-amber);
+  font-size: 0.64rem;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.ff-shell-practice-card b {
+  min-width: 0;
+  color: var(--shell-ink);
+  font-size: 0.98rem;
+  font-weight: 850;
+  line-height: 1.14;
+}
+
+.ff-shell-practice-card p,
+.ff-shell-teaching-notes p {
+  color: var(--shell-muted);
+  font-size: 0.8rem;
+  font-weight: 640;
+  line-height: 1.3;
+}
+
+.ff-shell-practice-card.is-mission {
+  border-color: rgba(110, 224, 170, 0.24);
+}
+
+.ff-shell-practice-card.is-thinking {
+  border-color: rgba(115, 184, 232, 0.26);
+}
+
+.ff-shell-practice-card.is-control {
+  border-color: rgba(232, 200, 107, 0.26);
+}
+
+.ff-shell-thinking-steps {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ff-shell-thinking-steps li {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 3px 8px;
+  align-items: start;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 7px;
+  padding: 7px 8px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.ff-shell-thinking-steps span {
+  color: var(--shell-amber);
+  font-size: 0.62rem;
+  font-weight: 900;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.ff-shell-thinking-steps b {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--shell-ink);
+  font-size: 0.78rem;
+  font-weight: 850;
+  line-height: 1.12;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ff-shell-thinking-steps small {
+  grid-column: 2;
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  color: var(--shell-muted);
+  font-size: 0.7rem;
+  font-weight: 640;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.ff-shell-teaching-notes {
+  display: grid;
+  gap: 7px;
+}
+
+.ff-shell-training-pips {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14px, 1fr));
+  gap: 5px;
+}
+
+.ff-shell-training-pips span {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.ff-shell-training-pips span.is-current {
+  background: var(--shell-blue);
+  box-shadow: 0 0 12px rgba(115, 184, 232, 0.4);
+}
+
+.ff-shell-training-pips span.is-good {
+  background: var(--shell-mint);
+}
+
+.ff-shell-training-pips span.is-bad {
+  background: var(--shell-coral);
+}
+
+.ff-shell-answer-choice {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.ff-shell-answer-choice small {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.ff-shell-answer-choice strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--shell-ink);
+  font-size: 0.84rem;
+  font-weight: 880;
+  line-height: 1.08;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ff-shell-feedback {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--shell-line);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.ff-shell-table-actions .ff-shell-feedback {
+  display: none;
+}
+
+.ff-shell-feedback.is-good {
+  background: rgba(110, 224, 170, 0.1);
+}
+
+.ff-shell-feedback.is-bad {
+  background: rgba(239, 118, 109, 0.1);
+}
+
+.ff-shell-feedback > span {
+  color: var(--shell-amber);
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.ff-shell-answer-audit {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ff-shell-answer-audit small {
+  min-height: 62px;
+}
+
+.ff-shell-answer-audit b {
+  color: var(--shell-amber);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+}
+
+.ff-shell-next {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  color: #07100b;
+  background: linear-gradient(180deg, #dfffd7, var(--shell-mint));
+  border-color: rgba(223, 255, 215, 0.75);
+  font-size: 0.96rem;
+  font-weight: 950;
+}
+
+.ff-shell-practice-card .ff-shell-next {
+  min-height: 42px;
+  margin-top: auto;
+}
+
+.ff-shell-summary {
+  align-content: start;
+}
+
+.ff-shell-summary-gate {
+  grid-template-columns: 1fr;
+}
+
+.ff-shell-weak-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.ff-shell-weak-tags span {
+  border: 1px solid rgba(232, 200, 107, 0.3);
+  border-radius: 999px;
+  padding: 6px 9px;
+  color: var(--shell-amber);
+  background: rgba(232, 200, 107, 0.08);
+  font-size: 0.74rem;
+  font-weight: 860;
+}
+
+.ff-shell-review-routes {
+  display: grid;
+  gap: 8px;
+}
+
+.ff-shell-review-routes a,
+.ff-shell-review-routes > span {
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgba(232, 200, 107, 0.34);
+  border-radius: 8px;
+  padding: 10px;
+  color: var(--shell-ink);
+  background: rgba(232, 200, 107, 0.08);
+  text-decoration: none;
+}
+
+.ff-shell-review-routes b {
+  font-size: 0.88rem;
+}
+
+.ff-shell-review-routes span {
+  color: var(--shell-muted);
+  font-size: 0.78rem;
+  line-height: 1.28;
+}
+
+.ff-shell-tech {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.ff-shell-tech-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ff-shell-tech-head span {
+  color: var(--shell-amber);
+  font-size: 0.76rem;
+  font-weight: 930;
+  text-transform: uppercase;
+}
+
+.ff-shell-tech-head button {
+  min-height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  padding: 0 12px;
+  color: var(--shell-muted);
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 0.74rem;
+  font-weight: 860;
+}
+
+.ff-shell-pack-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.ff-shell-pack-switch button {
+  min-height: 42px;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.ff-shell-pack-switch button.is-active {
+  border-color: rgba(110, 224, 170, 0.58);
+  background: rgba(110, 224, 170, 0.12);
+}
+
+.ff-shell-pack-switch span {
+  display: block;
+  color: var(--shell-ink);
+  font-size: 0.8rem;
+  font-weight: 880;
+  line-height: 1.16;
+}
+
+.ff-shell-source-audit {
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 8px;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.ff-shell-source-audit summary {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  color: var(--shell-amber);
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.ff-shell-source-audit[open] {
+  padding-bottom: 10px;
+}
+
+.ff-shell-source-audit[open] > :not(summary) {
+  margin: 0 10px 8px;
+}
+
+.ff-shell-contract {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ff-shell-contract span {
+  min-height: 54px;
+}
+
+.ff-shell-editor-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ff-shell-editor-head b {
+  color: var(--shell-mint);
+  font-size: 0.74rem;
+  font-weight: 900;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.ff-shell-editor-head b.is-error {
+  color: var(--shell-coral);
+}
+
+.ff-shell-pack-editor {
+  width: 100%;
+  min-height: 420px;
+  resize: vertical;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  padding: 12px;
+  color: #dfffe9;
+  background: #070b0e;
+  font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+  font-size: 0.76rem;
+  line-height: 1.42;
+  outline: none;
+}
+
+.ff-shell-pack-editor:focus {
+  border-color: rgba(110, 224, 170, 0.58);
+  box-shadow: 0 0 0 2px rgba(110, 224, 170, 0.14);
+}
+
+.ff-shell-editor-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ff-shell-editor-actions button {
+  min-height: 42px;
+  color: var(--shell-ink);
+  font-weight: 900;
+}
+
+.ff-shell-accent-amber .ff-shell-progress span,
+.ff-shell-accent-amber .ff-shell-next {
+  background: linear-gradient(90deg, var(--shell-amber), var(--shell-blue));
+}
+
+.ff-shell-accent-amber .ff-shell-next {
+  color: #100d06;
+  background: linear-gradient(180deg, #ffedaa, var(--shell-amber));
+}
+
+@media (max-width: 1280px) {
+  .ff-shell-pack-editor {
+    min-height: 300px;
+  }
+}
+
+@media (max-height: 760px) {
+  .ff-shell {
+    --shell-table-height: clamp(280px, calc(100svh - 370px), 350px);
+    --shell-option-height: 44px;
+  }
+
+  .ff-shell-board {
+    gap: 8px;
+    padding: 10px;
+    grid-template-rows: auto auto minmax(0, var(--shell-board-table-height)) min-content min-content;
+  }
+
+  .ff-shell-training-dock {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.22fr) minmax(0, 0.83fr);
+    grid-template-rows: auto;
+    min-height: 156px;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .ff-shell-practice-card {
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .ff-shell-practice-card p {
+    overflow: hidden;
+    display: -webkit-box;
+    font-size: 0.72rem;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .ff-shell-practice-card b {
+    font-size: 0.82rem;
+  }
+
+  .ff-shell-thinking-steps {
+    gap: 4px;
+  }
+
+  .ff-shell-thinking-steps li {
+    grid-template-columns: 70px minmax(0, 1fr);
+    gap: 2px 6px;
+    padding: 5px 6px;
+  }
+
+  .ff-shell-thinking-steps b {
+    font-size: 0.72rem;
+  }
+
+  .ff-shell-thinking-steps small {
+    display: none;
+  }
+
+  .ff-shell-table-actions .ff-shell-feedback {
+    display: none;
+  }
+}
+
+@media (max-height: 680px) {
+  .ff-shell-pot {
+    top: 18%;
+  }
+
+  .ff-shell-board-cards {
+    top: 40%;
+    min-height: 62px;
+  }
+
+  .ff-shell-hero {
+    bottom: 4%;
+    gap: 6px;
+  }
+
+  .ff-shell-card {
+    width: 58px;
+  }
+
+  .ff-shell-card.is-board {
+    width: 44px;
+  }
+
+  .ff-shell-hero-meta {
+    padding: 6px 10px;
+  }
+
+  .ff-shell-action-line {
+    width: min(210px, 31%);
+  }
+
+  .ff-shell-action-line span:nth-child(-n + 2) {
+    display: none;
+  }
+
+  .ff-shell-hero-cue {
+    width: min(210px, 31%);
+  }
+}
+
+@media (max-width: 920px) {
+  .ff-shell {
+    --shell-table-height: clamp(300px, calc(100svh - 420px), 380px);
+    padding: 10px;
+  }
+
+  .ff-shell-grid,
+  .ff-shell-grid.has-lab {
+    height: calc(100svh - 20px);
+    min-height: 0;
+    grid-template-columns: 1fr;
+  }
+
+  .ff-shell-lab:has(.ff-shell-simulator-snapshot),
+  .ff-shell:has(.ff-shell-simulator-snapshot) {
+    height: 100svh;
+    min-height: 100svh;
+    overflow: hidden;
+  }
+
+  .ff-shell-decision {
+    position: static;
+  }
+
+  .ff-shell-decision {
+    order: -1;
+  }
+
+  .ff-shell-grid:has(.ff-shell-simulator-snapshot) {
+    align-content: stretch;
+    height: calc(100svh - 20px);
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 0.42fr);
+    overflow: hidden;
+  }
+
+  .ff-shell-grid:has(.ff-shell-simulator-snapshot) .ff-shell-board {
+    height: 100%;
+    min-height: 0;
+    order: 1;
+  }
+
+  .ff-shell-grid.has-lab:has(.ff-shell-simulator-snapshot) {
+    grid-template-rows: auto minmax(0, 1fr) minmax(0, 0.42fr);
+  }
+
+  .ff-shell-grid.is-live-clean:has(.ff-shell-simulator-snapshot),
+  .ff-shell-grid.has-lab.is-live-clean:has(.ff-shell-simulator-snapshot) {
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  /* Single-column tablet: keep the proper 16:9 landscape table (its seat ring
+     is tuned for landscape), but center it vertically instead of top-anchoring
+     it with a dead band below. Mobile portrait-fill is handled in the ≤620
+     block. Base plane token (line ~335) is perf-smoke-pinned — left untouched. */
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-shell {
+    align-self: center;
+    /* On the narrow tablet felt the full-size plates overrun the ring edge.
+       Trim the plate width so text still fits but edge plates stop clipping. */
+    --seat-w: 120px;
+    --sim-1t-seat-name-font: max(12px, 1.5cqw);
+    --sim-1t-seat-stack-font: max(12px, 1.55cqw);
+  }
+
+  /* Pull the seat ring inward a touch by widening the felt's horizontal inset:
+     seats anchor to felt %, so a slightly narrower felt keeps the edge plates
+     on-felt without clipping, while staying wide enough that same-side seats
+     don't bunch. Extra width is absorbed by the table-shell around the felt. */
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt {
+    inset: 7.578% 6.5% 8.077%;
+  }
+
+  .ff-shell-grid:has(.ff-shell-simulator-snapshot) .ff-shell-decision {
+    order: 2;
+  }
+
+  .ff-shell h1 {
+    font-size: 1.82rem;
+  }
+
+  .ff-shell-table {
+    height: var(--shell-board-table-height);
+  }
+
+  .ff-shell-street-badge {
+    max-width: min(240px, 42%);
+  }
+
+  .ff-shell-action-line {
+    width: min(230px, 36%);
+  }
+
+  .ff-shell-hero-cue {
+    width: min(230px, 34%);
+  }
+
+  .ff-shell-training-dock {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ff-shell-metrics,
+  .ff-shell-gates {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 621px) and (max-width: 920px) {
+  /* The action bar is absolutely positioned below the 16:9 felt. Lift the
+     tablet table by half that extension so table + controls, not the felt
+     alone, are visually centred in a tall portrait viewport. */
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-shell {
+    --hero-card-width: 84px;
+    --hero-card-cap: 84px;
+    transform: translateY(clamp(-64px, -7svh, -48px));
+  }
+}
+
+@media (max-width: 620px) {
+  .ff-shell-head,
+  .ff-shell-decision-top,
+  .ff-shell-line,
+  .ff-shell-lab-bar {
+    display: grid;
+  }
+
+  .ff-shell-score,
+  .ff-shell-decision-top b {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .ff-shell-table {
+    height: var(--shell-board-table-height);
+  }
+
+  .ff-shell-board {
+    grid-template-rows: auto auto minmax(0, var(--shell-board-table-height)) min-content;
+  }
+
+  .ff-shell-board:has(.ff-shell-simulator-snapshot) {
+    --shell-table-plane-height-cap: 560px;
+    --shell-action-gutter: clamp(132px, 17svh, 144px);
+    gap: 8px;
+  }
+
+  .ff-shell-board:has(.ff-shell-simulator-snapshot.is-concept-spot) {
+    --shell-action-gutter: clamp(262px, 33svh, 284px);
+  }
+
+  .ff-shell-board:has(.ff-shell-simulator-snapshot.has-compact-concept-options) {
+    --shell-action-gutter: clamp(178px, 22svh, 188px);
+  }
+
+  .ff-shell-simulator-snapshot {
+    /* portrait: plane tracks available height, not width*9/16 (which collapsed
+       the mobile table into a landscape strip). Base token stays perf-pinned. */
+    --trainer-table-plane-height: min(calc(100% - var(--shell-action-gutter)), var(--shell-table-plane-height-cap));
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-shell {
+    --ff-shell-snapshot-chip-size: 16px;
+    --hero-card-width: 60px;
+    --hero-card-cap: 52px;
+    --board-card-width: 36px;
+    --mini-card-width: 18px;
+    --seat-w: 72px;
+    --seat-h: 34px;
+    --avatar: 20px;
+    --sim-1t-seat-name-font: 11px;
+    --sim-1t-seat-stack-font: 11px;
+    --sim-1t-pot-chip: var(--ff-shell-snapshot-chip-size);
+    --sim-1t-pot-min: 27px;
+    --sim-1t-pot-font: 12px;
+    --sim-1t-pot-label-font: 8px;
+    gap: 7px;
+    padding: 10px;
+    height: var(--trainer-table-plane-height);
+    aspect-ratio: auto;
+    align-self: start;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .seat-panel {
+    padding: 3px 8px 4px;
+    row-gap: 1px;
+    overflow: hidden;
+  }
+
+  /* Keep every mobile chip on the same compact token so pot and blind markers
+     read as one physical set rather than unrelated badges. */
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .bet-marker {
+    --poker-chip-size: var(--ff-shell-snapshot-chip-size);
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"]:not([data-marker-geometry="simulator-slot-v1"]) .bet-marker {
+    min-height: 22px;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .bet-marker-amount {
+    font-size: 13px;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-bar {
+    left: 7px;
+    right: 7px;
+    top: calc(100% + 10px);
+    bottom: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Mobile portrait is too tight to add the readout strip without pushing the
+     action buttons off-screen — clarity there comes from the aggressor ring,
+     the header question, and the on-felt bet markers. Desktop/tablet keep the
+     full readout. */
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-status {
+    display: none;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid.is-concept-spot[data-count="1"] .action-status.is-concept {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3px;
+    min-height: 0;
+    padding: 7px 9px;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid.is-concept-spot[data-count="1"] .action-status.is-concept span {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 0.76rem;
+    line-height: 1.25;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid.is-concept-spot[data-count="1"] .client-controls > .client-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ff-shell-simulator-snapshot.table-grid.has-compact-concept-options[data-count="1"] .client-controls > .client-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ff-shell-simulator-snapshot.table-grid.is-concept-spot[data-count="1"] .client-controls > .client-row .table-action {
+    min-height: 52px;
+    padding: 7px 9px;
+    font-size: 0.76rem;
+    line-height: 1.16;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid.has-compact-concept-options[data-count="1"] .client-controls > .client-row .table-action {
+    min-height: 48px;
+    font-size: 0.84rem;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid.is-concept-spot[data-count="1"] .client-controls[data-option-count="3"] > .client-row .table-action:last-child {
+    grid-column: 1;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-buttons,
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls {
+    width: 100%;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls[data-option-count="1"] > .client-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls[data-option-count="3"] > .client-row .table-action:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action {
+    min-height: 48px;
+    padding: 7px 10px;
+    font-size: 0.84rem;
+    line-height: 1.08;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-buttons {
+    grid-column: 1;
+    justify-self: stretch;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls:has(.bet-widget) > .client-row .table-action {
+    position: relative;
+    min-height: 52px;
+    padding: 6px 21px 6px 7px;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    font-size: 0.82rem;
+    line-height: 1.05;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls:has(.bet-widget) > .client-row .table-action-label,
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls:has(.bet-widget) > .client-row .table-action.has-amount .table-action-label {
+    display: flex;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    overflow: visible;
+    text-align: center;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls:has(.bet-widget) > .client-row .table-action-verb,
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls:has(.bet-widget) > .client-row .table-action-amount {
+    max-width: 100%;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls:has(.bet-widget) > .client-row .table-action-amount::before {
+    content: "";
+    margin: 0;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls:has(.bet-widget) > .client-row .table-action-hotkey {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    flex: none;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .bet-readout {
+    min-height: 34px;
+    padding: 5px 9px;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"]:not([data-marker-geometry="simulator-slot-v1"]) .hero-felt-bet {
+    min-height: 28px;
+    padding: 2px 8px 2px 5px;
+    font-size: 11px;
+  }
+
+  /* On the compact portrait felt Hero's already-known posted blind would cover
+     the hole cards even at the correct slot. Omit that redundant marker only;
+     every decision-driving opponent marker stays on the simulator slot. */
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"][data-marker-geometry="simulator-slot-v1"] .seat.is-hero .hero-felt-bet {
+    display: none;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .seat.is-hero .seat-position {
+    left: -30px;
+    top: 50%;
+    min-width: 30px;
+    height: 20px;
+    padding: 0 6px;
+    font-size: 11px;
+    transform: translateY(-50%);
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .seat.is-hero {
+    --hero-card-pocket-y: 0px;
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt {
+    --pot-y: 41%;
+    /* Proportional bottom reserve (was a fixed 120px floor that ate the whole
+       plane on short/narrow viewports and collapsed the felt to ~47px). */
+    inset: 7.5% 5.8% clamp(72px, 18%, 128px);
+  }
+
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .pot-label {
+    display: none;
+  }
+
+  .ff-shell-training-dock {
+    display: none;
+  }
+
+  .ff-shell-pot {
+    top: 18%;
+  }
+
+  .ff-shell-board-cards {
+    top: 40%;
+    min-height: 62px;
+  }
+
+  .ff-shell-hero {
+    bottom: 4%;
+  }
+
+  .ff-shell-seat {
+    width: 58px;
+    min-height: 30px;
+    padding: 6px;
+    font-size: 0.68rem;
+  }
+
+  .ff-shell-seat.has-action {
+    min-height: 36px;
+  }
+
+  .ff-shell-seat-action {
+    display: none !important;
+  }
+
+  .ff-shell-street-badge {
+    max-width: calc(100% - 78px);
+  }
+
+  .ff-shell-street-badge strong,
+  .ff-shell-action-line,
+  .ff-shell-hero-cue small {
+    display: none;
+  }
+
+  .ff-shell-hero-cue {
+    right: 8px;
+    bottom: 8px;
+    width: min(160px, 36%);
+    padding: 7px 8px;
+  }
+
+  .ff-shell-table-tools {
+    position: fixed;
+    left: 8px;
+    top: 12px;
+    z-index: 30;
+    transform: none;
+  }
+
+  .ff-shell-range-popover {
+    position: fixed;
+    left: 44px;
+    top: 12px;
+    width: min(330px, calc(100vw - 66px));
+    min-width: min(230px, calc(100vw - 66px));
+    max-height: calc(100svh - 24px);
+    padding: 10px;
+    transform: translateX(-6px);
+  }
+
+  .ff-shell-range-tool:hover .ff-shell-range-popover,
+  .ff-shell-range-tool:focus-within .ff-shell-range-popover,
+  .ff-shell-range-tool[open] .ff-shell-range-popover {
+    transform: translateX(0);
+  }
+
+  .ff-shell-logic-factors {
+    grid-template-columns: 1fr;
+  }
+
+  .ff-shell-range-decision {
+    grid-template-columns: 1fr;
+  }
+
+  .ff-shell-card {
+    width: 58px;
+  }
+
+  .ff-shell-card.is-board {
+    width: 45px;
+  }
+
+  .ff-shell-metrics,
+  .ff-shell-gates,
+  .ff-shell-action-map,
+  .ff-shell-answer-audit,
+  .ff-shell-contract,
+  .ff-shell-pack-switch,
+  .ff-shell-editor-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .ff-shell-option {
+    grid-template-columns: 1fr;
+  }
+
+  .ff-shell-table-actions .ff-shell-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ff-shell-thinking-steps li {
+    grid-template-columns: 1fr;
+  }
+
+  .ff-shell-thinking-steps small {
+    grid-column: 1;
+  }
+
+  .ff-shell-option b {
+    font-size: 0.72rem;
+  }
+
+  .ff-shell-option span {
+    max-width: none;
+    text-align: left;
+  }
+
+  .ff-shell-next {
+    position: sticky;
+    bottom: 10px;
+    z-index: 4;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.38);
+  }
+}

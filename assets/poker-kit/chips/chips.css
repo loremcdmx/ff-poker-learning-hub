@@ -1,0 +1,406 @@
+:root {
+  --poker-chip-size: clamp(24px, 2.4vw, 34px);
+  --poker-chip-edge: #7c4811;
+  --poker-chip-accent: #c8821f;
+  --poker-chip-light: #fff1bd;
+  --poker-chip-text: #2a1805;
+}
+
+.poker-chip-stack {
+  position: relative;
+  width: calc(var(--poker-chip-size) * 1.35);
+  height: calc(var(--poker-chip-size) * 1.35);
+  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.42));
+}
+
+.poker-chip {
+  position: absolute;
+  left: 50%;
+  bottom: var(--chip-bottom, 0px);
+  width: var(--poker-chip-size);
+  height: var(--poker-chip-size);
+  transform: translateX(-50%) rotate(var(--chip-tilt, -8deg));
+  border-radius: 50%;
+  color: var(--poker-chip-text);
+  background:
+    radial-gradient(circle at 50% 50%, #fff1be 0 18%, var(--poker-chip-accent) 19% 34%, transparent 35%),
+    conic-gradient(from 18deg, var(--poker-chip-light) 0 10%, var(--poker-chip-accent) 10% 22%, var(--poker-chip-light) 22% 32%, var(--poker-chip-accent) 32% 45%, var(--poker-chip-light) 45% 55%, var(--poker-chip-accent) 55% 68%, var(--poker-chip-light) 68% 78%, var(--poker-chip-accent) 78% 90%, var(--poker-chip-light) 90% 100%);
+  border: 1px solid rgba(255, 236, 168, 0.86);
+  box-shadow:
+    0 2px 0 var(--poker-chip-edge),
+    0 4px 4px rgba(0, 0, 0, 0.35),
+    inset 0 2px 4px rgba(255, 255, 255, 0.42),
+    inset 0 -2px 3px rgba(85, 41, 7, 0.42);
+}
+
+.poker-chip::after {
+  content: attr(data-denomination);
+  position: absolute;
+  inset: 21%;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 42% 32%, #fff5d1, var(--poker-chip-accent) 58%, var(--poker-chip-edge) 100%);
+  border: 1px solid rgba(117, 67, 13, 0.48);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.5);
+  color: inherit;
+  font-size: clamp(6px, calc(var(--poker-chip-size) * 0.27), 12px);
+  font-weight: 950;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.32);
+}
+
+.poker-chip:nth-child(2) {
+  --chip-bottom: calc(var(--poker-chip-size) * 0.34);
+  left: 54%;
+}
+
+.poker-chip:nth-child(3) {
+  --chip-bottom: calc(var(--poker-chip-size) * 0.68);
+  left: 48%;
+}
+
+.chip-overflow {
+  position: absolute;
+  right: calc(var(--poker-chip-size) * -0.42);
+  bottom: calc(var(--poker-chip-size) * 0.12);
+  z-index: 4;
+  min-width: calc(var(--poker-chip-size) * 0.66);
+  min-height: calc(var(--poker-chip-size) * 0.48);
+  display: inline-grid;
+  place-items: center;
+  padding: 0 4px;
+  border-radius: 999px;
+  color: #fff6d8;
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: clamp(8px, calc(var(--poker-chip-size) * 0.28), 11px);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.poker-chip--half,
+.poker-chip--gold {
+  --poker-chip-edge: #7c4811;
+  --poker-chip-accent: #c8821f;
+  --poker-chip-light: #fff1bd;
+  --poker-chip-text: #2a1805;
+}
+
+.poker-chip--one,
+.poker-chip--white {
+  --poker-chip-edge: #a9bbc8;
+  --poker-chip-accent: #dce7ee;
+  --poker-chip-light: #ffffff;
+  --poker-chip-text: #142332;
+}
+
+.poker-chip--one::after,
+.poker-chip--white::after {
+  border-color: rgba(26, 46, 60, 0.42);
+  background: radial-gradient(circle at 42% 32%, #ffffff, #eaf3f7 56%, #a9bbc8 100%);
+  text-shadow: none;
+}
+
+.poker-chip--twenty-five,
+.poker-chip--green {
+  --poker-chip-edge: #2d1155;
+  --poker-chip-accent: #5f28ab;
+  --poker-chip-light: #eee3fd;
+  --poker-chip-text: #f9f5fe;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.62);
+}
+
+.poker-chip--ten,
+.poker-chip--blue {
+  --poker-chip-edge: #103a82;
+  --poker-chip-accent: #2867d7;
+  --poker-chip-light: #e5efff;
+  --poker-chip-text: #eef5ff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.62);
+}
+
+.poker-chip--five,
+.poker-chip--red {
+  --poker-chip-edge: #8a1622;
+  --poker-chip-accent: #d72e42;
+  --poker-chip-light: #ffe2e8;
+  --poker-chip-text: #fff5df;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.62);
+}
+
+.poker-chip--hundred,
+.poker-chip--black {
+  --poker-chip-edge: #1a1028;
+  --poker-chip-accent: #4b258f;
+  --poker-chip-light: #d6c2ff;
+  --poker-chip-text: #fff3c9;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.72);
+}
+
+.poker-chip--five-hundred,
+.poker-chip--purple {
+  --poker-chip-edge: #2b133f;
+  --poker-chip-accent: #7d3ab6;
+  --poker-chip-light: #eadcff;
+  --poker-chip-text: #fff7ff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.72);
+}
+
+.poker-chip--thousand,
+.poker-chip--orange,
+.poker-chip--yellow {
+  --poker-chip-edge: #68410b;
+  --poker-chip-accent: #dfaa23;
+  --poker-chip-light: #fff4bc;
+  --poker-chip-text: #251505;
+}
+
+:root[data-poker-chip-theme="black"] .poker-chip {
+  filter: saturate(0.72) contrast(1.14) brightness(0.82);
+}
+
+.poker-dealer-button {
+  display: inline-grid;
+  place-items: center;
+  width: clamp(30px, 3.4vw, 42px);
+  height: clamp(30px, 3.4vw, 42px);
+  border-radius: 50%;
+  color: #151515;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.95), transparent 34%),
+    linear-gradient(180deg, #ffffff, #d8d8d8);
+  border: 2px solid rgba(0, 0, 0, 0.22);
+  box-shadow:
+    0 5px 12px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.poker-chip__rim,
+.poker-chip__emblem,
+.poker-chip__value,
+.poker-chip__brand,
+.poker-chip__microline,
+.poker-chip__security-ring,
+.poker-chip__serial,
+.poker-chip__outer-label {
+  display: none;
+  pointer-events: none;
+}
+
+.poker-chip-barrel {
+  --poker-chip-clay: var(--poker-chip-accent);
+  --barrel-spot-a: var(--poker-chip-light);
+  --barrel-spot-b: rgba(255, 255, 255, 0.74);
+  --barrel-spot-c: var(--poker-chip-edge);
+  --barrel-print: rgba(27, 18, 8, 0.82);
+  --barrel-label: "CHIP";
+  --barrel-width: calc(var(--poker-chip-size) * 1.78);
+  --barrel-height: calc(var(--poker-chip-size) * 0.36);
+  --barrel-step: calc(var(--poker-chip-size) * 0.085);
+  --barrel-face-size: calc(var(--poker-chip-size) * 0.88);
+  position: relative;
+  display: inline-block;
+  width: var(--barrel-width);
+  height: calc(var(--poker-chip-size) * 1.5);
+  color: var(--poker-chip-text);
+  filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.34));
+  vertical-align: bottom;
+}
+
+.poker-chip-barrel::before,
+.poker-chip-barrel::after {
+  content: "";
+  position: absolute;
+  right: 6%;
+  left: 6%;
+  z-index: 21;
+  pointer-events: none;
+}
+
+.poker-chip-barrel::before {
+  bottom: calc(var(--barrel-height) * 0.06);
+  height: calc((var(--barrel-count) - 1) * var(--barrel-step) + var(--barrel-height) * 0.82);
+  opacity: 0.2;
+  border-radius: 50% / 16%;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.34) 0 1px,
+      transparent 1px calc(var(--barrel-step) * 0.82),
+      rgba(0, 0, 0, 0.18) calc(var(--barrel-step) * 0.82) var(--barrel-step)
+    );
+}
+
+.poker-chip-barrel::after {
+  bottom: calc(var(--barrel-height) * 0.12);
+  height: calc(var(--poker-chip-size) * 0.28);
+  opacity: 0.28;
+  border-radius: 50% / 38%;
+  background:
+    linear-gradient(90deg, transparent 0 4%, rgba(255, 255, 255, 0.24) 18%, transparent 34% 66%, rgba(0, 0, 0, 0.22) 86%, transparent 100%);
+}
+
+.poker-chip-barrel__slice {
+  position: absolute;
+  right: 0;
+  bottom: calc(var(--slice-index) * var(--barrel-step));
+  left: 0;
+  z-index: calc(var(--slice-index) + 1);
+  height: var(--barrel-height);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--poker-chip-edge) 72%, #ffffff 28%);
+  border-radius: 50% / 44%;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.06) 32%, rgba(0, 0, 0, 0.32) 100%),
+    repeating-linear-gradient(
+      90deg,
+      var(--barrel-spot-a) 0 7%,
+      var(--poker-chip-clay) 7% 18%,
+      var(--barrel-spot-b) 18% 23%,
+      var(--poker-chip-clay) 23% 42%,
+      var(--barrel-spot-c) 42% 48%,
+      var(--poker-chip-clay) 48% 68%,
+      var(--barrel-spot-a) 68% 76%,
+      var(--poker-chip-clay) 76% 100%
+    );
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.38),
+    inset 0 -2px 2px rgba(0, 0, 0, 0.32);
+}
+
+.poker-chip-barrel__slice:nth-child(2n) {
+  filter: brightness(0.94) saturate(0.98);
+}
+
+.poker-chip-barrel__slice:nth-child(3n) {
+  opacity: 0.96;
+}
+
+.poker-chip-barrel__slice::before,
+.poker-chip-barrel__slice::after {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  color: var(--barrel-print);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 950;
+  line-height: 1;
+  letter-spacing: 0;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.24);
+  transform: translateY(-50%);
+}
+
+.poker-chip-barrel__slice::before {
+  content: attr(data-denomination);
+  left: 50%;
+  font-size: calc(var(--poker-chip-size) * 0.13);
+  transform: translate(-50%, -50%);
+}
+
+.poker-chip-barrel__slice::after {
+  content: var(--barrel-label);
+  right: 8%;
+  font-size: calc(var(--poker-chip-size) * 0.08);
+  text-shadow:
+    calc(var(--poker-chip-size) * -0.92) 0 0 var(--barrel-print),
+    0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.poker-chip-barrel__face {
+  position: absolute;
+  z-index: 22;
+  top: calc(var(--poker-chip-size) * -0.05);
+  left: 50%;
+  width: var(--barrel-face-size);
+  height: calc(var(--barrel-face-size) * 0.52);
+  transform: translateX(-50%) rotate(-5deg);
+  transform-origin: center;
+}
+
+.poker-chip-barrel__face .poker-chip {
+  --poker-chip-size: var(--barrel-face-size);
+  position: absolute;
+  top: 0;
+  bottom: auto;
+  left: 50%;
+  transform: translateX(-50%) scaleY(0.48) rotate(0deg);
+  transform-origin: center;
+}
+
+.poker-chip-barrel--half,
+.poker-chip-barrel--gold {
+  --poker-chip-edge: #7c4811;
+  --poker-chip-accent: #c8821f;
+  --poker-chip-clay: #c8821f;
+  --poker-chip-light: #fff1bd;
+  --poker-chip-text: #2a1805;
+}
+
+.poker-chip-barrel--one,
+.poker-chip-barrel--white {
+  --poker-chip-edge: #a9bbc8;
+  --poker-chip-accent: #dce7ee;
+  --poker-chip-clay: #dce7ee;
+  --poker-chip-light: #ffffff;
+  --poker-chip-text: #142332;
+}
+
+.poker-chip-barrel--five,
+.poker-chip-barrel--red {
+  --poker-chip-edge: #8a1622;
+  --poker-chip-accent: #d72e42;
+  --poker-chip-clay: #d72e42;
+  --poker-chip-light: #ffe2e8;
+  --poker-chip-text: #fff5df;
+}
+
+.poker-chip-barrel--ten,
+.poker-chip-barrel--blue {
+  --poker-chip-edge: #103a82;
+  --poker-chip-accent: #2867d7;
+  --poker-chip-clay: #2867d7;
+  --poker-chip-light: #e5efff;
+  --poker-chip-text: #eef5ff;
+}
+
+.poker-chip-barrel--twenty-five,
+.poker-chip-barrel--green {
+  --poker-chip-edge: #2d1155;
+  --poker-chip-accent: #5f28ab;
+  --poker-chip-clay: #5f28ab;
+  --poker-chip-light: #eee3fd;
+  --poker-chip-text: #f9f5fe;
+}
+
+.poker-chip-barrel--hundred,
+.poker-chip-barrel--black {
+  --poker-chip-edge: #1a1028;
+  --poker-chip-accent: #4b258f;
+  --poker-chip-clay: #4b258f;
+  --poker-chip-light: #d6c2ff;
+  --poker-chip-text: #fff3c9;
+}
+
+.poker-chip-barrel--five-hundred,
+.poker-chip-barrel--purple {
+  --poker-chip-edge: #2b133f;
+  --poker-chip-accent: #7d3ab6;
+  --poker-chip-clay: #7d3ab6;
+  --poker-chip-light: #eadcff;
+  --poker-chip-text: #fff7ff;
+}
+
+.poker-chip-barrel--thousand,
+.poker-chip-barrel--orange,
+.poker-chip-barrel--yellow {
+  --poker-chip-edge: #68410b;
+  --poker-chip-accent: #dfaa23;
+  --poker-chip-clay: #dfaa23;
+  --poker-chip-light: #fff4bc;
+  --poker-chip-text: #251505;
+}

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07110d">
+  <meta name="description" content="Три интерактивных префлоп-тренажёра FF: опен-рейзы, защита большого блайнда и рестилы.">
+  <title>FF · Префлоп-лаборатория</title>
+  <link rel="icon" href="assets/favicon.svg">
+  <link rel="stylesheet" href="hub.css">
+</head>
+<body>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="FF Префлоп-лаборатория — на главную">
+      <span class="brand-mark" aria-hidden="true">FF</span>
+      <span>
+        <strong>Префлоп-лаборатория</strong>
+        <small>Интерактивные уроки</small>
+      </span>
+    </a>
+    <a class="github-link" href="https://github.com/loremcdmx/ff-poker-learning-hub" target="_blank" rel="noreferrer">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.88c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.57 9.57 0 0 1 12 6.82a9.6 9.6 0 0 1 2.5.34c1.9-1.29 2.74-1.02 2.74-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.86v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+      GitHub
+    </a>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="page-title">
+      <p class="eyebrow"><span></span> Один маршрут · три навыка</p>
+      <h1 id="page-title">Префлоп становится<br><em>понятным в действии</em></h1>
+      <p class="hero-copy">Начни с открытия банка, научись защищать большой блайнд и закончи давлением рестилом. В каждом уроке — объяснение, диапазоны и практика.</p>
+      <div class="path-note" aria-label="Рекомендуемый порядок">
+        <span>Рекомендуемый порядок</span>
+        <strong>Опен → Защита BB → Рестил</strong>
+      </div>
+    </section>
+
+    <section class="trainer-grid" aria-label="Тренажёры">
+      <article class="trainer-card trainer-card-open">
+        <div class="card-topline">
+          <span class="step-number">01</span>
+          <span class="level">Старт</span>
+        </div>
+        <div class="card-symbol" aria-hidden="true">
+          <span class="position-dot position-ep">EP</span>
+          <span class="position-dot position-co">CO</span>
+          <span class="position-dot position-btn">BTN</span>
+        </div>
+        <h2>Опен-рейзы<br>по позициям</h2>
+        <p>Где открывать банк, как меняется диапазон от EP до BTN и что делать с пограничными руками.</p>
+        <ul aria-label="Содержание урока">
+          <li>5 позиций</li>
+          <li>диапазоны из методички</li>
+          <li>практика в симуляторе</li>
+        </ul>
+        <div class="card-actions">
+          <a class="primary-action" href="/open-raises">Начать урок <span aria-hidden="true">→</span></a>
+          <a class="source-action" href="https://github.com/loremcdmx/ff-poker-learning-hub/tree/main/assets/poker-rfi-open-lesson" target="_blank" rel="noreferrer" aria-label="Исходный код урока по опен-рейзам">Код</a>
+        </div>
+      </article>
+
+      <article class="trainer-card trainer-card-defense">
+        <div class="card-topline">
+          <span class="step-number">02</span>
+          <span class="level">Защита</span>
+        </div>
+        <div class="card-symbol shield-symbol" aria-hidden="true">
+          <span class="shield-ring"></span>
+          <strong>BB</strong>
+          <small>CALL</small>
+        </div>
+        <h2>Защита BB<br>коллом</h2>
+        <p>Как цена колла, позиция рейзера и сайзинг меняют границу защиты большого блайнда.</p>
+        <ul aria-label="Содержание урока">
+          <li>15 чартов</li>
+          <li>3 сайзинга</li>
+          <li>разбор границы</li>
+        </ul>
+        <div class="card-actions">
+          <a class="primary-action" href="/bb-defense">Начать урок <span aria-hidden="true">→</span></a>
+          <a class="source-action" href="https://github.com/loremcdmx/ff-poker-learning-hub/tree/main/assets/poker-bb-call-defense-lesson" target="_blank" rel="noreferrer" aria-label="Исходный код урока по защите большого блайнда">Код</a>
+        </div>
+      </article>
+
+      <article class="trainer-card trainer-card-resteal">
+        <div class="card-topline">
+          <span class="step-number">03</span>
+          <span class="level">Давление</span>
+        </div>
+        <div class="card-symbol resteal-symbol" aria-hidden="true">
+          <span class="arrow arrow-one">↗</span>
+          <span class="arrow arrow-two">↗</span>
+          <strong>ALL-IN</strong>
+        </div>
+        <h2>Рестилы<br>в коротких стеках</h2>
+        <p>Когда пуш после чужого опена печатает EV, а когда диапазон колла соперника ломает идею.</p>
+        <ul aria-label="Содержание урока">
+          <li>EV-математика</li>
+          <li>профили соперников</li>
+          <li>реальное поле</li>
+        </ul>
+        <div class="card-actions">
+          <a class="primary-action" href="/resteal">Начать урок <span aria-hidden="true">→</span></a>
+          <a class="source-action" href="https://github.com/loremcdmx/ff-poker-learning-hub/tree/main/assets/poker-resteal-lesson" target="_blank" rel="noreferrer" aria-label="Исходный код урока по рестилам">Код</a>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    <p>FF · Учебные инструменты для осмысленной практики</p>
+    <a href="https://github.com/loremcdmx/ff-poker-learning-hub" target="_blank" rel="noreferrer">Исходный код и данные</a>
+  </footer>
+</body>
+</html>

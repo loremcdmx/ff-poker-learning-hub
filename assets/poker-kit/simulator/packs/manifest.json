@@ -1,0 +1,40 @@
+{
+  "schema": "ff-poker-simulator-packs/v0",
+  "packs": {
+    "river-decisions": {
+      "name": "River decisions v0",
+      "stackDepths": [35, 50, 75],
+      "playableWeight": 0.64,
+      "spots": [
+        {
+          "key": "river-facing-pot",
+          "title": "River vs pot bet",
+          "heroPosition": "BB",
+          "activeVillain": 3,
+          "villainPosition": "BTN",
+          "startPot": 24,
+          "toCall": 18,
+          "canCheck": false,
+          "startStreet": "river",
+          "boardCards": 5,
+          "branch": ["BTN open 2.2 BB", "BB call", "Flop bet-call", "Turn check-check", "River BTN bet 18 BB"],
+          "prompt": "River: call или fold против крупной ставки"
+        },
+        {
+          "key": "river-thin-value",
+          "title": "River thin value",
+          "heroPosition": "BTN",
+          "activeVillain": 5,
+          "villainPosition": "BB",
+          "startPot": 18,
+          "toCall": 0,
+          "canCheck": true,
+          "startStreet": "river",
+          "boardCards": 5,
+          "branch": ["BTN open 2.2 BB", "BB call", "Flop check-check", "Turn bet-call", "River"],
+          "prompt": "River IP: thin value или check back"
+        }
+      ]
+    }
+  }
+}

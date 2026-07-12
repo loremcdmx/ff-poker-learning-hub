@@ -1,0 +1,9 @@
+Classic English-pattern card faces.
+
+Source collection:
+- https://commons.wikimedia.org/wiki/Category:SVG_English_pattern_playing_cards
+
+Downloaded as local SVG files so trainer pages do not fetch card faces during play.
+File keys use rank + suit:
+- ranks: A K Q J T 9 8 7 6 5 4 3 2
+- suits: h hearts, d diamonds, c clubs, s spades

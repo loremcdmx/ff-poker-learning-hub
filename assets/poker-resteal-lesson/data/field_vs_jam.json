@@ -1,0 +1,600 @@
+{
+  "meta": {
+    "deliverable": "field_vs_jam",
+    "description": "How the opener REACTS to a resteal jam (3bet all-in) from the blinds, by player type. continue = call or re-jam (villain already all-in).",
+    "window": "month_start_date 2026-01-01..2026-06-01",
+    "source_table": "analytics.int_tracker_hand_joined_for_opp_id + tracker_united_player_cats",
+    "spot": "opener's clean open (BTN/CO, is_rfi, raise<=3bb) that faced a 3bet sized 22..45x bb (proxy for 25-40bb resteal jam); preflop_effective_stack_size_bb 25..40.",
+    "value_convention": "fold_pct / continue_pct are FRACTIONS in [0,1].",
+    "positions": {
+      "0": "BTN",
+      "1": "CO"
+    }
+  },
+  "by_position_band": {
+    "aggro_fish": {
+      "BTN": {
+        "25-30": {
+          "n_faced": 2629,
+          "fold_pct": 0.6504,
+          "continue_pct": 0.3496
+        },
+        "30-35": {
+          "n_faced": 2185,
+          "fold_pct": 0.6641,
+          "continue_pct": 0.3359
+        },
+        "35-40": {
+          "n_faced": 1725,
+          "fold_pct": 0.6626,
+          "continue_pct": 0.3374
+        }
+      },
+      "CO": {
+        "25-30": {
+          "n_faced": 2257,
+          "fold_pct": 0.6101,
+          "continue_pct": 0.3899
+        },
+        "30-35": {
+          "n_faced": 2208,
+          "fold_pct": 0.6322,
+          "continue_pct": 0.3678
+        },
+        "35-40": {
+          "n_faced": 1912,
+          "fold_pct": 0.6323,
+          "continue_pct": 0.3677
+        }
+      }
+    },
+    "aggro_foldy": {
+      "BTN": {
+        "25-30": {
+          "n_faced": 7994,
+          "fold_pct": 0.8057,
+          "continue_pct": 0.1943
+        },
+        "30-35": {
+          "n_faced": 6367,
+          "fold_pct": 0.8362,
+          "continue_pct": 0.1638
+        },
+        "35-40": {
+          "n_faced": 4431,
+          "fold_pct": 0.8465,
+          "continue_pct": 0.1535
+        }
+      },
+      "CO": {
+        "25-30": {
+          "n_faced": 5235,
+          "fold_pct": 0.7727,
+          "continue_pct": 0.2273
+        },
+        "30-35": {
+          "n_faced": 4558,
+          "fold_pct": 0.7995,
+          "continue_pct": 0.2005
+        },
+        "35-40": {
+          "n_faced": 3692,
+          "fold_pct": 0.8142,
+          "continue_pct": 0.1858
+        }
+      }
+    },
+    "aggro_sticky": {
+      "BTN": {
+        "25-30": {
+          "n_faced": 2850,
+          "fold_pct": 0.7456,
+          "continue_pct": 0.2544
+        },
+        "30-35": {
+          "n_faced": 2410,
+          "fold_pct": 0.7656,
+          "continue_pct": 0.2344
+        },
+        "35-40": {
+          "n_faced": 1741,
+          "fold_pct": 0.7725,
+          "continue_pct": 0.2275
+        }
+      },
+      "CO": {
+        "25-30": {
+          "n_faced": 1941,
+          "fold_pct": 0.6883,
+          "continue_pct": 0.3117
+        },
+        "30-35": {
+          "n_faced": 1793,
+          "fold_pct": 0.715,
+          "continue_pct": 0.285
+        },
+        "35-40": {
+          "n_faced": 1523,
+          "fold_pct": 0.7321,
+          "continue_pct": 0.2679
+        }
+      }
+    },
+    "good_reg": {
+      "BTN": {
+        "25-30": {
+          "n_faced": 38862,
+          "fold_pct": 0.7973,
+          "continue_pct": 0.2027
+        },
+        "30-35": {
+          "n_faced": 29892,
+          "fold_pct": 0.8259,
+          "continue_pct": 0.1741
+        },
+        "35-40": {
+          "n_faced": 21810,
+          "fold_pct": 0.835,
+          "continue_pct": 0.165
+        }
+      },
+      "CO": {
+        "25-30": {
+          "n_faced": 26369,
+          "fold_pct": 0.7565,
+          "continue_pct": 0.2435
+        },
+        "30-35": {
+          "n_faced": 22581,
+          "fold_pct": 0.7857,
+          "continue_pct": 0.2143
+        },
+        "35-40": {
+          "n_faced": 18567,
+          "fold_pct": 0.7997,
+          "continue_pct": 0.2003
+        }
+      }
+    },
+    "mid_reg": {
+      "BTN": {
+        "25-30": {
+          "n_faced": 16862,
+          "fold_pct": 0.7695,
+          "continue_pct": 0.2305
+        },
+        "30-35": {
+          "n_faced": 12314,
+          "fold_pct": 0.7955,
+          "continue_pct": 0.2045
+        },
+        "35-40": {
+          "n_faced": 8877,
+          "fold_pct": 0.8013,
+          "continue_pct": 0.1987
+        }
+      },
+      "CO": {
+        "25-30": {
+          "n_faced": 12442,
+          "fold_pct": 0.7263,
+          "continue_pct": 0.2737
+        },
+        "30-35": {
+          "n_faced": 10270,
+          "fold_pct": 0.7595,
+          "continue_pct": 0.2405
+        },
+        "35-40": {
+          "n_faced": 8263,
+          "fold_pct": 0.7639,
+          "continue_pct": 0.2361
+        }
+      }
+    },
+    "nit": {
+      "BTN": {
+        "25-30": {
+          "n_faced": 456,
+          "fold_pct": 0.8158,
+          "continue_pct": 0.1842
+        },
+        "30-35": {
+          "n_faced": 364,
+          "fold_pct": 0.8187,
+          "continue_pct": 0.1813
+        },
+        "35-40": {
+          "n_faced": 240,
+          "fold_pct": 0.75,
+          "continue_pct": 0.25
+        }
+      },
+      "CO": {
+        "25-30": {
+          "n_faced": 375,
+          "fold_pct": 0.7413,
+          "continue_pct": 0.2587
+        },
+        "30-35": {
+          "n_faced": 326,
+          "fold_pct": 0.773,
+          "continue_pct": 0.227
+        },
+        "35-40": {
+          "n_faced": 260,
+          "fold_pct": 0.7731,
+          "continue_pct": 0.2269
+        }
+      }
+    },
+    "passive_fish": {
+      "BTN": {
+        "25-30": {
+          "n_faced": 615,
+          "fold_pct": 0.4943,
+          "continue_pct": 0.5057
+        },
+        "30-35": {
+          "n_faced": 452,
+          "fold_pct": 0.5288,
+          "continue_pct": 0.4712
+        },
+        "35-40": {
+          "n_faced": 348,
+          "fold_pct": 0.5517,
+          "continue_pct": 0.4483
+        }
+      },
+      "CO": {
+        "25-30": {
+          "n_faced": 588,
+          "fold_pct": 0.4575,
+          "continue_pct": 0.5425
+        },
+        "30-35": {
+          "n_faced": 511,
+          "fold_pct": 0.5108,
+          "continue_pct": 0.4892
+        },
+        "35-40": {
+          "n_faced": 443,
+          "fold_pct": 0.4921,
+          "continue_pct": 0.5079
+        }
+      }
+    },
+    "semipassive_fish": {
+      "BTN": {
+        "25-30": {
+          "n_faced": 14694,
+          "fold_pct": 0.634,
+          "continue_pct": 0.366
+        },
+        "30-35": {
+          "n_faced": 11646,
+          "fold_pct": 0.6598,
+          "continue_pct": 0.3402
+        },
+        "35-40": {
+          "n_faced": 8766,
+          "fold_pct": 0.6672,
+          "continue_pct": 0.3328
+        }
+      },
+      "CO": {
+        "25-30": {
+          "n_faced": 13243,
+          "fold_pct": 0.5987,
+          "continue_pct": 0.4013
+        },
+        "30-35": {
+          "n_faced": 11499,
+          "fold_pct": 0.6247,
+          "continue_pct": 0.3753
+        },
+        "35-40": {
+          "n_faced": 9813,
+          "fold_pct": 0.6286,
+          "continue_pct": 0.3714
+        }
+      }
+    },
+    "unknown": {
+      "BTN": {
+        "25-30": {
+          "n_faced": 490,
+          "fold_pct": 0.651,
+          "continue_pct": 0.349
+        },
+        "30-35": {
+          "n_faced": 380,
+          "fold_pct": 0.7053,
+          "continue_pct": 0.2947
+        },
+        "35-40": {
+          "n_faced": 253,
+          "fold_pct": 0.6759,
+          "continue_pct": 0.3241
+        }
+      },
+      "CO": {
+        "25-30": {
+          "n_faced": 418,
+          "fold_pct": 0.61,
+          "continue_pct": 0.39
+        },
+        "30-35": {
+          "n_faced": 367,
+          "fold_pct": 0.6839,
+          "continue_pct": 0.3161
+        },
+        "35-40": {
+          "n_faced": 285,
+          "fold_pct": 0.6667,
+          "continue_pct": 0.3333
+        }
+      }
+    },
+    "weak_reg": {
+      "BTN": {
+        "25-30": {
+          "n_faced": 11081,
+          "fold_pct": 0.7507,
+          "continue_pct": 0.2493
+        },
+        "30-35": {
+          "n_faced": 7982,
+          "fold_pct": 0.777,
+          "continue_pct": 0.223
+        },
+        "35-40": {
+          "n_faced": 5574,
+          "fold_pct": 0.7876,
+          "continue_pct": 0.2124
+        }
+      },
+      "CO": {
+        "25-30": {
+          "n_faced": 8664,
+          "fold_pct": 0.7238,
+          "continue_pct": 0.2762
+        },
+        "30-35": {
+          "n_faced": 6893,
+          "fold_pct": 0.7434,
+          "continue_pct": 0.2566
+        },
+        "35-40": {
+          "n_faced": 5436,
+          "fold_pct": 0.7456,
+          "continue_pct": 0.2544
+        }
+      }
+    }
+  },
+  "by_band": {
+    "aggro_fish": {
+      "25-30": {
+        "n_faced": 4886,
+        "fold_pct": 0.6318,
+        "continue_pct": 0.3682
+      },
+      "30-35": {
+        "n_faced": 4393,
+        "fold_pct": 0.6481,
+        "continue_pct": 0.3519
+      },
+      "35-40": {
+        "n_faced": 3637,
+        "fold_pct": 0.6467,
+        "continue_pct": 0.3533
+      }
+    },
+    "aggro_foldy": {
+      "25-30": {
+        "n_faced": 13229,
+        "fold_pct": 0.7927,
+        "continue_pct": 0.2073
+      },
+      "30-35": {
+        "n_faced": 10925,
+        "fold_pct": 0.8209,
+        "continue_pct": 0.1791
+      },
+      "35-40": {
+        "n_faced": 8123,
+        "fold_pct": 0.8318,
+        "continue_pct": 0.1682
+      }
+    },
+    "aggro_sticky": {
+      "25-30": {
+        "n_faced": 4791,
+        "fold_pct": 0.7224,
+        "continue_pct": 0.2776
+      },
+      "30-35": {
+        "n_faced": 4203,
+        "fold_pct": 0.744,
+        "continue_pct": 0.256
+      },
+      "35-40": {
+        "n_faced": 3264,
+        "fold_pct": 0.7537,
+        "continue_pct": 0.2463
+      }
+    },
+    "good_reg": {
+      "25-30": {
+        "n_faced": 65231,
+        "fold_pct": 0.7808,
+        "continue_pct": 0.2192
+      },
+      "30-35": {
+        "n_faced": 52473,
+        "fold_pct": 0.8086,
+        "continue_pct": 0.1914
+      },
+      "35-40": {
+        "n_faced": 40377,
+        "fold_pct": 0.8188,
+        "continue_pct": 0.1812
+      }
+    },
+    "mid_reg": {
+      "25-30": {
+        "n_faced": 29304,
+        "fold_pct": 0.7512,
+        "continue_pct": 0.2488
+      },
+      "30-35": {
+        "n_faced": 22584,
+        "fold_pct": 0.7791,
+        "continue_pct": 0.2209
+      },
+      "35-40": {
+        "n_faced": 17140,
+        "fold_pct": 0.7833,
+        "continue_pct": 0.2167
+      }
+    },
+    "nit": {
+      "25-30": {
+        "n_faced": 831,
+        "fold_pct": 0.7822,
+        "continue_pct": 0.2178
+      },
+      "30-35": {
+        "n_faced": 690,
+        "fold_pct": 0.7971,
+        "continue_pct": 0.2029
+      },
+      "35-40": {
+        "n_faced": 500,
+        "fold_pct": 0.762,
+        "continue_pct": 0.238
+      }
+    },
+    "passive_fish": {
+      "25-30": {
+        "n_faced": 1203,
+        "fold_pct": 0.4763,
+        "continue_pct": 0.5237
+      },
+      "30-35": {
+        "n_faced": 963,
+        "fold_pct": 0.5192,
+        "continue_pct": 0.4808
+      },
+      "35-40": {
+        "n_faced": 791,
+        "fold_pct": 0.5183,
+        "continue_pct": 0.4817
+      }
+    },
+    "semipassive_fish": {
+      "25-30": {
+        "n_faced": 27937,
+        "fold_pct": 0.6173,
+        "continue_pct": 0.3827
+      },
+      "30-35": {
+        "n_faced": 23145,
+        "fold_pct": 0.6423,
+        "continue_pct": 0.3577
+      },
+      "35-40": {
+        "n_faced": 18579,
+        "fold_pct": 0.6468,
+        "continue_pct": 0.3532
+      }
+    },
+    "unknown": {
+      "25-30": {
+        "n_faced": 908,
+        "fold_pct": 0.6322,
+        "continue_pct": 0.3678
+      },
+      "30-35": {
+        "n_faced": 747,
+        "fold_pct": 0.6948,
+        "continue_pct": 0.3052
+      },
+      "35-40": {
+        "n_faced": 538,
+        "fold_pct": 0.671,
+        "continue_pct": 0.329
+      }
+    },
+    "weak_reg": {
+      "25-30": {
+        "n_faced": 19745,
+        "fold_pct": 0.7389,
+        "continue_pct": 0.2611
+      },
+      "30-35": {
+        "n_faced": 14875,
+        "fold_pct": 0.7614,
+        "continue_pct": 0.2386
+      },
+      "35-40": {
+        "n_faced": 11010,
+        "fold_pct": 0.7668,
+        "continue_pct": 0.2332
+      }
+    }
+  },
+  "pooled": {
+    "aggro_fish": {
+      "n_faced": 12916,
+      "fold_pct": 0.6415,
+      "continue_pct": 0.3585
+    },
+    "aggro_foldy": {
+      "n_faced": 32277,
+      "fold_pct": 0.8121,
+      "continue_pct": 0.1879
+    },
+    "aggro_sticky": {
+      "n_faced": 12258,
+      "fold_pct": 0.7381,
+      "continue_pct": 0.2619
+    },
+    "good_reg": {
+      "n_faced": 158081,
+      "fold_pct": 0.7997,
+      "continue_pct": 0.2003
+    },
+    "mid_reg": {
+      "n_faced": 69028,
+      "fold_pct": 0.7683,
+      "continue_pct": 0.2317
+    },
+    "nit": {
+      "n_faced": 2021,
+      "fold_pct": 0.7823,
+      "continue_pct": 0.2177
+    },
+    "passive_fish": {
+      "n_faced": 2957,
+      "fold_pct": 0.5015,
+      "continue_pct": 0.4985
+    },
+    "semipassive_fish": {
+      "n_faced": 69661,
+      "fold_pct": 0.6335,
+      "continue_pct": 0.3665
+    },
+    "unknown": {
+      "n_faced": 2193,
+      "fold_pct": 0.663,
+      "continue_pct": 0.337
+    },
+    "weak_reg": {
+      "n_faced": 45630,
+      "fold_pct": 0.753,
+      "continue_pct": 0.247
+    }
+  }
+}
