@@ -1,7 +1,24 @@
 (function () {
   "use strict";
 
-  const VERSION = "ffstart-legacy-media-v3";
+  const VERSION = "ffstart-legacy-media-v5";
+
+  function playbackItems(lessonId, items) {
+    const standardPlayback = lessonId === "rfi-open-position" || lessonId === "bb-call-defense";
+    const directVideo = lessonId === "bb-call-defense";
+    if (!standardPlayback && !directVideo) return items;
+    return items.map(function (item) {
+      if (!item || typeof item !== "object" || !item.learning) return item;
+      return {
+        ...item,
+        ...(directVideo && item.videoUrl ? { embedUrl: "" } : {}),
+        learning: {
+          ...item.learning,
+          playback: "standard"
+        }
+      };
+    });
+  }
 
   function openPractice(lessonId) {
     const selector = lessonId === "rfi-open-position"
@@ -25,7 +42,7 @@
       if (!items.length) return;
 
       const player = mediaApi.mount(host, {
-        items,
+        items: playbackItems(lessonId, items),
         heading: items.length > 1 ? "Разборы этого урока" : "Посмотри полный разбор",
         body: host.dataset.ffstartMediaHeaderCopy === "none" ? false : undefined,
         practiceTarget: "practice",

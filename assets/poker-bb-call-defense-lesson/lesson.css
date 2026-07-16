@@ -3270,3 +3270,8 @@
     font-size: 0.64rem;
   }
 }
+
+/* Keep the BB-call video screen focused on the recording itself. */
+.bb-call-lesson [data-media-learning] {
+  display: none;
+}

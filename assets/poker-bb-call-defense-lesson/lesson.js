@@ -929,7 +929,7 @@
         '<h4>Нужно реализовать минимум ' + fmt(minimum, 1) + '% сырого эквити</h4>' +
       '</div>' +
       '<div class="realization-metric-stack"><div class="realization-bars deep-realization-bars">' +
-        '<div><span>Шоудаун-эквити</span><i><b style="width:' + String(clampPercent(model.rawEquityPct)) + '%"></b></i><strong>' + fmt(model.rawEquityPct, 1) + '%</strong></div>' +
+        '<div><span>Эквити</span><i><b style="width:' + String(clampPercent(model.rawEquityPct)) + '%"></b></i><strong>' + fmt(model.rawEquityPct, 1) + '%</strong></div>' +
         '<div class="is-price"><span>Цена колла</span><i><b style="width:' + String(clampPercent(size.potOddsPct)) + '%"></b></i><strong>' + fmt(size.potOddsPct, 1) + '%</strong></div>' +
         '<div class="is-required"><span>Нужно реализовать</span><i><b style="width:' + String(clampPercent(minimum)) + '%"></b></i><strong>' + fmt(minimum, 1) + '%</strong></div>' +
       '</div>' + renderFfRealization(model, position, size) + '</div>';

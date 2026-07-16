@@ -205,3 +205,36 @@
 @media (min-width:801px) and (max-width:1120px){
   .rfi-open-lesson:has(.screen[data-screen="ranges"].active) .lesson-brand>.eyebrow{display:none}
 }
+
+/* Keep the RFI video screen focused on the recordings and current chart. */
+.rfi-open-lesson [data-media-learning]{display:none}
+
+/* Stack-aware RFI chart and observed FF field layer. */
+.rfi-open-lesson .stack-tabs{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-bottom:7px;padding:5px;border:1px solid var(--line);border-radius:14px;background:rgba(8,6,11,.54)}
+.rfi-open-lesson .stack-tabs button{display:grid;gap:1px;min-width:0;min-height:42px;padding:6px 4px;border:1px solid transparent;border-radius:9px;color:var(--muted);background:transparent}
+.rfi-open-lesson .stack-tabs button strong{color:inherit;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rfi-open-lesson .stack-tabs button small{overflow:hidden;color:inherit;font-size:8px;line-height:1.1;text-overflow:ellipsis;white-space:nowrap;opacity:.72}
+.rfi-open-lesson .stack-tabs button.active{border-color:rgba(255,223,81,.58);color:#151017;background:linear-gradient(180deg,#ffe982,var(--brand-yellow));box-shadow:0 7px 20px rgba(255,223,81,.12)}
+.rfi-open-lesson .matrix .matrix-cell.shove{border-color:#ff9dac;background:linear-gradient(145deg,#ff4f69,#b71845);color:#fff7f8;font-weight:900;text-shadow:0 1px 1px rgba(68,0,15,.62);box-shadow:inset 0 1px rgba(255,255,255,.28),0 3px 10px rgba(213,31,77,.22)}
+.rfi-open-lesson .matrix .matrix-cell.shove.pair{background:linear-gradient(145deg,#ff6f78,#c6204c)}
+.rfi-open-lesson .matrix-key .key-shove i{background:linear-gradient(145deg,#ff4f69,#b71845)}
+.rfi-open-lesson .matrix-key .key-fold i{border-color:var(--chart-cell-border);background:#151219}
+.rfi-open-lesson .stack-field{position:relative;align-self:start;overflow:hidden;background:radial-gradient(circle at 100% 0,rgba(255,73,108,.18),transparent 43%),linear-gradient(145deg,rgba(255,255,255,.035),transparent 52%),var(--panel)}
+.rfi-open-lesson .stack-field h2{margin:5px 0 8px;font-size:27px;line-height:1.05}
+.rfi-open-lesson .stack-field-intro{margin:0 0 14px;font-size:13px}
+.rfi-open-lesson .field-league-list{display:grid;gap:8px}
+.rfi-open-lesson .field-league-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:rgba(8,6,11,.48)}
+.rfi-open-lesson .field-league-row>div{display:grid;gap:1px}.rfi-open-lesson .field-league-row span{font-size:12px;font-weight:850}.rfi-open-lesson .field-league-row small{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+.rfi-open-lesson .field-league-row strong{color:#ff8799;font-size:22px;line-height:1;font-variant-numeric:tabular-nums}
+.rfi-open-lesson .field-league-row i{grid-column:1/-1;height:5px;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.07)}
+.rfi-open-lesson .field-league-row i b{display:block;width:var(--field-rate);height:100%;border-radius:inherit;background:linear-gradient(90deg,#9f1740,#ff5e76)}
+.rfi-open-lesson .field-league-row em{grid-column:1/-1;color:var(--muted);font-size:9px;font-style:normal;font-variant-numeric:tabular-nums}
+.rfi-open-lesson .stack-field .source-note{margin:12px 0 0;font-size:10px;line-height:1.4}
+@media (min-width:801px){
+  .rfi-open-lesson .screen[data-screen="ranges"].active #rangeMatrix{inline-size:clamp(300px,calc(100svh - 397px),100%)}
+}
+@media (max-width:800px){
+  .rfi-open-lesson .stack-tabs{display:flex;overflow-x:auto;scroll-snap-type:x proximity}
+  .rfi-open-lesson .stack-tabs button{flex:0 0 86px;scroll-snap-align:start}
+  .rfi-open-lesson .stack-field{margin-top:14px;padding:16px!important}
+}

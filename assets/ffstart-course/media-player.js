@@ -2,7 +2,7 @@
   "use strict";
 
   const rootScope = typeof window !== "undefined" ? window : globalThis;
-  const VERSION = "ffstart-media-player-v5";
+  const VERSION = "ffstart-media-player-v6";
   const instances = new WeakMap();
   const transcriptCache = new Map();
   const captionChunkCache = new WeakMap();
@@ -180,7 +180,7 @@
       : "";
     const video = item.embedUrl
       ? `<iframe src="${escapeHtml(item.embedUrl)}" title="${escapeHtml(item.title)}" loading="lazy" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"${guided ? ' tabindex="-1"' : ""} data-media-vimeo></iframe>`
-      : `<video controls playsinline preload="none"${item.posterUrl ? ` poster="${escapeHtml(item.posterUrl)}"` : ""} data-media-video><source src="${escapeHtml(item.videoUrl)}" type="video/mp4">${captions}Ваш браузер не поддерживает видео.</video>`;
+      : `<video controls playsinline preload="metadata"${item.posterUrl ? ` poster="${escapeHtml(item.posterUrl)}"` : ""} data-media-video><source src="${escapeHtml(item.videoUrl)}" type="video/mp4">${captions}Ваш браузер не поддерживает видео.</video>`;
     const liveCaptions = item.transcriptUrl
       ? '<p class="ffstart-media-live-caption" data-media-live-caption hidden></p>'
       : "";
