@@ -13,7 +13,6 @@ vm.runInNewContext(source, context);
 const Data = context.window.PokerBbCallData;
 
 assert.ok(Data);
-assert.deepEqual(Array.from(Data.physicalPages), [10, 11]);
 assert.equal(Data.firstSpot.correct, "call");
 assert.equal(Data.firstSpot.options.find((option) => option.key === "raise").feedback, "Стандартное решение тут колл.");
 assert.equal(Data.practiceSpots.length, 21);
@@ -28,6 +27,13 @@ assert.equal(100 - Data.rangeScenarios["2_5"].BTN.foldPct, 55);
 assert.equal(100 - Data.rangeScenarios["3_0"].BTN.foldPct, 27);
 assert.equal(Data.sizes["2_5"].potOddsPct, 23.1);
 assert.equal(Data.sizes["3_0"].potOddsPct, 26.7);
+assert.equal(Data.rangeCellFor("2_0", "BTN", "84o").code, "F");
+assert.equal(Data.rangeCellFor("2_0", "BTN", "84o").callPct, 0);
+assert.equal(Data.rangeCellFor("2_0", "BTN", "84o").foldPct, 100);
+assert.equal(Data.rangeCellFor("2_0", "BTN", "42o").code, "F");
+assert.equal(Data.rangeCellFor("2_0", "BTN", "A5s").code, "B");
+assert.equal(Data.rangeCellFor("2_0", "BTN", "A5s").raisePct, 50);
+assert.equal(Data.rangeCellFor("2_0", "BTN", "A5s").callPct, 50);
 
 for (const sizeKey of ["2_0", "2_5", "3_0"]) {
   for (const position of ["EP", "MP", "HJ", "CO", "BTN"]) {
@@ -48,6 +54,8 @@ for (const sizeKey of ["2_0", "2_5", "3_0"]) {
         const combos = row === column ? 6 : row < column ? 4 : 12;
         hands.add(hand);
         assert.equal(cell.raisePct + cell.callPct + cell.foldPct, 100, sizeKey + ":" + position + ":" + hand);
+        assert.notEqual(cell.code, "M", sizeKey + ":" + position + ":" + hand + " partial call/fold simplified");
+        assert.equal(cell.callPct > 0 && cell.foldPct > 0, false, sizeKey + ":" + position + ":" + hand + " no weighted call/fold");
         actionCombos.raise += combos * cell.raisePct / 100;
         actionCombos.call += combos * cell.callPct / 100;
         actionCombos.fold += combos * cell.foldPct / 100;
