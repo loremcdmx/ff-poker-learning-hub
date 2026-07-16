@@ -56,7 +56,7 @@
     ]
   });
 
-  const practice = [
+  const fallbackPractice = [
     spot({
       id: "practice-aa-hj-vs-co", title: "Натсовая часть", hand: "AA", cards: ["As", "Ad"], heroPosition: "HJ", stack: 50,
       pot: 1, toCall: 5.3, currentBet: 7.5,
@@ -103,6 +103,283 @@
       ]
     })
   ];
+
+  const rangeModel = window.FF_VS3BET_RANGE_MODEL || null;
+  const continuationRegistry = window.FF_VS3BET_CONTINUATIONS || null;
+  const generatedSelections = new Map();
+  const generatedSeatOrder = ["UTG", "MP", "HJ", "CO", "BTN", "SB", "BB"];
+  const actionLabels = {
+    fold: "Пас",
+    call: "Колл",
+    fourbet: "4-бет",
+    jam: "4-бет пуш"
+  };
+  const actionPriority = ["jam", "fourbet", "call", "fold"];
+
+  const openCandidateHands = {
+    EP: "AA KK QQ JJ TT 99 88 77 66 55 44 33 22 AKs AQs AJs ATs A9s A8s A7s A6s A5s A4s A3s A2s KQs KJs KTs QJs QTs JTs T9s 98s 87s 76s 65s 54s AKo AQo KQo",
+    MP: "AA KK QQ JJ TT 99 88 77 66 55 44 33 22 AKs AQs AJs ATs A9s A8s A7s A6s A5s A4s A3s A2s KQs KJs KTs K9s QJs QTs Q9s JTs J9s T9s 98s 87s 76s 65s 54s AKo AQo AJo KQo",
+    HJ: "AA KK QQ JJ TT 99 88 77 66 55 44 33 22 AKs AQs AJs ATs A9s A8s A7s A6s A5s A4s A3s A2s KQs KJs KTs K9s K8s QJs QTs Q9s Q8s JTs J9s J8s T9s T8s 98s 97s 87s 86s 76s 65s 54s AKo AQo AJo ATo KQo KJo QJo",
+    CO: "AA KK QQ JJ TT 99 88 77 66 55 44 33 22 AKs AQs AJs ATs A9s A8s A7s A6s A5s A4s A3s A2s KQs KJs KTs K9s K8s K7s K6s QJs QTs Q9s Q8s Q7s JTs J9s J8s J7s T9s T8s T7s 98s 97s 96s 87s 86s 76s 75s 65s 64s 54s AKo AQo AJo ATo KQo KJo KTo QJo QTo JTo",
+    BTN: "AA KK QQ JJ TT 99 88 77 66 55 44 33 22 AKs AQs AJs ATs A9s A8s A7s A6s A5s A4s A3s A2s KQs KJs KTs K9s K8s K7s K6s K5s QJs QTs Q9s Q8s Q7s Q6s JTs J9s J8s J7s J6s T9s T8s T7s T6s 98s 97s 96s 87s 86s 85s 76s 75s 65s 64s 54s AKo AQo AJo ATo A9o KQo KJo KTo QJo QTo JTo",
+    SB: "AA KK QQ JJ TT 99 88 77 66 55 44 33 22 AKs AQs AJs ATs A9s A8s A7s A6s A5s A4s A3s A2s KQs KJs KTs K9s K8s K7s K6s K5s QJs QTs Q9s Q8s Q7s Q6s JTs J9s J8s J7s J6s T9s T8s T7s T6s 98s 97s 96s 87s 86s 85s 76s 75s 65s 64s 54s AKo AQo AJo ATo A9o KQo KJo KTo QJo QTo JTo"
+  };
+
+  const actionCandidates = {
+    fold: "KQo AJo ATo KJo QJo JTo KTo QTo K6s Q7s J7s T7s 97s 86s 76s 65s 54s 44 33 22",
+    call: "AJs KQs JJ TT 99 88 QJs JTs T9s 98s 87s 76s 65s 54s A5s KTs",
+    fourbet: "AKo AKs QQ KK AA AQo AQs JJ TT A5s",
+    jam: "AKo AKs QQ KK AA JJ TT AQs A5s"
+  };
+
+  function splitHands(value) {
+    return String(value || "").trim().split(/\s+/).filter(Boolean);
+  }
+
+  function unique(values) {
+    return values.filter((value, index, rows) => rows.indexOf(value) === index);
+  }
+
+  function parsePracticeId(id) {
+    const match = /^vs3-(ep|mp|hj|co|btn|sb)-(ip|oop)-(20_30|31_50|51_80|80_plus)-(2_5|3|4)x-v([12])$/.exec(String(id || ""));
+    if (!match) throw new Error(`Unexpected vs3 practice id: ${id}`);
+    const stackBySlug = { "20_30": "20-30", "31_50": "31-50", "51_80": "51-80", "80_plus": "80+" };
+    return {
+      id,
+      position: match[1].toUpperCase(),
+      relation: match[2].toUpperCase(),
+      stack: stackBySlug[match[3]],
+      size: Number(match[4].replace("_", ".")),
+      variant: Number(match[5])
+    };
+  }
+
+  function handClass(hand) {
+    if (hand.length === 2) return "pair";
+    if (hand.startsWith("A") && hand.endsWith("s")) return "suited-ace";
+    if (hand.endsWith("o")) return "offsuit";
+    if (/^[AKQJ][AKQJT]/.test(hand)) return "suited-broadway";
+    const ranks = rangeModel?.ranks || ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"];
+    const gap = Math.abs(ranks.indexOf(hand[0]) - ranks.indexOf(hand[1]));
+    return gap <= 2 ? "suited-connector" : "other-suited";
+  }
+
+  function dominantAction(cell) {
+    return actionPriority.reduce((best, action) => (
+      Number(cell?.[action] || 0) > Number(cell?.[best] || 0) ? action : best
+    ), "fold");
+  }
+
+  function rotated(values, offset) {
+    if (!values.length) return values;
+    const start = Math.abs(offset) % values.length;
+    return [...values.slice(start), ...values.slice(0, start)];
+  }
+
+  function choosePracticeHand(config, scenario, comboIndex) {
+    const comboKey = `${config.position}:${config.relation}:${config.stack}:${config.size}`;
+    const prior = generatedSelections.get(comboKey) || null;
+    if (config.id === "vs3-btn-ip-51_80-4x-v1") {
+      const forced = {
+        hand: "AJs",
+        action: dominantAction(scenario.cells.AJs),
+        className: handClass("AJs")
+      };
+      generatedSelections.set(comboKey, forced);
+      return forced;
+    }
+
+    const actionOrder = config.stack === "20-30"
+      ? ["jam", "call", "fold", "fourbet"]
+      : ["call", "fourbet", "fold"];
+    const preferredIndex = (comboIndex + config.variant - 1) % actionOrder.length;
+    const preferredActions = rotated(actionOrder, preferredIndex);
+    const openPool = splitHands(openCandidateHands[config.position]);
+
+    function candidates(action, minimum) {
+      const ordered = unique([...splitHands(actionCandidates[action]), ...openPool])
+        .filter((hand) => openPool.includes(hand) && scenario.cells[hand])
+        .filter((hand) => dominantAction(scenario.cells[hand]) === action)
+        .filter((hand) => Number(scenario.cells[hand][action]) >= minimum)
+        .filter((hand) => !prior || hand !== prior.hand);
+      const diverse = prior ? ordered.filter((hand) => handClass(hand) !== prior.className) : ordered;
+      return rotated(diverse.length ? diverse : ordered, comboIndex + config.variant);
+    }
+
+    for (const minimum of [60, 55, 50]) {
+      for (const action of preferredActions) {
+        const candidate = candidates(action, minimum)[0];
+        if (!candidate) continue;
+        const selected = { hand: candidate, action, className: handClass(candidate) };
+        generatedSelections.set(comboKey, selected);
+        return selected;
+      }
+    }
+
+    const fallback = openPool.find((hand) => (
+      scenario.cells[hand]
+      && (!prior || (hand !== prior.hand && handClass(hand) !== prior.className))
+    )) || openPool.find((hand) => hand !== prior?.hand) || "AA";
+    const selected = {
+      hand: fallback,
+      action: dominantAction(scenario.cells[fallback]),
+      className: handClass(fallback)
+    };
+    generatedSelections.set(comboKey, selected);
+    return selected;
+  }
+
+  function cardsForHand(hand) {
+    if (hand.length === 2) return [`${hand[0]}c`, `${hand[1]}h`];
+    if (hand.endsWith("s")) return [`${hand[0]}h`, `${hand[1]}h`];
+    return [`${hand[0]}s`, `${hand[1]}h`];
+  }
+
+  function heroTablePosition(position) {
+    return position === "EP" ? "UTG" : position;
+  }
+
+  function villainTablePosition(position, relation) {
+    if (relation === "IP") return "SB";
+    return { EP: "HJ", MP: "CO", HJ: "BTN", CO: "BTN", SB: "BB" }[position] || "BTN";
+  }
+
+  function generatedSeats(heroPosition, villainPosition, stackBb) {
+    return generatedSeatOrder.map((label) => ({
+      label,
+      state: label === heroPosition
+        ? "hero"
+        : label === villainPosition
+          ? (/SB|BB/.test(label) ? "blind" : "waiting")
+          : "folded",
+      stackBb
+    }));
+  }
+
+  function roundOne(value) {
+    return Math.round((Number(value) + Number.EPSILON) * 10) / 10;
+  }
+
+  function formatBb(value) {
+    return String(roundOne(value)).replace(".", ",");
+  }
+
+  function formatFrequency(value) {
+    const rounded = Math.round(Number(value || 0) * 10) / 10;
+    return `${String(rounded).replace(".", ",")}%`;
+  }
+
+  function feedbackFor(action, correctAction, cell, config) {
+    const selected = actionLabels[action];
+    const correct = actionLabels[correctAction];
+    if (action === correctAction) {
+      const relationCopy = config.relation === "IP"
+        ? "Позиция помогает реализовать equity."
+        : "Без позиции граница продолжения уже строже.";
+      return `Верно: ${selected.toLowerCase()} — главная учебная линия (${formatFrequency(cell[action])}). ${relationCopy}`;
+    }
+    return `${selected} получает ${formatFrequency(cell[action])}; главная линия здесь — ${correct.toLowerCase()} (${formatFrequency(cell[correctAction])}).`;
+  }
+
+  function generatedSpot(config, comboIndex) {
+    const scenario = rangeModel.scenario({
+      position: config.position,
+      relation: config.relation,
+      stack: config.stack,
+      size: config.size,
+      cohort: "reference"
+    });
+    const selected = choosePracticeHand(config, scenario, comboIndex);
+    const cell = scenario.cells[selected.hand];
+    const correctAction = dominantAction(cell);
+    const stack = rangeModel.stacks.find((item) => item.key === config.stack);
+    const stackBb = Number(stack?.sampleBb || 40);
+    const heroPosition = heroTablePosition(config.position);
+    const villainPosition = villainTablePosition(config.position, config.relation);
+    const openTo = 2;
+    const threeBetTo = roundOne(openTo * config.size);
+    const toCall = roundOne(threeBetTo - openTo);
+    const fourBetTo = roundOne(Math.min(stackBb - 1, Math.max(threeBetTo + 2, threeBetTo * (config.relation === "IP" ? 2.15 : 2.25))));
+    const continuation = continuationRegistry?.getContinuation?.(config.id) || null;
+    const heroCards = continuation?.nodes?.[continuation.start]?.table?.heroCards?.slice() || cardsForHand(selected.hand);
+    const relationLabel = config.relation === "IP" ? "в позиции" : "без позиции";
+    const options = [
+      { key: "fold", label: "Пас" },
+      { key: "call", label: `Колл +${formatBb(toCall)} BB` },
+      { key: "fourbet", label: `4-бет до ${formatBb(fourBetTo)} BB` },
+      { key: "jam", label: `Олл-ин ${formatBb(stackBb)} BB` }
+    ].map((option) => ({
+      ...option,
+      correct: option.key === correctAction,
+      feedback: feedbackFor(option.key, correctAction, cell, config)
+    }));
+    const practiceMeta = {
+      family: "vs3bet-defense",
+      position: config.position,
+      heroPosition,
+      villainPosition,
+      relation: config.relation,
+      relationLabel,
+      stackBucket: config.stack,
+      effectiveStackBb: stackBb,
+      threeBetSize: config.size,
+      openToBb: openTo,
+      threeBetToBb: threeBetTo,
+      cohort: "reference",
+      availableCohorts: rangeModel.cohorts.map((cohort) => cohort.key),
+      hand: selected.hand,
+      handClass: selected.className,
+      variant: config.variant,
+      actions: { ...cell },
+      correctAction,
+      sourceStatus: "exact-baseline-plus-transparent-heuristics"
+    };
+
+    return {
+      id: config.id,
+      title: `${config.position} ${relationLabel} · ${selected.hand}`,
+      hand: selected.hand,
+      question: `${config.position} открыл ${formatBb(openTo)} BB с ${selected.hand}. ${villainPosition} сделал 3-бет ${String(config.size).replace(".", ",")}x до ${formatBb(threeBetTo)} BB. Стек ${stack?.label || config.stack}. Твоя линия?`,
+      answer: `${actionLabels[correctAction]} — главная учебная линия (${formatFrequency(cell[correctAction])}). Точная позиционная матрица дополнена явно эвристическими фильтрами IP/OOP, стека и сайза.`,
+      context: "Сначала назови позицию, цену колла и эффективный стек. Результат не является solver-output или фактической hand-level частотой лиги.",
+      practiceMeta,
+      metadata: { rangeModel: practiceMeta },
+      table: {
+        seats: generatedSeats(heroPosition, villainPosition, stackBb),
+        heroPosition,
+        heroStack: `${stackBb} BB`,
+        effectiveStack: `${stackBb} BB`,
+        pot: "1 BB",
+        anteBb: 1,
+        heroCards,
+        boardCards: [],
+        street: "preflop",
+        actionLine: [`${heroPosition} open ${formatBb(openTo)} BB`, `${villainPosition} raise to ${formatBb(threeBetTo)} BB`],
+        historyLine: `${heroPosition} открыл ${formatBb(openTo)} BB · ${villainPosition} 3-бет ${String(config.size).replace(".", ",")}x · ${relationLabel}`,
+        toCall,
+        currentBet: threeBetTo,
+        dealerPosition: "BTN"
+      },
+      options,
+      ...(continuation ? { continuation } : {})
+    };
+  }
+
+  function generatePractice() {
+    if (!rangeModel || typeof rangeModel.scenario !== "function" || typeof rangeModel.practiceSpotIds !== "function") {
+      return fallbackPractice;
+    }
+    return rangeModel.practiceSpotIds().map((id, index) => generatedSpot(parsePracticeId(id), Math.floor(index / 2)));
+  }
+
+  const practice = generatePractice();
+  const practiceModes = [{
+    key: "filtered",
+    label: rangeModel ? "Вся сетка" : "Базовые примеры",
+    description: rangeModel ? "Выбери позицию, IP/OOP, стек и размер 3-бета." : "Резервный набор без загруженной матрицы.",
+    reference: rangeModel ? "Правильные ответы следуют слою «Методичка»; слои лиг нужны для сравнения ошибок." : "",
+    spotIds: practice.map((item) => item.id)
+  }];
 
   window.FF_POKER_FIELD_LESSON_DATA = {
     schemaVersion: 1,
@@ -184,6 +461,13 @@
         ]
       }
     ],
-    practice
+    practice,
+    practiceModes,
+    rangeModel: {
+      schemaVersion: rangeModel?.schemaVersion || 0,
+      status: rangeModel ? "ready" : "fallback",
+      practiceSpots: practice.length,
+      sourceBoundary: "Точные позиции из методички; IP/OOP, стек, сайз и hand-level слои лиг — прозрачные учебные адаптации."
+    }
   };
 })();

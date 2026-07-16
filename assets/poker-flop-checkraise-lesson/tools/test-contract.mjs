@@ -323,7 +323,7 @@ assert.doesNotMatch(html, /Функциональный snapshot|T♥9♥ до s
 assert.match(html, /6d0a6c0374a4/);
 assert.match(html, /ca84428f46bf/);
 assert.match(html, /d87ccb300d60/);
-assert.match(html, /31d437b2c932/);
+assert.match(html, /98c6cd491c82/);
 assert.match(html, /data-structure-league-matrix/);
 assert.match(html, /field-matrix\.css\?v=20260716-structures-1/);
 assert.match(html, /field-matrix\.js\?v=20260716-structures-1/);

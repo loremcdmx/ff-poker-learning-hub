@@ -63,7 +63,11 @@
    *   options: [{ key, label, correct, feedback, acceptableExploit? }],
    *   continuation?: {
    *     schemaVersion: 1, start,
-   *     nodes: { [id]: FULL_SNAPSHOT_NODE | TERMINAL_SHOWDOWN_NODE }
+   *     nodes: { [id]: FULL_SNAPSHOT_NODE | TERMINAL_SHOWDOWN_NODE },
+   *     ui?: {
+   *       launchLabel, coachEyebrow, coachTitle, coachCopy,
+   *       completeEyebrow, completeTitle, completeCopy
+   *     }
    *   }
    * }
    *
@@ -1310,11 +1314,13 @@
     if ($("[data-practice-next-external]") || !host || !spot?.continuation || !state.practiceAnswered) return;
     const controls = host.querySelector(".client-controls");
     if (!controls) return;
+    const continuationUi = asObject(spot.continuation.ui);
     const row = makeElement("div", "practice-next-row continuation-launch-row");
     const launch = makeElement(
       "button",
       "practice-next-button continuation-launch-button",
-      state.practiceChoice === "checkraise" ? "Доиграть до showdown" : "Разобрать X/R-ветку до showdown"
+      continuationUi.launchLabel
+        || (state.practiceChoice === "checkraise" ? "Доиграть до showdown" : "Разобрать X/R-ветку до showdown")
     );
     launch.type = "button";
     launch.dataset.practiceContinuation = "";
@@ -1373,6 +1379,8 @@
     state.practiceContinuationActive = true;
     renderPracticeControls();
     const coach = $("[data-practice-feedback]");
+    const continuationUi = asObject(spot.continuation.ui);
+    const hasContinuationUi = Object.keys(continuationUi).length > 0;
     const compact = Boolean(asObject(data.practicePresentation).compactFeedback);
     const chosen = optionFor(spot, state.practiceChoice);
     const villain = cleanText(spot.table?.actionLine?.[1]).split(" ")[0] || "Соперник";
@@ -1385,9 +1393,11 @@
     feedbackShell(
       coach,
       "is-neutral",
-      compact ? "Продолжение · без счёта" : "Свободное доигрывание · без дополнительного счёта",
-      continuationTitle,
-      cleanText(chosen?.continuationCopy)
+      continuationUi.coachEyebrow
+        || (compact ? "Продолжение · без счёта" : "Свободное доигрывание · без дополнительного счёта"),
+      continuationUi.coachTitle || continuationTitle,
+      continuationUi.coachCopy
+        || cleanText(chosen?.continuationCopy)
         || (compact
           ? "Если раздача продолжается, выбери линию на тёрне и ривере."
           : "Следующие решения не меняют оценку флопа. В конце увидишь реакцию соперника и итог линии.")
@@ -1401,10 +1411,13 @@
         const result = payload?.result || {};
         feedbackShell(
           coach,
-          "is-neutral",
-          cleanText(result.kicker) || "Раздача завершена",
-          "Флоп уже оценён",
-          "Итог раздачи показан на столе. Он не добавляет и не снимает баллы за первое решение."
+          hasContinuationUi ? "is-correct" : "is-neutral",
+          continuationUi.completeEyebrow || "Шоудаун · диапазон стал конкретным",
+          continuationUi.completeTitle || "Флоп уже оценён",
+          continuationUi.completeCopy
+            || (hasContinuationUi
+              ? result.summary || "Теперь видна вся учебная линия и конкретная рука соперника."
+              : "Итог раздачи показан на столе. Он не добавляет и не снимает баллы за первое решение.")
         );
       },
       onExit() {

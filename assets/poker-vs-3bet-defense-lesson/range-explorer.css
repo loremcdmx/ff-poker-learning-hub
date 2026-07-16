@@ -1,0 +1,664 @@
+.vs-3bet-defense-lesson {
+  --vs3-fold: #777381;
+  --vs3-call: #57d69a;
+  --vs3-fourbet: #e24aa0;
+  --vs3-jam: #ffb85b;
+  overflow-x: clip;
+}
+
+.vs-3bet-defense-lesson .decision-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.vs-3bet-defense-lesson .decision-panel-head { order: 0; }
+.vs-3bet-defense-lesson .decision-panel .lesson-table-host { order: 1; }
+.vs-3bet-defense-lesson .decision-panel .decision-feedback { order: 2; }
+
+.vs-3bet-defense-lesson .scope-disclosure {
+  margin-top: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .025);
+}
+
+.vs-3bet-defense-lesson .scope-disclosure summary {
+  padding: 12px 14px;
+  color: rgba(244, 241, 236, .78);
+  font-size: 12px;
+  font-weight: 820;
+  cursor: pointer;
+}
+
+.vs-3bet-defense-lesson .scope-disclosure summary::marker { color: var(--brand-yellow); }
+.vs-3bet-defense-lesson .scope-disclosure .scope-list { margin: 0; padding: 0 14px 14px; }
+
+.vs-3bet-defense-lesson .vs3-range-explorer {
+  min-width: 0;
+  padding: clamp(16px, 2.2vw, 28px);
+  overflow: hidden;
+}
+
+.vs-3bet-defense-lesson .vs3-loading {
+  display: grid;
+  min-height: 150px;
+  margin: 0;
+  padding: 24px;
+  place-items: center;
+  color: var(--soft);
+  text-align: center;
+}
+
+.vs-3bet-defense-lesson .vs3-explorer-head,
+.vs-3bet-defense-lesson .vs3-section-head,
+.vs-3bet-defense-lesson .vs3-matrix-head,
+.vs-3bet-defense-lesson .vs3-comparison-head,
+.vs-3bet-defense-lesson .vs3-leak-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.vs-3bet-defense-lesson .vs3-explorer-head h3,
+.vs-3bet-defense-lesson .vs3-section-head h3,
+.vs-3bet-defense-lesson .vs3-matrix-head h4,
+.vs-3bet-defense-lesson .vs3-comparison-head h4,
+.vs-3bet-defense-lesson .vs3-leak-head h3 {
+  margin: 0;
+}
+
+.vs-3bet-defense-lesson .vs3-explorer-head h3 {
+  max-width: 18ch;
+  font-size: clamp(26px, 3vw, 42px);
+  line-height: 1.05;
+  letter-spacing: -.035em;
+}
+
+.vs-3bet-defense-lesson .vs3-model-note {
+  max-width: 62ch;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(176, 131, 240, .22);
+  border-radius: 13px;
+  color: rgba(244, 241, 236, .72);
+  background: rgba(154, 101, 214, .075);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.vs-3bet-defense-lesson .vs3-model-note strong { color: var(--brand-violet-bright); }
+
+.vs-3bet-defense-lesson .vs3-filter-grid {
+  display: grid;
+  grid-template-columns: 1.45fr .7fr 1fr .75fr 1.25fr;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: rgba(8, 7, 13, .38);
+}
+
+.vs-3bet-defense-lesson .vs3-filter-group { min-width: 0; }
+
+.vs-3bet-defense-lesson .vs3-filter-label {
+  display: block;
+  margin: 0 0 7px 2px;
+  color: var(--soft);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+}
+
+.vs-3bet-defense-lesson .vs3-filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.vs-3bet-defense-lesson .vs3-filter-button {
+  flex: 1 1 auto;
+  min-width: 38px;
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, .105);
+  border-radius: 9px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, .025);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.vs-3bet-defense-lesson .vs3-filter-button:hover {
+  color: var(--text);
+  border-color: rgba(255, 223, 81, .34);
+}
+
+.vs-3bet-defense-lesson .vs3-filter-button[aria-pressed="true"] {
+  color: var(--ink);
+  border-color: rgba(255, 223, 81, .76);
+  background: linear-gradient(180deg, #fff09a, var(--brand-yellow));
+  box-shadow: 0 6px 16px rgba(255, 223, 81, .12);
+}
+
+.vs-3bet-defense-lesson .vs3-filter-button:disabled {
+  color: rgba(174, 167, 189, .38);
+  border-color: rgba(255, 255, 255, .055);
+  background: rgba(255, 255, 255, .012);
+  cursor: not-allowed;
+}
+
+.vs-3bet-defense-lesson .vs3-chart-layout {
+  display: grid;
+  grid-template-columns: minmax(610px, 1.35fr) minmax(290px, .65fr);
+  align-items: start;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.vs-3bet-defense-lesson .vs3-matrix-card,
+.vs-3bet-defense-lesson .vs3-hand-comparison {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(8, 7, 13, .38);
+}
+
+.vs-3bet-defense-lesson .vs3-matrix-head { align-items: center; margin-bottom: 10px; }
+
+.vs-3bet-defense-lesson .vs3-matrix-head h4,
+.vs-3bet-defense-lesson .vs3-comparison-head h4 {
+  font-size: 18px;
+  line-height: 1.15;
+}
+
+.vs-3bet-defense-lesson .vs3-scenario-copy,
+.vs-3bet-defense-lesson .vs3-comparison-copy {
+  margin: 4px 0 0;
+  color: var(--soft);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.vs-3bet-defense-lesson .vs3-action-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px 9px;
+}
+
+.vs-3bet-defense-lesson .vs3-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.vs-3bet-defense-lesson .vs3-legend-item i {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+}
+
+.vs-3bet-defense-lesson .is-fold { --vs3-tone: var(--vs3-fold); }
+.vs-3bet-defense-lesson .is-call { --vs3-tone: var(--vs3-call); }
+.vs-3bet-defense-lesson .is-fourbet { --vs3-tone: var(--vs3-fourbet); }
+.vs-3bet-defense-lesson .is-jam { --vs3-tone: var(--vs3-jam); }
+.vs-3bet-defense-lesson .vs3-legend-item i { background: var(--vs3-tone); }
+
+.vs-3bet-defense-lesson .vs3-matrix-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-color: rgba(255, 223, 81, .42) rgba(255, 255, 255, .04);
+  scrollbar-width: thin;
+}
+
+.vs-3bet-defense-lesson .vs3-range-grid {
+  display: grid;
+  grid-template-columns: repeat(13, minmax(44px, 1fr));
+  gap: 3px;
+  min-width: 610px;
+}
+
+.vs-3bet-defense-lesson .vs3-range-cell {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  min-width: 0;
+  aspect-ratio: 1;
+  padding: 4px;
+  overflow: hidden;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .09);
+  border-radius: 7px;
+  color: rgba(244, 241, 236, .9);
+  background: rgba(255, 255, 255, .026);
+  font: inherit;
+  cursor: pointer;
+}
+
+.vs-3bet-defense-lesson .vs3-range-cell::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  background: var(--vs3-cell-background, rgba(255, 255, 255, .025));
+  opacity: .36;
+}
+
+.vs-3bet-defense-lesson .vs3-range-cell:hover {
+  z-index: 2;
+  border-color: rgba(255, 223, 81, .62);
+  transform: translateY(-1px);
+}
+
+.vs-3bet-defense-lesson .vs3-range-cell[aria-pressed="true"] {
+  z-index: 3;
+  border-color: var(--brand-yellow);
+  box-shadow: 0 0 0 2px rgba(255, 223, 81, .22), 0 8px 18px rgba(0, 0, 0, .28);
+}
+
+.vs-3bet-defense-lesson .vs3-range-cell strong {
+  font-size: clamp(9px, .82vw, 12px);
+  line-height: 1;
+  letter-spacing: -.02em;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, .8);
+}
+
+.vs-3bet-defense-lesson .vs3-cell-mix {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  left: 3px;
+  display: flex;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, .08);
+}
+
+.vs-3bet-defense-lesson .vs3-action-segment {
+  display: block;
+  min-width: 0;
+  height: 100%;
+  background: var(--vs3-tone);
+}
+
+.vs-3bet-defense-lesson .vs3-hand-comparison {
+  position: sticky;
+  top: 14px;
+}
+
+.vs-3bet-defense-lesson .vs3-comparison-head { align-items: center; margin-bottom: 12px; }
+
+.vs-3bet-defense-lesson .vs3-hand-badge {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(255, 223, 81, .42);
+  border-radius: 14px;
+  color: var(--brand-yellow);
+  background: rgba(255, 223, 81, .07);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.vs-3bet-defense-lesson .vs3-layer-list {
+  display: grid;
+  gap: 7px;
+}
+
+.vs-3bet-defense-lesson .vs3-layer-row {
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, .065);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, .018);
+}
+
+.vs-3bet-defense-lesson .vs3-layer-row.is-current {
+  border-color: rgba(255, 223, 81, .33);
+  background: rgba(255, 223, 81, .035);
+}
+
+.vs-3bet-defense-lesson .vs3-layer-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.vs-3bet-defense-lesson .vs3-layer-name strong { font-size: 12px; }
+.vs-3bet-defense-lesson .vs3-layer-name span { color: var(--soft); font-size: 9px; }
+
+.vs-3bet-defense-lesson .vs3-layer-mix {
+  display: flex;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, .06);
+}
+
+.vs-3bet-defense-lesson .vs3-layer-numbers {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.vs-3bet-defense-lesson .vs3-layer-number {
+  display: grid;
+  gap: 2px;
+  color: var(--soft);
+  font-size: 8px;
+  text-align: center;
+}
+
+.vs-3bet-defense-lesson .vs3-layer-number b {
+  color: var(--vs3-tone);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.vs-3bet-defense-lesson .vs3-explorer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.vs-3bet-defense-lesson .vs3-explorer-footer p {
+  max-width: 72ch;
+  margin: 0;
+  color: var(--soft);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.vs-3bet-defense-lesson .vs3-aggregate-evidence { margin: clamp(28px, 4vw, 52px) 0 42px; }
+
+.vs-3bet-defense-lesson .vs3-section-head { align-items: end; margin-bottom: 12px; }
+
+.vs-3bet-defense-lesson .vs3-section-head h3 {
+  font-size: clamp(22px, 2.4vw, 34px);
+  line-height: 1.08;
+  letter-spacing: -.025em;
+}
+
+.vs-3bet-defense-lesson .vs3-evidence-boundary {
+  max-width: 105ch;
+  margin: 0 0 14px;
+  color: rgba(244, 241, 236, .68);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.vs-3bet-defense-lesson .cohort-card { padding: 15px; }
+.vs-3bet-defense-lesson .cohort-card-head { margin-bottom: 12px; }
+.vs-3bet-defense-lesson .cohort-card-head h3 { font-size: 17px; }
+.vs-3bet-defense-lesson .cohort-evidence { margin: 12px 0 10px; }
+.vs-3bet-defense-lesson .cohort-insight { font-size: 11px; line-height: 1.45; }
+
+.vs-3bet-defense-lesson details.field-table-card { margin-top: 12px; }
+
+.vs-3bet-defense-lesson details.field-table-card > summary {
+  padding: 13px 16px;
+  color: rgba(244, 241, 236, .75);
+  background: rgba(255, 255, 255, .025);
+  font-size: 12px;
+  font-weight: 820;
+  cursor: pointer;
+}
+
+.vs-3bet-defense-lesson details.field-table-card > summary::marker { color: var(--brand-yellow); }
+
+.vs-3bet-defense-lesson .vs3-leaks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.vs-3bet-defense-lesson .vs3-leak-card {
+  position: relative;
+  min-width: 0;
+  padding: clamp(18px, 2.6vw, 32px);
+  overflow: hidden;
+}
+
+.vs-3bet-defense-lesson .vs3-leak-card::after {
+  position: absolute;
+  right: -58px;
+  bottom: -72px;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  content: "";
+  background: radial-gradient(circle, var(--vs3-leak-glow), transparent 68%);
+  pointer-events: none;
+}
+
+.vs-3bet-defense-lesson .vs3-leak-card.is-underdefense { --vs3-leak-glow: rgba(226, 74, 160, .2); }
+.vs-3bet-defense-lesson .vs3-leak-card.is-overdefense { --vs3-leak-glow: rgba(255, 184, 91, .18); }
+
+.vs-3bet-defense-lesson .vs3-leak-tag {
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, .025);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.vs-3bet-defense-lesson .vs3-leak-card.is-underdefense .vs3-leak-tag { color: #f59bcf; border-color: rgba(226, 74, 160, .28); }
+.vs-3bet-defense-lesson .vs3-leak-card.is-overdefense .vs3-leak-tag { color: #ffd08a; border-color: rgba(255, 184, 91, .28); }
+
+.vs-3bet-defense-lesson .vs3-leak-head h3 { max-width: 18ch; font-size: clamp(24px, 3vw, 38px); line-height: 1.05; letter-spacing: -.035em; }
+
+.vs-3bet-defense-lesson .vs3-leak-hands {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 20px 0 14px;
+}
+
+.vs-3bet-defense-lesson .vs3-leak-hand {
+  display: grid;
+  min-width: 54px;
+  min-height: 44px;
+  padding: 7px 9px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 10px;
+  color: var(--text);
+  background: rgba(255, 255, 255, .035);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.vs-3bet-defense-lesson button.vs3-leak-hand { cursor: pointer; }
+.vs-3bet-defense-lesson button.vs3-leak-hand:hover { color: var(--brand-yellow); border-color: rgba(255, 223, 81, .42); }
+
+.vs-3bet-defense-lesson .vs3-leak-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 68ch;
+  margin: 0;
+  color: rgba(244, 241, 236, .76);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.vs-3bet-defense-lesson .vs3-leak-metric {
+  position: relative;
+  z-index: 1;
+  margin: 10px 0 0;
+  color: var(--brand-violet-bright);
+  font-size: 11px;
+  font-weight: 780;
+}
+
+.vs-3bet-defense-lesson .vs3-leak-rule {
+  position: relative;
+  z-index: 1;
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--brand-yellow);
+  border-radius: 0 10px 10px 0;
+  color: #fff0a7;
+  background: rgba(255, 223, 81, .055);
+  font-size: 12px;
+  font-weight: 720;
+  line-height: 1.5;
+}
+
+.vs-3bet-defense-lesson .practice-setup {
+  display: grid;
+  gap: 14px;
+}
+
+.vs-3bet-defense-lesson .vs3-practice-filter-card {
+  padding: clamp(18px, 2.6vw, 30px);
+}
+
+.vs-3bet-defense-lesson .vs3-practice-filter-card .vs3-section-head { align-items: center; }
+
+.vs-3bet-defense-lesson .vs3-practice-count {
+  max-width: 44ch;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(87, 214, 154, .2);
+  border-radius: 11px;
+  color: var(--lesson-good);
+  background: rgba(87, 214, 154, .055);
+  font-size: 11px;
+  font-weight: 760;
+  line-height: 1.45;
+  text-align: right;
+}
+
+.vs-3bet-defense-lesson [data-vs3-practice-filters] .vs3-filter-grid { margin-top: 16px; }
+
+.vs-3bet-defense-lesson .practice-table-panel {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.vs-3bet-defense-lesson .practice-coach {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.vs-3bet-defense-lesson .practice-run .lesson-table-host:has(> .continuation-result) {
+  --shell-action-gutter: 0px;
+  min-height: 0;
+  padding-bottom: 18px;
+}
+
+.vs-3bet-defense-lesson .lesson-table-host > .continuation-result { margin-top: 18px; }
+
+@media (max-width: 1180px) {
+  .vs-3bet-defense-lesson .vs3-filter-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .vs-3bet-defense-lesson .vs3-filter-group[data-filter-key="position"] { grid-column: span 3; }
+  .vs-3bet-defense-lesson .vs3-filter-group[data-filter-key="relation"] { grid-column: span 1; }
+  .vs-3bet-defense-lesson .vs3-filter-group[data-filter-key="stack"] { grid-column: span 2; }
+  .vs-3bet-defense-lesson .vs3-filter-group[data-filter-key="size"] { grid-column: span 2; }
+  .vs-3bet-defense-lesson .vs3-filter-group[data-filter-key="cohort"] { grid-column: span 4; }
+}
+
+@media (max-width: 1050px) {
+  .vs-3bet-defense-lesson .vs3-chart-layout { grid-template-columns: 1fr; }
+  .vs-3bet-defense-lesson .vs3-hand-comparison { position: static; }
+  .vs-3bet-defense-lesson .vs3-layer-list { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .vs-3bet-defense-lesson .vs3-layer-numbers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .vs-3bet-defense-lesson .practice-coach,
+  .vs-3bet-defense-lesson .practice-table-panel {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .vs-3bet-defense-lesson .vs3-layer-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 820px) {
+  .vs-3bet-defense-lesson .step-tabs {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .vs-3bet-defense-lesson .decision-panel .decision-feedback {
+    order: 1;
+    min-height: 0;
+    border-top: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .vs-3bet-defense-lesson .decision-panel .lesson-table-host { order: 2; }
+
+  .vs-3bet-defense-lesson .scope-disclosure { margin-top: 4px; }
+
+  .vs-3bet-defense-lesson .vs3-explorer-head,
+  .vs-3bet-defense-lesson .vs3-section-head,
+  .vs-3bet-defense-lesson .vs3-matrix-head,
+  .vs-3bet-defense-lesson .vs3-explorer-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .vs-3bet-defense-lesson .vs3-explorer-head h3 { max-width: none; }
+  .vs-3bet-defense-lesson .vs3-model-note { max-width: none; }
+  .vs-3bet-defense-lesson .vs3-action-legend { justify-content: flex-start; }
+  .vs-3bet-defense-lesson .vs3-explorer-footer .field-button { align-self: flex-start; }
+  .vs-3bet-defense-lesson .vs3-practice-count { max-width: none; text-align: left; }
+}
+
+@media (max-width: 650px) {
+  .vs-3bet-defense-lesson .vs3-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .vs-3bet-defense-lesson .vs3-filter-group[data-filter-key] { grid-column: span 1; }
+  .vs-3bet-defense-lesson .vs3-filter-group[data-filter-key="position"],
+  .vs-3bet-defense-lesson .vs3-filter-group[data-filter-key="cohort"] { grid-column: 1 / -1; }
+  .vs-3bet-defense-lesson .vs3-filter-button { min-height: 40px; }
+  .vs-3bet-defense-lesson .vs3-leaks { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 590px) {
+  .vs-3bet-defense-lesson .step-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .vs-3bet-defense-lesson .vs3-range-explorer { padding: 12px; border-radius: 17px; }
+  .vs-3bet-defense-lesson .vs3-matrix-card,
+  .vs-3bet-defense-lesson .vs3-hand-comparison { padding: 10px; border-radius: 13px; }
+  .vs-3bet-defense-lesson .vs3-range-grid { grid-template-columns: repeat(13, 44px); }
+  .vs-3bet-defense-lesson .vs3-range-cell strong { font-size: 10px; }
+  .vs-3bet-defense-lesson .vs3-layer-list { grid-template-columns: 1fr; }
+  .vs-3bet-defense-lesson .vs3-comparison-head { align-items: center; }
+  .vs-3bet-defense-lesson .vs3-hand-badge { width: 52px; height: 52px; }
+  .vs-3bet-defense-lesson .vs3-leak-head { align-items: stretch; flex-direction: column; }
+  .vs-3bet-defense-lesson .vs3-leak-head h3 { max-width: none; }
+  .vs-3bet-defense-lesson .practice-start-card .field-button,
+  .vs-3bet-defense-lesson .vs3-explorer-footer .field-button { width: 100%; }
+}

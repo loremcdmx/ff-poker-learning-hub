@@ -46,8 +46,9 @@ three ranks and must not be used to infer progression.
 
 - `docs/methodics-15-11.md`: position, sizing and stack adjustments; teaching
   control `65 / 25 / 10`, kept separate from observed field frequencies.
-- Supplied methodology PDF: page 7 has the positional RFI-vs-3-bet visual;
-  page 15 compares defense against 2.5x / 3x / 4x.
+- Supplied methodology PDF: page 7 has the exact EP/MP/HJ/CO/BTN
+  RFI-vs-3-bet matrices; page 12 has the exact SB-vs-BB matrix; page 15
+  compares defense against 2.5x / 3x / 4x in one CO-vs-BTN example.
 - `assets/poker-vs-3bet/data.lazy.json`: 208 combined tasks, including 59
   defense tasks (23 fold / 27 call / 9 4-bet). All 59 use 58 BB and the same
   `Hero 2 BB → 3-bet 8 BB` line, so the new practice deliberately adds other
@@ -56,3 +57,27 @@ three ranks and must not be used to infer progression.
 The field mix is descriptive. It is not an optimal chart and does not identify
 the EV of an individual fold, call or 4-bet. `chips_ev` was not used as a
 counterfactual action value.
+
+## Что в чарте является точным, а что моделью
+
+Базовый слой «Методичка» переносит клетки и частоты из исходных матриц
+страниц 7 и 12. Это единственный hand-level слой, который показывается как
+дословный источник.
+
+В PDF нет полного куба `позиция × IP/OOP × стек × размер 3-бета`, поэтому
+остальные фильтры являются учебной адаптацией:
+
+- 2.5x расширяет прежде всего suited-call;
+- 4x сужает call и переносит часть сильных продолжений в 4-bet;
+- 20–30 BB сокращает спекулятивные коллы и отделяет 4-bet jam;
+- глубокие стеки сохраняют больше реализуемых в позиции suited-call;
+- OOP сужает пограничный call относительно IP.
+
+Эти поправки помечаются в интерфейсе как модель, а не как новая страница
+методички или solver-решение.
+
+Слои League 1 / 2 / 3 / «Новички» также не являются измеренными hand-level
+чартами. Они показывают учебную модель состава диапазона, откалиброванную к
+опубликованным агрегатам fold / call / 4-bet выше. «Новички» используют
+наблюдаемый срез R15–17, который на 99% состоит из R15; это ограничение
+показывается рядом с чартом.
