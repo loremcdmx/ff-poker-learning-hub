@@ -1,0 +1,34 @@
+:root {
+  --poker-suit-text-heart: #f04464;
+  --poker-suit-text-diamond: #4f8dff;
+  --poker-suit-text-club: #2fc472;
+  --poker-suit-text-spade: #d9dee9;
+}
+
+.poker-suit-text {
+  display: inline;
+  font: inherit;
+  line-height: inherit;
+}
+
+.poker-suit-text.poker-suit-text--h {
+  color: var(--poker-suit-text-heart);
+}
+
+.poker-suit-text.poker-suit-text--d {
+  color: var(--poker-suit-text-diamond);
+}
+
+.poker-suit-text.poker-suit-text--c {
+  color: var(--poker-suit-text-club);
+}
+
+.poker-suit-text.poker-suit-text--s {
+  color: var(--poker-suit-text-spade);
+}
+
+@media (forced-colors: active) {
+  .poker-suit-text {
+    color: CanvasText;
+  }
+}

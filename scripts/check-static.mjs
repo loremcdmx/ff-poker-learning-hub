@@ -36,8 +36,14 @@ const requiredDirectories = [
   "assets/poker-vs-3bet-defense-lesson"
 ];
 const lessonPages = new Set(expectedRoutes.values());
+const suitTextPages = new Set(["index.html", ...lessonPages]);
+const suitTextAssets = [
+  "assets/poker-kit/suit-text.css",
+  "assets/poker-kit/suit-text.js"
+];
 const immutableLessonAssets = new Map(
   [
+    ...suitTextAssets,
     "assets/poker-kit/decks/decks.css",
     "assets/poker-kit/decks/deck-library.js",
     "assets/poker-kit/chips/chips.css",
@@ -100,10 +106,16 @@ for (const page of pages) {
     const cleanRef = ref.split(/[?#]/, 1)[0];
     if (!cleanRef) continue;
     check(localTargetExists(pagePath, ref), `${page} resolves ${cleanRef}`);
-    if (lessonPages.has(page) && immutableLessonAssets.has(cleanRef)) {
+    if (suitTextPages.has(page) && immutableLessonAssets.has(cleanRef)) {
       const version = ref.match(/[?&]v=([a-f0-9]{12})(?:[&#]|$)/)?.[1];
       const expectedVersion = immutableLessonAssets.get(cleanRef);
       check(version === expectedVersion, `${page} cache-busts ${cleanRef} with its content hash`);
+    }
+  }
+  if (suitTextPages.has(page)) {
+    for (const asset of suitTextAssets) {
+      const version = immutableLessonAssets.get(asset);
+      check(html.includes(`${asset}?v=${version}`), `${page} loads shared four-color suit text asset ${asset}`);
     }
   }
 }
