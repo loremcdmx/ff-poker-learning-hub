@@ -1249,4 +1249,13 @@ body.practice-is-running .topline { display: none; }
 @media (max-width:620px){
   .step-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
   .step-tab{width:100%;min-width:0;white-space:normal}
+  .practice-screen.is-running{grid-template-columns:minmax(0,1fr)}
+  .practice-screen.is-running .practice-disclaimer{grid-template-columns:minmax(0,1fr);min-width:0;max-width:100%}
+  .practice-screen.is-running .practice-launch{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+  .practice-screen.is-running .session-lengths{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;flex:1 1 100%}
+  .practice-screen.is-running .bot-strength-legend,
+  .practice-screen.is-running .bot-strength-legend>span,
+  .practice-screen.is-running .practice-device-note,
+  .practice-screen.is-running .session-lengths,
+  .practice-screen.is-running .session-lengths button{min-width:0;max-width:100%}
 }

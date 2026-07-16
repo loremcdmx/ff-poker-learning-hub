@@ -6,6 +6,7 @@ const repo = new URL("../../../", import.meta.url);
 const html = readFileSync(new URL("flop-cbet-hu-lesson.html", repo), "utf8");
 const dataSource = readFileSync(new URL("assets/poker-flop-cbet-hu-lesson/data.js", repo), "utf8");
 const lessonSource = readFileSync(new URL("assets/poker-flop-cbet-hu-lesson/lesson.js", repo), "utf8");
+const lessonCss = readFileSync(new URL("assets/poker-flop-cbet-hu-lesson/lesson.css", repo), "utf8");
 const engineSource = readFileSync(new URL("assets/poker-kit/simulator/engine-core.js", repo), "utf8");
 const settingsSource = readFileSync(new URL("assets/poker-simulator/simulator-settings.js", repo), "utf8");
 const embedSource = readFileSync(new URL("assets/poker-simulator/embed.js", repo), "utf8");
@@ -43,6 +44,8 @@ for (const token of [
 }
 
 assert.match(lessonSource, /pack:\s*"cbet-rvbb"/);
+assert.match(html, /poker-flop-cbet-hu-lesson\/lesson\.css\?v=bfc15268b81c/);
+assert.match(lessonCss, /@media \(max-width: 860px\)[\s\S]*?\.lesson-header \{\s*position: static;\s*top: auto;/, "mobile lesson header does not cover trainer actions");
 assert.match(lessonSource, /autoStart:\s*true/);
 assert.match(lessonSource, /function ensureSimulator\(/);
 assert.match(lessonSource, /function renderBoardExamples\(/);

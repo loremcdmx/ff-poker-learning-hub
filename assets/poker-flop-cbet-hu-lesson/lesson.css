@@ -3049,7 +3049,8 @@ html[data-embed="true"] .field-controls {
   }
 
   .lesson-header {
-    top: 6px;
+    position: static;
+    top: auto;
   }
 
   .scope-strip {
