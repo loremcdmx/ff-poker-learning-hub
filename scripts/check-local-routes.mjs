@@ -9,10 +9,13 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const host = "127.0.0.1";
 const routes = [
-  { path: "/", file: "index.html", title: "FF · Префлоп-лаборатория" },
+  { path: "/", file: "index.html", title: "FF · Обучающий хаб" },
   { path: "/rfi-open-position-lesson", file: "rfi-open-position-lesson.html", title: "Опен-рейзы по позициям · FF Префлоп-лаборатория" },
   { path: "/bb-call-defense-lesson", file: "bb-call-defense-lesson.html", title: "Защита BB коллом · FF Префлоп-лаборатория" },
   { path: "/resteal-lesson", file: "resteal-lesson.html", title: "Рестилы в коротких стеках · FF Префлоп-лаборатория" },
+  { path: "/flop-cbet-hu-lesson", file: "flop-cbet-hu-lesson.html", title: "C-bet RvBB · урок и библиотека FF" },
+  { path: "/flop-checkraise-lesson", file: "flop-checkraise-lesson.html", title: "Чек-рейз флопа · FF Poker Learning Hub" },
+  { path: "/vs-3bet-defense-lesson", file: "vs-3bet-defense-lesson.html", title: "Защита против 3-бета · FF Poker Learning Hub" },
 ];
 
 const child = spawn(process.execPath, [join(root, "scripts/serve-local.mjs")], {

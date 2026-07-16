@@ -8,12 +8,18 @@ const pages = [
   "rfi-open-position-lesson.html",
   "bb-call-defense-lesson.html",
   "resteal-lesson.html",
+  "flop-cbet-hu-lesson.html",
+  "flop-checkraise-lesson.html",
+  "vs-3bet-defense-lesson.html",
   "poker-simulator.html"
 ];
 const expectedRoutes = new Map([
   ["/rfi-open-position-lesson", "rfi-open-position-lesson.html"],
   ["/bb-call-defense-lesson", "bb-call-defense-lesson.html"],
-  ["/resteal-lesson", "resteal-lesson.html"]
+  ["/resteal-lesson", "resteal-lesson.html"],
+  ["/flop-cbet-hu-lesson", "flop-cbet-hu-lesson.html"],
+  ["/flop-checkraise-lesson", "flop-checkraise-lesson.html"],
+  ["/vs-3bet-defense-lesson", "vs-3bet-defense-lesson.html"]
 ]);
 const requiredDirectories = [
   "assets/poker-kit",
@@ -23,7 +29,10 @@ const requiredDirectories = [
   "assets/player-survey",
   "assets/poker-rfi-open-lesson",
   "assets/poker-bb-call-defense-lesson",
-  "assets/poker-resteal-lesson"
+  "assets/poker-resteal-lesson",
+  "assets/poker-flop-cbet-hu-lesson",
+  "assets/poker-flop-checkraise-lesson",
+  "assets/poker-vs-3bet-defense-lesson"
 ];
 
 let failures = 0;
@@ -100,10 +109,10 @@ for (const sourceFile of sourceFiles) {
 }
 
 const hub = readFileSync(join(root, "index.html"), "utf8");
-check((hub.match(/class="trainer-card /g) || []).length === 3, "hub exposes exactly three trainer cards");
+check((hub.match(/class="trainer-card /g) || []).length === 6, "hub exposes exactly six trainer cards");
 for (const route of expectedRoutes.keys()) check(hub.includes(`href="${route}"`), `hub links to ${route}`);
 check(hub.includes("https://github.com/loremcdmx/ff-poker-learning-hub"), "hub includes the public GitHub link");
-for (const page of pages.slice(1, 4)) {
+for (const page of expectedRoutes.values()) {
   const html = readFileSync(join(root, page), "utf8");
   check(html.includes('href="/"'), `${page} links back to the learning hub`);
   check(html.includes('rel="icon"'), `${page} declares a favicon`);

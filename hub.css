@@ -207,6 +207,9 @@ h1 em { color: var(--acid); font-weight: inherit; }
 
 .trainer-card-defense { background: linear-gradient(150deg, rgba(16, 38, 35, .94), rgba(8, 20, 19, .94)); }
 .trainer-card-resteal { background: linear-gradient(150deg, rgba(36, 35, 20, .94), rgba(18, 19, 10, .94)); }
+.trainer-card-cbet { background: linear-gradient(150deg, rgba(39, 25, 53, .95), rgba(17, 10, 24, .95)); }
+.trainer-card-checkraise { background: linear-gradient(150deg, rgba(49, 25, 34, .95), rgba(21, 10, 15, .95)); }
+.trainer-card-vs3bet { background: linear-gradient(150deg, rgba(22, 34, 52, .95), rgba(9, 15, 24, .95)); }
 
 .card-topline {
   display: flex;
@@ -305,6 +308,91 @@ h1 em { color: var(--acid); font-weight: inherit; }
 .arrow { position: absolute; color: var(--warm); font-family: Georgia, serif; }
 .arrow-one { left: 62px; bottom: 35px; font-size: 52px; opacity: .45; }
 .arrow-two { left: 124px; top: 20px; font-size: 74px; }
+
+.cbet-symbol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: radial-gradient(ellipse at center, rgba(176, 131, 240, .17), transparent 66%), rgba(10, 6, 15, .42);
+}
+
+.cbet-symbol > span {
+  display: grid;
+  width: 48px;
+  height: 66px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .24);
+  border-radius: 7px;
+  color: #18121d;
+  background: #f4f0e8;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, .28);
+  font: 700 17px/1 Georgia, serif;
+}
+
+.cbet-symbol strong {
+  position: absolute;
+  right: 22px;
+  bottom: 18px;
+  color: #d9baff;
+  font: 850 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .12em;
+}
+
+.checkraise-symbol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  background: radial-gradient(ellipse at center, rgba(240, 138, 125, .17), transparent 66%), rgba(17, 7, 11, .42);
+}
+
+.checkraise-symbol span,
+.checkraise-symbol strong {
+  padding: 10px 11px;
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-radius: 9px;
+  color: #d8c9cf;
+  background: rgba(255, 255, 255, .045);
+  font: 800 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .08em;
+}
+
+.checkraise-symbol strong {
+  color: #ffd2c9;
+  border-color: rgba(240, 138, 125, .5);
+  background: rgba(240, 138, 125, .11);
+}
+
+.checkraise-symbol i { color: rgba(255, 255, 255, .38); font-style: normal; }
+
+.vs3bet-symbol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: radial-gradient(ellipse at center, rgba(142, 155, 242, .18), transparent 66%), rgba(6, 10, 18, .42);
+}
+
+.vs3bet-symbol span,
+.vs3bet-symbol strong {
+  padding: 11px 14px;
+  border: 1px solid rgba(142, 155, 242, .35);
+  border-radius: 10px;
+  color: #cfd5ff;
+  background: rgba(142, 155, 242, .08);
+  font: 850 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .08em;
+}
+
+.vs3bet-symbol i { color: rgba(255, 255, 255, .42); font-style: normal; }
+.vs3bet-symbol small {
+  position: absolute;
+  bottom: 18px;
+  color: rgba(220, 225, 255, .58);
+  font: 800 8px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .14em;
+}
 
 .trainer-card h2 {
   margin: 0;
