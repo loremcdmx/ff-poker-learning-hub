@@ -940,3 +940,61 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   .lesson-table-host > .continuation-feedback,
   .lesson-table-host > .continuation-result { margin-top: 112px; }
 }
+
+/* Check-raise tables need a little more vertical room than the generic field
+   lesson shell because they render both a board and Hero cards. Keep this
+   correction route-scoped so preflop field lessons retain their geometry. */
+body.flop-checkraise-lesson .lesson-table-host .ff-shell-simulator-snapshot {
+  --trainer-table-plane-height: min(430px, calc(100cqw * 9 / 16)) !important;
+}
+
+@media (min-width: 621px) {
+  body.flop-checkraise-lesson .lesson-table-host
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt.has-board {
+    --hero-card-width: clamp(72px, 7.9vh, 76px) !important;
+    --hero-card-cap: clamp(72px, 7.9vh, 76px) !important;
+    --board-card-width: clamp(45px, 5.3vh, 48px) !important;
+    --pot-y-bottom: 61.5% !important;
+  }
+}
+
+@media (max-width: 820px) {
+  body.flop-checkraise-lesson .lesson-table-host .ff-shell-simulator-snapshot {
+    --trainer-table-plane-height: 360px !important;
+  }
+}
+
+@media (min-width: 621px) and (max-width: 820px) {
+  body.flop-checkraise-lesson .lesson-table-host
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt.has-board {
+    --hero-card-width: 62px !important;
+    --hero-card-cap: 62px !important;
+    --board-card-width: 40px !important;
+  }
+}
+
+@media (min-width: 591px) and (max-width: 620px) {
+  body.flop-checkraise-lesson .lesson-table-host {
+    min-height: 490px !important;
+  }
+
+  body.flop-checkraise-lesson .lesson-table-host
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt.has-board {
+    --pot-y-bottom: 64% !important;
+  }
+}
+
+@media (max-width: 590px) {
+  body.flop-checkraise-lesson .lesson-table-host {
+    min-height: 472px !important;
+  }
+
+  body.flop-checkraise-lesson .lesson-table-host .ff-shell-simulator-snapshot {
+    --trainer-table-plane-height: 350px !important;
+  }
+
+  body.flop-checkraise-lesson .lesson-table-host
+  .ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt.has-board {
+    --pot-y-bottom: 64% !important;
+  }
+}

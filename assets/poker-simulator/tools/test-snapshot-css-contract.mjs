@@ -35,6 +35,23 @@ for (const token of [
   assert(shell.includes(token), `shared compact snapshot profile owns ${token}`);
 }
 
+const fieldLesson = read("assets/poker-field-lesson/lesson.css");
+for (const token of [
+  "body.flop-checkraise-lesson .lesson-table-host .ff-shell-simulator-snapshot",
+  "--trainer-table-plane-height: min(430px, calc(100cqw * 9 / 16)) !important",
+  "--hero-card-width: clamp(72px, 7.9vh, 76px) !important",
+  "--board-card-width: clamp(45px, 5.3vh, 48px) !important",
+  "--pot-y-bottom: 61.5% !important",
+  "--trainer-table-plane-height: 360px !important",
+  "--hero-card-width: 62px !important",
+  "--board-card-width: 40px !important",
+  "min-height: 490px !important",
+  "--trainer-table-plane-height: 350px !important",
+  "--pot-y-bottom: 64% !important"
+]) {
+  assert(fieldLesson.includes(token), `check-raise collision profile owns ${token}`);
+}
+
 const lessonCssFiles = [
   "assets/poker-bb-call-defense-lesson/base.css",
   "assets/poker-bb-call-defense-lesson/lesson.css",

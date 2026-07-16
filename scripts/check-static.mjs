@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -34,6 +35,20 @@ const requiredDirectories = [
   "assets/poker-flop-checkraise-lesson",
   "assets/poker-vs-3bet-defense-lesson"
 ];
+const lessonPages = new Set(expectedRoutes.values());
+const immutableLessonAssets = new Map(
+  [
+    "assets/poker-kit/decks/decks.css",
+    "assets/poker-kit/decks/deck-library.js",
+    "assets/poker-kit/chips/chips.css",
+    "assets/poker-kit/chips/chip-library.js",
+    "assets/poker-trainer-shell/shell.css",
+    "assets/poker-field-lesson/lesson.css"
+  ].map((asset) => [
+    asset,
+    createHash("sha256").update(readFileSync(join(root, asset))).digest("hex").slice(0, 12)
+  ])
+);
 
 let failures = 0;
 function check(condition, message) {
@@ -85,6 +100,11 @@ for (const page of pages) {
     const cleanRef = ref.split(/[?#]/, 1)[0];
     if (!cleanRef) continue;
     check(localTargetExists(pagePath, ref), `${page} resolves ${cleanRef}`);
+    if (lessonPages.has(page) && immutableLessonAssets.has(cleanRef)) {
+      const version = ref.match(/[?&]v=([a-f0-9]{12})(?:[&#]|$)/)?.[1];
+      const expectedVersion = immutableLessonAssets.get(cleanRef);
+      check(version === expectedVersion, `${page} cache-busts ${cleanRef} with its content hash`);
+    }
   }
 }
 
