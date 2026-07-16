@@ -482,14 +482,14 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
 .field-empty { color: var(--soft); text-align: center !important; }
 .sample-note { margin: 0; padding: 13px 16px; border-top: 1px solid var(--line); color: var(--soft); font-size: 11px; line-height: 1.5; }
 
-/* Explanatory board cards with exact aggregate counts beside every field claim. */
+/* Compact teaching examples: one aligned category grid, then one short plan per hand. */
 .examples-scope {
   display: grid;
-  grid-template-columns: auto minmax(260px, .8fr) minmax(360px, 1.2fr);
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 16px;
-  margin-bottom: 14px;
-  padding: 14px 18px;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 12px 15px;
 }
 .examples-scope strong {
   padding: 6px 9px;
@@ -501,32 +501,34 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   text-transform: uppercase;
 }
 .examples-scope span { color: rgba(244, 241, 236, .86); font-size: 13px; font-weight: 760; }
-.examples-scope small { color: var(--soft); font-size: 11px; line-height: 1.5; }
-.example-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 14px; }
+.example-groups { display: grid; grid-template-columns: 1fr; align-items: start; gap: 18px; }
 .example-group { min-width: 0; padding: 20px; overflow: hidden; }
 .example-group.is-value { box-shadow: inset 0 3px 0 rgba(87, 214, 154, .72), 0 20px 54px rgba(0, 0, 0, .27); }
 .example-group.is-bluff { box-shadow: inset 0 3px 0 rgba(142, 155, 242, .82), 0 20px 54px rgba(0, 0, 0, .27); }
-.example-group.is-value .eyebrow { color: var(--lesson-good); }
-.example-group.is-bluff .eyebrow { color: var(--lesson-blue); }
-.example-group-head { display: flex; align-items: flex-start; gap: 13px; margin-bottom: 15px; }
-.example-group-head h3 { margin: 0; font-size: clamp(22px, 2vw, 30px); line-height: 1.08; letter-spacing: -.025em; }
-.example-group-head .eyebrow { margin-bottom: 5px; }
-.example-group-index { color: rgba(244, 241, 236, .28); font-size: 12px; font-weight: 900; letter-spacing: .08em; }
-.example-list { display: grid; gap: 11px; }
+.example-group.is-value .example-group-head h3 { color: var(--lesson-good); }
+.example-group.is-bluff .example-group-head h3 { color: var(--lesson-blue); }
+.example-group-head { margin-bottom: 14px; }
+.example-group-head h3 { margin: 0; font-size: clamp(22px, 2vw, 28px); line-height: 1.08; letter-spacing: -.025em; }
+.example-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 12px;
+}
+.example-group.is-bluff .example-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .field-example-card {
   display: grid;
-  gap: 13px;
+  gap: 11px;
   min-width: 0;
-  padding: 16px;
+  height: 100%;
+  padding: 14px;
   border: 1px solid rgba(255, 255, 255, .075);
   border-radius: 16px;
   background: linear-gradient(145deg, rgba(255, 255, 255, .035), rgba(7, 7, 12, .18));
 }
 .field-example-card.is-value { border-color: rgba(87, 214, 154, .16); }
 .field-example-card.is-bluff { border-color: rgba(142, 155, 242, .18); }
-.field-example-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.field-example-head .eyebrow { margin-bottom: 4px; color: var(--soft); }
-.field-example-head h4 { margin: 0; font-size: 19px; line-height: 1.16; }
+.field-example-head h4 { margin: 0; font-size: 18px; line-height: 1.16; }
 .example-gap {
   flex: 0 0 auto;
   padding: 6px 8px;
@@ -546,10 +548,11 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
 }
 .example-stage {
   display: grid;
-  grid-template-columns: minmax(0, .72fr) auto minmax(0, 1.28fr);
+  grid-template-columns: max-content auto max-content;
   align-items: center;
-  gap: 10px;
-  padding: 11px;
+  justify-content: center;
+  gap: 18px;
+  padding: 10px;
   border-radius: 13px;
   background: radial-gradient(circle at 68% 50%, rgba(154, 101, 214, .13), transparent 58%), rgba(255, 255, 255, .025);
 }
@@ -560,52 +563,37 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
 .example-cards .example-color-card { --poker-card-width: 38px; flex: 0 0 auto; }
 .example-cards.is-board .example-color-card { --poker-card-width: 43px; }
 .example-cards.is-mini .example-color-card { --poker-card-width: 28px; }
+.flop-checkraise-lesson [data-step="examples"] .example-color-card .poker-deck-card__cb-index { display: none; }
 .example-card-fallback { display: grid; width: 34px; aspect-ratio: .72; place-items: center; border-radius: 5px; background: #eee; color: #111; font-weight: 900; }
 .example-action-band {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  display: flex;
   align-items: center;
-  gap: 3px 11px;
-  padding: 11px 12px;
+  justify-content: center;
+  min-height: 38px;
+  padding: 9px 12px;
   border: 1px solid rgba(255, 223, 81, .16);
   border-radius: 12px;
   background: linear-gradient(90deg, rgba(255, 223, 81, .08), rgba(255, 255, 255, .018));
 }
-.example-action-band span {
-  grid-row: 1 / span 2;
-  padding: 5px 7px;
-  border-radius: 7px;
-  color: var(--ink);
-  background: var(--brand-yellow);
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-}
-.example-action-band strong { color: var(--brand-yellow); font-size: 15px; line-height: 1.1; }
+.example-action-band strong { color: var(--brand-yellow); font-size: 14px; line-height: 1.1; text-align: center; }
 .field-example-card.is-value .example-action-band strong { color: var(--lesson-good); }
 .field-example-card.is-bluff .example-action-band strong { color: var(--lesson-blue); }
-.example-action-band small { color: var(--soft); font-size: 10px; line-height: 1.35; }
 .example-variants { display: grid; gap: 8px; }
 .example-variants > p { margin: 0; color: var(--soft); font-size: 9px; font-weight: 850; letter-spacing: .07em; text-transform: uppercase; }
 .example-variant-row { display: flex; flex-wrap: wrap; gap: 7px; }
 .example-variant-chip {
   display: flex;
   align-items: center;
-  gap: 7px;
-  min-width: 132px;
-  padding: 7px 9px;
+  min-width: 0;
+  padding: 4px;
   border: 1px solid rgba(255, 255, 255, .07);
-  border-radius: 10px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, .025);
 }
-.example-variant-chip > div:last-child { display: grid; gap: 2px; }
-.example-variant-chip strong { font-size: 11px; }
-.example-variant-chip span { color: var(--soft); font-size: 9px; }
 .example-lesson-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .example-lesson-cell {
   min-width: 0;
-  padding: 11px;
+  padding: 10px;
   border: 1px solid rgba(255, 255, 255, .06);
   border-radius: 11px;
   background: rgba(255, 255, 255, .022);
@@ -615,25 +603,23 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
 .example-lesson-cell h5 { margin: 0 0 6px; color: rgba(244, 241, 236, .68); font-size: 9px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; }
 .example-lesson-cell.is-good h5 { color: var(--lesson-good); }
 .example-lesson-cell.is-caution h5 { color: #ffb85e; }
-.example-lesson-cell p { margin: 0; color: rgba(244, 241, 236, .78); font-size: 11px; line-height: 1.5; }
+.example-lesson-cell p { margin: 0; color: rgba(244, 241, 236, .8); font-size: 11px; line-height: 1.48; }
 .example-contrast {
   display: grid;
-  gap: 9px;
-  padding: 11px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px 10px;
+  padding: 9px 10px;
   border: 1px solid rgba(255, 255, 255, .075);
   border-radius: 12px;
   background: rgba(3, 3, 8, .24);
 }
 .example-contrast.is-call { border-left: 3px solid rgba(255, 223, 81, .65); }
 .example-contrast.is-fold { border-left: 3px solid rgba(244, 241, 236, .28); }
-.example-contrast header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.example-contrast header span { color: var(--soft); font-size: 9px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
-.example-contrast header strong { color: var(--brand-yellow); font-size: 11px; }
-.example-contrast.is-fold header strong { color: var(--muted); }
 .example-contrast-visual { display: flex; align-items: center; gap: 7px; }
-.example-contrast-visual > span { font-size: 11px; font-weight: 850; }
-.example-contrast-visual > i { color: var(--soft); font-size: 9px; font-style: normal; }
-.example-contrast p { margin: 0; color: rgba(244, 241, 236, .72); font-size: 10px; line-height: 1.48; }
+.example-contrast-visual > strong { color: var(--brand-yellow); font-size: 11px; line-height: 1.3; }
+.example-contrast.is-fold .example-contrast-visual > strong { color: var(--muted); }
+.example-contrast p { margin: 0; color: rgba(244, 241, 236, .72); font-size: 10px; line-height: 1.42; }
 .example-evidence { display: grid; gap: 10px; }
 .example-category-label {
   margin: 0;
@@ -666,7 +652,7 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
 .example-foot span { color: rgba(244, 241, 236, .68); font-size: 10px; font-weight: 760; }
 .example-foot small { color: var(--soft); font-size: 10px; line-height: 1.45; }
 .examples-empty { display: grid; min-height: 140px; place-items: center; margin: 0; padding: 20px; border: 1px dashed var(--line); border-radius: 14px; text-align: center; }
-.examples-method { max-width: 110ch; margin: 14px 0 34px; color: var(--soft); font-size: 11px; line-height: 1.55; }
+.examples-method { margin: 12px 0 34px; color: var(--soft); font-size: 11px; line-height: 1.5; text-align: center; }
 
 /* Final step: repeat the same decision interface, with local-only counters. */
 .practice-start-card { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 26px; padding: clamp(24px, 4vw, 52px); }
@@ -746,6 +732,137 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   background: rgba(255, 255, 255, .055);
   box-shadow: none;
 }
+.flop-checkraise-lesson .practice-trainer-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: clamp(20px, 3vw, 44px);
+}
+.flop-checkraise-lesson .practice-heading-copy { min-width: 0; }
+.flop-checkraise-lesson .practice-intro {
+  max-width: 74ch;
+  margin: 12px 0 0;
+  color: rgba(244, 241, 236, .7);
+  font-size: clamp(13px, 1.1vw, 15px);
+  line-height: 1.55;
+}
+.flop-checkraise-lesson .practice-heading-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+.flop-checkraise-lesson .practice-depth-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(126px, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .025);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .025);
+}
+.flop-checkraise-lesson .practice-depth-button {
+  min-height: 42px;
+  padding: 9px 13px;
+  border: 0;
+  border-radius: 10px;
+  color: rgba(244, 241, 236, .62);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 820;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+.flop-checkraise-lesson .practice-depth-button:hover:not(:disabled) {
+  color: var(--text);
+  background: rgba(255, 255, 255, .045);
+}
+.flop-checkraise-lesson .practice-depth-button.is-active,
+.flop-checkraise-lesson .practice-depth-button[aria-pressed="true"] {
+  color: var(--ink);
+  background: linear-gradient(180deg, #fff09a, var(--brand-yellow));
+  box-shadow: 0 6px 18px rgba(255, 223, 81, .13);
+}
+.flop-checkraise-lesson .practice-depth-button:disabled {
+  cursor: not-allowed;
+  opacity: .44;
+}
+.flop-checkraise-lesson .practice-score {
+  display: grid;
+  gap: 2px;
+  min-width: 98px;
+  text-align: right;
+}
+.flop-checkraise-lesson .practice-score span {
+  color: var(--soft);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+.flop-checkraise-lesson .practice-score strong {
+  color: var(--lesson-good);
+  font-size: 23px;
+  font-variant-numeric: tabular-nums;
+}
+.flop-checkraise-lesson .practice-trainer-run { padding-bottom: 20px; }
+.flop-checkraise-lesson [data-step="practice"] .practice-coach {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.flop-checkraise-lesson .practice-trainer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 13px 2px 0;
+  border-top: 1px solid var(--line);
+}
+.flop-checkraise-lesson .practice-trainer-footer > p {
+  max-width: 58ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.flop-checkraise-lesson .practice-trainer-footer > p strong { color: var(--text); }
+.flop-checkraise-lesson .practice-footer-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.flop-checkraise-lesson .practice-trainer-footer .field-button {
+  min-height: 44px;
+  padding: 8px 13px;
+  white-space: nowrap;
+}
+.flop-checkraise-lesson [data-practice-next-external]:disabled {
+  opacity: .38;
+  cursor: not-allowed;
+  filter: saturate(.24);
+  box-shadow: none;
+  transform: none;
+}
+.flop-checkraise-lesson [data-practice-next-external]:disabled:hover {
+  border-color: transparent;
+  filter: saturate(.24);
+  transform: none;
+}
+.flop-checkraise-lesson .practice-continuation-button {
+  border-color: rgba(142, 155, 242, .34);
+  color: var(--lesson-blue);
+}
+.flop-checkraise-lesson .practice-continuation-button.is-primary {
+  border-color: transparent;
+  color: var(--ink);
+}
 .lesson-table-host > .continuation-feedback,
 .lesson-table-host > .continuation-result {
   position: relative;
@@ -775,6 +892,19 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
 @keyframes lesson-appear { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 @keyframes lesson-orbit { to { transform: rotate(360deg); } }
 
+@media (min-width: 901px) {
+  .flop-checkraise-lesson [data-step="practice"] .practice-layout {
+    grid-template-columns: minmax(560px, 1.45fr) minmax(280px, .55fr);
+    align-items: stretch;
+    gap: 20px;
+  }
+  .flop-checkraise-lesson [data-step="practice"] .practice-coach {
+    position: static;
+    top: auto;
+    min-height: 0;
+  }
+}
+
 @media (max-width: 1180px) {
   .lesson-topline { align-items: flex-start; flex-direction: column; }
   .step-tabs { width: 100%; justify-content: flex-start; }
@@ -783,6 +913,11 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   .scope-list { margin-top: 10px; }
   .cohort-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .example-groups { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 1000px) {
+  .example-list,
+  .example-group.is-bluff .example-list { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 900px) {
@@ -812,6 +947,21 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   .practice-start-card .field-button { justify-self: start; }
   .practice-layout { grid-template-columns: 1fr; }
   .practice-coach { position: static; min-height: 0; }
+  .flop-checkraise-lesson .practice-trainer-heading {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: flex-start;
+    gap: 18px;
+  }
+  .flop-checkraise-lesson .practice-heading-tools {
+    align-items: flex-end;
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+  .flop-checkraise-lesson .practice-trainer-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .flop-checkraise-lesson .practice-footer-controls { justify-content: flex-start; flex-wrap: wrap; }
   .examples-scope { grid-template-columns: 1fr; gap: 8px; }
 }
 
@@ -855,6 +1005,25 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   .example-contrast header { align-items: flex-start; flex-direction: column; }
   .practice-hud { flex-wrap: wrap; }
   .practice-hud .field-button { width: 100%; margin-left: 0; }
+  .flop-checkraise-lesson .practice-trainer-heading { grid-template-columns: 1fr; }
+  .flop-checkraise-lesson .practice-heading-tools {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    width: 100%;
+  }
+  .flop-checkraise-lesson .practice-depth-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+  .flop-checkraise-lesson .practice-depth-button {
+    min-height: 44px;
+    padding-inline: 8px;
+    white-space: normal;
+  }
+  .flop-checkraise-lesson .practice-score { text-align: left; }
+  .flop-checkraise-lesson .practice-footer-controls { width: 100%; }
+  .flop-checkraise-lesson .practice-trainer-footer .field-button { width: 100%; }
   .lesson-footer { align-items: flex-start; flex-direction: column; }
 }
 

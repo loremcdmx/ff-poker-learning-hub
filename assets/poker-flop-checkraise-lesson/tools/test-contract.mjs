@@ -6,11 +6,13 @@ import vm from "node:vm";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../../..");
-const [html, source, shared, continuationDataSource, continuationControllerSource, sizeMatchedCsv, fieldMatrixSource, fieldMatrixCss, fieldMatrixCsv] = await Promise.all([
+const [html, source, shared, sharedCss, continuationDataSource, practiceGeneratorSource, continuationControllerSource, sizeMatchedCsv, fieldMatrixSource, fieldMatrixCss, fieldMatrixCsv] = await Promise.all([
   readFile(path.join(root, "flop-checkraise-lesson.html"), "utf8"),
   readFile(path.join(root, "assets/poker-flop-checkraise-lesson/data.js"), "utf8"),
   readFile(path.join(root, "assets/poker-field-lesson/lesson.js"), "utf8"),
+  readFile(path.join(root, "assets/poker-field-lesson/lesson.css"), "utf8"),
   readFile(path.join(root, "assets/poker-flop-checkraise-lesson/continuations.js"), "utf8"),
+  readFile(path.join(root, "assets/poker-flop-checkraise-lesson/practice-generator.js"), "utf8"),
   readFile(path.join(root, "assets/poker-trainer-shell/simulator-continuation.js"), "utf8"),
   readFile(path.join(root, "assets/poker-flop-checkraise-lesson/research/size-matched-k-high-dry-folds.csv"), "utf8"),
   readFile(path.join(root, "assets/poker-flop-checkraise-lesson/field-matrix.js"), "utf8"),
@@ -20,6 +22,7 @@ const [html, source, shared, continuationDataSource, continuationControllerSourc
 
 const context = { window: {} };
 vm.runInNewContext(continuationDataSource, context, { filename: "poker-flop-checkraise-lesson/continuations.js" });
+vm.runInNewContext(practiceGeneratorSource, context, { filename: "poker-flop-checkraise-lesson/practice-generator.js" });
 vm.runInNewContext(source, context, { filename: "poker-flop-checkraise-lesson/data.js" });
 const data = context.window.FF_POKER_FIELD_LESSON_DATA;
 
@@ -222,17 +225,18 @@ for (const spot of data.practice) {
   assert.equal(spot.table.seats.filter((seat) => seat.state === "folded").length, 4, `${spot.id} folds every bystander seat`);
 }
 
-assert.deepEqual(Array.from(data.practiceModes, (mode) => mode.key), ["all", "missed"]);
-const allMode = data.practiceModes.find((mode) => mode.key === "all");
-const missedMode = data.practiceModes.find((mode) => mode.key === "missed");
-assert.equal(allMode.spotIds.length, 66);
-assert(allMode.spotIds.every((id) => byId.has(id)));
-assert.equal(allMode.spotIds.filter((id) => byId.get(id).options.find((option) => option.correct).key === "checkraise").length, 11);
-assert.equal(allMode.compareExpectedXr, true);
-assert.equal(missedMode.spotIds.length, 13);
-assert.equal(missedMode.spotIds.filter((id) => byId.get(id).options.find((option) => option.correct).key === "checkraise").length, 11);
-assert.match(missedMode.reference, /не сравнивай/i);
-assert.match(missedMode.description, /не exact-combo/i, "missed mode stays methodological without combo-level field claims");
+assert.equal(data.practiceModes, undefined, "the practice screen no longer exposes a finite pack filter");
+assert.deepEqual(
+  Object.fromEntries(Object.entries(data.practiceGenerator)),
+  { schemaVersion: 1, global: "FFFlopCheckraisePracticeGenerator", defaultDepth: "flop" },
+  "practice resolves the procedural browser provider"
+);
+assert.equal(typeof context.window.FFFlopCheckraisePracticeGenerator?.createSession, "function");
+assert.deepEqual(
+  Object.fromEntries(Object.entries(data.practicePresentation)),
+  { autoStart: true, compactFeedback: true, externalControls: true },
+  "check-raise practice opts into the immediate c-bet-style loop"
+);
 assert.match(byId.get("xr-22-set").question, /2♣2♠/, "displayed pocket deuces match the table cards");
 assert.match(byId.get("fold-j5-weak-backdoor").options.find((option) => option.key === "checkraise").feedback, /эксплойт.*оверфолд.*дисциплинированнее/i);
 assert.match(byId.get("fold-t8-backdoor-only").answer, /эксплойт.*gutshot.*один.*runner-runner/i);
@@ -256,7 +260,10 @@ for (const example of [...data.examples.value, ...data.examples.bluff]) {
   for (const key of ["baselineRole", "whyThisHand", "bestTurns", "slowdownTurns", "afterVillainContinues"]) {
     assert(example.playbook[key], `${example.id} has filled ${key}`);
   }
+  assert(example.playbook.summary?.why, `${example.id} has a concise visible reason`);
+  assert(example.playbook.summary?.turn, `${example.id} has a concise visible turn plan`);
   assert(["call", "fold"].includes(example.contrast.actionKey), `${example.id} has a Call/Fold boundary`);
+  assert(example.contrast.shortCopy, `${example.id} has a concise visible contrast`);
   const contrastSpot = byId.get(example.contrast.sourceSpotId);
   assert(contrastSpot, `${example.id} contrast points to a practice spot`);
   assert.equal(contrastSpot.options.find((option) => option.correct).key, example.contrast.actionKey);
@@ -292,21 +299,31 @@ assert.deepEqual(
     .sort(),
   "every authored X/R candidate appears once inside the five category cards"
 );
-assert.match(data.examples.lead, /пять категорий.*почему X\/R.*после колла/i);
-assert.match(data.examples.method, /reverse-Hero hand-level extract/i);
-assert.match(data.examples.method, /не маскируем общий X\/R/i);
+assert.match(data.examples.lead, /пять категорий.*когда рейзить.*тёрне/i);
+assert.match(data.examples.method, /примеры учебные.*точных частот/i);
 assert.match(data.examples.bluff[0].contrast.copy, /один слабый backdoor.*эксплойт.*два пути усиления/i);
 assert.match(data.examples.bluff[1].contrast.copy, /один runner-runner.*эксплойт.*gutshot/i);
 
 assert.match(html, /data-intro-table/);
 assert.match(html, /data-step-target="examples"/);
-assert.match(html, /data-practice-mode="all"/);
-assert.match(html, /data-practice-mode="missed"/);
-assert.match(html, /data-practice-xr-rate/);
-assert.match(html, /data-practice-missed-xr/);
-assert.match(html, /data-practice-extra-xr/);
-assert.match(html, /Оптимистичных X\/R/);
-assert.match(html, /20260716-optimistic-xr-1/);
+assert.doesNotMatch(html, /example-group-index/, "examples use aligned section headings without decorative counters");
+assert.doesNotMatch(html, /data-examples-note/, "scenario scope is not repeated as a technical footnote");
+assert.doesNotMatch(html, /data-practice-mode=/, "the old finite-pack focus picker is gone");
+assert.match(html, /data-practice-depth="flop"[^>]*>Только флоп/);
+assert.match(html, /data-practice-depth="full"[^>]*>Полная раздача/);
+assert.match(html, /Где здесь чек-рейз\?/);
+assert.match(html, /У оппонента есть фолды на рейз/);
+assert.match(html, /data-practice-score/);
+assert.match(html, /data-practice-reset/);
+assert.match(html, /data-practice-next-external disabled/);
+assert.match(html, /data-practice-continuation-external hidden/);
+assert.doesNotMatch(html, /data-practice-start/, "practice opens directly on the first playable hand");
+assert.doesNotMatch(html, /data-practice-xr-rate|data-practice-missed-xr|data-practice-extra-xr/, "technical X/R counters do not crowd the main loop");
+assert.doesNotMatch(html, /Функциональный snapshot|T♥9♥ до showdown|Оптимистичных X\/R/, "setup and methodological copy stay out of the playable screen");
+assert.match(html, /6d0a6c0374a4/);
+assert.match(html, /ca84428f46bf/);
+assert.match(html, /d87ccb300d60/);
+assert.match(html, /31d437b2c932/);
 assert.match(html, /data-structure-league-matrix/);
 assert.match(html, /field-matrix\.css\?v=20260716-structures-1/);
 assert.match(html, /field-matrix\.js\?v=20260716-structures-1/);
@@ -317,6 +334,7 @@ assert.ok(html.indexOf("simulator-snapshot.js") < html.indexOf("poker-flop-check
 assert.ok(html.indexOf("simulator-practice.js") < html.indexOf("simulator-continuation.js"));
 assert.ok(html.indexOf("simulator-continuation.js") < html.indexOf("poker-flop-checkraise-lesson/continuations.js"));
 assert.ok(html.indexOf("poker-flop-checkraise-lesson/continuations.js") < html.indexOf("poker-flop-checkraise-lesson/data.js"));
+assert.ok(html.indexOf("poker-flop-checkraise-lesson/practice-generator.js") < html.indexOf("poker-flop-checkraise-lesson/data.js"));
 assert.ok(html.indexOf("poker-flop-checkraise-lesson/data.js") < html.indexOf("poker-flop-checkraise-lesson/field-matrix.js"));
 assert.ok(html.indexOf("poker-flop-checkraise-lesson/field-matrix.js") < html.indexOf("poker-field-lesson/lesson.js"));
 assert.match(fieldMatrixSource, /C-bet после чека/);
@@ -324,15 +342,56 @@ assert.match(fieldMatrixSource, /Фолд на X\/R/);
 assert.match(fieldMatrixSource, /dataset\.foldView/);
 assert.match(fieldMatrixCss, /structure-league-mobile-label/);
 assert.match(fieldMatrixCss, /@media \(max-width: 820px\)/);
+assert.match(
+  sharedCss,
+  /\.flop-checkraise-lesson \[data-step="examples"\] \.example-color-card \.poker-deck-card__cb-index\s*\{\s*display:\s*none;/,
+  "every small color-block card in check-raise examples hides corner annotations"
+);
+assert.doesNotMatch(
+  sharedCss,
+  /\.example-variant-chip span\s*\{/,
+  "variant labels never cascade into the card rank"
+);
+assert.match(
+  sharedCss,
+  /\.example-list\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/,
+  "value examples align in one three-card row on wide screens"
+);
+assert.match(
+  sharedCss,
+  /@media \(min-width:\s*901px\)\s*\{[\s\S]*?\.flop-checkraise-lesson \[data-step="practice"\] \.practice-layout\s*\{[\s\S]*?grid-template-columns:\s*minmax\(560px,\s*1\.45fr\)\s*minmax\(280px,\s*\.55fr\);[\s\S]*?align-items:\s*stretch;/,
+  "check-raise practice gives the playable table c-bet-like priority on desktop"
+);
+assert.match(
+  sharedCss,
+  /\.flop-checkraise-lesson \[data-practice-next-external\]:disabled\s*\{[\s\S]*?opacity:\s*\.38;[\s\S]*?cursor:\s*not-allowed;/,
+  "the external next action does not look enabled before an answer"
+);
 assert.match(shared, /FFTrainerSimulator\.renderDecision/);
 assert.match(shared, /practiceModeErrors/);
+assert.match(shared, /practiceGeneratorErrors/);
+assert.match(shared, /createPracticeSession/);
+assert.match(shared, /nextGeneratedPracticeSpot/);
 assert.match(shared, /missedXr/);
 assert.match(shared, /Ниже учебной линии/);
 assert.match(shared, /Допустимый эксплойт/);
+assert.match(shared, /practicePresentation\)\.autoStart/);
+assert.match(shared, /data-practice-next-external/);
+assert.match(shared, /data-practice-continuation-external/);
+assert.match(shared, /data-practice-depth/);
+assert.match(shared, /state\.practiceChoice !== "fold"/, "full-hand mode ends immediately when Hero folds the flop");
+assert.match(shared, /Чек-рейз — ок/);
+assert.match(shared, /Лузовый чек-рейз/);
+assert.match(shared, /Очевидно пропущенный чек-рейз/);
+assert.match(shared, /compact \? "Что делаешь\?" : spot\.question/);
+assert.match(shared, /replace\(\/\^Верно:/);
+assert.match(shared, /revealPracticeNode\("\[data-practice-feedback\]"\)/);
+assert.match(shared, /revealPracticeNode\("\[data-practice-table\]"\)/);
 assert.match(shared, /decisionOutcomeFor/);
 assert.match(shared, /expectedXr/);
 assert.match(shared, /mountContinuation/);
 assert.match(shared, /data-practice-continuation/);
+assert.doesNotMatch(shared, /BTN коллирует учебный check-raise|BTN открыл K♦K♠/);
 assert.doesNotMatch(continuationControllerSource, /FFTrainerEvents|FFPlayerProgress|localStorage|sessionStorage/, "continuation does not create a second telemetry or persistence path");
 assert.doesNotMatch(shared, /host\.className = `decision-feedback/, "feedback keeps structural coach classes");
 
@@ -376,6 +435,7 @@ assert(invalidFieldErrors.some((error) => /matched N больше overall N/.tes
 
 const rateFeedback = runtimeContext.window.FFPokerFieldLesson.practiceRateFeedbackFor;
 const decisionOutcome = runtimeContext.window.FFPokerFieldLesson.decisionOutcomeFor;
+const allMode = { compareExpectedXr: true, reference: "Учебная линия" };
 const j5Spot = byId.get("fold-j5-weak-backdoor");
 assert.equal(
   decisionOutcome(j5Spot.options.find((option) => option.key === "checkraise"), j5Spot.options.find((option) => option.correct)),
@@ -407,7 +467,7 @@ const incomplete = JSON.parse(JSON.stringify(data));
 incomplete.cohorts[0].actions[0].pct = null;
 incomplete.examples.value[0].tree = "rvcc";
 incomplete.examples.value[0].playbook.bestTurns = "";
-incomplete.practiceModes[0].spotIds.push("unknown-spot");
+incomplete.practiceGenerator.global = "";
 incomplete.wisdom[2].visual.boardCards[1] = "Kc";
 incomplete.wisdom[2].visual.sizing.checkraise = "";
 incomplete.wisdom[2].visual.rows = incomplete.wisdom[2].visual.rows.filter((row) => row.key !== "league2");
@@ -416,7 +476,7 @@ const incompleteErrors = runtimeContext.window.FFPokerFieldLesson.validateData(i
 assert(incompleteErrors.some((error) => /actions\[0\]: нет pct/.test(error)), "missing pct is rejected");
 assert(incompleteErrors.some((error) => /tree должен быть bb_vs_late_rfi/.test(error)), "wrong example tree is rejected");
 assert(incompleteErrors.some((error) => /playbook: нет bestTurns/.test(error)), "empty example turn plan is rejected");
-assert(incompleteErrors.some((error) => /неизвестный spotId unknown-spot/.test(error)), "unknown mode spot is rejected");
+assert(incompleteErrors.some((error) => /practiceGenerator\.global/.test(error)), "missing procedural provider global is rejected");
 assert(incompleteErrors.some((error) => /три уникальные валидные карты/.test(error)), "duplicate board card is rejected");
 assert(incompleteErrors.some((error) => /нет checkraise/.test(error)), "missing shared size scope is rejected");
 assert(incompleteErrors.some((error) => /нужны league1, league2, league3/.test(error)), "missing league row is rejected");

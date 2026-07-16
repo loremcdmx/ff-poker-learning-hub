@@ -44,7 +44,12 @@
    *   practice: [SNAPSHOT_SPOT, ...],
    *   practiceModes?: [
    *     { key, label, description, reference?, compareExpectedXr?, spotIds: [PRACTICE_ID, ...] }
-   *   ]
+   *   ],
+   *   practiceGenerator?: {
+   *     schemaVersion: 1,
+   *     global: "BrowserGlobalWithCreateSession",
+   *     defaultDepth?: "flop" | "full"
+   *   }
    * }
    *
    * SNAPSHOT_SPOT is the native FFTrainerSimulatorSnapshot shape:
@@ -86,12 +91,15 @@
     firstChoice: "",
     wisdomIndex: 0,
     practiceMode: "",
+    practiceDepth: "flop",
+    practiceSession: null,
     practiceQueue: [],
     practiceIndex: 0,
     practiceChoice: "",
     practiceAnswered: false,
     practiceContinuation: null,
     practiceContinuationActive: false,
+    practiceContinuationIntroduced: false,
     practiceStarted: false,
     stats: { hands: 0, correct: 0, mistakes: 0, checkraises: 0, expectedXr: 0, missedXr: 0, extraXr: 0 }
   };
@@ -335,6 +343,17 @@
     return errors;
   }
 
+  function practiceGeneratorErrors(practiceGenerator) {
+    const source = asObject(practiceGenerator);
+    if (!Object.keys(source).length) return [];
+    const errors = [];
+    if (source.schemaVersion !== 1) errors.push("practiceGenerator.schemaVersion: ожидается 1");
+    if (!cleanText(source.global)) errors.push("practiceGenerator.global: нет имени browser global");
+    const defaultDepth = cleanText(source.defaultDepth || "flop");
+    if (!["flop", "full"].includes(defaultDepth)) errors.push("practiceGenerator.defaultDepth: нужен flop или full");
+    return errors;
+  }
+
   function validateData(value) {
     const errors = [];
     const data = asObject(value);
@@ -355,6 +374,7 @@
     if (!asArray(data.practice).length) errors.push("practice queue пуста");
     asArray(data.practice).forEach((spot, index) => errors.push(...spotErrors(spot, `practice[${index}]`)));
     errors.push(...practiceModeErrors(data.practice, data.practiceModes));
+    errors.push(...practiceGeneratorErrors(data.practiceGenerator));
     return { data, errors };
   }
 
@@ -422,6 +442,9 @@
     body.dataset.currentStep = next;
     saveProgress();
     root.scrollTo({ top: 0, behavior: options.instant ? "auto" : "smooth" });
+    if (next === "practice" && asObject(data.practicePresentation).autoStart && !state.practiceStarted) {
+      startPractice();
+    }
     if (options.focusHeading) {
       root.requestAnimationFrame(() => {
         const heading = $(`.lesson-screen[data-step="${next}"] h2`);
@@ -957,13 +980,8 @@
   function createExampleVariant(representative) {
     const source = asObject(representative);
     const chip = makeElement("div", "example-variant-chip");
+    chip.setAttribute("aria-label", source.hand || "Дополнительная рука");
     chip.append(createExampleCards(source.heroCards, `Представитель ${source.hand || "категории"}`, "mini"));
-    const copy = makeElement("div", "");
-    copy.append(
-      makeElement("strong", "", source.hand || "Рука"),
-      makeElement("span", "", source.boardLabel || "тот же тип доски")
-    );
-    chip.append(copy);
     return chip;
   }
 
@@ -976,61 +994,37 @@
   function createExampleContrast(contrast) {
     const source = asObject(contrast);
     const card = makeElement("aside", `example-contrast is-${cleanText(source.actionKey) || "call"}`);
-    const heading = makeElement("header", "");
-    heading.append(
-      makeElement("span", "", "Похожая рука · другое действие"),
-      makeElement("strong", "", source.actionLabel || "Call")
-    );
     const visual = makeElement("div", "example-contrast-visual");
     visual.append(
       createExampleCards(source.heroCards, `Контрпример ${source.hand || "рука"}`, "mini"),
-      makeElement("span", "", source.hand || "Контроль"),
-      makeElement("i", "", "на"),
-      createExampleCards(source.boardCards, "Доска контрпримера", "mini")
+      makeElement("strong", "", `${source.hand || "Похожая рука"} — ${source.actionLabel || "Call"}`)
     );
-    card.append(heading, visual, makeElement("p", "", source.copy || "Сравни границу между действиями."));
+    card.append(visual, makeElement("p", "", source.shortCopy || source.copy || "Сравни границу между действиями."));
     return card;
   }
 
   function createFieldExample(example, groupKey) {
     const source = asObject(example);
-    const evidence = asObject(source.evidence);
     const playbook = asObject(source.playbook);
+    const summary = asObject(playbook.summary);
     const representatives = asArray(source.representatives);
-    const league1Rate = exampleRate(evidence.league1);
-    const league3Rate = exampleRate(evidence.league3);
-    const gap = league1Rate === null || league3Rate === null ? null : league1Rate - league3Rate;
     const card = makeElement("article", `field-example-card is-${groupKey}`);
     const heading = makeElement("header", "field-example-head");
-    const title = makeElement("div", "");
-    title.append(
-      makeElement("p", "eyebrow", source.handClass || (groupKey === "value" ? "Вэлью" : "Полублеф")),
-      makeElement("h4", "", source.title || "Пример чек-рейза")
-    );
-    const delta = makeElement(
-      "span",
-      `example-gap${gap === null ? " is-pending" : ""}`,
-      gap === null ? "базовая линия" : `L1 − L3 ${gap >= 0 ? "+" : ""}${gap.toLocaleString("ru-RU", { maximumFractionDigits: 1 })} п.п.`
-    );
-    heading.append(title, delta);
+    heading.append(makeElement("h4", "", source.title || "Пример чек-рейза"));
 
     const stage = makeElement("div", "example-stage");
     const hand = makeElement("div", "example-card-block");
-    hand.append(makeElement("span", "", "Hero"), createExampleCards(source.heroCards, "Карты Hero", "hero"));
+    hand.append(makeElement("span", "", "Рука"), createExampleCards(source.heroCards, "Карты игрока", "hero"));
     const board = makeElement("div", "example-card-block");
     board.append(makeElement("span", "", "Флоп"), createExampleCards(source.boardCards, "Флоп", "board"));
     stage.append(hand, makeElement("i", "example-stage-arrow", "→"), board);
 
     const action = makeElement("div", "example-action-band");
-    action.append(
-      makeElement("span", "", "Базовая линия"),
-      makeElement("strong", "", playbook.action || "Чек-рейз"),
-      makeElement("small", "", playbook.baselineRole || source.handClass || "Учебная роль")
-    );
+    action.append(makeElement("strong", "", playbook.action || "Чек-рейз"));
 
     const variants = makeElement("div", "example-variants");
     if (representatives.length > 1) {
-      variants.append(makeElement("p", "", "Ещё представители категории"));
+      variants.append(makeElement("p", "", "Ещё руки"));
       const variantRow = makeElement("div", "example-variant-row");
       representatives.slice(1).forEach((representative) => variantRow.append(createExampleVariant(representative)));
       variants.append(variantRow);
@@ -1038,38 +1032,13 @@
 
     const lessonGrid = makeElement("div", "example-lesson-grid");
     lessonGrid.append(
-      createExampleLessonCell("Почему X/R", playbook.whyThisHand, "is-why"),
-      createExampleLessonCell("Если получили колл", playbook.afterVillainContinues, "is-after"),
-      createExampleLessonCell("Продолжаем", playbook.bestTurns, "is-good"),
-      createExampleLessonCell("Не автопродолжение", playbook.slowdownTurns, "is-caution")
+      createExampleLessonCell("Почему рейз", summary.why || source.takeaway || playbook.whyThisHand, "is-why"),
+      createExampleLessonCell("План тёрна", summary.turn || playbook.afterVillainContinues, "is-after")
     );
 
-    const evidenceGrid = makeElement("div", "example-evidence");
-    evidenceGrid.append(makeElement("p", "example-category-label", `Категория: ${evidence.categoryLabel || source.handClass || "—"}`));
-    if (cleanText(evidence.status) === "pending_exact_extract") {
-      const pending = makeElement("div", "example-evidence-pending");
-      pending.append(
-        makeElement("strong", "", "L1–L3: нужен exact-HH с картами BB"),
-        makeElement("span", "", "Общий X/R узла здесь намеренно не повторяется как частота этой категории.")
-      );
-      evidenceGrid.append(pending);
-    } else {
-      evidenceGrid.append(
-        createExampleEvidenceRow("League 1 · R1–5", evidence.league1, "is-league1"),
-        createExampleEvidenceRow("League 2 · R6–10", evidence.league2, "is-league2"),
-        createExampleEvidenceRow("League 3 · R11–17", evidence.league3, "is-league3")
-      );
-    }
-
-    const takeaway = makeElement("p", "example-takeaway", source.takeaway || "Сравни выбор линии между группами.");
-    const foot = makeElement("footer", "example-foot");
-    foot.append(
-      makeElement("span", "", evidence.scope || "Field evidence bucket"),
-      makeElement("small", "", source.representativeNote || "Карты — представитель бакета; проценты относятся ко всему бакету.")
-    );
     card.append(heading, stage, action);
     if (representatives.length > 1) card.append(variants);
-    card.append(lessonGrid, createExampleContrast(source.contrast), takeaway, evidenceGrid, foot);
+    card.append(lessonGrid, createExampleContrast(source.contrast));
     return card;
   }
 
@@ -1099,6 +1068,47 @@
 
   function currentPracticeSpot() {
     return state.practiceQueue[state.practiceIndex] || null;
+  }
+
+  function practiceGeneratorConfig() {
+    return asObject(data.practiceGenerator);
+  }
+
+  function resolvePracticeGenerator() {
+    const config = practiceGeneratorConfig();
+    const globalName = cleanText(config.global);
+    const generator = globalName ? root[globalName] : null;
+    return generator && typeof generator.createSession === "function" ? generator : null;
+  }
+
+  function createPracticeSession() {
+    const generator = resolvePracticeGenerator();
+    if (!generator) return null;
+    const session = generator.createSession();
+    return session && typeof session.next === "function" ? session : null;
+  }
+
+  function nextGeneratedPracticeSpot() {
+    if (!state.practiceSession || typeof state.practiceSession.next !== "function") return null;
+    const spot = state.practiceSession.next();
+    return spotErrors(spot, "generated practice").length ? null : spot;
+  }
+
+  function renderPracticeDepth() {
+    $$("[data-practice-depth]").forEach((button) => {
+      const active = cleanText(button.dataset.practiceDepth) === state.practiceDepth;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", String(active));
+      button.disabled = state.practiceContinuationActive;
+    });
+  }
+
+  function setPracticeDepth(depth) {
+    const nextDepth = cleanText(depth);
+    if (state.practiceContinuationActive || !["flop", "full"].includes(nextDepth)) return;
+    state.practiceDepth = nextDepth;
+    renderPracticeDepth();
+    renderPracticeControls();
   }
 
   function practiceModes() {
@@ -1132,6 +1142,7 @@
     replaceText("[data-practice-hands]", state.stats.hands);
     replaceText("[data-practice-correct]", state.stats.correct);
     replaceText("[data-practice-mistakes]", state.stats.mistakes);
+    replaceText("[data-practice-score]", `${state.stats.correct} / ${state.stats.hands}`);
     replaceText("[data-practice-xr-rate]", state.stats.hands ? formatPercent(state.stats.checkraises / state.stats.hands * 100) : "—");
     replaceText("[data-practice-missed-xr]", state.stats.missedXr);
     replaceText("[data-practice-extra-xr]", state.stats.extraXr);
@@ -1140,6 +1151,13 @@
 
   function practiceRateFeedback() {
     return practiceRateFeedbackFor(activePracticeMode(), state.stats);
+  }
+
+  function revealPracticeNode(selector) {
+    if (typeof root.matchMedia !== "function" || !root.matchMedia("(max-width: 900px)").matches) return;
+    const node = $(selector);
+    const behavior = root.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    node?.scrollIntoView?.({ behavior, block: "start" });
   }
 
   function practiceRateFeedbackFor(mode, stats) {
@@ -1178,9 +1196,30 @@
   function renderPracticeFeedback() {
     const host = $("[data-practice-feedback]");
     const spot = currentPracticeSpot();
+    const practiceMeta = asObject(spot?.practiceMeta);
+    const generated = practiceMeta.generated === true;
+    const compact = Boolean(asObject(data.practicePresentation).compactFeedback);
     if (!host || !spot) return;
     if (!state.practiceAnswered) {
-      feedbackShell(host, "is-neutral", "Решение за столом", spot.question, spot.context || "Выбери действие под столом. После ответа появится разбор.");
+      if (generated) {
+        const foldRead = asObject(practiceMeta.foldRead);
+        feedbackShell(
+          host,
+          "is-neutral",
+          cleanText(foldRead.label) || "У соперника есть фолды",
+          "Не надо рейзить всё",
+          cleanText(foldRead.copy)
+            || "Сильное вэлью и лучшие дро отправляй в чек-рейз, средние руки коллируй, слабый воздух выбрасывай."
+        );
+        return;
+      }
+      feedbackShell(
+        host,
+        "is-neutral",
+        compact ? "Твой ход" : "Решение за столом",
+        compact ? "Что делаешь?" : spot.question,
+        compact ? "Выбери действие под столом." : (spot.context || "Выбери действие под столом. После ответа появится разбор.")
+      );
       return;
     }
     const chosen = optionFor(spot, state.practiceChoice);
@@ -1189,14 +1228,74 @@
     const correct = outcome === "correct";
     const alternative = outcome === "alternative";
     const missedXr = !correct && expected?.key === "checkraise";
+    if (generated) {
+      const semanticOutcome = cleanText(chosen?.outcome)
+        || (correct && chosen?.key === "checkraise"
+          ? "xr-ok"
+          : alternative
+            ? "loose-xr"
+            : missedXr
+              ? "missed-xr"
+              : correct
+                ? "correct"
+                : "wrong");
+      const verdict = {
+        "xr-ok": {
+          tone: "is-correct",
+          kicker: "Верно · давление с планом",
+          title: "Чек-рейз — ок"
+        },
+        "loose-xr": {
+          tone: "is-alternative",
+          kicker: "Эксплойт, но не база",
+          title: "Лузовый чек-рейз"
+        },
+        "missed-xr": {
+          tone: "is-wrong",
+          kicker: "Фолд-эквити осталось неиспользованным",
+          title: "Очевидно пропущенный чек-рейз"
+        },
+        correct: {
+          tone: "is-correct",
+          kicker: "Верно · диапазон не обязан рейзить всё",
+          title: chosen?.key === "fold" ? "Фолд — ок" : "Колл — ок"
+        },
+        wrong: {
+          tone: "is-wrong",
+          kicker: `Лучше: ${expected?.label || "другая линия"}`,
+          title: "Линия не подходит"
+        }
+      }[semanticOutcome] || {
+        tone: correct ? "is-correct" : alternative ? "is-alternative" : "is-wrong",
+        kicker: correct ? "Верно" : alternative ? "Эксплойт, но не база" : `Лучше: ${expected?.label || "другая линия"}`,
+        title: correct ? "Решение — ок" : alternative ? "Лузовый чек-рейз" : "Линия не подходит"
+      };
+      feedbackShell(
+        host,
+        verdict.tone,
+        verdict.kicker,
+        verdict.title,
+        cleanText(chosen?.feedback || practiceMeta.reason || spot.answer || "Сравни линию с разбором урока.").replace(/^Верно:\s*/i, "")
+      );
+      return;
+    }
+    const kicker = correct
+      ? "Верно"
+      : alternative
+        ? "Допустимый эксплойт"
+        : missedXr
+          ? "Пропущен чек-рейз"
+          : `Промах · нужно: ${expected?.label || "другое действие"}`;
     feedbackShell(
       host,
       correct ? "is-correct" : alternative ? "is-alternative" : "is-wrong",
-      correct ? "Верно" : alternative ? "Допустимый эксплойт · при большом оверфолде" : missedXr ? "Пропущен check-raise" : "Промах",
-      correct ? (spot.title || "Решение совпало") : alternative ? `База дисциплинированнее: ${expected?.label || "—"}` : `Нужно: ${expected?.label || "—"}`,
-      chosen?.feedback || spot.answer || "Сравни линию с разбором урока."
+      compact ? kicker : correct ? "Верно" : alternative ? "Допустимый эксплойт · при большом оверфолде" : missedXr ? "Пропущен check-raise" : "Промах",
+      compact ? (spot.title || "Разбор решения") : correct ? (spot.title || "Решение совпало") : alternative ? `База дисциплинированнее: ${expected?.label || "—"}` : `Нужно: ${expected?.label || "—"}`,
+      compact
+        ? cleanText(chosen?.feedback || spot.answer || "Сравни линию с разбором урока.").replace(/^Верно:\s*/i, "")
+        : chosen?.feedback || spot.answer || "Сравни линию с разбором урока."
     );
-    if (cleanText(spot.answer) && cleanText(spot.answer) !== cleanText(chosen?.feedback)) {
+    if (!compact && cleanText(spot.answer) && cleanText(spot.answer) !== cleanText(chosen?.feedback)) {
       host.append(makeElement("p", "feedback-answer", spot.answer));
     }
   }
@@ -1208,7 +1307,7 @@
   }
 
   function appendPracticeContinuationControls(host, spot) {
-    if (!host || !spot?.continuation || !state.practiceAnswered) return;
+    if ($("[data-practice-next-external]") || !host || !spot?.continuation || !state.practiceAnswered) return;
     const controls = host.querySelector(".client-controls");
     if (!controls) return;
     const row = makeElement("div", "practice-next-row continuation-launch-row");
@@ -1226,37 +1325,86 @@
     controls.append(row);
   }
 
+  function renderPracticeControls() {
+    const spot = currentPracticeSpot();
+    const next = $("[data-practice-next-external]");
+    const continuation = $("[data-practice-continuation-external]");
+    const footer = $(".practice-trainer-footer");
+    const depthAware = Boolean($("[data-practice-depth]"));
+    const canContinue = Boolean(
+      state.practiceAnswered
+      && spot?.continuation
+      && (!depthAware || state.practiceDepth === "full")
+      && (!depthAware || state.practiceChoice !== "fold")
+    );
+    if (footer) footer.hidden = state.practiceContinuationActive;
+    if (next) {
+      next.hidden = depthAware && canContinue && !state.practiceContinuationActive;
+      next.disabled = !state.practiceAnswered || state.practiceContinuationActive;
+      next.textContent = "Следующая ситуация";
+    }
+    if (continuation) {
+      continuation.hidden = !canContinue || state.practiceContinuationActive;
+      continuation.textContent = "Продолжить раздачу";
+      continuation.classList.toggle("is-primary", canContinue);
+      continuation.classList.toggle("is-secondary", !canContinue);
+    }
+    $$("[data-practice-mode], [data-practice-depth], [data-practice-reset]").forEach((control) => {
+      control.disabled = state.practiceContinuationActive;
+    });
+    renderPracticeDepth();
+  }
+
   function startPracticeContinuation() {
     const spot = currentPracticeSpot();
     const host = $("[data-practice-table]");
-    if (!spot?.continuation || !host || !state.practiceAnswered || state.practiceContinuationActive) return;
+    if (
+      !spot?.continuation
+      || !host
+      || !state.practiceAnswered
+      || state.practiceContinuationActive
+      || ($("[data-practice-depth]") && state.practiceDepth !== "full")
+    ) return;
     if (typeof root.FFTrainerSimulator?.mountContinuation !== "function") {
       feedbackShell($("[data-practice-feedback]"), "is-wrong", "Продолжение не загрузилось", "Обновите страницу", "Shared continuation controller недоступен.");
       return;
     }
     destroyPracticeContinuation();
     state.practiceContinuationActive = true;
+    renderPracticeControls();
     const coach = $("[data-practice-feedback]");
+    const compact = Boolean(asObject(data.practicePresentation).compactFeedback);
+    const chosen = optionFor(spot, state.practiceChoice);
+    const villain = cleanText(spot.table?.actionLine?.[1]).split(" ")[0] || "Соперник";
+    const continuationTitle = cleanText(chosen?.continuationTitle)
+      || (state.practiceChoice === "fold"
+        ? "Ты выбросил — раздача закончилась"
+        : state.practiceChoice === "call"
+          ? `${villain} получил колл`
+          : `${villain} отвечает на чек-рейз`);
     feedbackShell(
       coach,
       "is-neutral",
-      "Свободное доигрывание · без дополнительного счёта",
-      "BTN коллирует учебный check-raise",
-      "Выбирай только готовые кнопки на тёрне и ривере. Эти решения не меняют оценку первого ответа; в конце откроются карты BTN и вся линия."
+      compact ? "Продолжение · без счёта" : "Свободное доигрывание · без дополнительного счёта",
+      continuationTitle,
+      cleanText(chosen?.continuationCopy)
+        || (compact
+          ? "Если раздача продолжается, выбери линию на тёрне и ривере."
+          : "Следующие решения не меняют оценку флопа. В конце увидишь реакцию соперника и итог линии.")
     );
     state.practiceContinuation = root.FFTrainerSimulator.mountContinuation(host, spot, {
       rootOptionKey: state.practiceChoice,
       positionLabels: { UTG: "EP", LJ: "MP" },
       decimalComma: true,
-      completeLabel: "Следующая раздача",
+      completeLabel: "Следующая ситуация",
       onComplete(payload) {
         const result = payload?.result || {};
         feedbackShell(
           coach,
-          "is-correct",
-          "Шоудаун · диапазон стал конкретным",
-          "BTN открыл K♦K♠ — сет королей",
-          result.summary || "Теперь видно не только решение Hero, но и точную руку, против которой прошла учебная линия."
+          "is-neutral",
+          cleanText(result.kicker) || "Раздача завершена",
+          "Флоп уже оценён",
+          "Итог раздачи показан на столе. Он не добавляет и не снимает баллы за первое решение."
         );
       },
       onExit() {
@@ -1271,22 +1419,46 @@
     if (!spot || !host) return;
     renderDecision(host, spot, state.practiceChoice, {
       hideActionStatus: false,
-      nextLabel: state.practiceAnswered && !spot.continuation ? "Следующая раздача" : "",
+      nextLabel: $("[data-practice-next-external]") ? "" : state.practiceAnswered && !spot.continuation ? "Следующая раздача" : "",
       errorPrefix: `practice[${state.practiceIndex}]`
     });
     appendPracticeContinuationControls(host, spot);
     renderPracticeFeedback();
     renderPracticeHud();
+    renderPracticeControls();
   }
 
   function startPractice() {
-    const queue = shuffledPractice();
+    const restarting = state.practiceStarted;
+    const generatorConfigured = Boolean(Object.keys(practiceGeneratorConfig()).length);
+    let session = null;
+    let queue = [];
+    try {
+      session = createPracticeSession();
+      const generatedSpot = session ? (() => {
+        state.practiceSession = session;
+        return nextGeneratedPracticeSpot();
+      })() : null;
+      queue = generatedSpot ? [generatedSpot] : shuffledPractice();
+    } catch (error) {
+      session = null;
+      queue = [];
+    }
+    if (generatorConfigured && (!session || !queue.length)) {
+      state.practiceSession = null;
+      showDataError([...validation.errors, "генератор бесконечной практики не загрузился"]);
+      return;
+    }
     if (!queue.length) {
       showDataError([...validation.errors, "практика пока недоступна"]);
       return;
     }
-    const continuationIndex = queue.findIndex((spot) => spot?.continuation);
-    if (continuationIndex > 0) [queue[0], queue[continuationIndex]] = [queue[continuationIndex], queue[0]];
+    if (!session && !state.practiceContinuationIntroduced) {
+      const continuationIndex = queue.findIndex((spot) => spot?.continuation);
+      if (continuationIndex > 0) [queue[0], queue[continuationIndex]] = [queue[continuationIndex], queue[0]];
+      state.practiceContinuationIntroduced = continuationIndex >= 0;
+    }
+    state.practiceSession = session;
     state.practiceQueue = queue;
     state.practiceIndex = 0;
     state.practiceChoice = "";
@@ -1294,10 +1466,15 @@
     destroyPracticeContinuation();
     state.practiceStarted = true;
     state.stats = { hands: 0, correct: 0, mistakes: 0, checkraises: 0, expectedXr: 0, missedXr: 0, extraXr: 0 };
-    $("[data-practice-setup]").hidden = true;
-    $("[data-practice-run]").hidden = false;
+    const setup = $("[data-practice-setup]");
+    const run = $("[data-practice-run]");
+    if (setup) setup.hidden = true;
+    if (run) run.hidden = false;
     renderPracticeSpot();
-    root.requestAnimationFrame(() => $("[data-practice-table] .table-action")?.focus({ preventScroll: true }));
+    root.requestAnimationFrame(() => {
+      $("[data-practice-table] .table-action")?.focus({ preventScroll: true });
+      if (restarting) revealPracticeNode("[data-practice-table]");
+    });
   }
 
   function answerPractice(key) {
@@ -1316,30 +1493,60 @@
     if (expected?.key === "checkraise" && key !== "checkraise") state.stats.missedXr += 1;
     if (expected?.key !== "checkraise" && key === "checkraise") state.stats.extraXr += 1;
     renderPracticeSpot();
-    root.requestAnimationFrame(() => $("[data-practice-table] [data-practice-next]")?.focus({ preventScroll: true }));
+    root.requestAnimationFrame(() => {
+      const continuation = $("[data-practice-continuation-external]");
+      const next = $("[data-practice-next-external]");
+      const target = continuation && !continuation.hidden
+        ? continuation
+        : next && !next.hidden
+          ? next
+          : $("[data-practice-table] [data-practice-next]");
+      target?.focus({ preventScroll: true });
+      revealPracticeNode("[data-practice-feedback]");
+    });
   }
 
   function nextPractice() {
     if (!state.practiceAnswered || !state.practiceQueue.length) return;
     destroyPracticeContinuation();
-    state.practiceIndex += 1;
-    if (state.practiceIndex >= state.practiceQueue.length) state.practiceQueue = shuffledPractice();
-    state.practiceIndex %= state.practiceQueue.length;
+    if (state.practiceSession) {
+      const generatedSpot = nextGeneratedPracticeSpot();
+      if (!generatedSpot) {
+        showDataError([...validation.errors, "генератор не смог собрать следующую ситуацию"]);
+        return;
+      }
+      state.practiceQueue = [generatedSpot];
+      state.practiceIndex = 0;
+    } else {
+      state.practiceIndex += 1;
+      if (state.practiceIndex >= state.practiceQueue.length) state.practiceQueue = shuffledPractice();
+      state.practiceIndex %= state.practiceQueue.length;
+    }
     state.practiceChoice = "";
     state.practiceAnswered = false;
     renderPracticeSpot();
-    root.requestAnimationFrame(() => $("[data-practice-table] .table-action")?.focus({ preventScroll: true }));
+    root.requestAnimationFrame(() => {
+      $("[data-practice-table] .table-action")?.focus({ preventScroll: true });
+      revealPracticeNode("[data-practice-table]");
+    });
   }
 
   function stopPractice() {
     destroyPracticeContinuation();
     state.practiceStarted = false;
+    state.practiceSession = null;
     state.practiceQueue = [];
     state.practiceChoice = "";
     state.practiceAnswered = false;
-    $("[data-practice-run]").hidden = true;
-    $("[data-practice-setup]").hidden = false;
-    $("[data-practice-start]")?.focus({ preventScroll: true });
+    const run = $("[data-practice-run]");
+    const setup = $("[data-practice-setup]");
+    if (setup) {
+      if (run) run.hidden = true;
+      setup.hidden = false;
+      $("[data-practice-start]")?.focus({ preventScroll: true });
+      return;
+    }
+    startPractice();
   }
 
   function setupDecisionEvents() {
@@ -1360,12 +1567,18 @@
       if (action) answerPractice(action.dataset.optionKey);
     });
     $$("[data-practice-mode]").forEach((button) => button.addEventListener("click", () => {
-      if (state.practiceStarted) return;
       state.practiceMode = cleanText(button.dataset.practiceMode);
       renderPracticeModeSetup();
+      if (state.practiceStarted && asObject(data.practicePresentation).autoStart) startPractice();
+    }));
+    $$("[data-practice-depth]").forEach((button) => button.addEventListener("click", () => {
+      setPracticeDepth(button.dataset.practiceDepth);
     }));
     $("[data-practice-start]")?.addEventListener("click", startPractice);
     $("[data-practice-stop]")?.addEventListener("click", stopPractice);
+    $("[data-practice-reset]")?.addEventListener("click", startPractice);
+    $("[data-practice-next-external]")?.addEventListener("click", nextPractice);
+    $("[data-practice-continuation-external]")?.addEventListener("click", startPracticeContinuation);
   }
 
   function restoreProgress() {
@@ -1376,12 +1589,15 @@
   }
 
   function initialize() {
+    const defaultDepth = cleanText(practiceGeneratorConfig().defaultDepth);
+    state.practiceDepth = ["flop", "full"].includes(defaultDepth) ? defaultDepth : "flop";
     applyMeta();
     renderWisdom();
     renderField();
     renderExamples();
     renderFirstDecision();
     renderPracticeModeSetup();
+    renderPracticeDepth();
     setupNavigation();
     setupWisdom();
     setupDecisionEvents();

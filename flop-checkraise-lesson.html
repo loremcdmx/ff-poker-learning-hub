@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=a19790bf2596">
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
-  <link rel="stylesheet" href="assets/poker-field-lesson/lesson.css?v=be493cb0692f">
+  <link rel="stylesheet" href="assets/poker-field-lesson/lesson.css?v=6d0a6c0374a4">
   <link rel="stylesheet" href="assets/poker-flop-checkraise-lesson/field-matrix.css?v=20260716-structures-1">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
 </head>
@@ -105,85 +105,67 @@
     <section class="lesson-screen" data-step="examples" aria-labelledby="examplesTitle" hidden>
       <div class="examples-heading">
         <div>
-          <p class="eyebrow">BB vs CO/BTN · разбор решений</p>
-          <h2 id="examplesTitle" data-examples-title>Из чего собрать check-raise</h2>
+          <p class="eyebrow">Примеры</p>
+          <h2 id="examplesTitle" data-examples-title>Кандидаты на чек-рейз</h2>
         </div>
-        <p data-examples-lead>Раздачи объясняют выбор кандидата; частота и N относятся ко всему сценарию, а не к одной доске или руке.</p>
+        <p data-examples-lead>Пять категорий: когда рейзить и что делать на тёрне.</p>
       </div>
       <aside class="examples-scope panel" aria-label="Границы примеров">
-        <strong>Только BB против позднего стила</strong>
-        <span>Опен CO/BTN → колл BB → чек BB → c-bet префлоп-рейзера → решение BB</span>
-        <small data-examples-note>Value и bluff определяются по силе руки и дро на флопе; наблюдаемая частота не равна solver-частоте.</small>
+        <strong>BB против CO/BTN</strong>
+        <span>Колл префлоп → чек → c-bet</span>
       </aside>
       <div class="example-groups">
         <section class="example-group is-value panel" aria-labelledby="valueExamplesTitle">
           <header class="example-group-head">
-            <span class="example-group-index">01</span>
-            <div>
-              <p class="eyebrow">Вэлью</p>
-              <h3 id="valueExamplesTitle">Строим банк с верхом диапазона</h3>
-            </div>
+            <h3 id="valueExamplesTitle">Вэлью</h3>
           </header>
           <div class="example-list" data-examples-value></div>
         </section>
         <section class="example-group is-bluff panel" aria-labelledby="bluffExamplesTitle">
           <header class="example-group-head">
-            <span class="example-group-index">02</span>
-            <div>
-              <p class="eyebrow">Блефы / полублефы</p>
-              <h3 id="bluffExamplesTitle">Давим руками с живым equity</h3>
-            </div>
+            <h3 id="bluffExamplesTitle">Блефы с эквити</h3>
           </header>
           <div class="example-list" data-examples-bluff></div>
         </section>
       </div>
-      <p class="examples-method" data-examples-method>Порог надёжности и правила классификации появятся вместе с проверенным набором данных.</p>
+      <p class="examples-method" data-examples-method>Примеры учебные; точных частот по отдельным рукам пока нет.</p>
     </section>
 
     <section class="lesson-screen" data-step="practice" aria-labelledby="practiceTitle" hidden>
-      <div class="practice-heading">
-        <div>
-          <p class="eyebrow">Закрепление без лимита</p>
-          <h2 id="practiceTitle">Решай за столом</h2>
+      <div class="practice-heading practice-trainer-heading">
+        <div class="practice-heading-copy">
+          <p class="eyebrow">Бесконечная практика · одна раздача на экране</p>
+          <h2 id="practiceTitle">Где здесь чек-рейз?</h2>
+          <p class="practice-intro">
+            У оппонента есть фолды на рейз. Чек-рейзь сильное вэлью и лучшие полублефы,
+            средние руки коллируй, слабый воздух выбрасывай.
+          </p>
         </div>
-        <p>Очередь перемешивается локально. Ответы не отправляются и не влияют на профиль игрока.</p>
-      </div>
-      <div class="practice-setup" data-practice-setup>
-        <article class="practice-start-card panel">
-          <div>
-            <p class="eyebrow">Функциональный snapshot</p>
-            <h3 data-practice-mode-title>Все ситуации</h3>
-            <p data-practice-mode-description>Выберите режим и начните бесконечную очередь решений. Первая T♥9♥-раздача доигрывается до showdown.</p>
-            <div class="practice-mode-picker" role="group" aria-label="Режим практики">
-              <button class="practice-mode-button is-active" type="button" data-practice-mode="all" aria-pressed="true">Все ситуации</button>
-              <button class="practice-mode-button" type="button" data-practice-mode="missed" aria-pressed="false">Пропущенные X/R</button>
-            </div>
-            <p class="practice-mode-reference" data-practice-mode-reference>Ориентир режима появится после загрузки данных.</p>
-            <div class="practice-promise" aria-label="Особенности практики">
-              <span>бесконечная очередь</span>
-              <span>T♥9♥ до showdown</span>
-              <span>счёт X/R и промахов</span>
-            </div>
+        <div class="practice-heading-tools">
+          <div class="practice-depth-picker" role="group" aria-label="Глубина раздачи">
+            <button class="practice-depth-button is-active" type="button" data-practice-depth="flop" aria-pressed="true">Только флоп</button>
+            <button class="practice-depth-button" type="button" data-practice-depth="full" aria-pressed="false">Полная раздача</button>
           </div>
-          <button class="field-button is-primary" type="button" data-practice-start>Начать практику</button>
-        </article>
-      </div>
-      <div class="practice-run" data-practice-run hidden>
-        <div class="practice-hud" aria-live="polite">
-          <span>Раздач <b data-practice-hands>0</b></span>
-          <span>Верно <b data-practice-correct>0</b></span>
-          <span>Промахи <b data-practice-mistakes>0</b></span>
-          <span>X/R <b data-practice-xr-rate>—</b></span>
-          <span>Пропущено X/R <b data-practice-missed-xr>0</b></span>
-          <span>Оптимистичных X/R <b data-practice-extra-xr>0</b></span>
-          <button class="field-button is-secondary" type="button" data-practice-stop>Закончить</button>
+          <div class="practice-score" aria-live="polite">
+            <span>По базе</span>
+            <strong data-practice-score>0 / 0</strong>
+          </div>
         </div>
-        <p class="practice-live-reference" data-practice-reference></p>
+      </div>
+      <div class="practice-run practice-trainer-run" data-practice-run>
         <div class="practice-layout">
           <article class="practice-table-panel panel">
             <div class="lesson-table-host" data-practice-table aria-label="Практика решений на чек-рейз флопа" aria-live="polite"></div>
           </article>
           <aside class="practice-coach decision-feedback is-neutral panel" data-practice-feedback role="status" aria-live="polite" aria-atomic="true"></aside>
+        </div>
+        <div class="practice-trainer-footer">
+          <p><strong>Подсказка:</strong> сначала ищи сильную руку или хорошее дро.</p>
+          <div class="practice-footer-controls">
+            <button class="field-button is-secondary" type="button" data-practice-reset>Сбросить</button>
+            <button class="field-button is-secondary practice-continuation-button" type="button" data-practice-continuation-external hidden>Доиграть</button>
+            <button class="field-button is-primary" type="button" data-practice-next-external disabled>Следующая</button>
+          </div>
         </div>
       </div>
     </section>
@@ -204,8 +186,9 @@
   <script src="assets/poker-trainer-shell/simulator-practice.js?v=20260714-practice-api"></script>
   <script src="assets/poker-trainer-shell/simulator-continuation.js?v=20260716-full-hand-1"></script>
   <script src="assets/poker-flop-checkraise-lesson/continuations.js?v=20260716-full-hand-1"></script>
-  <script src="assets/poker-flop-checkraise-lesson/data.js?v=20260716-optimistic-xr-1"></script>
+  <script src="assets/poker-flop-checkraise-lesson/practice-generator.js?v=ca84428f46bf"></script>
+  <script src="assets/poker-flop-checkraise-lesson/data.js?v=d87ccb300d60"></script>
   <script src="assets/poker-flop-checkraise-lesson/field-matrix.js?v=20260716-structures-1"></script>
-  <script src="assets/poker-field-lesson/lesson.js?v=20260716-optimistic-xr-1"></script>
+  <script src="assets/poker-field-lesson/lesson.js?v=31d437b2c932"></script>
 </body>
 </html>

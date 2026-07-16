@@ -335,13 +335,6 @@
   ];
 
   const byId = new Map(practice.map((item) => [item.id, item]));
-  const xrIds = [
-    "xr-t9-backdoors", "xr-97-double-backdoor", "xr-kq-value",
-    "xr-jt-gutshot", "xr-qt-gutshot", "xr-qj-gutshot",
-    "xr-k9-two-pair", "xr-k2-two-pair", "xr-99-set", "xr-22-set", "xr-set-value"
-  ];
-  const controlIds = practice.map((item) => item.id).filter((id) => !xrIds.includes(id));
-  const allModeIds = [...xrIds, ...controlIds, ...controlIds, ...controlIds, ...controlIds, ...controlIds.slice(0, 7)];
 
   const categoryEvidence = (categoryKey, categoryLabel) => ({
     status: "pending_exact_extract",
@@ -356,7 +349,7 @@
   const example = ({
     sourceIds, title, handClass, categoryKey, categoryLabel, takeaway,
     baselineRole, whyThisHand, bestTurns, slowdownTurns, afterVillainContinues,
-    controlId, controlCopy
+    turnPlan, controlId, controlCopy, controlShort
   }) => {
     const representatives = sourceIds.map((sourceId) => {
       const source = byId.get(sourceId);
@@ -388,7 +381,11 @@
         whyThisHand,
         bestTurns,
         slowdownTurns,
-        afterVillainContinues
+        afterVillainContinues,
+        summary: {
+          why: takeaway,
+          turn: turnPlan
+        }
       },
       contrast: {
         sourceSpotId: controlId,
@@ -397,7 +394,8 @@
         boardCards: control.table.boardCards,
         actionKey: controlAction.key,
         actionLabel: controlAction.label,
-        copy: controlCopy
+        copy: controlCopy,
+        shortCopy: controlShort
       },
       takeaway,
       representativeNote: "Карты показывают учебные границы категории. Общий X/R всего узла сюда не подставляется; L1–L3 появятся только после exact-HH с картами BB.",
@@ -625,21 +623,23 @@
     ],
     examples: {
       tree: "bb_vs_late_rfi",
-      title: "Из чего собрать check-raise",
-      lead: "Пять категорий показывают не только руку, но и всю базовую линию: почему X/R, что делать после колла и где похожая рука уже выбирает Call или Fold.",
-      note: "Опен CO/BTN → колл BB → чек BB → c-bet префлоп-рейзера → решение BB. Другие типы банков сюда не входят.",
-      method: "Turn-план начинается после колла флопового X/R; ререйз соперника на флопе — отдельная ветка. Category×League частоты появятся после reverse-Hero hand-level extract. До этого мы показываем полный учебный разбор и не маскируем общий X/R под частоту конкретной руки.",
+      title: "Кандидаты на чек-рейз",
+      lead: "Пять категорий: когда рейзить и что делать на тёрне.",
+      note: "BB против CO/BTN: колл префлоп → чек → c-bet.",
+      method: "Примеры учебные; точных частот по отдельным рукам пока нет.",
       value: [
         example({
-          sourceIds: ["xr-kq-value"], title: "Сильная top pair", handClass: "Вэлью · верх Kx",
+          sourceIds: ["xr-kq-value"], title: "Сильная топ-пара", handClass: "Вэлью · верх Kx",
           categoryKey: "strong_top_pair", categoryLabel: "сильная top pair",
           baselineRole: "Вэлью-опора полублефов",
           whyThisHand: "K♦Q♦ находится наверху одно-парной части BB и может получить продолжение от части Kx хуже. Если всё сильное только коллирует, X/R остаётся без естественной вэлью-опоры.",
           bestTurns: "K усиливает до трипса, Q — до двух пар. Чистые низкие бланки часто сохраняют второй контролируемый вэлью-баррель.",
           slowdownTurns: "A ухудшает относительную силу пары; J/T и спаривание доски усиливают часть продолжения BTN. Это не автоматический три барреля с одной парой.",
           afterVillainContinues: "На K/Q продолжай уверенно; на чистом бланке добирай умеренно. На A/J/T/спаренной доске чаще оставляй место для чека и не стекуй одну пару против резкой агрессии.",
+          turnPlan: "Баррель на K, Q и бланках; осторожнее на A, J, T и спарке.",
           controlId: "call-k7-top-pair",
           controlCopy: "K7 — тоже top pair, но слабый kicker оставляет её в check-call: сохраняем блефы BTN и не изолируемся против Kx сильнее.",
+          controlShort: "Слабый кикер оставляем в чек-колле.",
           takeaway: "Рейзим не любой Kx: верх top-pair части поддерживает X/R, более слабые Kx защищают колл."
         }),
         example({
@@ -650,8 +650,10 @@
           bestTurns: "Повтор своей ранги даёт full house: K/9 для K9, K/2 для K2. Чистые низкие бланки сохраняют большое преимущество над одной парой.",
           slowdownTurns: "Для K2 девятка контрафитит исходные две пары; T/J/Q закрывают естественные gutshot. Сильная made hand остаётся вэлью, но сайз и ответ соперника важны.",
           afterVillainContinues: "На full-house картах играй на большой банк; большинство бланков продолжай ставить. На контрафите и закрывшихся straight-картах внимательнее реагируй на крупный рейз.",
+          turnPlan: "Продолжай на бланках; осторожнее на контрафите и закрывшихся стритах.",
           controlId: "call-k8-top-pair",
           controlCopy: "K8 — одна пара со слабым kicker. Она достаточно сильна для Call, но X/R чаще выбивает хуже и получает продолжение от Kx сильнее.",
+          controlShort: "Одна пара чаще остаётся в чек-колле.",
           takeaway: "Две пары начинают добор сразу; соседняя одна пара сохраняет устойчивый check-call."
         }),
         example({
@@ -662,55 +664,54 @@
           bestTurns: "Повтор ранга сета даёт каре; спаривание другой карты доски — full house. Большинство неспаренных бланков всё ещё оставляют сет очень сильной рукой.",
           slowdownTurns: "T/J/Q закрывают часть gutshot на K92; heart завершает фронтдорный flush на Q72tt и в варианте 22 на K92hh. Это карты внимания, а не автоматический fold.",
           afterVillainContinues: "На paired board играй на стек; на чистых бланках продолжай добор. Когда закрывается очевидное дро, уменьшай сайз или проверяй ответ соперника, сохраняя redraw к full house.",
+          turnPlan: "Продолжай на бланках и спарках; контролируй размер, когда закрылось дро.",
           controlId: "call-55-q72",
           controlCopy: "55 на Q72tt — готовая underpair для Call. Showdown value есть, но полярный X/R лучше строить из сетов и сильных дро.",
+          controlShort: "Есть шоудаун-вэлью, но для рейза лучше сет или сильное дро.",
           takeaway: "Название «нижний сет» не делает руку средней: сеты формируют естественный верх value X/R."
         })
       ],
       bluff: [
         example({
-          sourceIds: ["xr-t9-backdoors", "xr-97-double-backdoor"], title: "Двойной backdoor", handClass: "Полублеф · T9s и 97s",
+          sourceIds: ["xr-t9-backdoors", "xr-97-double-backdoor"], title: "Двойной бэкдор", handClass: "Полублеф · T9s и 97s",
           categoryKey: "double_backdoor", categoryLabel: "два backdoor-пути",
           baselineRole: "Лучший связный воздух",
           whyThisHand: "T♥9♥ и 9♥7♥ не имеют готового дро, но объединяют backdoor straight и backdoor flush. Это осмысленный нижний край X/R, а не лицензия рейзить любые две карты.",
           bestTurns: "T9: J/7 создают OESD; 97: T/6. Любой heart включает flush draw. В authored T9-линии J♥ ведёт к bet 10 BB, а Q♥ на ривере — к jam 24,5 BB.",
           slowdownTurns: "Спаривание K/8/2 укрепляет продолжение BTN; сухие оверкарты почти не добавляют equity. Попадание в T/9/7 чаще переводит руку в контроль showdown value.",
           afterVillainContinues: "Баррель лучшие straight-карты и hearts; промежуточные gutshot продолжай выборочно. На полном бланке спокойно завершай блеф вместо обязательного второго барреля.",
+          turnPlan: "Баррель на картах стрита и своей масти; на бланке сдавайся.",
           controlId: "fold-j5-weak-backdoor",
           controlCopy: "J♥5♥ имеет только один слабый backdoor. База — Fold. При уверенном риде на сильный оверфолд X/R допустим как эксплойт, но T9/97 дисциплинированнее: у них два пути усиления.",
+          controlShort: "Только один слабый бэкдор — базово пас.",
           takeaway: "Оверфолд позволяет расшириться, но базовый порядок кандидатов сохраняется: сначала руки с двумя независимыми путями усиления."
         }),
         example({
-          sourceIds: ["xr-jt-gutshot", "xr-qt-gutshot", "xr-qj-gutshot"], title: "Gutshot + backdoor", handClass: "Полублеф · JT, QT и QJ",
+          sourceIds: ["xr-jt-gutshot", "xr-qt-gutshot", "xr-qj-gutshot"], title: "Гатшот + бэкдор", handClass: "Полублеф · JT, QT и QJ",
           categoryKey: "gutshot_plus", categoryLabel: "gutshot + backdoor",
           baselineRole: "Готовая equity и полезные блокеры",
           whyThisHand: "У всех трёх рук уже есть прямой аут на straight и мастевая backdoor-ветка. QJ дополнительно убирает часть KQ/KJ из сильного продолжения BTN.",
           bestTurns: "JT закрывает straight на Q, QT — на J, QJ — на T. Мастевая карта включает flush draw; для JT восьмёрка также создаёт OESD.",
           slowdownTurns: "Спаривание K/9/2 усиливает часть диапазона колла; сухие низкие бланки почти не добавляют equity. Q/J/T, давшие пару, чаще переводят полублеф в контроль.",
           afterVillainContinues: "На straight-карте переходи к вэлью, на мастевых картах продолжай полублеф. На паре чаще реализуй showdown value, на пустой карте разреши себе give-up.",
+          turnPlan: "Баррель на стритовых и мастевых картах; пару чаще играй через чек.",
           controlId: "fold-t8-backdoor-only",
           controlCopy: "T8 имеет только один runner-runner straight-путь. База — Fold; против явного оверфолда X/R допустим как эксплойт, но JT/QT/QJ дисциплинированнее благодаря готовому gutshot и backdoor-ветке.",
+          controlShort: "Готового дро нет — базово пас.",
           takeaway: "Эксплойт может расширить X/R, но готовый gutshot даёт намного надёжнее план после колла, чем один далёкий runner-runner путь."
         })
       ]
     },
     practice,
-    practiceModes: [
-      {
-        key: "all",
-        label: "Все ситуации",
-        description: "Калибровочная учебная колода: value, полублефы, calls и folds. Сначала T♥9♥ до showdown, затем очередь бесконечно перемешивается.",
-        reference: "В полном цикле 11 базовых X/R из 66 решений = 16,7%. Оптимистичные X/R считаются отдельно: они допустимы при уверенном риде на оверфолд, но база выбирает руки дисциплинированнее.",
-        compareExpectedXr: true,
-        spotIds: allModeIds
-      },
-      {
-        key: "missed",
-        label: "Пропущенные X/R",
-        description: "Усиленная выборка X/R-кандидатов плюс два контроля. Сначала T♥9♥ до showdown; это поиск пропусков относительно учебной линии, не exact-combo анализ League 1.",
-        reference: "Режим намеренно переобогащён X/R: смотри на пропуски и оптимистичные эксплойт-рейзы, не сравнивай свою частоту с полем.",
-        spotIds: [...xrIds, "call-a8-middle-pair", "fold-t8-backdoor-only"]
-      }
-    ]
+    practiceGenerator: {
+      schemaVersion: 1,
+      global: "FFFlopCheckraisePracticeGenerator",
+      defaultDepth: "flop"
+    },
+    practicePresentation: {
+      autoStart: true,
+      compactFeedback: true,
+      externalControls: true
+    }
   };
 })();
