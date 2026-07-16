@@ -108,6 +108,9 @@
     const publicApiKit = options.publicApiKit || windowRef.PokerSimulatorPublicApi || {};
     const smokeScenariosKit = options.smokeScenariosKit || windowRef.PokerSimulatorSmokeScenarios || {};
     const embeddedMode = Boolean(options.embeddedMode);
+    const bootParams = options.bootParams || { get: () => "" };
+    const embeddedAutoStart = embeddedMode
+      && ["1", "true", "yes"].includes(String(bootParams.get?.("autostart") || "").toLowerCase());
     const getState = typeof options.getState === "function" ? options.getState : () => ({ settings: {} });
     const hydrateExternalPacks = typeof options.hydrateExternalPacks === "function" ? options.hydrateExternalPacks : noop;
     const hydratePackOptions = typeof options.hydratePackOptions === "function" ? options.hydratePackOptions : noop;
@@ -191,7 +194,15 @@
       hydratePackOptions();
       syncTableCount(state.settings?.tableCount, false);
       await acquireSessionLock();
-      if (state.settings?.autoStart && !state.started) options.dealNextAllTables?.();
+      if (embeddedAutoStart) {
+        state.restoreTableSnapshots = [];
+        state.tables = [];
+        state.activeTableId = 1;
+        state.started = false;
+        options.dealNextAllTables?.();
+      } else if (state.settings?.autoStart && !state.started) {
+        options.dealNextAllTables?.();
+      }
       if (!state.settings?.demoMode) syncPendingSessionArchives();
       flushRender("boot");
       syncSimulationControls();

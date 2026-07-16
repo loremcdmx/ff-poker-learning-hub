@@ -67,6 +67,31 @@ FFTrainerSimulator.mountPractice("#practice-frame", {
 });
 ```
 
+### Simplified full-hand continuation
+
+Lesson snapshots that must continue across streets use
+`assets/poker-trainer-shell/simulator-continuation.js`. The same snapshot table
+and discrete action buttons are rendered on every node; there is no bet slider,
+telemetry, persistence, or random fallback.
+
+```js
+const session = FFTrainerSimulator.mountContinuation("#practice-table", spot, {
+  rootOptionKey: "checkraise",
+  completeLabel: "Следующая раздача",
+  onExit: advancePractice
+});
+```
+
+`spot.continuation` is an explicit acyclic graph of full snapshot nodes. Every
+decision node has 2–4 authored actions and one teaching answer. Every branch
+must terminate in a showdown node that reveals one opponent hand and explains
+the result. If a spot has no valid graph, keep the legacy one-decision flow;
+never invent cards, runouts, pot math, or opponent responses in the adapter.
+
+Only the root lesson decision belongs to the lesson score. Later-street
+decisions are an explanatory hand walkthrough unless a future trainer contract
+explicitly defines separate telemetry.
+
 `practice=` is canonical. Existing `lesson=` and `drill=` URLs remain supported
 as aliases.
 

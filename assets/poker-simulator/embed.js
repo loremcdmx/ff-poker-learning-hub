@@ -59,6 +59,8 @@
     if (options.handTempo || options.tempo) {
       url.searchParams.set("tempo", String(options.handTempo || options.tempo));
     }
+    if (options.pack) url.searchParams.set("pack", String(options.pack));
+    if (options.autoStart || options.autostart) url.searchParams.set("autostart", "1");
     if (options.run || options.runKey) url.searchParams.set("run", String(options.run || options.runKey));
     if (options.cacheKey) url.searchParams.set("embed", String(options.cacheKey));
     return url;
@@ -203,6 +205,8 @@
         practice: this.getAttribute("practice") || "",
         hands: this.getAttribute("hands") || "",
         tempo: this.getAttribute("tempo") || "",
+        pack: this.getAttribute("pack") || "",
+        autoStart: this.hasAttribute("autostart") || this.hasAttribute("auto-start"),
         title: this.getAttribute("title") || "Poker Simulator"
       });
       this.controller.ready.catch((err) => {

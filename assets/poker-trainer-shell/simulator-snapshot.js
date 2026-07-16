@@ -73,6 +73,7 @@
 
   function streetLabel(value, boardCards = []) {
     const text = cleanLine(value).toLowerCase();
+    if (/showdown|шоудаун/.test(text)) return "showdown";
     if (/preflop|префлоп/.test(text)) return "preflop";
     if (/river|ривер/.test(text)) return "river";
     if (/turn|терн|тёрн/.test(text)) return "turn";
@@ -88,7 +89,8 @@
       preflop: "Префлоп",
       flop: "Флоп",
       turn: "Терн",
-      river: "Ривер"
+      river: "Ривер",
+      showdown: "Шоудаун"
     }[street] || "Раздача";
   }
 
@@ -163,7 +165,7 @@
     if (!text) return [];
     return text
       .replace(/\s+and\s+/gi, ", ")
-      .split(/[,;]\s*/i)
+      .split(/;\s*|(?<!\d),(?!\d)\s*/i)
       .map(cleanLine)
       .filter(Boolean);
   }
@@ -687,12 +689,14 @@
   function optionClass(option, state, expected, concept = false) {
     const picked = state?.selectedKey === option?.key;
     const correct = expected?.key === option?.key;
+    const alternative = picked && !correct && option?.acceptableExploit === true;
     return [
       "table-action",
       !concept && splitActionLabel(option?.label || "").amount ? "has-amount" : "",
       state?.answered && picked ? "is-picked" : "",
       state?.answered && correct ? "is-correct" : "",
-      state?.answered && picked && !correct ? "is-wrong" : ""
+      state?.answered && alternative ? "is-alternative" : "",
+      state?.answered && picked && !correct && !alternative ? "is-wrong" : ""
     ].filter(Boolean).join(" ");
   }
 
@@ -701,8 +705,11 @@
     const amount = label.amount;
     const picked = state?.selectedKey === option?.key;
     const correct = expected?.key === option?.key;
+    const alternative = picked && !correct && option?.acceptableExploit === true;
     const answerState = state?.answered && correct
       ? { key: "correct", mark: "Верно", label: "верный ответ" }
+      : state?.answered && alternative
+        ? { key: "alternative", mark: "Эксплойт", label: "допустимый эксплойт вне базовой линии" }
       : state?.answered && picked
         ? { key: "wrong", mark: "Ошибка", label: "твой неверный ответ" }
         : null;
@@ -740,7 +747,7 @@
       return `
         <div class="action-status is-hero is-concept">
           <strong>Ситуация</strong>
-          <span>${escapeHtml(cleanLine(table.__spot?.question) || "Выберите лучший вывод для этой турнирной ситуации.")}</span>
+          <span>${escapeHtml(cleanLine(table.__spot?.question) || "Выбери лучший вывод для этой турнирной ситуации.")}</span>
         </div>
       `;
     }
@@ -755,11 +762,13 @@
         && cleanLine(action.seat)
         && normalizeSeatKey(action.seat) !== heroKey)
       .slice(-4);
-    const summary = table.toCall
-      ? `К коллу ${amountDisplay(table.toCall)}`
-      : table.currentBet
-        ? `Ставка ${amountDisplay(table.currentBet)}`
-        : "Выберите действие";
+    const summary = table.__state?.finished || table.street === "showdown"
+      ? "Карты открыты"
+      : table.toCall
+        ? `К коллу ${amountDisplay(table.toCall)}`
+        : table.currentBet
+          ? `Ставка ${amountDisplay(table.currentBet)}`
+          : "Выбери действие";
     const actionSummary = actions.map((action) => {
       const parts = [action.seat, action.label, action.amount]
         .map((part) => cleanLine(part))

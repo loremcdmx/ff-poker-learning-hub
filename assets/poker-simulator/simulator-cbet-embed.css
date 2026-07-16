@@ -1,0 +1,126 @@
+/* C-bet lesson control profile.
+ *
+ * The simulator keeps its canonical 1920x1080 stage and scales that scene into
+ * the lesson iframe. Only the teaching controls are compensated here: the
+ * shared stage geometry, seats and standalone simulator remain untouched. */
+@media (min-width: 621px) {
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .action-bar:has(.client-controls .bet-widget) {
+    grid-template-columns: minmax(0, 1fr) minmax(585px, 637px);
+  }
+
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .action-buttons:has(.client-controls .bet-widget),
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .action-buttons:has(.client-controls .bet-widget) .client-controls {
+    width: 100%;
+    min-width: 0;
+  }
+
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .action-buttons:has(.client-controls .bet-widget) .client-controls {
+    gap: 4px;
+    padding: 5px;
+  }
+
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls:has(.bet-widget) > .bet-widget {
+    --cbet-embed-slider-track: clamp(6px, calc(4px * var(--sim-stage-inverse-scale, 1)), 8px);
+    --cbet-embed-slider-thumb: clamp(20px, calc(14px * var(--sim-stage-inverse-scale, 1)), 28px);
+    gap: 4px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls .bet-widget.is-preflop-amount .bet-preset,
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls .bet-widget.is-postflop-percent .bet-preset {
+    min-width: 0;
+    min-height: 44px;
+    padding-inline: clamp(5px, calc(4px * var(--sim-stage-inverse-scale, 1)), 9px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: clamp(16px, calc(12px * var(--sim-stage-inverse-scale, 1)), 20px);
+    white-space: nowrap;
+  }
+
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls .bet-stepper {
+    grid-template-columns:
+      clamp(32px, calc(28px * var(--sim-stage-inverse-scale, 1)), 54px)
+      minmax(clamp(72px, calc(91px * var(--sim-stage-inverse-scale, 1)), 182px), 1fr)
+      clamp(32px, calc(28px * var(--sim-stage-inverse-scale, 1)), 54px);
+    min-height: 39px;
+  }
+
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls .bet-stepper button,
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls [data-bet-step] {
+    min-width: clamp(32px, calc(28px * var(--sim-stage-inverse-scale, 1)), 54px);
+    min-height: 36px;
+    font-size: clamp(16px, calc(12px * var(--sim-stage-inverse-scale, 1)), 22px);
+  }
+
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls .bet-stepper-value {
+    font-size: clamp(16px, calc(12px * var(--sim-stage-inverse-scale, 1)), 20px);
+  }
+
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls .bet-slider-row,
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls .bet-widget.is-preflop-amount .bet-slider-row {
+    min-height: 23px;
+  }
+
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls [data-bet-slider] {
+    height: 23px;
+  }
+
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls [data-bet-slider]::-webkit-slider-runnable-track {
+    height: var(--cbet-embed-slider-track);
+  }
+
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls [data-bet-slider]::-webkit-slider-thumb {
+    width: var(--cbet-embed-slider-thumb);
+    height: var(--cbet-embed-slider-thumb);
+    margin-top: clamp(-10px, calc(-5px * var(--sim-stage-inverse-scale, 1)), -6px);
+  }
+
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls [data-bet-slider]::-moz-range-track,
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls [data-bet-slider]::-moz-range-progress {
+    height: var(--cbet-embed-slider-track);
+  }
+
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls [data-bet-slider]::-moz-range-thumb {
+    width: var(--cbet-embed-slider-thumb);
+    height: var(--cbet-embed-slider-thumb);
+  }
+
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls:has(.bet-widget) > .client-row,
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls.is-shove > .client-row,
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls.is-final-all-in > .client-row {
+    gap: 4px;
+  }
+
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls:has(.bet-widget) > .client-row .table-action,
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls.is-shove > .client-row .table-action,
+  html[data-simulator-embedded="true"][data-simulator-pack="cbet-rvbb"]
+    .table-grid[data-count="1"] .client-controls.is-final-all-in > .client-row .table-action {
+    min-height: 60px;
+    font-size: clamp(18px, calc(14px * var(--sim-stage-inverse-scale, 1)), 24px);
+  }
+}

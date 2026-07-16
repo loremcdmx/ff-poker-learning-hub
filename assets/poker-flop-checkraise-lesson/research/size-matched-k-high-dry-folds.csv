@@ -1,0 +1,4 @@
+period,sample,cohort,rank_min,rank_max,board_class,cbet_pct_min_inclusive,cbet_pct_max_inclusive,xr_pct_starting_pot_min_inclusive,xr_pct_starting_pot_max_inclusive,folds,faced_xr,players,fold_rate,median_cbet_pct_pot,median_xr_multiple_cbet,median_xr_pct_starting_pot
+2026-Q2,deterministic_70pct_hh_co_btn,league1,1,5,k_high_dry,30,36,95,105,46,93,69,0.4946,33.00,3.01,99.50
+2026-Q2,deterministic_70pct_hh_co_btn,league2,6,10,k_high_dry,30,36,95,105,110,242,178,0.4545,33.00,3.02,99.52
+2026-Q2,deterministic_70pct_hh_co_btn,league3,11,17,k_high_dry,30,36,95,105,162,269,211,0.6022,33.00,3.02,99.51

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Интерактивный урок FF по защите против 3-бета: первое решение, три опоры, срезы поля и практика на функциональном столе.">
+  <meta property="og:title" content="Защита против 3-бета · FF Poker Learning Hub">
+  <meta property="og:description" content="Учимся выбирать пас, колл или 4-бет после опена — с данными поля и практикой на общем столе.">
+  <title>Защита против 3-бета · FF Poker Learning Hub</title>
+  <link rel="icon" href="assets/favicon.svg">
+  <link rel="stylesheet" href="assets/poker-kit/tokens.css">
+  <link rel="stylesheet" href="assets/poker-kit/decks/decks.css">
+  <link rel="stylesheet" href="assets/poker-kit/chips/chips.css">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-table.css?v=db213746612e">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-polish.css?v=d5b525b07ce0">
+  <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=20260716-trainer-batch">
+  <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
+  <link rel="stylesheet" href="assets/4k-scale.css">
+  <link rel="stylesheet" href="assets/poker-field-lesson/lesson.css?v=20260715-field-shell-1">
+</head>
+<body class="poker-field-lesson vs-3bet-defense-lesson" data-lesson-key="vs-3bet-defense">
+  <main class="field-lesson-app">
+    <header class="lesson-topline">
+      <div class="lesson-brand">
+        <a class="lesson-home" href="/">← В обучающий хаб</a>
+        <p class="eyebrow" data-lesson-kicker>Префлоп · против 3-бета</p>
+      </div>
+      <nav class="step-tabs" role="tablist" aria-label="Шаги урока">
+        <button class="step-tab is-active" type="button" role="tab" aria-selected="true" data-step-target="deal">1. Раздача</button>
+        <button class="step-tab" type="button" role="tab" aria-selected="false" data-step-target="wisdom" disabled>2. Главное</button>
+        <button class="step-tab" type="button" role="tab" aria-selected="false" data-step-target="field" disabled>3. Поле</button>
+        <button class="step-tab" type="button" role="tab" aria-selected="false" data-step-target="practice" disabled>4. Практика</button>
+      </nav>
+    </header>
+
+    <aside class="data-error-banner" data-data-error role="alert" hidden>
+      <strong>Данные</strong>
+      <span data-data-error-text>Набор урока пока не подключён.</span>
+    </aside>
+
+    <section class="lesson-screen is-active" data-step="deal" aria-labelledby="dealTitle">
+      <article class="deal-shell panel">
+        <div class="deal-copy">
+          <p class="eyebrow">Первое решение — до теории</p>
+          <h1 id="dealTitle" data-lesson-title>Защита против 3-бета</h1>
+          <p class="intro-lead" data-intro-lead>Выбери линию на функциональном столе. После ответа урок покажет идею, поле и очередь похожих решений.</p>
+          <ol class="scope-list" data-scope-list aria-label="Границы урока">
+            <li class="scope-empty">Границы выборки появятся вместе с данными.</li>
+          </ol>
+        </div>
+        <article class="decision-panel panel" aria-labelledby="introSpotTitle">
+          <header class="decision-panel-head">
+            <span id="introSpotTitle" data-intro-title>Раздача против 3-бета</span>
+            <span>Выбери действие прямо под столом</span>
+          </header>
+          <div class="lesson-table-host" data-intro-table aria-label="Интерактивная раздача на защиту против 3-бета" aria-live="polite"></div>
+          <div class="decision-feedback is-neutral" data-intro-feedback role="status" aria-live="polite" aria-atomic="true"></div>
+        </article>
+      </article>
+    </section>
+
+    <section class="lesson-screen" data-step="wisdom" aria-labelledby="wisdomTitle" hidden>
+      <div class="wisdom-heading">
+        <div>
+          <p class="eyebrow">Сначала пойми идею</p>
+          <h2 id="wisdomTitle">Три опоры защиты</h2>
+        </div>
+        <p><strong>3 короткие мысли</strong> · стрелки, точки или свайп</p>
+      </div>
+      <div class="wisdom-carousel" data-wisdom-carousel role="region" aria-roledescription="карусель" aria-label="Три главные мысли урока" tabindex="0">
+        <div class="wisdom-track" data-wisdom-track></div>
+        <div class="wisdom-controls" role="group" aria-label="Навигация по мыслям">
+          <button class="wisdom-arrow" type="button" data-wisdom-prev aria-label="Предыдущая мысль">←</button>
+          <div class="wisdom-dots" data-wisdom-dots></div>
+          <span class="wisdom-counter" data-wisdom-counter aria-live="polite">1 из 3</span>
+          <button class="wisdom-arrow" type="button" data-wisdom-next aria-label="Следующая мысль">→</button>
+        </div>
+      </div>
+      <div class="wisdom-actions">
+        <button class="field-button is-primary" type="button" data-step-link="practice">Сразу попробовать</button>
+        <button class="field-button is-secondary" type="button" data-step-link="field">Посмотреть поле</button>
+      </div>
+    </section>
+
+    <section class="lesson-screen" data-step="field" aria-labelledby="fieldTitle" hidden>
+      <div class="field-heading">
+        <div>
+          <p class="eyebrow">FF · агрегированные группы</p>
+          <h2 id="fieldTitle">Как защищается поле</h2>
+        </div>
+        <div class="data-stamp" aria-label="Источник и период данных">
+          <span data-source-label>Источник готовится</span>
+          <span data-period-label>Период готовится</span>
+        </div>
+      </div>
+      <div class="cohort-cards" data-cohort-cards aria-label="Сравнение четырёх групп"></div>
+      <article class="field-table-card panel">
+        <div class="field-table-scroll">
+          <table class="field-table">
+            <caption class="visually-hidden">Частоты действий по лигам 1, 2, 3 и игрокам рангов 15–17</caption>
+            <thead data-field-head></thead>
+            <tbody data-field-body></tbody>
+          </table>
+        </div>
+        <p class="sample-note" data-sample-note>Методология и границы выборки появятся вместе с проверенным набором данных.</p>
+      </article>
+    </section>
+
+    <section class="lesson-screen" data-step="practice" aria-labelledby="practiceTitle" hidden>
+      <div class="practice-heading">
+        <div>
+          <p class="eyebrow">Закрепление без лимита</p>
+          <h2 id="practiceTitle">Решай за столом</h2>
+        </div>
+        <p>Очередь перемешивается локально. Ответы не отправляются и не влияют на профиль игрока.</p>
+      </div>
+      <div class="practice-setup" data-practice-setup>
+        <article class="practice-start-card panel">
+          <div>
+            <p class="eyebrow">Функциональный snapshot</p>
+            <h3>Серия решений против 3-бета</h3>
+            <p>Карты, позиции, размеры и действия находятся в очереди урока. Здесь нет статичных «кнопок рядом с картинкой»: каждое решение принимается внутри общего стола.</p>
+            <div class="practice-promise" aria-label="Особенности практики">
+              <span>случайный порядок</span>
+              <span>разбор после ответа</span>
+              <span>счёт только в сессии</span>
+            </div>
+          </div>
+          <button class="field-button is-primary" type="button" data-practice-start>Начать практику</button>
+        </article>
+      </div>
+      <div class="practice-run" data-practice-run hidden>
+        <div class="practice-hud" aria-live="polite">
+          <span>Раздач <b data-practice-hands>0</b></span>
+          <span>Верно <b data-practice-correct>0</b></span>
+          <span>Промахи <b data-practice-mistakes>0</b></span>
+          <button class="field-button is-secondary" type="button" data-practice-stop>Закончить</button>
+        </div>
+        <div class="practice-layout">
+          <article class="practice-table-panel panel">
+            <div class="lesson-table-host" data-practice-table aria-label="Практика решений против 3-бета" aria-live="polite"></div>
+          </article>
+          <aside class="practice-coach decision-feedback is-neutral panel" data-practice-feedback role="status" aria-live="polite" aria-atomic="true"></aside>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="lesson-footer">
+    <a href="/">← Все уроки</a>
+    <a href="/flop-checkraise-lesson" data-footer-next>К уроку: чек-рейз флопа →</a>
+  </footer>
+
+  <script src="assets/poker-kit/decks/deck-library.js"></script>
+  <script src="assets/poker-kit/chips/chip-library.js"></script>
+  <script src="assets/poker-simulator/simulator-board-render.js?v=cb215df9f7dd"></script>
+  <script src="assets/poker-simulator/simulator-seat-slots.js?v=20260714-card-pocket-20"></script>
+  <script src="assets/poker-simulator/simulator-seat-renderer.js?v=fe2184958bf0"></script>
+  <script src="assets/poker-simulator/simulator-table-renderer.js?v=20260713-pot-label"></script>
+  <script src="assets/poker-trainer-shell/simulator-snapshot.js?v=20260716-trainer-batch"></script>
+  <script src="assets/poker-trainer-shell/simulator-practice.js?v=20260714-practice-api"></script>
+  <script src="assets/poker-vs-3bet-defense-lesson/data.js?v=20260715-field-1"></script>
+  <script src="assets/poker-field-lesson/lesson.js?v=20260715-field-shell-1"></script>
+</body>
+</html>

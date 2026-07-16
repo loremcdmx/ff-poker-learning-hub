@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Интерактивный урок FF по чек-рейзу флопа: первое решение, три опоры, срезы поля и практика на функциональном столе.">
+  <meta property="og:title" content="Чек-рейз флопа · FF Poker Learning Hub">
+  <meta property="og:description" content="Учимся находить чек-рейз по структуре доски, диапазонам и размеру ставки — с данными поля и практикой.">
+  <title>Чек-рейз флопа · FF Poker Learning Hub</title>
+  <link rel="icon" href="assets/favicon.svg">
+  <link rel="stylesheet" href="assets/poker-kit/tokens.css">
+  <link rel="stylesheet" href="assets/poker-kit/decks/decks.css">
+  <link rel="stylesheet" href="assets/poker-kit/chips/chips.css">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-table.css?v=db213746612e">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-polish.css?v=d5b525b07ce0">
+  <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=20260716-trainer-batch">
+  <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
+  <link rel="stylesheet" href="assets/4k-scale.css">
+  <link rel="stylesheet" href="assets/poker-field-lesson/lesson.css?v=20260716-optimistic-xr-1">
+  <link rel="stylesheet" href="assets/poker-flop-checkraise-lesson/field-matrix.css?v=20260716-structures-1">
+</head>
+<body class="poker-field-lesson flop-checkraise-lesson" data-lesson-key="flop-checkraise">
+  <main class="field-lesson-app">
+    <header class="lesson-topline">
+      <div class="lesson-brand">
+        <a class="lesson-home" href="/">← В обучающий хаб</a>
+        <p class="eyebrow" data-lesson-kicker>Постфлоп · чек-рейз</p>
+      </div>
+      <nav class="step-tabs" role="tablist" aria-label="Шаги урока">
+        <button class="step-tab is-active" type="button" role="tab" aria-selected="true" data-step-target="deal">1. Раздача</button>
+        <button class="step-tab" type="button" role="tab" aria-selected="false" data-step-target="wisdom" disabled>2. Главное</button>
+        <button class="step-tab" type="button" role="tab" aria-selected="false" data-step-target="field" disabled>3. Поле</button>
+        <button class="step-tab" type="button" role="tab" aria-selected="false" data-step-target="examples" disabled>4. Примеры</button>
+        <button class="step-tab" type="button" role="tab" aria-selected="false" data-step-target="practice" disabled>5. Практика</button>
+      </nav>
+    </header>
+
+    <aside class="data-error-banner" data-data-error role="alert" hidden>
+      <strong>Данные</strong>
+      <span data-data-error-text>Набор урока пока не подключён.</span>
+    </aside>
+
+    <section class="lesson-screen is-active" data-step="deal" aria-labelledby="dealTitle">
+      <article class="deal-shell panel">
+        <div class="deal-copy">
+          <p class="eyebrow">Первое решение — до теории</p>
+          <h1 id="dealTitle" data-lesson-title>Чек-рейз флопа</h1>
+          <p class="intro-lead" data-intro-lead>Выбери линию на функциональном столе. После ответа урок покажет идею, поле и очередь похожих решений.</p>
+          <ol class="scope-list" data-scope-list aria-label="Границы урока">
+            <li class="scope-empty">Границы выборки появятся вместе с данными.</li>
+          </ol>
+        </div>
+        <article class="decision-panel panel" aria-labelledby="introSpotTitle">
+          <header class="decision-panel-head">
+            <span id="introSpotTitle" data-intro-title>Раздача на чек-рейз</span>
+            <span>Выбери действие прямо под столом</span>
+          </header>
+          <div class="lesson-table-host" data-intro-table aria-label="Интерактивная раздача на чек-рейз флопа" aria-live="polite"></div>
+          <div class="decision-feedback is-neutral" data-intro-feedback role="status" aria-live="polite" aria-atomic="true"></div>
+        </article>
+      </article>
+    </section>
+
+    <section class="lesson-screen" data-step="wisdom" aria-labelledby="wisdomTitle" hidden>
+      <div class="wisdom-heading">
+        <div>
+          <p class="eyebrow">Сначала пойми идею</p>
+          <h2 id="wisdomTitle">Три опоры чек-рейза</h2>
+        </div>
+        <p><strong>3 короткие мысли</strong> · стрелки, точки или свайп</p>
+      </div>
+      <div class="wisdom-carousel" data-wisdom-carousel role="region" aria-roledescription="карусель" aria-label="Три главные мысли урока" tabindex="0">
+        <div class="wisdom-track" data-wisdom-track></div>
+        <div class="wisdom-controls" role="group" aria-label="Навигация по мыслям">
+          <button class="wisdom-arrow" type="button" data-wisdom-prev aria-label="Предыдущая мысль">←</button>
+          <div class="wisdom-dots" data-wisdom-dots></div>
+          <span class="wisdom-counter" data-wisdom-counter aria-live="polite">1 из 3</span>
+          <button class="wisdom-arrow" type="button" data-wisdom-next aria-label="Следующая мысль">→</button>
+        </div>
+      </div>
+      <div class="wisdom-actions">
+        <button class="field-button is-primary" type="button" data-step-link="practice">Сразу попробовать</button>
+        <button class="field-button is-secondary" type="button" data-step-link="field">Посмотреть поле</button>
+      </div>
+    </section>
+
+    <section class="lesson-screen" data-step="field" aria-labelledby="fieldTitle" hidden>
+      <div class="field-heading">
+        <div>
+          <p class="eyebrow">CO/BTN против BB · структуры флопа</p>
+          <h2 id="fieldTitle">Где поле ставит — и где сдаётся</h2>
+        </div>
+        <div class="data-stamp" aria-label="Источник и период данных">
+          <span data-source-label>Источник готовится</span>
+          <span data-period-label>Период готовится</span>
+        </div>
+      </div>
+      <div class="structure-league-matrix" data-structure-league-matrix aria-live="polite">
+        <article class="panel structure-league-loading">Собираем структуру поля…</article>
+      </div>
+    </section>
+
+    <section class="lesson-screen" data-step="examples" aria-labelledby="examplesTitle" hidden>
+      <div class="examples-heading">
+        <div>
+          <p class="eyebrow">BB vs CO/BTN · разбор решений</p>
+          <h2 id="examplesTitle" data-examples-title>Из чего собрать check-raise</h2>
+        </div>
+        <p data-examples-lead>Раздачи объясняют выбор кандидата; частота и N относятся ко всему сценарию, а не к одной доске или руке.</p>
+      </div>
+      <aside class="examples-scope panel" aria-label="Границы примеров">
+        <strong>Только BB против позднего стила</strong>
+        <span>Опен CO/BTN → колл BB → чек BB → c-bet префлоп-рейзера → решение BB</span>
+        <small data-examples-note>Value и bluff определяются по силе руки и дро на флопе; наблюдаемая частота не равна solver-частоте.</small>
+      </aside>
+      <div class="example-groups">
+        <section class="example-group is-value panel" aria-labelledby="valueExamplesTitle">
+          <header class="example-group-head">
+            <span class="example-group-index">01</span>
+            <div>
+              <p class="eyebrow">Вэлью</p>
+              <h3 id="valueExamplesTitle">Строим банк с верхом диапазона</h3>
+            </div>
+          </header>
+          <div class="example-list" data-examples-value></div>
+        </section>
+        <section class="example-group is-bluff panel" aria-labelledby="bluffExamplesTitle">
+          <header class="example-group-head">
+            <span class="example-group-index">02</span>
+            <div>
+              <p class="eyebrow">Блефы / полублефы</p>
+              <h3 id="bluffExamplesTitle">Давим руками с живым equity</h3>
+            </div>
+          </header>
+          <div class="example-list" data-examples-bluff></div>
+        </section>
+      </div>
+      <p class="examples-method" data-examples-method>Порог надёжности и правила классификации появятся вместе с проверенным набором данных.</p>
+    </section>
+
+    <section class="lesson-screen" data-step="practice" aria-labelledby="practiceTitle" hidden>
+      <div class="practice-heading">
+        <div>
+          <p class="eyebrow">Закрепление без лимита</p>
+          <h2 id="practiceTitle">Решай за столом</h2>
+        </div>
+        <p>Очередь перемешивается локально. Ответы не отправляются и не влияют на профиль игрока.</p>
+      </div>
+      <div class="practice-setup" data-practice-setup>
+        <article class="practice-start-card panel">
+          <div>
+            <p class="eyebrow">Функциональный snapshot</p>
+            <h3 data-practice-mode-title>Все ситуации</h3>
+            <p data-practice-mode-description>Выберите режим и начните бесконечную очередь решений. Первая T♥9♥-раздача доигрывается до showdown.</p>
+            <div class="practice-mode-picker" role="group" aria-label="Режим практики">
+              <button class="practice-mode-button is-active" type="button" data-practice-mode="all" aria-pressed="true">Все ситуации</button>
+              <button class="practice-mode-button" type="button" data-practice-mode="missed" aria-pressed="false">Пропущенные X/R</button>
+            </div>
+            <p class="practice-mode-reference" data-practice-mode-reference>Ориентир режима появится после загрузки данных.</p>
+            <div class="practice-promise" aria-label="Особенности практики">
+              <span>бесконечная очередь</span>
+              <span>T♥9♥ до showdown</span>
+              <span>счёт X/R и промахов</span>
+            </div>
+          </div>
+          <button class="field-button is-primary" type="button" data-practice-start>Начать практику</button>
+        </article>
+      </div>
+      <div class="practice-run" data-practice-run hidden>
+        <div class="practice-hud" aria-live="polite">
+          <span>Раздач <b data-practice-hands>0</b></span>
+          <span>Верно <b data-practice-correct>0</b></span>
+          <span>Промахи <b data-practice-mistakes>0</b></span>
+          <span>X/R <b data-practice-xr-rate>—</b></span>
+          <span>Пропущено X/R <b data-practice-missed-xr>0</b></span>
+          <span>Оптимистичных X/R <b data-practice-extra-xr>0</b></span>
+          <button class="field-button is-secondary" type="button" data-practice-stop>Закончить</button>
+        </div>
+        <p class="practice-live-reference" data-practice-reference></p>
+        <div class="practice-layout">
+          <article class="practice-table-panel panel">
+            <div class="lesson-table-host" data-practice-table aria-label="Практика решений на чек-рейз флопа" aria-live="polite"></div>
+          </article>
+          <aside class="practice-coach decision-feedback is-neutral panel" data-practice-feedback role="status" aria-live="polite" aria-atomic="true"></aside>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="lesson-footer">
+    <a href="/">← Все уроки</a>
+    <a href="/vs-3bet-defense-lesson" data-footer-next>Следующий урок: защита против 3-бета →</a>
+  </footer>
+
+  <script src="assets/poker-kit/decks/deck-library.js"></script>
+  <script src="assets/poker-kit/chips/chip-library.js"></script>
+  <script src="assets/poker-simulator/simulator-board-render.js?v=cb215df9f7dd"></script>
+  <script src="assets/poker-simulator/simulator-seat-slots.js?v=20260714-card-pocket-20"></script>
+  <script src="assets/poker-simulator/simulator-seat-renderer.js?v=fe2184958bf0"></script>
+  <script src="assets/poker-simulator/simulator-table-renderer.js?v=20260713-pot-label"></script>
+  <script src="assets/poker-trainer-shell/simulator-snapshot.js?v=20260716-trainer-batch"></script>
+  <script src="assets/poker-trainer-shell/simulator-practice.js?v=20260714-practice-api"></script>
+  <script src="assets/poker-trainer-shell/simulator-continuation.js?v=20260716-full-hand-1"></script>
+  <script src="assets/poker-flop-checkraise-lesson/continuations.js?v=20260716-full-hand-1"></script>
+  <script src="assets/poker-flop-checkraise-lesson/data.js?v=20260716-optimistic-xr-1"></script>
+  <script src="assets/poker-flop-checkraise-lesson/field-matrix.js?v=20260716-structures-1"></script>
+  <script src="assets/poker-field-lesson/lesson.js?v=20260716-optimistic-xr-1"></script>
+</body>
+</html>

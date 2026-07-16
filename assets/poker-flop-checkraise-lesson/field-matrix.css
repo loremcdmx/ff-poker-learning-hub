@@ -1,0 +1,391 @@
+.flop-checkraise-lesson .structure-league-matrix {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 44px;
+}
+
+.flop-checkraise-lesson .structure-league-loading,
+.flop-checkraise-lesson .structure-league-error {
+  padding: 22px;
+  color: var(--muted);
+}
+
+.flop-checkraise-lesson .structure-league-error strong { color: var(--lesson-bad); }
+.flop-checkraise-lesson .structure-league-error p { margin: 8px 0 0; }
+
+.flop-checkraise-lesson .structure-league-scope {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.35fr) minmax(300px, .65fr);
+  align-items: center;
+  gap: 22px;
+  padding: 20px 22px;
+  border-color: rgba(255, 223, 81, .22);
+  background:
+    linear-gradient(110deg, rgba(255, 223, 81, .07), transparent 44%),
+    rgba(255, 255, 255, .025);
+}
+
+.flop-checkraise-lesson .structure-league-scope-copy {
+  display: grid;
+  gap: 5px;
+}
+
+.flop-checkraise-lesson .structure-league-scope-copy .eyebrow { margin: 0; }
+.flop-checkraise-lesson .structure-league-scope-copy strong { font-size: 17px; line-height: 1.3; }
+.flop-checkraise-lesson .structure-league-scope-copy span { color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+.flop-checkraise-lesson .structure-league-scope-facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.flop-checkraise-lesson .structure-league-scope-facts span {
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: rgba(244, 241, 236, .78);
+  background: rgba(0, 0, 0, .16);
+  font-size: 11px;
+  font-weight: 720;
+  white-space: nowrap;
+}
+
+.flop-checkraise-lesson .structure-league-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 18px 20px;
+}
+
+.flop-checkraise-lesson .structure-league-controls-copy { min-width: 0; }
+.flop-checkraise-lesson .structure-league-controls-copy .eyebrow { margin-bottom: 5px; }
+.flop-checkraise-lesson .structure-league-controls-copy h3 { margin: 0; font-size: 18px; }
+.flop-checkraise-lesson .structure-league-controls-copy p:last-child {
+  max-width: 90ch;
+  margin: 6px 0 0;
+  color: var(--soft);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.flop-checkraise-lesson .structure-league-view-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(105px, 1fr));
+  flex: 0 0 auto;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, .18);
+}
+
+.flop-checkraise-lesson .structure-league-view-tabs button {
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.flop-checkraise-lesson .structure-league-view-tabs button:hover { color: var(--text); }
+.flop-checkraise-lesson .structure-league-view-tabs button.is-active {
+  border-color: rgba(255, 223, 81, .28);
+  color: #1a1608;
+  background: var(--brand-yellow);
+  box-shadow: 0 8px 22px rgba(255, 223, 81, .12);
+}
+
+.flop-checkraise-lesson .structure-league-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.flop-checkraise-lesson .structure-league-summary { min-width: 0; padding: 18px; }
+.flop-checkraise-lesson .structure-league-summary > header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.flop-checkraise-lesson .structure-league-summary h3 { margin: 0; font-size: 20px; }
+.flop-checkraise-lesson .structure-league-summary .eyebrow { margin-bottom: 4px; color: var(--soft); }
+.flop-checkraise-lesson .structure-league-index {
+  color: rgba(255, 223, 81, .52);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.flop-checkraise-lesson .structure-league-summary-metrics,
+.flop-checkraise-lesson .structure-league-cell-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.flop-checkraise-lesson .structure-league-kpi {
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, .026);
+}
+
+.flop-checkraise-lesson .structure-league-kpi.is-cbet {
+  border-color: rgba(255, 223, 81, .18);
+  background: rgba(255, 223, 81, .045);
+}
+
+.flop-checkraise-lesson .structure-league-kpi.is-fold {
+  border-color: rgba(87, 214, 154, .18);
+  background: rgba(87, 214, 154, .04);
+}
+
+.flop-checkraise-lesson .structure-league-kpi-label {
+  display: block;
+  overflow: hidden;
+  margin-bottom: 5px;
+  color: var(--soft);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .045em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.flop-checkraise-lesson .structure-league-kpi strong {
+  display: block;
+  color: var(--text);
+  font-size: clamp(20px, 1.65vw, 27px);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.flop-checkraise-lesson .structure-league-kpi.is-cbet strong { color: var(--brand-yellow); }
+.flop-checkraise-lesson .structure-league-kpi.is-fold strong { color: var(--lesson-good); }
+.flop-checkraise-lesson .structure-league-kpi small {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.flop-checkraise-lesson .structure-league-summary-note {
+  margin: 11px 0 0;
+  color: var(--soft);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.flop-checkraise-lesson .structure-league-table-card { overflow: hidden; }
+.flop-checkraise-lesson .structure-league-table-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.flop-checkraise-lesson .structure-league-table-heading .eyebrow { margin-bottom: 5px; }
+.flop-checkraise-lesson .structure-league-table-heading h3 { margin: 0; font-size: 21px; }
+.flop-checkraise-lesson .structure-league-legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px 14px; }
+.flop-checkraise-lesson .structure-league-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 720;
+}
+
+.flop-checkraise-lesson .structure-league-legend span::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+  background: var(--brand-yellow);
+  content: "";
+}
+
+.flop-checkraise-lesson .structure-league-legend span.is-fold::before { background: var(--lesson-good); }
+.flop-checkraise-lesson .structure-league-table-scroll { overflow-x: auto; }
+.flop-checkraise-lesson .structure-league-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.flop-checkraise-lesson .structure-league-table th,
+.flop-checkraise-lesson .structure-league-table td {
+  padding: 13px;
+  border-right: 1px solid rgba(255, 255, 255, .045);
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.flop-checkraise-lesson .structure-league-table tr > :last-child { border-right: 0; }
+.flop-checkraise-lesson .structure-league-table tbody tr:last-child > * { border-bottom: 0; }
+.flop-checkraise-lesson .structure-league-table thead th {
+  color: var(--soft);
+  background: rgba(255, 255, 255, .025);
+  font-size: 10px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.flop-checkraise-lesson .structure-league-table thead th:first-child { width: 220px; }
+.flop-checkraise-lesson .structure-league-table tbody tr:hover { background: rgba(255, 255, 255, .016); }
+.flop-checkraise-lesson .structure-league-board { background: rgba(0, 0, 0, .075); }
+.flop-checkraise-lesson .structure-league-board-example {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--brand-yellow);
+  font-size: 16px;
+  font-weight: 850;
+  letter-spacing: .025em;
+}
+
+.flop-checkraise-lesson .structure-league-board strong { display: block; font-size: 13px; }
+.flop-checkraise-lesson .structure-league-board small {
+  display: block;
+  margin-top: 4px;
+  color: var(--soft);
+  font-size: 10px;
+  font-weight: 520;
+  line-height: 1.35;
+}
+
+.flop-checkraise-lesson .structure-league-cell .structure-league-kpi { padding: 9px 10px; }
+.flop-checkraise-lesson .structure-league-cell .structure-league-kpi strong { font-size: clamp(19px, 1.45vw, 24px); }
+.flop-checkraise-lesson .structure-league-mobile-label { display: none; }
+.flop-checkraise-lesson .structure-league-method {
+  padding: 13px 16px;
+  border-top: 1px solid var(--line);
+  color: var(--soft);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.flop-checkraise-lesson .structure-league-method strong { color: rgba(244, 241, 236, .78); }
+
+@media (max-width: 980px) {
+  .flop-checkraise-lesson .structure-league-scope { grid-template-columns: 1fr; }
+  .flop-checkraise-lesson .structure-league-scope-facts { justify-content: flex-start; }
+  .flop-checkraise-lesson .structure-league-summary-grid { grid-template-columns: 1fr; }
+  .flop-checkraise-lesson .structure-league-summary {
+    display: grid;
+    grid-template-columns: minmax(160px, .55fr) minmax(360px, 1.45fr);
+    align-items: center;
+    gap: 12px 20px;
+  }
+  .flop-checkraise-lesson .structure-league-summary > header { margin-bottom: 0; }
+  .flop-checkraise-lesson .structure-league-summary-note { grid-column: 2; margin-top: -4px; }
+}
+
+@media (max-width: 820px) {
+  .flop-checkraise-lesson .structure-league-controls { align-items: stretch; flex-direction: column; }
+  .flop-checkraise-lesson .structure-league-view-tabs { align-self: flex-start; }
+}
+
+@media (max-width: 590px) {
+  .flop-checkraise-lesson .structure-league-table-card { background: transparent; box-shadow: none; }
+  .flop-checkraise-lesson .structure-league-table-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-inline: 0;
+  }
+  .flop-checkraise-lesson .structure-league-legend { justify-content: flex-start; }
+  .flop-checkraise-lesson .structure-league-table-scroll { overflow: visible; }
+  .flop-checkraise-lesson .structure-league-table,
+  .flop-checkraise-lesson .structure-league-table tbody,
+  .flop-checkraise-lesson .structure-league-table tr,
+  .flop-checkraise-lesson .structure-league-table th,
+  .flop-checkraise-lesson .structure-league-table td {
+    display: block;
+    width: 100%;
+  }
+  .flop-checkraise-lesson .structure-league-table { min-width: 0; }
+  .flop-checkraise-lesson .structure-league-table thead { display: none; }
+  .flop-checkraise-lesson .structure-league-table tbody { display: grid; gap: 10px; }
+  .flop-checkraise-lesson .structure-league-table tbody tr {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 17px;
+    background: rgba(255, 255, 255, .025);
+    box-shadow: var(--shadow-sm);
+  }
+  .flop-checkraise-lesson .structure-league-table th,
+  .flop-checkraise-lesson .structure-league-table td {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .flop-checkraise-lesson .structure-league-table tbody tr > :last-child { border-bottom: 0; }
+  .flop-checkraise-lesson .structure-league-board {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 11px;
+    padding: 14px 15px;
+  }
+  .flop-checkraise-lesson .structure-league-board-example { grid-row: 1 / span 2; align-self: center; margin: 0; }
+  .flop-checkraise-lesson .structure-league-board small { grid-column: 2; }
+  .flop-checkraise-lesson .structure-league-cell-metrics {
+    display: grid;
+    grid-template-columns: minmax(78px, .34fr) repeat(2, minmax(0, 1fr));
+    align-items: center;
+    gap: 8px;
+  }
+  .flop-checkraise-lesson .structure-league-cell { padding: 10px 12px; }
+  .flop-checkraise-lesson .structure-league-mobile-label {
+    display: block;
+    color: rgba(244, 241, 236, .78);
+    font-size: 11px;
+    font-weight: 820;
+    line-height: 1.3;
+  }
+  .flop-checkraise-lesson .structure-league-method {
+    margin-top: 10px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .02);
+  }
+}
+
+@media (max-width: 590px) {
+  .flop-checkraise-lesson .structure-league-matrix { gap: 10px; }
+  .flop-checkraise-lesson .structure-league-scope,
+  .flop-checkraise-lesson .structure-league-controls { padding: 16px; border-radius: 17px; }
+  .flop-checkraise-lesson .structure-league-view-tabs { width: 100%; }
+  .flop-checkraise-lesson .structure-league-summary {
+    display: block;
+    padding: 15px;
+    border-radius: 17px;
+  }
+  .flop-checkraise-lesson .structure-league-summary > header { margin-bottom: 12px; }
+  .flop-checkraise-lesson .structure-league-summary-note { margin-top: 9px; }
+  .flop-checkraise-lesson .structure-league-kpi { padding: 9px; }
+  .flop-checkraise-lesson .structure-league-kpi strong,
+  .flop-checkraise-lesson .structure-league-cell .structure-league-kpi strong { font-size: 20px; }
+  .flop-checkraise-lesson .structure-league-cell-metrics {
+    grid-template-columns: minmax(62px, .3fr) repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .flop-checkraise-lesson .structure-league-cell { padding: 9px 8px; }
+  .flop-checkraise-lesson .structure-league-cell .structure-league-kpi { padding: 8px 7px; }
+  .flop-checkraise-lesson .structure-league-kpi-label { font-size: 8px; }
+  .flop-checkraise-lesson .structure-league-kpi small { font-size: 9px; }
+  .flop-checkraise-lesson .structure-league-mobile-label { font-size: 10px; }
+}

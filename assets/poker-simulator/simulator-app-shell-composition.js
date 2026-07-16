@@ -137,6 +137,7 @@
         embedKit: dependencies.embedKit,
         smokeScenariosKit: dependencies.smokeScenariosKit,
         embeddedMode: appFoundation.embeddedMode,
+        bootParams: appFoundation.bootParams,
         getState: () => state,
         replayDialog,
         isLayoutSmokeLocalhost: appFoundation.isLayoutSmokeLocalhost,

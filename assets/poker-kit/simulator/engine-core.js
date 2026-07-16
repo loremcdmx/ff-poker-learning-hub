@@ -2497,6 +2497,27 @@
           prompt: "BvB limp pot: ставка 1 BB или check"
         }
       ]
+    },
+    "cbet-rvbb": {
+      name: "C-bet IP vs BB",
+      stackDepths: [38, 50, 65, 80],
+      playableWeight: 1,
+      spots: [
+        {
+          key: "btn-vs-bb-cbet",
+          title: "BTN vs BB · c-bet",
+          heroPosition: "BTN",
+          activeVillain: 5,
+          villainPosition: "BB",
+          startPot: 5.2,
+          toCall: 0,
+          canCheck: true,
+          startStreet: "flop",
+          boardCards: 3,
+          branch: ["BTN open 2.2 BB", "BB call", "Flop", "BB check"],
+          prompt: "BB чекнул — c-bet или check back"
+        }
+      ]
     }
   };
 

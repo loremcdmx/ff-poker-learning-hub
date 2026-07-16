@@ -131,6 +131,8 @@
     function applyEmbeddedModeFlag() {
       if (embeddedMode && documentRef?.documentElement?.dataset) {
         documentRef.documentElement.dataset.simulatorEmbedded = "true";
+        const embeddedPack = String(bootParams.get("pack") || "").trim();
+        if (embeddedPack) documentRef.documentElement.dataset.simulatorPack = embeddedPack;
       }
     }
 
@@ -145,6 +147,28 @@
       }
       if (settings && embeddedMode && practicePacks?.applyBootSettings) {
         practicePacks.applyBootSettings(settings);
+      }
+      const bootPack = String(bootParams.get("pack") || "").trim();
+      const pack = engine.PACKS?.[bootPack];
+      const supportedPack = Boolean(pack?.spots?.length)
+        && pack.spots.every((spot) => !spot.startStreet || ["preflop", "flop", "turn", "river"].includes(spot.startStreet));
+      if (settings && embeddedMode && bootPack && supportedPack) {
+        settings.pack = bootPack;
+      }
+      const autoStart = ["1", "true", "yes"].includes(String(bootParams.get("autostart") || "").toLowerCase());
+      if (settings && embeddedMode && autoStart) {
+        settings.setupCompleted = true;
+        settings.trainingMode = false;
+        settings.simulationMode = "random";
+      }
+      if (settings && embeddedMode && autoStart && bootPack === "cbet-rvbb" && supportedPack) {
+        settings.playerCount = sanitizePlayerCount(6);
+        settings.randomStackMinBb = 38;
+        settings.randomStackMaxBb = 80;
+        settings.postflopBetPercents = "25,33,50,67,allin";
+        settings.actionTimerSeconds = 0;
+        settings.deck = "color-block";
+        settings.uiScale = "standard";
       }
       return settings;
     }
