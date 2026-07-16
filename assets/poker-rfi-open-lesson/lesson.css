@@ -238,3 +238,7 @@
   .rfi-open-lesson .stack-tabs button{flex:0 0 86px;scroll-snap-align:start}
   .rfi-open-lesson .stack-field{margin-top:14px;padding:16px!important}
 }
+@media (max-width:620px){
+  .rfi-open-lesson .step-tabs{grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
+  .rfi-open-lesson .step-tab{width:100%;min-width:0;white-space:normal}
+}

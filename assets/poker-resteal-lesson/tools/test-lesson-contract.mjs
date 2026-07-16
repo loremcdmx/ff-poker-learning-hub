@@ -41,6 +41,8 @@ assert.ok(restealCatalog.indexOf("advice.js") < restealCatalog.indexOf("simulato
 assert.match(featureLoader, /function readyForBoot\(\)[\s\S]*loadPracticePack\(\)/, "simulator boot waits for the requested practice pack");
 assert.match(html, /poker-progress\/progress\.js\?v=20260715-ffstart-handoff-v16/);
 assert.match(html, /poker-resteal-lesson\/lesson\.js\?v=20260715-ffstart-handoff-v16/);
+assert.match(html, /poker-resteal-lesson\/lesson\.css\?v=9abf19f8a6d2/);
+assert.match(css, /@media \(max-width:620px\)\{[\s\S]*?\.step-tabs\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\);overflow:visible\}/, "mobile lesson tabs use a visible 2x2 grid");
 assert.doesNotMatch(html, /data-control=["']ante["']|pkoToggle|waterfall|<details|Источник|Как посчитано/);
 assert.match(html, /Всегда включён · 1 BB/);
 assert.match(html, />Сыграть раздачу<\/button>/);
