@@ -20,7 +20,8 @@ const expectedRoutes = new Map([
   ["/resteal-lesson", "resteal-lesson.html"],
   ["/flop-cbet-hu-lesson", "flop-cbet-hu-lesson.html"],
   ["/flop-checkraise-lesson", "flop-checkraise-lesson.html"],
-  ["/vs-3bet-defense-lesson", "vs-3bet-defense-lesson.html"]
+  ["/vs-3bet-defense-lesson", "vs-3bet-defense-lesson.html"],
+  ["/poker-simulator", "poker-simulator.html"]
 ]);
 const requiredDirectories = [
   "assets/poker-kit",
@@ -35,7 +36,7 @@ const requiredDirectories = [
   "assets/poker-flop-checkraise-lesson",
   "assets/poker-vs-3bet-defense-lesson"
 ];
-const lessonPages = new Set(expectedRoutes.values());
+const lessonPages = new Set([...expectedRoutes.values()].filter((page) => page !== "poker-simulator.html"));
 const suitTextPages = new Set(["index.html", ...lessonPages]);
 const suitTextAssets = [
   "assets/poker-kit/suit-text.css",
@@ -141,14 +142,15 @@ for (const sourceFile of sourceFiles) {
 }
 
 const hub = readFileSync(join(root, "index.html"), "utf8");
-check((hub.match(/class="trainer-card /g) || []).length === 6, "hub exposes exactly six trainer cards");
+check((hub.match(/class="trainer-card /g) || []).length === 7, "hub exposes six lessons and the poker simulator");
 for (const route of expectedRoutes.keys()) check(hub.includes(`href="${route}"`), `hub links to ${route}`);
 check(hub.includes("https://github.com/loremcdmx/ff-poker-learning-hub"), "hub includes the public GitHub link");
-for (const page of expectedRoutes.values()) {
+for (const page of lessonPages) {
   const html = readFileSync(join(root, page), "utf8");
   check(html.includes('href="/"'), `${page} links back to the learning hub`);
   check(html.includes('rel="icon"'), `${page} declares a favicon`);
 }
+check(!readFileSync(join(root, "poker-simulator.html"), "utf8").includes('window.location.replace("/")'), "poker simulator remains directly accessible from the hub");
 check(!readFileSync(join(root, "assets/poker-rfi-open-lesson/simulator-pack.js"), "utf8").includes('"MP","HJ"'), "RFI engine pack does not target nonexistent 7-max MP");
 check(!readFileSync(join(root, "assets/poker-resteal-lesson/lesson.js"), "utf8").includes('new URL("poker-simulator.html"'), "resteal practice starts without a clean-URL redirect");
 

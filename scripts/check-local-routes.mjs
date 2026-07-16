@@ -16,6 +16,7 @@ const routes = [
   { path: "/flop-cbet-hu-lesson", file: "flop-cbet-hu-lesson.html", title: "C-bet RvBB · урок и библиотека FF" },
   { path: "/flop-checkraise-lesson", file: "flop-checkraise-lesson.html", title: "Чек-рейз флопа · FF Poker Learning Hub" },
   { path: "/vs-3bet-defense-lesson", file: "vs-3bet-defense-lesson.html", title: "Защита против 3-бета · FF Poker Learning Hub" },
+  { path: "/poker-simulator", file: "poker-simulator.html", title: "Покерный симулятор столов" },
 ];
 
 const child = spawn(process.execPath, [join(root, "scripts/serve-local.mjs")], {

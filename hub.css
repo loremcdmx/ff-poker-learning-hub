@@ -210,6 +210,11 @@ h1 em { color: var(--acid); font-weight: inherit; }
 .trainer-card-cbet { background: linear-gradient(150deg, rgba(39, 25, 53, .95), rgba(17, 10, 24, .95)); }
 .trainer-card-checkraise { background: linear-gradient(150deg, rgba(49, 25, 34, .95), rgba(21, 10, 15, .95)); }
 .trainer-card-vs3bet { background: linear-gradient(150deg, rgba(22, 34, 52, .95), rgba(9, 15, 24, .95)); }
+.trainer-card-simulator {
+  grid-column: 1 / -1;
+  min-height: 410px;
+  background: linear-gradient(135deg, rgba(17, 46, 37, .97), rgba(10, 21, 29, .97));
+}
 
 .card-topline {
   display: flex;
@@ -394,6 +399,106 @@ h1 em { color: var(--acid); font-weight: inherit; }
   letter-spacing: .14em;
 }
 
+.simulator-card-layout {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr);
+  gap: 34px;
+  align-items: stretch;
+  margin-top: 20px;
+}
+
+.trainer-card-simulator .card-symbol {
+  height: auto;
+  min-height: 300px;
+  margin: 0;
+}
+
+.simulator-symbol {
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(ellipse at center, rgba(104, 213, 209, .17), transparent 68%),
+    rgba(4, 12, 12, .5);
+}
+
+.simulator-felt {
+  position: relative;
+  width: min(76%, 410px);
+  aspect-ratio: 1.7;
+  border: 8px solid rgba(188, 218, 205, .16);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(216, 243, 109, .09), transparent 28%),
+    linear-gradient(145deg, #174f3b, #0c3329);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, .28), inset 0 0 0 2px rgba(255, 255, 255, .07);
+}
+
+.simulator-felt::before {
+  position: absolute;
+  inset: 8%;
+  border: 1px solid rgba(216, 243, 109, .15);
+  border-radius: inherit;
+  content: "";
+}
+
+.simulator-seat {
+  position: absolute;
+  width: 14%;
+  min-width: 34px;
+  aspect-ratio: 1.65;
+  border: 1px solid rgba(104, 213, 209, .32);
+  border-radius: 999px;
+  background: #0a1a1b;
+  box-shadow: 0 7px 16px rgba(0, 0, 0, .3);
+}
+
+.simulator-seat-top { top: -9%; left: 43%; }
+.simulator-seat-right-top { top: 18%; right: -5%; }
+.simulator-seat-right-bottom { right: 5%; bottom: -2%; }
+.simulator-seat-bottom { bottom: -9%; left: 43%; border-color: rgba(216, 243, 109, .5); }
+.simulator-seat-left-bottom { bottom: -2%; left: 5%; }
+.simulator-seat-left-top { top: 18%; left: -5%; }
+
+.simulator-card-back {
+  position: absolute;
+  top: 41%;
+  width: 11%;
+  aspect-ratio: .72;
+  border: 2px solid rgba(241, 246, 242, .72);
+  border-radius: 5px;
+  background: repeating-linear-gradient(45deg, #5572bb 0 4px, #263c77 4px 8px);
+  box-shadow: 0 7px 14px rgba(0, 0, 0, .28);
+}
+
+.simulator-card-back-one { left: 38%; transform: rotate(-6deg); }
+.simulator-card-back-two { right: 38%; transform: rotate(6deg); }
+.simulator-chip {
+  position: absolute;
+  right: 28%;
+  bottom: 24%;
+  width: 7%;
+  aspect-ratio: 1;
+  border: 3px dashed rgba(255, 255, 255, .65);
+  border-radius: 50%;
+  background: #d7a946;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, .3);
+}
+
+.simulator-card-content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 12px 6px 2px 0;
+}
+
+.simulator-card-content > p {
+  margin: 16px 0 18px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.62;
+}
+
 .trainer-card h2 {
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
@@ -475,6 +580,9 @@ footer a { color: #aebcb3; text-underline-offset: 4px; }
   .trainer-card { min-height: auto; }
   .trainer-card > p { min-height: auto; }
   .card-symbol { height: 158px; }
+  .simulator-card-layout { grid-template-columns: 1fr; gap: 24px; }
+  .trainer-card-simulator .card-symbol { min-height: 280px; }
+  .simulator-card-content { padding: 0; }
 }
 
 @media (max-width: 600px) {
@@ -492,6 +600,8 @@ footer a { color: #aebcb3; text-underline-offset: 4px; }
   .trainer-grid { gap: 13px; padding-bottom: 54px; }
   .trainer-card { padding: 17px; border-radius: 19px; }
   .card-symbol { margin: 18px 0 22px; }
+  .trainer-card-simulator .card-symbol { min-height: 210px; margin: 0; }
+  .simulator-card-layout { gap: 20px; margin-top: 18px; }
   .trainer-card h2 { font-size: 28px; }
   footer { display: grid; gap: 4px; justify-items: start; align-content: center; }
 }

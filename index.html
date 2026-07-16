@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#07110d">
-  <meta name="description" content="Шесть интерактивных уроков FF по префлопу и постфлопу: решения за настоящим столом, чарты, данные поля и практика.">
+  <meta name="description" content="Шесть интерактивных уроков FF и полноценный покерный симулятор: решения за настоящим столом, данные поля и свободная практика.">
   <meta property="og:title" content="FF · Обучающий хаб">
-  <meta property="og:description" content="Шесть интерактивных уроков: от опен-рейза и защиты BB до c-bet, чек-рейза и защиты на 3-бет.">
+  <meta property="og:description" content="Шесть интерактивных уроков и свободная игра в покерном симуляторе: от опен-рейза до решений в 3-бет поте.">
   <title>FF · Обучающий хаб</title>
   <link rel="icon" href="assets/favicon.svg">
   <link rel="stylesheet" href="hub.css">
@@ -33,16 +33,16 @@
 
   <main>
     <section class="hero" aria-labelledby="page-title">
-      <p class="eyebrow"><span></span> Один маршрут · шесть навыков</p>
+      <p class="eyebrow"><span></span> Шесть навыков · свободная игра</p>
       <h1 id="page-title">Покер становится<br><em>понятным в действии</em></h1>
-      <p class="hero-copy">От первого опен-рейза до решений в 3-бет поте: в каждом уроке сначала действие за столом, затем методика, данные поля и практика.</p>
+      <p class="hero-copy">От первого опен-рейза до решений в 3-бет поте: пройди уроки по порядку, а затем собери свой стол и закрепи навыки в свободной игре.</p>
       <div class="path-note" aria-label="Рекомендуемый порядок">
         <span>Рекомендуемый порядок</span>
-        <strong>Опен → Защита BB → Рестил → C-bet → X/R → vs 3-bet</strong>
+        <strong>Опен → Защита BB → Рестил → C-bet → X/R → vs 3-bet → Симулятор</strong>
       </div>
     </section>
 
-    <section class="trainer-grid" aria-label="Тренажёры">
+    <section class="trainer-grid" aria-label="Тренажёры и симулятор">
       <article class="trainer-card trainer-card-open">
         <div class="card-topline">
           <span class="step-number">01</span>
@@ -179,6 +179,42 @@
         <div class="card-actions">
           <a class="primary-action" href="/vs-3bet-defense-lesson">Начать урок <span aria-hidden="true">→</span></a>
           <a class="source-action" href="https://github.com/loremcdmx/ff-poker-learning-hub/tree/main/assets/poker-vs-3bet-defense-lesson" target="_blank" rel="noreferrer" aria-label="Исходный код урока по защите на 3-бет">Код</a>
+        </div>
+      </article>
+
+      <article class="trainer-card trainer-card-simulator">
+        <div class="card-topline">
+          <span class="step-number">07</span>
+          <span class="level">Свободная игра</span>
+        </div>
+        <div class="simulator-card-layout">
+          <div class="card-symbol simulator-symbol" aria-hidden="true">
+            <div class="simulator-felt">
+              <span class="simulator-seat simulator-seat-top"></span>
+              <span class="simulator-seat simulator-seat-right-top"></span>
+              <span class="simulator-seat simulator-seat-right-bottom"></span>
+              <span class="simulator-seat simulator-seat-bottom"></span>
+              <span class="simulator-seat simulator-seat-left-bottom"></span>
+              <span class="simulator-seat simulator-seat-left-top"></span>
+              <span class="simulator-card-back simulator-card-back-one"></span>
+              <span class="simulator-card-back simulator-card-back-two"></span>
+              <span class="simulator-chip"></span>
+            </div>
+          </div>
+          <div class="simulator-card-content">
+            <h2>Покерный<br>симулятор</h2>
+            <p>Собери свой стол и играй полноценные раздачи без ограниченного пака — в удобном темпе и против соперников разной силы.</p>
+            <ul aria-label="Возможности симулятора">
+              <li>2–8 игроков</li>
+              <li>1–4 стола</li>
+              <li>рандом и MTT</li>
+              <li>фидбек, статистика и повторы</li>
+            </ul>
+            <div class="card-actions">
+              <a class="primary-action" href="/poker-simulator">Открыть симулятор <span aria-hidden="true">→</span></a>
+              <a class="source-action" href="https://github.com/loremcdmx/ff-poker-learning-hub/blob/main/poker-simulator.html" target="_blank" rel="noreferrer" aria-label="Исходный код покерного симулятора">Код</a>
+            </div>
+          </div>
         </div>
       </article>
     </section>
