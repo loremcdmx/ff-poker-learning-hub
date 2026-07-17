@@ -3709,7 +3709,15 @@
   function updatePreflopStateForHero(table) {
     const heroContribution = contributionOf(table, 0);
     const heroHasChips = remainingStack(table, 0) > 0;
-    table.toCall = Math.round(Math.max(0, Number(table.currentBet || 0) - heroContribution) * 10) / 10;
+    // Keep the full-BB bring-in while live stacks remain, but never ask Hero
+    // to add chips that no non-folded opponent can match. After the field folds
+    // to a short all-in BB, this turns SB 0.5 vs BB 0.4 into zero action (and
+    // SB 0.5 vs BB 0.8 into the real 0.3 call) rather than a nominal-BB debt.
+    const effectiveTarget = Math.min(
+      Number(table.currentBet || 0),
+      effectiveAllInCeiling(table, 0)
+    );
+    table.toCall = Math.round(Math.max(0, effectiveTarget - heroContribution) * 10) / 10;
     table.canCheck = heroHasChips && table.heroPosition === blindPositions(table.positions).bigBlind && table.toCall === 0;
     table.heroTurn = heroHasChips && table.heroTurn;
     table.minRaiseTo = Math.round(Math.min(maxContributionForSeat(table, 0), Math.max(2, Number(table.currentBet || 1) + Number(table.lastRaiseSize || 1))) * 10) / 10;

@@ -1610,7 +1610,11 @@
       const liveSeats = [hero, ...opponents].filter((seat) => seat && !seat.folded);
       const hasUnansweredBet = liveSeats.some((seat) => {
         if (remainingStack(table, seat.id) <= 0) return false;
-        const required = Math.min(target, maxContributionForSeat(table, seat.id));
+        // A nominal blind/raise cannot create action beyond what a live
+        // opponent can still match. This matters when action folds to a short
+        // all-in BB: an SB that already posted more than the BB has no debt and
+        // the hand must run out instead of offering a fake call/all-in button.
+        const required = Math.min(target, effectiveAllInCeiling(table, seat.id));
         return contributionOf(table, seat.id) + EPSILON_BB < required;
       });
       if (hasUnansweredBet) return false;
