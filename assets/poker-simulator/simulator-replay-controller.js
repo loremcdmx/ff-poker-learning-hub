@@ -37,6 +37,7 @@
 
     function showReplay(entry = scopedReplayEntries()[0]) {
       stopReplayAutoplay(false);
+      if (typeof replayUi.clearReplayFlights === "function") replayUi.clearReplayFlights(replayDialog, replayBody);
       if (!entry?.handHistory) {
         // Table without finished hands yet: open the dialog with an honest
         // empty state instead of silently doing nothing.
@@ -59,6 +60,9 @@
     function renderReplayDialog() {
       if (!state.replayHand || !replayBody || typeof replayUi.renderReplay !== "function") return;
       const prevIndex = state.replayRenderedIndex;
+      if (typeof replayUi.prepareReplayAnimations === "function") {
+        replayUi.prepareReplayAnimations(replayBody, replayDialog, state.replayHand);
+      }
       replayBody.innerHTML = replayUi.renderReplay(state.replayHand, {
         replayIndex: state.replayIndex,
         replayPlaying: state.replayPlaying,
@@ -115,6 +119,9 @@
       clearReplayAutoplayTimer();
       state.replayPlaying = false;
       if (renderNow && replayDialog?.open) renderReplayDialog();
+      if (!replayDialog?.open && typeof replayUi.clearReplayFlights === "function") {
+        replayUi.clearReplayFlights(replayDialog, replayBody);
+      }
     }
 
     function setReplayIndex(index, options = {}) {

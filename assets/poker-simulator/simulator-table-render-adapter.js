@@ -165,6 +165,7 @@
       formatInlineAmounts,
       escapeHtml,
       actionI18n: root.PokerSimulatorActionI18n,
+      sessionIdentity: () => String(state().sessionId || ""),
       now: () => Date.now(),
       durations: options.tableEffectDurations
     });

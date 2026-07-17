@@ -341,6 +341,12 @@
         // open size still fits the tight multi-table preset chips.
         const bb = value.match(/^(\d+(?:\.\d+)?)bb$/i);
         if (bb) return bb[1];
+        // Decimal open-size chips are the only preflop labels that still run
+        // long in the scaled four-table row. Keep the familiar integer "3x",
+        // but shorten "3.5x" to "3.5" where the decimal already conveys that
+        // this is a sizing preset rather than an action.
+        const decimalX = value.match(/^(\d+\.\d+)x$/i);
+        if (decimalX) return decimalX[1];
         return value;
       }
 

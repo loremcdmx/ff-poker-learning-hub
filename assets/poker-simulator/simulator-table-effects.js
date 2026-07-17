@@ -76,6 +76,7 @@
     const injectedBetMarkerLandingMs = typeof options.betMarkerLandingMs === "function" ? options.betMarkerLandingMs : null;
     const injectedChipRevealMs = typeof options.chipRevealMs === "function" ? options.chipRevealMs : null;
     const actionI18n = options.actionI18n || root.PokerSimulatorActionI18n || {};
+    const sessionIdentity = typeof options.sessionIdentity === "function" ? options.sessionIdentity : () => "";
     const localizeActionLabel = typeof actionI18n.localizeActionLabel === "function" ? actionI18n.localizeActionLabel : (value) => value;
     const localizeActionText = typeof actionI18n.localizeActionText === "function" ? actionI18n.localizeActionText : (value) => value;
     const localizeThinkingLabel = typeof actionI18n.thinkingLabel === "function" ? actionI18n.thinkingLabel : (actor) => `${actor} думает`;
@@ -412,8 +413,92 @@
       return delay;
     }
 
+    // A live effect key owns its first felt coordinates for its visual chapter. The
+    // slot resolver deliberately uses different obstacle sets for betting,
+    // all-in and reveal phases; asking it again mid-animation can therefore move
+    // the same marker/flight by double-digit felt percentages. The DOM patcher
+    // preserves a keyed transient's first inline style, so keeping the render
+    // model on that same immutable anchor prevents a later teardown/remount from
+    // snapping to a different phase's coordinates. One bounded entry per table
+    // is replaced automatically when handNo advances.
+    const effectAnchorLatch = new Map();
+
+    function visualHandKey(table) {
+      const handNo = Number(table?.handNo);
+      if (!Number.isFinite(handNo)) return "";
+      // Multiplayer reuses local table ids (the primary table is commonly 1)
+      // and server hand counters may restart in a different room. Room identity
+      // therefore belongs to every per-hand visual latch key.
+      const roomId = String(table?.serverRoomId || "").trim();
+      // Local hand counters restart at 1 after a manual session reset. Include
+      // the live session id as well so table 1 / hand 1 can never inherit a
+      // previous session's coordinates or latched action markup.
+      const sessionId = String(sessionIdentity(table) || table?.sessionId || "").trim();
+      const scope = [roomId ? `room:${roomId}` : "", sessionId ? `session:${sessionId}` : "local"]
+        .filter(Boolean)
+        .join(":");
+      return `${scope}:hand:${handNo}`;
+    }
+
+    function effectAnchorLatchFor(table) {
+      const tableId = Number(table?.id);
+      const handKey = visualHandKey(table);
+      if (!Number.isFinite(tableId) || !handKey) return null;
+      const current = effectAnchorLatch.get(tableId);
+      if (current?.handKey === handKey) return current;
+      const next = { handKey, points: new Map() };
+      effectAnchorLatch.set(tableId, next);
+      return next;
+    }
+
+    function immutableEffectPoint(table, key, resolvePoint) {
+      const latch = effectAnchorLatchFor(table);
+      const pointKey = String(key || "");
+      if (latch && pointKey && latch.points.has(pointKey)) return latch.points.get(pointKey);
+      const point = typeof resolvePoint === "function" ? resolvePoint() : null;
+      if (!point || !Number.isFinite(Number(point.x)) || !Number.isFinite(Number(point.y))) return point;
+      if (!latch || !pointKey) return point;
+      if (!latch.points.has(pointKey)) {
+        latch.points.set(pointKey, { x: Number(point.x), y: Number(point.y) });
+      }
+      return latch.points.get(pointKey);
+    }
+
+    function markerChapterKey(table, snapshot = null, item = null, index = 0, matchClosingSnapshot = false) {
+      const actionIndex = item ? actionIndexForBetAnimation(table, item, index) : -1;
+      const action = item?.street
+        ? item
+        : actionIndex >= 0
+          ? table?.actionAnimations?.[actionIndex] || null
+          : null;
+      // The engine can publish the first board before the closing preflop flight
+      // is built. In that boundary shape the matched action legitimately reads
+      // {preflop, boardLength:3}, while visualClosedStreetBets still owns the
+      // visible marker as {preflop, boardLength:0}. Seq-band ownership is the
+      // canonical bridge: a closing flight must target the already-latched
+      // closing marker chapter, not create a second point from the grown board.
+      const closingSnapshot = snapshot || (matchClosingSnapshot && item ? closingStreetBetSnapshot(table) : null);
+      const snapshotOwnsItem = Boolean(
+        closingSnapshot && (!item || actionMatchesClosingStreet(table, item, index, closingSnapshot))
+      );
+      const chapterSnapshot = snapshotOwnsItem ? closingSnapshot : null;
+      const street = String(chapterSnapshot?.street || action?.street || table?.street || "live");
+      const rawBoardLength = chapterSnapshot?.boardLength ?? action?.boardLength ?? visibleBoardLength(table);
+      const boardLength = Number.isFinite(Number(rawBoardLength)) ? Number(rawBoardLength) : 0;
+      return `${street}:${boardLength}`;
+    }
+
+    function markerEffectPoint(table, seatId, chapterKey = markerChapterKey(table)) {
+      const id = Number(seatId);
+      // The same transient (including a closing-street hold) must never jump
+      // when the table's resolver changes phase. A genuinely new street is a
+      // new marker, however, and must be allowed to resolve against that
+      // street's board/keep-out geometry instead of inheriting preflop space.
+      return immutableEffectPoint(table, `marker:${id}:${chapterKey}`, () => betPoint(table, id));
+    }
+
     function renderBetMarker(table, seatId, amount, snapshot = null, options = {}) {
-      const point = betPoint(table, Number(seatId));
+      const point = markerEffectPoint(table, seatId, markerChapterKey(table, snapshot));
       const seat = table.seats?.find((item) => Number(item.id) === Number(seatId));
       const explicitDelay = Number(options.delayMs);
       const delay = Number.isFinite(explicitDelay) ? explicitDelay : markerDelayForSeat(table, seatId, snapshot);
@@ -446,7 +531,7 @@
     }
 
     function renderPendingBetMarkerAnchor(table, seatId, delayMs, snapshot = null) {
-      const point = betPoint(table, Number(seatId));
+      const point = markerEffectPoint(table, seatId, markerChapterKey(table, snapshot));
       const delay = Math.max(0, Math.round(Number(delayMs) || 0));
       const closingClass = snapshot ? " is-closing-street" : "";
       const handKey = Number.isFinite(Number(table?.handNo)) ? Number(table.handNo) : "live";
@@ -622,8 +707,8 @@
         .filter(({ item, index }) => !isBetFlightComplete(table, item, index))
         .map(({ item, index }) => {
           const seatId = Number(item.seatId);
-          const point = seatPoint(table, seatId);
-          const target = betPoint(table, seatId);
+          const point = immutableEffectPoint(table, `flight:${item.key}:from`, () => seatPoint(table, seatId));
+          const target = markerEffectPoint(table, seatId, markerChapterKey(table, null, item, index, true));
           const { action, chipDelay, chipDuration } = betFlightTiming(table, item, index);
           const flightClass = betFlightClass(table, item, action);
           const displayAmount = Number.isFinite(Number(item.contribution)) ? Number(item.contribution) : Number(item.amount);
@@ -664,7 +749,7 @@
     function renderFoldMuckForAction(table, item) {
       const seatId = Number(item.seatId);
       const seat = table.seats?.find((candidate) => Number(candidate.id) === seatId);
-      const target = betPoint(table, seatId);
+      const target = markerEffectPoint(table, seatId, markerChapterKey(table, null, item));
       const delay = FOLD_MUCK_BASE_DELAY_MS;
       const riverResolution = actionRiverResolution(item);
       const muckClass = riverResolution ? ` is-river-resolution is-${riverResolution}` : "";
@@ -673,7 +758,7 @@
         : compactTimingMs(duration("muckDurationMs"), duration("compactMuckDurationMs"));
       const cards = FOLD_MUCK_CARDS;
       return cards.map((card, cardIndex) => {
-        const from = foldMuckCardStartPoint(table, seat, cardIndex);
+        const from = immutableEffectPoint(table, `muck:${item.key}:${cardIndex}:from`, () => foldMuckCardStartPoint(table, seat, cardIndex));
         return `
           <span class="muck-card${muckClass}" style="--muck-duration:${muckDuration}ms; --from-x:${from.x}%; --from-y:${from.y}%; --to-x:${target.x}%; --to-y:${target.y}%; --muck-x:${card.x}px; --muck-y:${card.y}px; --start-rot:${card.start}deg; --end-rot:${card.end}deg; --fold-delay:${delay + card.delay}ms;" data-animation-key="${escapeHtml(item.key)}-muck-${cardIndex}" aria-hidden="true"></span>
         `;
@@ -698,7 +783,7 @@
     const actionBubbleItemLatch = new Map();
 
     function renderActionBubbleItem(table, item, index) {
-      const point = actionPoint(table, Number(item.seatId));
+      const point = immutableEffectPoint(table, `action:${item.key}`, () => actionPoint(table, Number(item.seatId)));
       const timing = actionTimingAtIndex(table, index);
       const label = actionAnnouncementLabel(table, item);
       const classes = actionBubbleClasses(item);
@@ -714,8 +799,8 @@
 
     function actionBubbleLatchFor(tableId, handNo) {
       const current = actionBubbleItemLatch.get(tableId);
-      if (current?.handNo === handNo) return current;
-      const next = { handNo, nextOrder: 0, items: new Map() };
+      if (current?.handNo === handNo && current.resetPending !== true) return current;
+      const next = { handNo, nextOrder: 0, items: new Map(), resetPending: false };
       actionBubbleItemLatch.set(tableId, next);
       return next;
     }
@@ -723,6 +808,15 @@
     function clearActionBubbleLatch(table, _reason) {
       const tableId = Number(table?.id);
       if (!Number.isFinite(tableId)) return;
+      const current = actionBubbleItemLatch.get(tableId);
+      // A fresh chapter is prepared synchronously, but its replacement action
+      // queue can be painted one render later. Keep the old keyed markup through
+      // that gap and replace the latch atomically when the first new action is
+      // rendered. Reduced motion / explicit teardown still clears immediately.
+      if (/fresh-sequence/.test(String(_reason || "")) && current?.handNo === visualHandKey(table)) {
+        current.resetPending = true;
+        return;
+      }
       actionBubbleItemLatch.delete(tableId);
     }
 
@@ -741,9 +835,9 @@
 
     function renderActionBubbles(table) {
       const tableId = Number(table?.id);
-      const handNo = Number(table?.handNo);
+      const handNo = visualHandKey(table);
       const actions = Array.isArray(table?.actionAnimations) ? table.actionAnimations : [];
-      const latchable = Number.isFinite(tableId) && Number.isFinite(handNo);
+      const latchable = Number.isFinite(tableId) && Boolean(handNo);
       if (prefersReducedMotion()) {
         if (latchable) clearActionBubbleLatch(table, "reduced-motion");
         return "";

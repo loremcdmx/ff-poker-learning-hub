@@ -54,6 +54,16 @@
         const pileAmount = hasBoard ? potState.carriedAmount : potState.totalAmount;
         const pileState = hasBoard ? potState : { ...potState, carriedAmount: pileAmount };
         const heroTimebankHtml = table?.serverMode ? "" : renderHeroTimebank(table);
+        const actionBarClasses = actionBarClass(table);
+        const actionsHtml = renderActions(table);
+        // Server mode owns the live turn clock inside .client-controls. Rendering
+        // the generic lower-left hero status at the same time duplicates the
+        // decision prompt ("Ваше слово") and steals space from the only playable
+        // action dock. Non-server tables still use the standalone timebank/status
+        // slot exactly as before.
+        const actionStatusHtml = table?.serverMode && actionBarClasses.split(/\s+/).includes("is-hero-turn")
+          ? ""
+          : (heroTimebankHtml || renderActionStatus(table));
         const tableClasses = [
           isActive ? "is-active" : "",
           over ? "is-over" : "",
@@ -103,9 +113,9 @@
             </section>
             ${renderTournamentFinishScreen(table)}
 
-            <footer class="action-bar ${actionBarClass(table)}">
-              ${heroTimebankHtml || renderActionStatus(table)}
-              <div class="action-buttons">${renderActions(table)}</div>
+            <footer class="action-bar ${actionBarClasses}">
+              ${actionStatusHtml}
+              <div class="action-buttons">${actionsHtml}</div>
             </footer>
           </article>
         `;

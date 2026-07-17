@@ -70,8 +70,66 @@
       callback();
     }
 
+    function replayFlightHost(replayDialog) {
+      if (!replayDialog?.querySelector || !documentRef?.createElement) return null;
+      let host = replayDialog.querySelector(":scope > .replay-flight-layer");
+      if (host) return host;
+      host = documentRef.createElement("div");
+      host.className = "replay-flight-layer";
+      host.setAttribute("aria-hidden", "true");
+      replayDialog.appendChild(host);
+      return host;
+    }
+
+    function replayAnimationIdentity(hand) {
+      return [
+        String(hand?.sessionId || hand?.id || "session"),
+        String(hand?.handNo ?? hand?.no ?? "hand"),
+        String(hand?.tableId ?? "table")
+      ].join(":");
+    }
+
+    function replayAnimationBody(replayDialog, replayBody = null) {
+      return replayBody?.dataset
+        ? replayBody
+        : replayDialog?.querySelector?.("#replay-body, .replay-body") || null;
+    }
+
+    function nextReplayAnimationGeneration(replayBody) {
+      if (!replayBody?.dataset) return "0";
+      const next = Math.max(0, Number(replayBody.dataset.replayAnimationGeneration) || 0) + 1;
+      replayBody.dataset.replayAnimationGeneration = String(next);
+      return String(next);
+    }
+
+    function clearReplayFlights(replayDialog, replayBody = null) {
+      const host = replayDialog?.querySelector?.(":scope > .replay-flight-layer");
+      if (host) {
+        if (typeof host.replaceChildren === "function") host.replaceChildren();
+        else host.innerHTML = "";
+      }
+      // Closing/reopening can happen inside one browser frame. Invalidate a
+      // queued callback as well as removing flights already mounted in the
+      // stable layer, even when the next dialog shows the same hand.
+      nextReplayAnimationGeneration(replayAnimationBody(replayDialog, replayBody));
+    }
+
+    function prepareReplayAnimations(replayBody, replayDialog, hand) {
+      const identity = replayAnimationIdentity(hand);
+      if (!replayBody?.dataset) return { identity, generation: "0" };
+      if (replayBody.dataset.replayAnimationIdentity !== identity) {
+        clearReplayFlights(replayDialog, replayBody);
+        replayBody.dataset.replayAnimationIdentity = identity;
+      }
+      // Every DOM replacement is a new render generation. Existing chips live
+      // outside replayBody and keep flying for valid same-hand steps, while a
+      // callback queued by an older render can no longer mutate the new felt.
+      return { identity, generation: nextReplayAnimationGeneration(replayBody) };
+    }
+
     function animateReplayAdvance(replayBody, replayDialog, hand, replayIndex) {
       if (!replayDialog?.open || replayPrefersReducedMotion() || typeof replayStepView !== "function") return;
+      const animationToken = prepareReplayAnimations(replayBody, replayDialog, hand);
       const events = replayVisibleEvents(hand);
       const activeIndex = clampIndex(replayIndex, events.length);
       const view = replayStepView(hand, events, activeIndex);
@@ -79,6 +137,8 @@
 
       runReplayAnimationFrame(() => {
         if (!replayDialog?.open || replayPrefersReducedMotion()) return;
+        if (replayBody?.dataset?.replayAnimationIdentity !== animationToken.identity) return;
+        if (replayBody?.dataset?.replayAnimationGeneration !== animationToken.generation) return;
         const surface = replayAnimationRoot(replayBody);
         if (!surface || typeof surface.querySelectorAll !== "function") return;
 
@@ -98,7 +158,7 @@
         const seatId = events[activeIndex]?.seatId;
         if (view.amountPaid && view.amountPaid > 0 && seatId != null) {
           const betTarget = surface.querySelector(`.replay-bet[data-seat-id="${seatId}"]`) || pot;
-          flyReplayChip(surface, surface.querySelector(`.replay-seat[data-seat-id="${seatId}"]`), betTarget, view.amountPaid);
+          flyReplayChip(replayFlightHost(replayDialog), surface.querySelector(`.replay-seat[data-seat-id="${seatId}"]`), betTarget, view.amountPaid);
         }
       });
     }
@@ -344,6 +404,13 @@
     }
 
     const REPLAY_SEAT_SLOT_CW = [0, 6, 5, 4, 3, 2, 8, 1, 7];
+    const REPLAY_SEAT_SAFE_ENVELOPE = Object.freeze({
+      xMin: 14,
+      xMax: 86,
+      yMin: 14,
+      yMax: 79,
+      heroYMax: 89
+    });
 
     function replaySeatLayout(seats) {
       const list = Array.isArray(seats) ? seats.filter(Boolean) : [];
@@ -354,23 +421,28 @@
       });
       const n = Math.max(1, ordered.length);
       const round1 = (v) => Math.round(v * 10) / 10;
+      const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
       const map = new Map();
       ordered.forEach((seat, k) => {
         const ang = (90 + (k * 360 / n)) * Math.PI / 180;
         const hero = Boolean(seat?.isHero);
         const sin = Math.sin(ang);
+        const cos = Math.cos(ang);
         const cy = 54;
         const betCy = 54;
-        const rx = hero ? 41 : 47;
-        const ry = hero ? 34 : 46;
+        const rx = 40;
+        const ry = hero ? 35 : Math.abs(sin) > 0.72 ? 40 : 34;
         const brx = 34;
         const bry = 26;
-        const betX = hero ? 68 : round1(50 + brx * Math.cos(ang));
-        const betY = round1(betCy + bry * Math.sin(ang));
-        const seatY = !hero && sin < -0.94 ? 4.8 : round1(cy + ry * sin);
+        const betX = hero ? 68 : round1(50 + brx * cos);
+        const betY = round1(betCy + bry * sin);
+        const rawSeatX = 50 + rx * cos;
+        const rawSeatY = cy + ry * sin;
+        const seatZone = sin < -0.72 ? "top" : sin > 0.72 ? "bottom" : "side";
         map.set(Number(seat?.id), {
-          seatX: round1(50 + rx * Math.cos(ang)),
-          seatY,
+          seatX: round1(clamp(rawSeatX, REPLAY_SEAT_SAFE_ENVELOPE.xMin, REPLAY_SEAT_SAFE_ENVELOPE.xMax)),
+          seatY: round1(clamp(rawSeatY, REPLAY_SEAT_SAFE_ENVELOPE.yMin, hero ? REPLAY_SEAT_SAFE_ENVELOPE.heroYMax : REPLAY_SEAT_SAFE_ENVELOPE.yMax)),
+          seatZone,
           betX,
           betY
         });
@@ -504,7 +576,7 @@
       }
       const style = pos ? `left:${pos.seatX}%; top:${pos.seatY}%` : "";
       return `
-        <div class="replay-seat ${seat.isHero ? "is-hero" : ""} ${active ? "is-active" : ""} ${seat.folded ? "is-folded" : ""} ${botCardReveal ? "is-revealed" : ""} ${isWinner ? "is-winner" : ""}" data-seat-id="${Number(seat.id)}" style="${style}">
+        <div class="replay-seat is-${pos?.seatZone || "side"}-slot ${seat.isHero ? "is-hero" : ""} ${active ? "is-active" : ""} ${seat.folded ? "is-folded" : ""} ${botCardReveal ? "is-revealed" : ""} ${isWinner ? "is-winner" : ""}" data-seat-id="${Number(seat.id)}" style="${style}">
           ${cardsHtml}
           <div class="replay-seat-panel">
             <b>${isWinner ? '<span class="replay-winner-mark" aria-label="Победитель">●</span>' : ""}${escapeHtml(seat.isHero ? "Hero" : seat.position || seat.name || `Seat ${Number(seat.id)}`)}</b>
@@ -567,6 +639,8 @@
     return {
       renderReplay,
       animateReplayAdvance,
+      prepareReplayAnimations,
+      clearReplayFlights,
       syncReplayTimelineScroll
     };
   }
