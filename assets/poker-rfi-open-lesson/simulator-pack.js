@@ -14,6 +14,16 @@
   let restartHandlerInstalled = false;
   let learningUiHandlersInstalled = false;
   let limpReturnFocus = null;
+  let positionPreview = "";
+  let positionPinned = "";
+
+  function handMode(value = params.get("handMode")) {
+    return String(value || "").toLowerCase() === "full" ? "full" : "preflop";
+  }
+
+  function preflopOnly() {
+    return handMode() === "preflop";
+  }
 
   function sessionHands(value = params.get("hands")) {
     const count = Number(value);
@@ -55,6 +65,7 @@
       bigBlindAnteBb: 1,
       lobbyEvents: false,
       revealOpponentCardsOnFinish: true,
+      revealPreflopFoldedCardsOnFinish: true,
       statsScope: "session",
       handTempo: "fast",
       turboMode: true,
@@ -107,7 +118,15 @@
   }
 
   function practiceScenario() {
-    return { defaultBeforeHero: { action: "fold" } };
+    return {
+      defaultBeforeHero: { action: "fold" },
+      ...(preflopOnly()
+        ? { defaultAfterHero: { action: "fold" } }
+        : {
+            afterHero: [{ position: "BB", action: "call" }],
+            defaultAfterHero: { action: "fold" }
+          })
+    };
   }
 
   function decorateScenario(table, { handNo, attempts }) {
@@ -176,6 +195,64 @@
     return { handNo, position, combo, frequency, expected, action, correct: Boolean(action) && action === expected };
   }
 
+  function statsForGrades(grades = []) {
+    const statsApi = root.PokerRfiPracticeStats;
+    const stats = statsApi?.create?.();
+    if (!stats || typeof statsApi?.record !== "function") return null;
+    grades.forEach((grade) => statsApi.record(stats, {
+      position: grade.position,
+      hand: grade.combo,
+      chosen: grade.action,
+      expected: grade.expected
+    }));
+    return stats;
+  }
+
+  function statsHandAt(row, column) {
+    return handAt(row, column);
+  }
+
+  function positionChartMarkup(stats, position) {
+    const statsApi = root.PokerRfiPracticeStats;
+    if (!stats || !statsApi || !position) return "";
+    const summary = statsApi.summary(stats, position);
+    const ranks = root.PokerRfiData?.ranks || [];
+    const cells = ranks.map((_, row) => ranks.map((__, column) => {
+      const hand = statsHandAt(row, column);
+      const result = statsApi.hand(stats, position, hand);
+      const kind = result.extraOpens
+        ? " is-extra-open"
+        : result.missedOpens
+          ? " is-missed-open"
+          : result.otherMistakes ? " is-other-mistake" : "";
+      return `<span class="rfi-position-cell${kind}" title="${hand}" aria-hidden="true"><b>${hand}</b></span>`;
+    }).join("")).join("");
+    const accuracy = summary.accuracy == null ? "—" : `${summary.accuracy}%`;
+    const score = summary.attempts ? `${summary.correct} из ${summary.attempts} верно` : "Пока без ответов";
+    return `<header><strong>${position} · ${accuracy}</strong><span>${score}</span></header><div class="rfi-position-chart-body"><div class="rfi-position-grid" role="img" aria-label="Ошибки из позиции ${position}">${cells}</div><div class="rfi-position-legend"><span><i class="is-extra"></i>Лишний опен <b>${summary.extraOpens}</b></span><span><i class="is-missed"></i>Пропущен опен <b>${summary.missedOpens}</b></span><span><i class="is-other"></i>Лишний колл <b>${summary.otherMistakes}</b></span></div></div>`;
+  }
+
+  function renderPositionStats(hud, stats, currentPosition = "") {
+    const statsApi = root.PokerRfiPracticeStats;
+    const summaryHost = hud?.querySelector?.("[data-rfi-position-summary]");
+    const chart = hud?.querySelector?.("[data-rfi-position-chart]");
+    if (!statsApi || !stats || !summaryHost || !chart) return;
+    const active = positionPinned || positionPreview;
+    summaryHost.innerHTML = statsApi.POSITIONS.map((position) => {
+      const result = statsApi.summary(stats, position);
+      const accuracy = result.accuracy == null ? "—" : `${result.accuracy}%`;
+      const detail = result.attempts ? `${result.correct}/${result.attempts}` : "0 рук";
+      const label = result.attempts
+        ? `${position}: ${result.correct} из ${result.attempts} верно, ${result.accuracy} процентов`
+        : `${position}: пока без ответов`;
+      return `<button type="button" class="rfi-position-stat${position === currentPosition ? " is-current" : ""}${position === active ? " is-active" : ""}" data-rfi-position="${position}" aria-controls="rfiPositionChart" aria-expanded="${position === active}" aria-label="${label}"><strong>${position}</strong><b>${accuracy}</b><span>${detail}</span></button>`;
+    }).join("");
+    chart.hidden = !active;
+    chart.innerHTML = active ? positionChartMarkup(stats, active) : "";
+    if (active) chart.setAttribute("aria-label", `Ошибки из позиции ${active}`);
+    else chart.removeAttribute("aria-label");
+  }
+
   function handAt(row, column) {
     const ranks = root.PokerRfiData?.ranks || "AKQJT98765432".split("");
     return row === column
@@ -235,8 +312,8 @@
     feedback = root.document.createElement("aside");
     feedback.className = "rfi-range-review";
     feedback.dataset.rfiFeedback = "";
-    feedback.setAttribute("role", "alertdialog");
-    feedback.setAttribute("aria-modal", "true");
+    feedback.setAttribute("role", "dialog");
+    feedback.setAttribute("aria-modal", "false");
     feedback.setAttribute("aria-labelledby", "rfi-review-title");
     feedback.setAttribute("aria-hidden", "true");
     root.document.body.appendChild(feedback);
@@ -352,14 +429,6 @@
     if (!active || !root.document || learningUiHandlersInstalled) return;
     learningUiHandlersInstalled = true;
     root.document.addEventListener("click", (event) => {
-      const limp = event.target?.closest?.('.client-controls.is-rfi-opening [data-action="call"]');
-      if (limp) {
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation?.();
-        showLimpWarning(limp);
-        return;
-      }
       const dismissLimp = event.target?.closest?.("[data-rfi-limp-dismiss]");
       if (dismissLimp) {
         event.preventDefault();
@@ -391,15 +460,6 @@
         }
         return;
       }
-      const tag = event.target?.tagName;
-      if (event.metaKey || event.ctrlKey || event.altKey || event.repeat || tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA" || event.target?.isContentEditable || String(event.key).toLowerCase() !== "c") return;
-      if (root.document.querySelector('[data-rfi-limp-warning][aria-hidden="false"]')) return;
-      const openingCall = root.document.querySelector('.client-controls.is-rfi-opening [data-action="call"]');
-      if (!openingCall) return;
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation?.();
-      showLimpWarning(openingCall);
     }, true);
   }
 
@@ -432,22 +492,51 @@
       hud.setAttribute("aria-live", "polite");
       const targets = root.PokerRfiData?.targets || { EP: 20, MP: 24, HJ: 32, CO: 48, BTN: 66 };
       const sessionLimit = sessionHands();
-      hud.innerHTML = `<strong>Опен-рейз по позициям</strong><span>EP ${targets.EP}% · MP ${targets.MP}% · HJ ${targets.HJ}% · CO ${targets.CO}% · BTN ${targets.BTN}%</span><small>Все до героя выбросили · рейз ${OPEN_SIZE_LABEL} BB или пас · колл покажет подсказку</small><b data-rfi-score>${sessionLimit > 0 ? `0 / ${sessionLimit} верно` : "0 верно · 0 сыграно"}</b>`;
+      hud.innerHTML = `<div class="rfi-drill-copy"><strong>Опен-рейз по позициям</strong><span>EP ${targets.EP}% · MP ${targets.MP}% · HJ ${targets.HJ}% · CO ${targets.CO}% · BTN ${targets.BTN}%</span><small>${preflopOnly() ? "Только префлоп" : "Вся раздача"} · все до героя выбросили · опен ${OPEN_SIZE_LABEL} BB, колл или пас</small></div><b data-rfi-score>${sessionLimit > 0 ? `0 / ${sessionLimit} верно` : "0 верно · 0 сыграно"}</b><section class="rfi-position-insights" aria-labelledby="rfiPositionHeading"><div class="rfi-position-heading"><strong id="rfiPositionHeading">По позициям</strong><span>Наведи или нажми, чтобы увидеть промахи</span></div><div class="rfi-position-summary" data-rfi-position-summary aria-label="Точность по позициям"></div><div class="rfi-position-chart" id="rfiPositionChart" data-rfi-position-chart role="region" hidden></div></section>`;
       topbar.prepend(hud);
+      hud.addEventListener("pointerover", (event) => {
+        const button = event.target?.closest?.("[data-rfi-position]");
+        if (button) positionPreview = button.dataset.rfiPosition || "";
+      });
+      hud.addEventListener("pointerleave", () => {
+        if (!positionPinned) positionPreview = "";
+      });
+      hud.addEventListener("focusin", (event) => {
+        const button = event.target?.closest?.("[data-rfi-position]");
+        if (button) positionPreview = button.dataset.rfiPosition || "";
+      });
+      hud.addEventListener("focusout", () => root.setTimeout(() => {
+        if (!positionPinned && !hud.contains(root.document.activeElement)) positionPreview = "";
+      }, 0));
+      hud.addEventListener("click", (event) => {
+        const button = event.target?.closest?.("[data-rfi-position]");
+        if (!button) return;
+        const position = button.dataset.rfiPosition || "";
+        positionPinned = positionPinned === position ? "" : position;
+        positionPreview = positionPinned;
+      });
+      hud.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        positionPinned = "";
+        positionPreview = "";
+      });
       let signature = "";
       const update = () => {
         const payload = root.PokerSimulatorApp?.currentSessionPayload?.() || {};
         const entries = completedEntries(payload);
         const grades = entries.map(gradeEntry).filter((grade) => grade.action);
+        const stats = statsForGrades(grades);
         const correct = grades.filter((grade) => grade.correct).length;
         hud.querySelector("[data-rfi-score]").textContent = sessionLimit > 0
           ? `${correct} / ${grades.length || sessionLimit} верно`
           : `${correct} верно · ${grades.length} сыграно`;
+        renderPositionStats(hud, stats, targetLearningPosition(payload.handSeq || 1));
         const latest = grades.at(-1);
         const nextSignature = latest ? `${latest.handNo}:${latest.combo}:${latest.action}` : "";
         if (latest && nextSignature !== signature && !processedEntries.has(nextSignature)) {
           signature = nextSignature;
           processedEntries.add(nextSignature);
+          if (latest.action === "limp") playLimpTone();
           showGrade(latest);
         }
         hud.classList.toggle("is-complete", sessionLimit > 0 && entries.length >= sessionLimit);
@@ -503,6 +592,8 @@
     packKey: PACK_KEY,
     storageSuffix: "rfi-open-demo",
     openSizeBb: OPEN_SIZE_BB,
+    handMode,
+    preflopOnly,
     enginePositions,
     learningPosition,
     sessionHands,
@@ -519,6 +610,8 @@
     heroPreflopAction,
     decisionForFrequency,
     gradeEntry,
+    statsForGrades,
+    positionChartMarkup,
     reviewVerdict,
     reviewChart,
     playLimpTone,
@@ -531,6 +624,7 @@
   if (!active) return;
   if (root.document?.documentElement?.dataset) {
     root.document.documentElement.dataset.rfiOpenDrill = "true";
+    root.document.documentElement.dataset.rfiHandMode = handMode();
     delete root.document.documentElement.dataset.simulatorStageProfile;
   }
   if (!root.PokerSimulatorPracticePacks) installPack(root.PokerSimulatorEngine);

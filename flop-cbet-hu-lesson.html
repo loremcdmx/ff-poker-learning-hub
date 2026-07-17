@@ -9,13 +9,24 @@
   <link rel="stylesheet" href="assets/poker-kit/tokens.css">
   <link rel="stylesheet" href="assets/poker-kit/decks/decks.css?v=0639396cc47c">
   <link rel="stylesheet" href="assets/poker-kit/suit-text.css?v=7689ca588fe6">
+  <link rel="stylesheet" href="assets/poker-kit/chips/chips.css?v=ed4e97084f43">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-table.css?v=db213746612e">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-polish.css?v=bc2cfdc45ad0">
+  <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=a19790bf2596">
+  <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
-  <link rel="stylesheet" href="assets/poker-flop-cbet-hu-lesson/lesson.css?v=bfc15268b81c">
+  <link rel="stylesheet" href="assets/poker-flop-cbet-hu-lesson/lesson.css?v=7ede6a365c09">
   <script defer src="assets/poker-kit/decks/deck-library.js?v=b03058b680c1"></script>
+  <script defer src="assets/poker-kit/chips/chip-library.js?v=eab58b025e92"></script>
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
+  <script defer src="assets/poker-simulator/simulator-board-render.js?v=cb215df9f7dd"></script>
+  <script defer src="assets/poker-simulator/simulator-seat-slots.js?v=20260715-ffstart-handoff-v16"></script>
+  <script defer src="assets/poker-simulator/simulator-seat-renderer.js?v=fe2184958bf0"></script>
+  <script defer src="assets/poker-simulator/simulator-table-renderer.js?v=37282f928111"></script>
+  <script defer src="assets/poker-trainer-shell/simulator-snapshot.js?v=20260716-trainer-batch"></script>
+  <script defer src="assets/poker-trainer-shell/simulator-practice.js?v=591b8e2f6784"></script>
   <script defer src="assets/poker-flop-cbet-hu-lesson/data.js?v=d038ff36f3ed"></script>
-  <script defer src="assets/poker-simulator/embed.js?v=20260716-cbet-rvbb"></script>
-  <script defer src="assets/poker-flop-cbet-hu-lesson/lesson.js?v=b1cbd323ed5c"></script>
+  <script defer src="assets/poker-flop-cbet-hu-lesson/lesson.js?v=05ff38c51178"></script>
 </head>
 <body>
   <main class="lesson-shell">
@@ -30,9 +41,8 @@
       <nav class="step-tabs" aria-label="Шаги урока" role="tablist">
         <button class="step-tab is-active" id="dealTab" type="button" role="tab" aria-selected="true" aria-controls="dealScreen" data-step-target="deal">1. Раздача</button>
         <button class="step-tab" id="mainTab" type="button" role="tab" aria-selected="false" aria-controls="mainScreen" data-step-target="main" tabindex="-1">2. Урок</button>
-        <button class="step-tab" id="practiceTab" type="button" role="tab" aria-selected="false" aria-controls="practiceScreen" data-step-target="practice" tabindex="-1">3. Тренировка</button>
+        <button class="step-tab" id="practiceTab" type="button" role="tab" aria-selected="false" aria-controls="practiceScreen" data-step-target="practice" tabindex="-1">3. Практика</button>
         <button class="step-tab" id="examplesTab" type="button" role="tab" aria-selected="false" aria-controls="examplesScreen" data-step-target="examples" tabindex="-1">4. Примеры</button>
-        <button class="step-tab" id="simulatorTab" type="button" role="tab" aria-selected="false" aria-controls="simulatorScreen" data-step-target="simulator" tabindex="-1">5. Симулятор</button>
       </nav>
     </header>
 
@@ -62,31 +72,7 @@
             <span><i class="live-dot" aria-hidden="true"></i> 6-max · BTN vs BB · SRP</span>
             <strong>Флоп · ход Hero IP</strong>
           </div>
-          <div class="felt-table">
-            <div class="folded-seat folded-seat-utg" aria-label="UTG сфолдил"><strong>UTG</strong><span>фолд</span></div>
-            <div class="seat seat-villain">
-              <span class="seat-avatar">BB</span>
-              <div><strong>Big Blind</strong><small>чек</small></div>
-            </div>
-            <div class="folded-seat folded-seat-hj" aria-label="HJ сфолдил"><strong>HJ</strong><span>фолд</span></div>
-            <div class="folded-seat folded-seat-co" aria-label="CO сфолдил"><strong>CO</strong><span>фолд</span></div>
-            <div class="folded-seat folded-seat-sb" aria-label="SB сфолдил"><strong>SB</strong><span>фолд</span></div>
-            <div class="pot-label"><span>Банк</span><strong>SRP</strong></div>
-            <div class="board-cards" data-card-codes="Ac,7d,2h" data-card-variant="board" aria-label="Флоп: туз треф, семь бубен, двойка червей"></div>
-            <div class="hero-cards" data-card-codes="Qs,Js" data-card-variant="hero" aria-label="Карты Hero: дама пик, валет пик"></div>
-            <div class="seat seat-hero">
-              <span class="seat-avatar is-hero">BTN</span>
-              <div><strong>Hero · ты</strong><small>префлоп-рейзер · BTN · IP</small></div>
-              <span class="dealer-button" aria-label="Баттон у Hero">D</span>
-            </div>
-          </div>
-          <div class="action-row" aria-label="Выбор действия на флопе">
-            <button type="button" data-deal-action="check">Чек</button>
-            <button type="button" data-deal-action="25">25%</button>
-            <button type="button" data-deal-action="33">33%</button>
-            <button type="button" data-deal-action="50">50%</button>
-            <button type="button" data-deal-action="67">67%</button>
-          </div>
+          <div class="lesson-table-host cbet-deal-table" data-deal-table aria-live="polite"></div>
         </article>
 
         <aside class="coach-card panel" aria-live="polite" data-deal-feedback>
@@ -308,57 +294,60 @@
     <section class="lesson-screen" id="practiceScreen" role="tabpanel" data-step="practice" aria-labelledby="practiceTab" hidden>
       <div class="screen-heading trainer-heading">
         <div>
-          <p class="eyebrow">Бесконечная практика · одна раздача на экране</p>
+          <p class="eyebrow">Практика без лимита · одна раздача на экране</p>
           <h2 id="practiceTitle">Выбери действие после чека BB</h2>
         </div>
-        <div class="trainer-score" aria-live="polite">
-          <span>Верно</span>
-          <strong data-trainer-score>0 / 0</strong>
-        </div>
+        <p>Три решения, как в остальных тренажёрах: чек, маленький c-bet или крупный c-bet.</p>
       </div>
 
-      <div class="deal-layout trainer-layout">
-        <article class="poker-stage panel" aria-label="Тренировочная раздача 6-max RvBB">
-          <div class="stage-topline">
-            <span><i class="live-dot" aria-hidden="true"></i> <b data-trainer-context>6-max · BTN vs BB · SRP</b></span>
-            <strong data-trainer-title>Раздача 1</strong>
+      <div class="cbet-practice-setup" data-trainer-setup>
+        <article class="panel cbet-practice-integrity">
+          <div>
+            <p class="eyebrow">Что именно тренируем</p>
+            <h3>Решение на флопе, а не бет-слайдер</h3>
+            <p>Сначала выбери класс действия. Точный сайз внутри группы подскажет разбор после ответа.</p>
           </div>
-          <div class="felt-table trainer-table">
-            <div class="folded-seat folded-seat-utg" aria-label="UTG сфолдил"><strong>UTG</strong><span>фолд</span></div>
-            <div class="seat seat-villain">
-              <span class="seat-avatar">BB</span>
-              <div><strong>Big Blind</strong><small data-trainer-opponent>чек · ридов нет</small></div>
-            </div>
-            <div class="folded-seat folded-seat-hj" aria-label="HJ сфолдил"><strong>HJ</strong><span>фолд</span></div>
-            <div class="folded-seat folded-seat-co" aria-label="CO сфолдил"><strong>CO</strong><span>фолд</span></div>
-            <div class="folded-seat folded-seat-sb" aria-label="SB сфолдил"><strong>SB</strong><span>фолд</span></div>
-            <div class="pot-label"><span>Решение</span><strong>c-bet?</strong></div>
-            <div class="board-cards" data-trainer-board></div>
-            <div class="hero-cards" data-trainer-hand></div>
-            <div class="seat seat-hero">
-              <span class="seat-avatar is-hero">BTN</span>
-              <div><strong>Hero · ты</strong><small>префлоп-рейзер · BTN · IP</small></div>
-              <span class="dealer-button" aria-label="Баттон у Hero">D</span>
-            </div>
-          </div>
-          <div class="action-row trainer-actions" aria-label="Выбор действия на флопе">
-            <button type="button" data-trainer-action="check">Чек</button>
-            <button type="button" data-trainer-action="25">25%</button>
-            <button type="button" data-trainer-action="33">33%</button>
-            <button type="button" data-trainer-action="50">50%</button>
-            <button type="button" data-trainer-action="67">67%</button>
+          <div class="cbet-practice-legend" aria-label="Три варианта ответа">
+            <span><i class="is-check"></i>Чек</span>
+            <span><i class="is-small"></i>25–33%</span>
+            <span><i class="is-large"></i>50–67%</span>
           </div>
         </article>
-
-        <aside class="coach-card panel trainer-feedback" aria-live="polite" data-trainer-feedback>
-          <p class="eyebrow">Твой ход</p>
-          <h3>Сначала узнай структуру</h3>
-        </aside>
+        <article class="panel cbet-practice-launch">
+          <div>
+            <strong>Играй сколько хочешь</strong>
+            <span>Счёт и промахи остаются перед глазами; закончить можно в любой момент.</span>
+          </div>
+          <button class="primary-button" type="button" data-trainer-start>Попробовать</button>
+        </article>
       </div>
-      <div class="screen-actions trainer-footer">
-        <p><strong>Подсказка:</strong> сначала структура, затем рид на BB, потом размер.</p>
-        <button class="secondary-button" type="button" data-trainer-reset>Сбросить счёт</button>
-        <button class="primary-button" type="button" data-trainer-next disabled>Следующая раздача</button>
+
+      <div class="cbet-practice-run" data-trainer-run hidden>
+        <div class="panel cbet-practice-hud" aria-live="polite">
+          <span>Руки <b data-trainer-hands>0</b></span>
+          <span>Верно <b data-trainer-correct>0</b></span>
+          <span>Промахи <b data-trainer-misses>0</b></span>
+          <button class="secondary-button" type="button" data-trainer-exit>Закончить</button>
+        </div>
+
+        <div class="deal-layout trainer-layout">
+          <article class="poker-stage panel" aria-label="Тренировочная раздача 6-max RvBB">
+            <div class="stage-topline">
+              <span><i class="live-dot" aria-hidden="true"></i> <b data-trainer-context>6-max · BTN vs BB · SRP</b></span>
+              <strong data-trainer-title>Раздача 1</strong>
+            </div>
+            <div class="lesson-table-host cbet-practice-table" data-trainer-table aria-live="polite"></div>
+          </article>
+
+          <aside class="coach-card panel trainer-feedback" aria-live="polite" data-trainer-feedback>
+            <p class="eyebrow">Твой ход</p>
+            <h3>Сначала узнай структуру</h3>
+          </aside>
+        </div>
+        <div class="screen-actions trainer-footer">
+          <p><strong>Подсказка:</strong> структура → рид на BB → размер.</p>
+          <button class="primary-button" type="button" data-trainer-next disabled>Следующая раздача</button>
+        </div>
       </div>
     </section>
 
@@ -376,19 +365,6 @@
       </div>
     </section>
 
-    <section class="lesson-screen simulator-screen" id="simulatorScreen" role="tabpanel" data-step="simulator" aria-labelledby="simulatorTab" hidden>
-      <div class="screen-heading simulator-heading">
-        <div>
-          <p class="eyebrow">Свободная игра · новые флопы без конца</p>
-          <h2 id="simulatorTitle">BB уже чекнул — твой ход</h2>
-        </div>
-        <p>BTN открылся, BB заколлировал. Выбери чек-бэк или c-bet и доиграй раздачу дальше.</p>
-      </div>
-      <div class="simulator-line" aria-label="Линия раздачи">
-        <span>BTN raise</span><i aria-hidden="true">→</i><span>BB call</span><i aria-hidden="true">→</i><strong>BB check</strong><i aria-hidden="true">→</i><b>Hero</b>
-      </div>
-      <div class="lesson-simulator-frame" data-cbet-simulator aria-label="Симулятор c-bet BTN против BB"></div>
-    </section>
     <footer class="lesson-footer">
       <a href="/">← Все уроки</a>
       <a href="/flop-checkraise-lesson">Следующий урок: чек-рейз флопа →</a>

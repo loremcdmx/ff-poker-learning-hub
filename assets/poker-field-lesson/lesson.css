@@ -225,6 +225,26 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
 .decision-feedback.is-alternative .eyebrow { color: var(--lesson-warning); }
 .decision-feedback.is-wrong { box-shadow: inset 4px 0 0 var(--lesson-bad); }
 .decision-feedback.is-wrong .eyebrow { color: #ff9ba1; }
+
+/* Match the shared table action language on the opening decision:
+   fold is red, call stays neutral, and the aggressive action is gold. */
+.flop-checkraise-lesson [data-step="deal"] .lesson-table-host .table-action[data-option-key="fold"]:not(.is-correct):not(.is-wrong):not(.is-alternative) {
+  color: #ffe8e8;
+  border-color: rgba(231, 106, 102, .18);
+  background: linear-gradient(180deg, rgba(231, 106, 102, .18), rgba(72, 18, 17, .36));
+}
+.flop-checkraise-lesson [data-step="deal"] .lesson-table-host .table-action[data-option-key="call"]:not(.is-correct):not(.is-wrong):not(.is-alternative) {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, .075);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .035));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .055);
+}
+.flop-checkraise-lesson [data-step="deal"] .lesson-table-host .table-action[data-option-key="checkraise"]:not(.is-correct):not(.is-wrong):not(.is-alternative) {
+  color: #0b0a0d;
+  border-color: rgba(181, 150, 225, .3);
+  background: linear-gradient(180deg, #b697e1, #dabe58);
+  box-shadow: 0 8px 18px rgba(139, 95, 202, .16), inset 0 1px 0 rgba(255, 255, 255, .38);
+}
 .flop-checkraise-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action.is-alternative {
   color: #231606;
   border-color: rgba(255, 196, 94, .94);

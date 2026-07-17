@@ -13,12 +13,12 @@
   <link rel="stylesheet" href="assets/poker-kit/suit-text.css?v=7689ca588fe6">
   <link rel="stylesheet" href="assets/poker-kit/chips/chips.css?v=ed4e97084f43">
   <link rel="stylesheet" href="assets/poker-simulator/simulator-table.css?v=db213746612e">
-  <link rel="stylesheet" href="assets/poker-simulator/simulator-polish.css?v=d002130232a1">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-polish.css?v=bc2cfdc45ad0">
   <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=a19790bf2596">
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
   <link rel="stylesheet" href="assets/poker-resteal-lesson/lesson.css?v=e9e2767a08ac">
-  <link rel="stylesheet" href="assets/poker-resteal-lesson/rank-comparison.css?v=90e50a2b0bee">
+  <link rel="stylesheet" href="assets/poker-resteal-lesson/rank-comparison.css?v=a9ab61b4f539">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
 </head>
 <body>
@@ -32,8 +32,9 @@
       <nav class="step-tabs" role="tablist" aria-label="Шаги урока">
         <button class="step-tab" role="tab" type="button" aria-selected="true" aria-controls="ideaScreen" data-step-target="idea">1. Раздача</button>
         <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="wisdomScreen" data-step-target="wisdom" disabled>2. Главное</button>
-        <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="deepScreen" data-step-target="deep" disabled>3. Подробнее</button>
-        <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="practiceScreen" data-step-target="practice" disabled>4. Практика</button>
+        <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="dataScreen" data-step-target="data" disabled>3. Данные</button>
+        <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="deepScreen" data-step-target="deep" disabled>4. Математика рестила</button>
+        <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="practiceScreen" data-step-target="practice" disabled>5. Практика</button>
       </nav>
     </header>
 
@@ -189,15 +190,42 @@
         </div>
       </article>
 
-      <article class="panel rank-evidence-slide wisdom-slide" id="rankEvidenceSlide" data-wisdom-slide aria-label="Рестил-пуши по лигам FunFarm">
+          </div>
+        </div>
+        <div class="wisdom-carousel-controls">
+          <button class="wisdom-arrow" type="button" data-wisdom-prev aria-label="Предыдущая мысль">←</button>
+          <div class="wisdom-carousel-status">
+            <span id="wisdomStoryCounter" aria-live="polite">1 из 6</span>
+            <div class="wisdom-story-dots" id="wisdomStoryDots" aria-label="Выбор мысли"></div>
+          </div>
+          <button class="wisdom-arrow" type="button" data-wisdom-next aria-label="Следующая мысль">→</button>
+        </div>
+      </div>
+
+      <div class="wisdom-actions">
+        <div><strong>Главное:</strong><span>замечай поздний широкий опен и не отдавай BB автоматически.</span></div>
+        <button class="btn primary" type="button" data-step-link="practice">Попробовать за столом</button>
+        <button class="btn secondary" type="button" data-step-link="data">Посмотреть данные FF</button>
+      </div>
+    </section>
+
+    <section class="screen data-screen" id="dataScreen" role="tabpanel" data-step="data" aria-labelledby="data-title">
+      <div class="section-heading data-heading">
+        <div><p class="eyebrow">Как играют в FF</p><h2 id="data-title">Кто и как рестилит с BB</h2></div>
+        <p>Выбери позицию опен-рейзера, сайз и эффективный стек. Сводка покажет все четыре уровня, а матрицы — какие именно руки доходили до прямого олл-ина.</p>
+      </div>
+
+      <article class="panel rank-evidence-slide" id="rankEvidenceSlide" aria-label="Рестил-пуши по лигам FunFarm">
         <div class="rank-evidence-head">
           <div class="rank-evidence-copy">
             <p class="eyebrow">Данные FF · ранг на момент раздачи</p>
-            <h3>Рестил-пуш растёт вместе с лигой и ABI</h3>
-            <p>Слева всегда совсем новички. Справа выбери лигу и сравни тот же спот: кто открыл, каким сайзом и при каком эффективном стеке.</p>
+            <h3>Игроки более высоких лиг пушат чаще</h3>
+            <p>Слева всегда совсем новички. Справа выбери лигу и сравни тот же спот на одинаковой позиции, сайзе и глубине.</p>
           </div>
           <div class="rank-growth-strip" id="rankGrowthStrip" aria-label="ABI и частота рестил-пушей по уровню FF"></div>
         </div>
+
+        <div class="rank-dataset-facts" id="rankDatasetFacts" aria-label="Объём набора данных"></div>
 
         <div class="rank-evidence-controls" id="rankComparisonFilters" aria-label="Условия сравнения рестил-пушей">
           <fieldset>
@@ -214,13 +242,15 @@
           </fieldset>
         </div>
 
+        <div class="rank-spot-summary" id="rankSpotSummary" aria-label="Все уровни FF в выбранном споте"></div>
+
         <div class="rank-evidence-compare">
           <section class="rank-chart is-novice" aria-labelledby="rankNoviceTitle">
             <div class="rank-chart-head">
               <div><span>Слева · фиксировано</span><h4 id="rankNoviceTitle">Совсем новички</h4></div>
               <div class="rank-chart-stats" id="rankNoviceStats"></div>
             </div>
-            <div class="rank-action-bar" id="rankNoviceActionBar" aria-hidden="true"></div>
+            <div class="rank-action-bar" id="rankNoviceActionBar" aria-label="Распределение действий совсем новичков"></div>
             <div class="rank-matrix" id="rankNoviceMatrix" role="grid" aria-label="Рестил-пуши совсем новичков"></div>
           </section>
 
@@ -230,31 +260,24 @@
               <div class="rank-chart-stats" id="rankLeagueStats"></div>
             </div>
             <div class="rank-league-tabs" id="rankLeagueTabs" role="tablist" aria-label="Лига для сравнения"></div>
-            <div class="rank-action-bar" id="rankLeagueActionBar" aria-hidden="true"></div>
+            <div class="rank-action-bar" id="rankLeagueActionBar" aria-label="Распределение действий выбранной лиги"></div>
             <div class="rank-matrix" id="rankLeagueMatrix" role="grid" aria-label="Рестил-пуши выбранной лиги"></div>
           </section>
         </div>
 
+        <div class="rank-frequency-legend" aria-label="Шкала частоты и качества выборки">
+          <strong>Частота пуша</strong>
+          <span><i class="is-rate-0"></i>0%</span>
+          <span><i class="is-rate-1"></i>5%</span>
+          <span><i class="is-rate-2"></i>15%</span>
+          <span><i class="is-rate-3"></i>30%</span>
+          <span><i class="is-rate-4"></i>50%+</span>
+          <span class="is-thin-sample"><i></i>N 5–19</span>
+          <span class="is-no-sample"><i></i>N &lt; 5</span>
+        </div>
         <div class="rank-hand-readout" id="rankHandReadout" aria-live="polite"></div>
         <p class="rank-evidence-source" id="rankEvidenceSource"></p>
       </article>
-          </div>
-        </div>
-        <div class="wisdom-carousel-controls">
-          <button class="wisdom-arrow" type="button" data-wisdom-prev aria-label="Предыдущая мысль">←</button>
-          <div class="wisdom-carousel-status">
-            <span id="wisdomStoryCounter" aria-live="polite">1 из 7</span>
-            <div class="wisdom-story-dots" id="wisdomStoryDots" aria-label="Выбор мысли"></div>
-          </div>
-          <button class="wisdom-arrow" type="button" data-wisdom-next aria-label="Следующая мысль">→</button>
-        </div>
-      </div>
-
-      <div class="wisdom-actions">
-        <div><strong>Главное:</strong><span>замечай поздний широкий опен и не отдавай BB автоматически.</span></div>
-        <button class="btn primary" type="button" data-step-link="practice">Попробовать за столом</button>
-        <button class="btn secondary" type="button" data-step-link="deep">Разобраться в цифрах</button>
-      </div>
     </section>
 
     <section class="screen deep-screen" id="deepScreen" role="tabpanel" data-step="deep" aria-labelledby="deep-title">
@@ -310,7 +333,7 @@
     <section class="screen practice-screen" id="practiceScreen" role="tabpanel" data-step="practice" aria-labelledby="practice-title">
       <div class="section-heading compact-heading practice-heading">
         <div><p class="eyebrow">Полный симулятор</p><h2 id="practice-title">Отработай навык на симуляторе</h2></div>
-        <p>Большинство раздач — CO или BTN против твоего BB. Каждая четвёртая проверяет внимание: ранний рейз, коллер или лимп.</p>
+        <p>Большинство раздач — CO или BTN против твоего BB. Каждая четвёртая проверяет внимание: ранний рейз или коллер.</p>
       </div>
       <aside class="panel practice-disclaimer" aria-label="Честность симулятора и сила ботов">
         <div class="practice-fair-play">
@@ -325,7 +348,7 @@
         </div>
       </aside>
       <div class="panel practice-launch" aria-label="Настройка тренировочной сессии">
-        <div class="practice-launch-copy"><strong>Сколько раздач сыграть?</strong><span>Сначала читай экшен. Сверху стола считаются пуши, пасы на пуш и результат — по факту и по эквити.</span><small class="practice-outcome-note" id="practiceOutcomeNote">Результат банка — не оценка решения: хорошая игра иногда проигрывает.</small></div>
+        <div class="practice-launch-copy"><strong>Сколько раздач сыграть?</strong><span>Сначала читай экшен и выбирай одно из трёх действий: пас, колл или рестил. Сверху стола считаются пуши, пасы на пуш и результат — по факту и по эквити.</span><small class="practice-outcome-note" id="practiceOutcomeNote">Результат банка — не оценка решения: хорошая игра иногда проигрывает.</small></div>
         <p class="practice-device-note">Сам стол работает на планшете или компьютере шириной от 621 px.</p>
         <div class="session-lengths" role="group" aria-label="Количество раздач">
           <button type="button" data-session-hands="10" aria-pressed="true">10</button>
@@ -359,14 +382,14 @@
   <script defer src="assets/poker-simulator/simulator-seat-renderer.js?v=fe2184958bf0"></script>
   <script defer src="assets/poker-simulator/simulator-table-renderer.js?v=37282f928111"></script>
   <script defer src="assets/poker-trainer-shell/simulator-snapshot.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-simulator/embed.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-trainer-shell/simulator-practice.js?v=20260715-ffstart-handoff-v16"></script>
+  <script defer src="assets/poker-simulator/embed.js?v=d3bdd7d52145"></script>
+  <script defer src="assets/poker-trainer-shell/simulator-practice.js?v=591b8e2f6784"></script>
   <script defer src="assets/poker-resteal-lesson/data/browser-bundle.js?v=63cee47708b4"></script>
   <script defer src="assets/poker-resteal-lesson/data.js?v=20260713-2"></script>
   <script defer src="assets/poker-resteal-lesson/data/resteal-rank-data.js?v=c522607916cc"></script>
-  <script defer src="assets/poker-resteal-lesson/engine.js?v=20260713-2"></script>
-  <script defer src="assets/poker-resteal-lesson/rank-comparison.js?v=eb545d7b77cb"></script>
+  <script defer src="assets/poker-resteal-lesson/engine.js?v=b2b87c4f94e4"></script>
+  <script defer src="assets/poker-resteal-lesson/rank-comparison.js?v=bb66bafdd61b"></script>
   <script defer src="assets/poker-progress/progress.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-resteal-lesson/lesson.js?v=20260715-ffstart-handoff-v16"></script>
+  <script defer src="assets/poker-resteal-lesson/lesson.js?v=87ce01dc1642"></script>
 </body>
 </html>

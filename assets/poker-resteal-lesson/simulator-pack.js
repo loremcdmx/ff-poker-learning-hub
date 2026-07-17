@@ -6,7 +6,7 @@
   const requestedPractice = params.get("practice") || params.get("lesson") || params.get("drill");
   const active = requestedPractice === "resteal" || requestedPractice === "bb-resteal";
   const PACK_KEY = "resteal-bb-demo";
-  const trickKinds = ["early-open", "open-call", "limp"];
+  const trickKinds = ["early-open", "open-call"];
   let lastCombo = "";
   const seenCombos = new Set();
   const processedAdviceEntryIds = new Set();
@@ -860,6 +860,14 @@
     defaultBetAmount({ table, bounds, value, draft }) {
       if (draft || table?.street !== "preflop" || Number(table?.toCall || 0) <= 0) return value;
       return bounds.max;
+    },
+    decisionClass({ table }) {
+      return table?.restealDrill
+        && table.heroTurn
+        && table.street === "preflop"
+        && Number(table.toCall || 0) > 0
+        ? "is-resteal-decision"
+        : "";
     },
     sessionCompleteAction: { action: "resteal-play-again", label: "Сыграть ещё" }
   };

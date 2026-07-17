@@ -13,12 +13,12 @@
   <link rel="stylesheet" href="assets/poker-kit/suit-text.css?v=7689ca588fe6">
   <link rel="stylesheet" href="assets/poker-kit/chips/chips.css?v=ed4e97084f43">
   <link rel="stylesheet" href="assets/poker-simulator/simulator-table.css?v=db213746612e">
-  <link rel="stylesheet" href="assets/poker-simulator/simulator-polish.css?v=d002130232a1">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-polish.css?v=bc2cfdc45ad0">
   <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=a19790bf2596">
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
   <link rel="stylesheet" href="assets/poker-bb-call-defense-lesson/base.css?v=20260716-practice-scroll-v18">
-  <link rel="stylesheet" href="assets/poker-bb-call-defense-lesson/lesson.css?v=20260716-hide-video-learning-v24">
+  <link rel="stylesheet" href="assets/poker-bb-call-defense-lesson/lesson.css?v=645d5a65ad44">
   <link rel="stylesheet" href="assets/ffstart-course/media-player.css?v=20260715-ffstart-v20">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
 </head>
@@ -33,9 +33,9 @@
       <nav class="step-tabs" role="tablist" aria-label="Шаги урока">
         <button class="step-tab" role="tab" type="button" aria-selected="true" aria-controls="ideaScreen" data-step-target="idea" tabindex="0">1. Раздача</button>
         <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="wisdomScreen" data-step-target="wisdom" tabindex="-1" disabled>2. Главное</button>
-        <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="dataScreen" data-step-target="data" tabindex="-1" disabled>3. Данные</button>
+        <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="videoScreen" data-step-target="video" tabindex="-1" disabled>3. Видео</button>
         <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="deepScreen" data-step-target="deep" tabindex="-1" disabled>4. Чарты</button>
-        <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="videoScreen" data-step-target="video" tabindex="-1" disabled>5. Видео</button>
+        <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="dataScreen" data-step-target="data" tabindex="-1" disabled>5. Данные</button>
         <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="practiceScreen" data-step-target="practice" tabindex="-1" disabled>6. Практика</button>
         <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="memoryScreen" data-step-target="memory" tabindex="-1" disabled>7. Проверка памяти</button>
       </nav>
@@ -177,19 +177,19 @@
               <div class="wisdom-copy-block">
                 <p class="eyebrow">Защита — не синоним колла</p>
                 <h3>Доведи три цвета до автоматизма</h3>
-                <p>Для рейза BTN до 2 BB базовый ориентир: 9% рук идут в 3-бет, 81% — в колл, 10% — в пас. Цель тренажёра — узнавать клетку без паузы.</p>
+                <p>Цель тренажёра — довести принятие решений по защите BB до автоматизма. В реальной игре 3-й лиги против опена BTN до 2 BB: 14% решений — 3-бет, 60% — колл, 26% — пас.</p>
               </div>
-              <div class="action-split" aria-label="Распределение защиты против рейза BTN до 2 BB">
-                <div class="is-raise"><span>3-бет</span><strong>9%</strong></div>
-                <div class="is-call"><span>Колл</span><strong>81%</strong></div>
-                <div class="is-fold"><span>Пас</span><strong>10%</strong></div>
+              <div class="action-split" aria-label="Как реально играет 3-я лига против рейза BTN до 2 BB">
+                <div class="is-raise"><span>3-бет</span><strong>14%</strong></div>
+                <div class="is-call"><span>Колл</span><strong>60%</strong></div>
+                <div class="is-fold"><span>Пас</span><strong>26%</strong></div>
               </div>
             </article>
 
             <article class="panel wisdom-slide bb-scope-slide" data-wisdom-slide>
               <div class="wisdom-copy-block">
                 <p class="eyebrow">Граница этого урока</p>
-                <h3>Чарт работает один на один</h3>
+                <h3>Работает для банков 1 на 1</h3>
                 <p>Один игрок открыл, остальные выбросили, ты на BB закрываешь экшен. Если SB или кто-то ещё вошёл в банк, это уже мультивей: лучше шансы банка, но больше доминации и обратных имплайдов.</p>
               </div>
               <div class="scope-contrast">
@@ -220,12 +220,13 @@
       <article class="panel league-data-panel bb-league-data-slide" id="leagueDefenseSlide" aria-labelledby="leagueDefenseTitle">
         <div class="league-defense-head">
           <div>
-            <p class="eyebrow">Данные FunFarm · связь по когортам</p>
-            <h2 id="leagueDefenseTitle">Навык защиты BB растёт вместе с ABI</h2>
+            <p class="eyebrow">Как играют в FF</p>
+            <h2 id="leagueDefenseTitle">Кто лучше защищает BB — лучше повышается по ABI</h2>
           </div>
         </div>
 
         <div class="league-defense-controls" aria-label="Фильтры сравнительных чартов">
+          <div class="league-filter-group is-stack"><span>Стек</span><div class="segmented-control" id="leagueStackTabs" role="tablist" aria-label="Эффективный стек для сравнения"></div></div>
           <div class="league-filter-group is-position"><span>Позиция</span><div class="segmented-control" id="leaguePositionTabs" role="tablist" aria-label="Позиция рейзера для сравнения"></div></div>
           <div class="league-filter-group is-size"><span>Сайз</span><div class="segmented-control" id="leagueSizeTabs" role="tablist" aria-label="Сайз опена для сравнения"></div></div>
           <div class="league-filter-group is-league"><span>Лига</span><div class="segmented-control" id="leagueTabs" role="tablist" aria-label="Лига для сравнения"></div></div>
@@ -303,14 +304,22 @@
         </article>
       </div>
 
-      <div class="practice-run" id="practiceRun" hidden>
+      <div class="panel practice-run" id="practiceRun" hidden>
         <div class="practice-hud" aria-live="polite">
-          <span><small>Руки</small><b id="practiceHands">0</b></span>
-          <span><small>Верно</small><b id="practiceCorrect">0</b></span>
-          <span><small>Пропущенные коллы</small><b id="practiceMissedCalls">0</b></span>
-          <span><small>Лишние коллы</small><b id="practiceWideCalls">0</b></span>
-          <span><small>Пропущенные 3-беты</small><b id="practiceMissedThreeBets">0</b></span>
-          <button class="btn secondary" type="button" id="exitPractice">К уроку</button>
+          <div class="practice-hud-overall">
+            <span>Рука <b id="practiceHands">0</b></span>
+            <span>Верно <b id="practiceCorrect">0</b></span>
+            <span>Промахи <b id="practiceMisses">0</b></span>
+            <button class="btn secondary" type="button" id="exitPractice">Закончить</button>
+          </div>
+          <section class="practice-error-insights" aria-labelledby="practiceErrorHeading">
+            <div class="practice-error-heading"><strong id="practiceErrorHeading">По типам решений</strong><span>Что именно стоит повторить</span></div>
+            <div class="practice-error-summary">
+              <span class="is-missed-call"><small>Пропущен колл</small><b id="practiceMissedCalls">0</b></span>
+              <span class="is-wide-call"><small>Колл вместо паса</small><b id="practiceWideCalls">0</b></span>
+              <span class="is-missed-three-bet"><small>Пропущен 3-бет</small><b id="practiceMissedThreeBets">0</b></span>
+            </div>
+          </section>
         </div>
         <div class="encounter-layout practice-layout">
           <article class="panel room-stage">
@@ -358,14 +367,14 @@
   <script defer src="assets/poker-simulator/simulator-seat-renderer.js?v=fe2184958bf0"></script>
   <script defer src="assets/poker-simulator/simulator-table-renderer.js?v=37282f928111"></script>
   <script defer src="assets/poker-trainer-shell/simulator-snapshot.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-simulator/embed.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-trainer-shell/simulator-practice.js?v=20260715-ffstart-handoff-v16"></script>
+  <script defer src="assets/poker-simulator/embed.js?v=d3bdd7d52145"></script>
+  <script defer src="assets/poker-trainer-shell/simulator-practice.js?v=591b8e2f6784"></script>
   <script defer src="assets/poker-bb-call-defense-lesson/engine.js?v=20260715-ffstart-handoff-v16"></script>
   <script defer src="assets/poker-bb-call-defense-lesson/range-data.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-bb-call-defense-lesson/data.js?v=20260715-ffstart-handoff-v18"></script>
+  <script defer src="assets/poker-bb-call-defense-lesson/data.js?v=de5ee8e8909e"></script>
   <script defer src="assets/poker-bb-call-defense-lesson/recall.js?v=20260716-memory-review-v20"></script>
   <script defer src="assets/poker-progress/progress.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-bb-call-defense-lesson/lesson.js?v=20260716-memory-review-v20"></script>
+  <script defer src="assets/poker-bb-call-defense-lesson/lesson.js?v=2024de1054e8"></script>
   <script defer src="assets/ffstart-course/media-player.js?v=20260716-native-metadata-v22"></script>
   <script defer src="assets/ffstart-course/legacy-media.js?v=20260716-bb-direct-video-v2"></script>
 </body>

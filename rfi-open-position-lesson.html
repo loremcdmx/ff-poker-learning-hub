@@ -13,12 +13,12 @@
   <link rel="stylesheet" href="assets/poker-kit/suit-text.css?v=7689ca588fe6">
   <link rel="stylesheet" href="assets/poker-kit/chips/chips.css?v=ed4e97084f43">
   <link rel="stylesheet" href="assets/poker-simulator/simulator-table.css?v=db213746612e">
-  <link rel="stylesheet" href="assets/poker-simulator/simulator-polish.css?v=d002130232a1">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-polish.css?v=bc2cfdc45ad0">
   <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=a19790bf2596">
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
   <link rel="stylesheet" href="assets/poker-bb-call-defense-lesson/base.css?v=20260715-ffstart-handoff-v16">
-  <link rel="stylesheet" href="assets/poker-rfi-open-lesson/lesson.css?v=2aaac3893884">
+  <link rel="stylesheet" href="assets/poker-rfi-open-lesson/lesson.css?v=065370b2f915">
   <link rel="stylesheet" href="assets/ffstart-course/media-player.css?v=20260715-ffstart-v20">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
 </head>
@@ -27,7 +27,7 @@
     <header class="topline">
       <div class="lesson-brand"><a class="lesson-home" href="/">← В лабораторию</a><p class="eyebrow">Префлоп · опен-рейз по позициям</p></div>
       <nav class="step-tabs" role="tablist" aria-label="Шаги урока">
-        <button class="step-tab active" role="tab" aria-selected="true" data-go="hand">1. Раздача</button><button class="step-tab" role="tab" aria-selected="false" data-go="main" disabled>2. Главное</button><button class="step-tab" role="tab" aria-selected="false" data-go="ranges" disabled>3. Подробнее</button><button class="step-tab" role="tab" aria-selected="false" data-go="practice" disabled>4. Практика</button>
+        <button class="step-tab active" role="tab" aria-selected="true" data-go="hand">1. Раздача</button><button class="step-tab" role="tab" aria-selected="false" data-go="main" disabled>2. Главное</button><button class="step-tab" role="tab" aria-selected="false" data-go="ranges" disabled>3. Чарты</button><button class="step-tab" role="tab" aria-selected="false" data-go="field" disabled>4. Как играют реги</button><button class="step-tab" role="tab" aria-selected="false" data-go="video" disabled>5. Видео</button><button class="step-tab" role="tab" aria-selected="false" data-go="practice" disabled>6. Практика</button>
       </nav>
     </header>
     <section class="screen active is-active" data-screen="hand">
@@ -99,13 +99,34 @@
     </section>
 
     <section class="screen" data-screen="ranges">
-      <div data-ffstart-legacy-media hidden></div>
-      <div class="deep-heading"><div><h2>Опен меняется вместе с позицией и стеком</h2></div></div>
-      <div class="range-layout">
-        <article class="panel range-card"><div class="stack-tabs" id="stackTabs" role="tablist" aria-label="Эффективный стек"></div><div class="position-tabs" id="positionTabs"></div><div class="range-meta"><div><p class="eyebrow" id="rangeSeat">EP · ранняя · 40+ BB</p><h2 id="rangeTitle">Открываем 20%</h2></div><p id="rangeHint"></p></div><div class="matrix-key"><span class="key-open"><i></i>Рейз</span><span class="key-pair"><i></i>Пары</span><span class="key-suited"><i></i>Suited</span><span class="key-offsuit"><i></i>Offsuit</span><small>Учебный чарт: жёлтая клетка — рейз, если частота в исходнике выше 75%</small></div><div class="matrix" id="rangeMatrix" aria-label="Матрица стартовых рук"></div></article>
+      <div class="deep-heading reference-heading"><div><p class="eyebrow">Наши рекомендации</p><h2>Чарты первого входа</h2></div><p>Сначала выбери стек, затем позицию.</p></div>
+      <div class="range-layout" id="rangeLayout">
+        <article class="panel range-card"><div class="stack-groups" id="stackTabs" aria-label="Стек"></div><div class="position-tabs" id="positionTabs"></div><div class="range-meta"><div><p class="eyebrow" id="rangeSeat">EP · ранняя · 70+ BB</p><h2 id="rangeTitle">Открываем 20%</h2></div><p id="rangeHint"></p></div><div class="matrix-key" id="rangeMatrixKey"><span class="key-open"><i></i>Рейз</span><span class="key-fold"><i></i>Пас</span></div><div class="matrix" id="rangeMatrix" aria-label="Матрица рекомендованных действий"></div></article>
 	        <aside class="panel memory" id="rangeMemory"><p class="eyebrow">Проверка памяти</p><h2>Посмотри 10 секунд — нарисуй чарт сам</h2><p>Выбери позицию сверху, запомни границу и восстанови чарт. Результат считаем по 1 326 комбинациям рук, а не по 169 клеткам или проценту опена.</p><div class="memory-example" aria-hidden="true"><span>Пас</span><i>→</i><span class="open">Рейз</span></div><button class="primary" id="startRecall">Запомнить чарт EP за 10 секунд</button><div class="recall" id="recall" hidden></div><div id="recallResult" aria-live="polite"></div></aside>
-        <aside class="panel stack-field" id="stackField" hidden><p class="eyebrow">Как играет поле FF</p><h2 id="fieldTitle">Опен-пуш по лигам</h2><p class="stack-field-intro" id="fieldIntro"></p><div class="field-league-list" id="fieldLeagueList"></div><p class="source-note">Наблюдаемые first-in пуши, chipEV-срез. Это не GTO-таргет и не ICM/PKO $EV. Покрытые ранги указаны у каждой строки.</p></aside>
       </div>
+    </section>
+
+    <section class="screen" data-screen="field">
+      <div class="deep-heading reference-heading field-heading"><div><p class="eyebrow">Большой срез FF</p><h2>Как играют реги</h2></div><p>Выбери группу, стек и позицию — матрица покажет реальные действия.</p></div>
+      <article class="panel field-reference">
+        <div class="field-league-tabs" id="fieldLeagueTabs" role="tablist" aria-label="Группа игроков"></div>
+        <div class="stack-groups field-stack-groups" id="fieldStackTabs" aria-label="Стек"></div>
+        <div class="position-tabs field-position-tabs" id="fieldPositionTabs" aria-label="Позиция"></div>
+        <div class="field-summary">
+          <div><p class="eyebrow" id="fieldCohortLabel">Лига 3 · top 25%</p><h2 id="fieldTitle">12–15 BB · CO</h2><p id="fieldSubtitle">Играют 27,4% рук</p></div>
+          <div class="field-action-total" id="fieldActionTotal"></div>
+        </div>
+        <div class="field-action-bar" id="fieldActionBar" aria-hidden="true"></div>
+        <div class="field-action-legend" id="fieldActionLegend"></div>
+        <div class="matrix field-matrix" id="fieldRangeMatrix" aria-label="Наблюдаемые действия по стартовым рукам"></div>
+        <div class="field-hand-detail" id="fieldHandDetail" aria-live="polite"></div>
+        <p class="source-note field-source" id="fieldSource"></p>
+        <details class="field-methodology"><summary>Как считали</summary><div id="fieldMethodologyBody"></div></details>
+      </article>
+    </section>
+
+    <section class="screen" data-screen="video">
+      <div data-ffstart-legacy-media hidden></div>
     </section>
 
     <section class="screen" data-screen="practice">
@@ -124,26 +145,41 @@
         <article class="panel practice-mode-card is-live" aria-labelledby="liveModeTitle">
           <div class="practice-mode-copy">
             <p class="eyebrow">Режим 2 · Живой стол</p>
-            <h2 id="liveModeTitle">Раздачи без предыдущих входов</h2>
+            <h2 id="liveModeTitle">Все руки</h2>
             <p>Раздачи без лимита идут по кругу EP–BTN. Играешь первое решение на функциональном 7-max столе.</p>
           </div>
           <div class="practice-launch-actions practice-live-actions">
+            <fieldset class="practice-depth-setting" aria-describedby="practiceDepthHint">
+              <legend>Глубина раздачи</legend>
+              <div class="practice-depth-options" role="radiogroup" aria-label="Глубина раздачи в режиме Все руки">
+                <button type="button" data-simulator-hand-mode="preflop" aria-pressed="true">Только префлоп</button>
+                <button type="button" data-simulator-hand-mode="full" aria-pressed="false">Вся раздача</button>
+              </div>
+              <p id="practiceDepthHint">После первого решения сразу получишь разбор и новую ситуацию.</p>
+            </fieldset>
             <button class="btn primary" id="startSimulator" type="button">Запустить</button>
           </div>
         </article>
       </div>
       <div class="panel curated-practice" id="curatedPractice" hidden>
-        <div class="practice-hud" aria-live="polite"><span>Рука <b id="handNo">0</b></span><span>Верно <b id="score">0</b></span><span>Промахи <b id="misses">0</b></span><button class="btn" id="stopCurated" type="button">Закончить</button></div>
-        <div class="encounter"><article class="panel room-stage practice-room-stage"><div class="lesson-table-host" id="practiceTable" aria-live="polite"></div></article><aside class="coach" id="practiceCoach"></aside></div>
+        <div class="practice-hud">
+          <div class="practice-hud-overall" aria-live="polite"><span>Рука <b id="handNo">0</b></span><span>Верно <b id="score">0</b></span><span>Промахи <b id="misses">0</b></span><button class="btn" id="stopCurated" type="button">Закончить</button></div>
+          <section class="practice-position-insights" id="practicePositionInsights" aria-labelledby="practicePositionHeading">
+            <div class="practice-position-heading"><strong id="practicePositionHeading">По позициям</strong><span>Наведи, чтобы увидеть промахи</span></div>
+            <div class="practice-position-summary" id="practicePositionSummary" aria-label="Точность по позициям"></div>
+            <div class="practice-position-chart" id="practicePositionChart" role="region" hidden></div>
+          </section>
+        </div>
+        <div class="encounter"><article class="panel room-stage practice-room-stage"><div class="lesson-table-host" id="practiceTable" aria-live="polite"></div><div class="practice-feedback" id="practiceFeedback" hidden></div></article><aside class="coach" id="practiceCoach"></aside></div>
       </div>
       <div class="simulator-shell" id="simulatorShell" hidden aria-busy="false">
-        <div class="simulator-toolbar"><span>Живой стол · без лимита раздач</span><button class="btn" id="stopSimulator" type="button">Закончить</button></div>
+        <div class="simulator-toolbar"><span>Живой стол · <b id="simulatorModeLabel">только префлоп</b> · без лимита раздач</span><button class="btn" id="stopSimulator" type="button">Закончить</button></div>
         <div class="simulator-loading" id="simulatorLoading">Загружаем настоящий стол…</div>
         <iframe id="rfiSimulator" title="Симулятор опен-рейза по позициям" loading="eager" allow="autoplay"></iframe>
       </div>
     </section>
   </main>
   <footer class="lesson-footer"><a href="/">← Все тренажёры</a><a href="/bb-call-defense-lesson">Следующий урок: защита BB →</a></footer>
-	  <script src="assets/poker-kit/decks/deck-library.js?v=b03058b680c1"></script><script src="assets/poker-kit/chips/chip-library.js?v=eab58b025e92"></script><script src="assets/poker-simulator/simulator-random.js?v=7231b8091c3c"></script><script src="assets/poker-simulator/simulator-board-render.js?v=cb215df9f7dd"></script><script src="assets/poker-simulator/simulator-seat-slots.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-simulator/simulator-seat-renderer.js?v=fe2184958bf0"></script><script src="assets/poker-simulator/simulator-table-renderer.js?v=37282f928111"></script><script src="assets/poker-trainer-shell/simulator-snapshot.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-simulator/embed.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-trainer-shell/simulator-practice.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-progress/progress.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-rfi-open-lesson/data.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-rfi-open-lesson/stack-data.js?v=20260716-stack-splits-v1"></script><script src="assets/poker-rfi-open-lesson/recall.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-rfi-open-lesson/deal.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-rfi-open-lesson/lesson.js?v=20260716-stack-splits-v1"></script><script src="assets/ffstart-course/media-player.js?v=20260715-ffstart-v20"></script><script src="assets/ffstart-course/legacy-media.js?v=20260716-bb-direct-video-v2"></script>
+	  <script src="assets/poker-kit/decks/deck-library.js?v=b03058b680c1"></script><script src="assets/poker-kit/chips/chip-library.js?v=eab58b025e92"></script><script src="assets/poker-simulator/simulator-random.js?v=7231b8091c3c"></script><script src="assets/poker-simulator/simulator-board-render.js?v=cb215df9f7dd"></script><script src="assets/poker-simulator/simulator-seat-slots.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-simulator/simulator-seat-renderer.js?v=fe2184958bf0"></script><script src="assets/poker-simulator/simulator-table-renderer.js?v=37282f928111"></script><script src="assets/poker-trainer-shell/simulator-snapshot.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-simulator/embed.js?v=d3bdd7d52145"></script><script src="assets/poker-trainer-shell/simulator-practice.js?v=591b8e2f6784"></script><script src="assets/poker-progress/progress.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-rfi-open-lesson/data.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-rfi-open-lesson/field-action-data.js?v=5663d5b3bee2"></script><script src="assets/poker-rfi-open-lesson/stack-data.js?v=6159528b5316"></script><script src="assets/poker-rfi-open-lesson/recall.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-rfi-open-lesson/deal.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-rfi-open-lesson/practice-stats.js?v=8264ad18789d"></script><script src="assets/poker-rfi-open-lesson/lesson.js?v=b167b322a3d3"></script><script src="assets/ffstart-course/media-player.js?v=20260715-ffstart-v20"></script><script src="assets/ffstart-course/legacy-media.js?v=20260716-bb-direct-video-v2"></script>
 </body>
 </html>

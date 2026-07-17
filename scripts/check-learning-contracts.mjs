@@ -48,19 +48,45 @@ function callWeights(category) {
 function fieldGridPct(category) {
   const openPct = fieldOpens[category].BTN.open_clean_pct * 100;
   const observedFold = fieldVsJam[category].fold_pct;
-  const callPct = Math.min(openPct, Math.max(openPct * (1 - observedFold), 12));
+  const useObservedFold = openPct < 12;
+  const callPct = useObservedFold
+    ? openPct * (1 - observedFold)
+    : Math.max(openPct * (1 - observedFold), 12);
   const pushedCombos = equity.hands.reduce((total, hand) => {
-    const result = engine.fieldHand({ hand, openPct, callPct, callWeights: callWeights(category), stack: 40, openSize: 2, ante: 1, bounty: 0, ranking, equityFor });
+    const result = engine.fieldHand({ hand, openPct, callPct, foldEquity: useObservedFold ? observedFold : undefined, callWeights: callWeights(category), stack: 40, openSize: 2, ante: 1, bounty: 0, ranking, equityFor });
     return total + (result.ev >= 0.5 ? engine.totalCombos(hand) : 0);
   }, 0);
   return pushedCombos / 1326 * 100;
 }
 
+const passiveFishOpen = fieldOpens.passive_fish.BTN.open_clean_pct * 100;
+const passiveFishFold = fieldVsJam.passive_fish.fold_pct;
+const passiveFishCall = passiveFishOpen * (1 - passiveFishFold);
+const passiveFishQJo = engine.fieldHand({
+  hand: "QJo",
+  openPct: passiveFishOpen,
+  callPct: passiveFishCall,
+  foldEquity: passiveFishFold,
+  callWeights: callWeights("passive_fish"),
+  stack: 40,
+  openSize: 2,
+  ante: 1,
+  bounty: 0,
+  ranking,
+  equityFor
+});
+assert.equal(passiveFishQJo.foldEquity, 0.5015, "passive-fish field fold equity stays independent from the structural call range");
+assert(Math.abs(passiveFishQJo.ev - (-1.9102)) < 0.001, `passive-fish QJo EV stays near -1.91 BB (actual ${passiveFishQJo.ev})`);
+
 const goodRegGrid = fieldGridPct("good_reg");
 const nitGrid = fieldGridPct("nit");
 const activeFishGrid = fieldGridPct("aggro_fish");
-assert(goodRegGrid < 45, `good-reg grid stays in a bounded teaching range (actual ${goodRegGrid.toFixed(1)}%)`);
-assert(nitGrid <= activeFishGrid, `nit grid is not wider than active-fish grid (${nitGrid.toFixed(1)}% <= ${activeFishGrid.toFixed(1)}%)`);
+const passiveFishGrid = fieldGridPct("passive_fish");
+assert(Math.abs(goodRegGrid - 38.1599) < 0.01, `good-reg keeps the structural teaching grid (actual ${goodRegGrid.toFixed(4)}%)`);
+assert(Math.abs(nitGrid - 12.0664) < 0.01, `nit keeps the structural teaching grid (actual ${nitGrid.toFixed(4)}%)`);
+assert(Math.abs(activeFishGrid - 31.8250) < 0.01, `active-fish keeps the empirical continuation grid (actual ${activeFishGrid.toFixed(4)}%)`);
+assert(Math.abs(passiveFishGrid - 9.9548) < 0.01, `passive-fish uses observed fold equity when its whole open is below the 12% floor (actual ${passiveFishGrid.toFixed(4)}%)`);
+assert(passiveFishGrid < activeFishGrid, `passive-fish grid stays narrower than active-fish (${passiveFishGrid.toFixed(1)}% < ${activeFishGrid.toFixed(1)}%)`);
 
 assert.deepEqual(rfi.enginePositions, ["UTG", "LJ", "HJ", "CO", "BTN"], "RFI pack uses the 7-max engine vocabulary");
 assert.equal(rfi.targetPosition(2), "LJ", "second RFI hand targets engine LJ");
@@ -74,8 +100,8 @@ assert(rfiCss.includes(".rfi-limp-warning"), "RFI pack includes the dedicated li
 assert(rfiCss.includes('.rfi-review-cell.is-hit:after { content:none; }'), "RFI target ring keeps the played hand label unobstructed");
 const rfiPackSource = readFileSync(resolve(root, "assets/poker-rfi-open-lesson/simulator-pack.js"), "utf8");
 assert(rfiPackSource.includes("manualNextHand: true"), "RFI waits for post-hand review before dealing the next hand");
-assert(rfiPackSource.includes('.client-controls.is-rfi-opening [data-action="call"]'), "RFI intercepts only the unopened limp action");
-assert(rfiPackSource.includes("stopImmediatePropagation"), "RFI limp guard stops the invalid action before the engine receives it");
+assert(!rfiPackSource.includes("const limp = event.target?.closest?.('.client-controls.is-rfi-opening"), "RFI Call reaches the engine as a real limp decision");
+assert(rfiPackSource.includes('if (latest.action === "limp") playLimpTone();'), "RFI grades the limp after the decision instead of capture-blocking the button");
 assert(!rfiPackSource.includes("2,2"), "RFI live mode no longer exposes the old 2.2 BB size");
 const rfiBettingSource = readFileSync(resolve(root, "assets/poker-simulator/simulator-betting.js"), "utf8");
 assert(rfiBettingSource.includes("PokerSimulatorPracticePacks?.defaultBetAmount"), "practice packs own their default live bet through the shared registry");

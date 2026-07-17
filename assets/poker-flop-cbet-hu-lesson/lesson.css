@@ -327,7 +327,7 @@ a:focus-visible,
   border-radius: 48% / 42%;
 }
 
-.seat {
+.felt-table .seat {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -341,18 +341,18 @@ a:focus-visible,
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.3);
 }
 
-.seat-villain {
+.felt-table .seat-villain {
   top: 58px;
   left: 10%;
 }
 
-.seat-hero {
+.felt-table .seat-hero {
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
 }
 
-.folded-seat {
+.felt-table .folded-seat {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -367,13 +367,13 @@ a:focus-visible,
   color: var(--muted);
 }
 
-.folded-seat strong {
+.felt-table .folded-seat strong {
   color: var(--text);
   font-size: 0.7rem;
   line-height: 1;
 }
 
-.folded-seat span {
+.felt-table .folded-seat span {
   font-size: 0.56rem;
   font-weight: 850;
   letter-spacing: 0.08em;
@@ -381,28 +381,28 @@ a:focus-visible,
   text-transform: uppercase;
 }
 
-.folded-seat-utg {
+.felt-table .folded-seat-utg {
   top: 24px;
   left: 50%;
   transform: translateX(-50%);
 }
 
-.folded-seat-hj {
+.felt-table .folded-seat-hj {
   top: 58px;
   right: 10%;
 }
 
-.folded-seat-co {
+.felt-table .folded-seat-co {
   right: 6%;
   bottom: 76px;
 }
 
-.folded-seat-sb {
+.felt-table .folded-seat-sb {
   bottom: 76px;
   left: 6%;
 }
 
-.dealer-button {
+.felt-table .dealer-button {
   display: grid;
   position: absolute;
   top: -12px;
@@ -419,7 +419,7 @@ a:focus-visible,
   font-weight: 950;
 }
 
-.seat-avatar {
+.felt-table .seat-avatar {
   display: grid;
   flex: 0 0 40px;
   width: 40px;
@@ -432,59 +432,59 @@ a:focus-visible,
   font-weight: 950;
 }
 
-.seat-avatar.is-hero {
+.felt-table .seat-avatar.is-hero {
   background: var(--brand-yellow);
 }
 
-.seat div {
+.felt-table .seat div {
   display: grid;
   gap: 3px;
 }
 
-.seat strong {
+.felt-table .seat strong {
   font-size: 0.85rem;
 }
 
-.seat small {
+.felt-table .seat small {
   color: var(--muted);
   font-size: 0.68rem;
 }
 
-.board-cards,
-.hero-cards {
+.felt-table .board-cards,
+.felt-table .hero-cards {
   display: flex;
   position: absolute;
   z-index: 4;
 }
 
-.board-cards {
+.felt-table .board-cards {
   top: 50%;
   left: 50%;
   gap: 8px;
   transform: translate(-50%, -52%);
 }
 
-.hero-cards {
+.felt-table .hero-cards {
   bottom: 92px;
   left: 50%;
   transform: translateX(-50%);
 }
 
-.board-cards .cbet-color-block-card {
+.felt-table .board-cards .cbet-color-block-card {
   --poker-card-width: clamp(62px, 8vw, 86px);
 }
 
-.hero-cards .cbet-color-block-card {
+.felt-table .hero-cards .cbet-color-block-card {
   --poker-card-width: 54px;
   margin-left: -8px;
 }
 
-.hero-cards .cbet-color-block-card:first-child {
+.felt-table .hero-cards .cbet-color-block-card:first-child {
   --tilt: -4deg;
   margin-left: 0;
 }
 
-.hero-cards .cbet-color-block-card:last-child {
+.felt-table .hero-cards .cbet-color-block-card:last-child {
   --tilt: 4deg;
 }
 
@@ -498,7 +498,7 @@ a:focus-visible,
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
 }
 
-.pot-label {
+.felt-table .pot-label {
   display: grid;
   position: absolute;
   z-index: 3;
@@ -512,18 +512,18 @@ a:focus-visible,
   text-align: center;
 }
 
-.pot-label span {
+.felt-table .pot-label span {
   color: var(--muted);
   font-size: 0.62rem;
   text-transform: uppercase;
 }
 
-.pot-label strong {
+.felt-table .pot-label strong {
   color: var(--brand-yellow);
   font-size: 0.8rem;
 }
 
-.action-row {
+.felt-table + .action-row {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
@@ -531,7 +531,7 @@ a:focus-visible,
   border-top: 1px solid var(--line);
 }
 
-.action-row button,
+.felt-table + .action-row button,
 .primary-button,
 .secondary-button {
   min-height: 46px;
@@ -544,14 +544,14 @@ a:focus-visible,
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
 }
 
-.action-row button:hover,
+.felt-table + .action-row button:hover,
 .secondary-button:hover {
   transform: translateY(-2px);
   border-color: rgba(176, 131, 240, 0.75);
   background: rgba(176, 131, 240, 0.1);
 }
 
-.action-row button.is-selected {
+.felt-table + .action-row button.is-selected {
   color: var(--brand-ink);
   border-color: var(--brand-yellow);
   background: var(--brand-yellow);
@@ -1443,24 +1443,215 @@ a:focus-visible,
   align-items: center;
 }
 
-.trainer-score {
+.cbet-practice-setup,
+.cbet-practice-run {
   display: grid;
-  gap: 2px;
-  min-width: 95px;
-  text-align: right;
+  gap: 14px;
 }
 
-.trainer-score span {
+.cbet-practice-setup[hidden],
+.cbet-practice-run[hidden] {
+  display: none;
+}
+
+.cbet-practice-integrity,
+.cbet-practice-launch {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 20px;
+}
+
+.cbet-practice-integrity h3,
+.cbet-practice-integrity p,
+.cbet-practice-launch strong,
+.cbet-practice-launch span {
+  margin: 0;
+}
+
+.cbet-practice-integrity > div:first-child,
+.cbet-practice-launch > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.cbet-practice-integrity p:last-child,
+.cbet-practice-launch span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.cbet-practice-launch .primary-button,
+.cbet-practice-hud .secondary-button {
+  min-height: 46px;
+}
+
+.cbet-practice-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 9px 14px;
+}
+
+.cbet-practice-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--soft);
-  font-size: 0.68rem;
-  font-weight: 850;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
+  font-size: 0.76rem;
+  font-weight: 820;
+  white-space: nowrap;
 }
 
-.trainer-score strong {
-  color: var(--lesson-green);
-  font-size: 1.4rem;
+.cbet-practice-legend i {
+  width: 13px;
+  height: 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+}
+
+.cbet-practice-legend .is-check {
+  background: #241821;
+}
+
+.cbet-practice-legend .is-small {
+  background: #4d3678;
+}
+
+.cbet-practice-legend .is-large {
+  border-color: #c6a72a;
+  background: var(--brand-yellow);
+}
+
+.cbet-practice-hud {
+  position: sticky;
+  top: 8px;
+  z-index: 24;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 10px;
+  align-items: stretch;
+  padding: 10px;
+  background: linear-gradient(145deg, rgba(24, 21, 34, 0.98), rgba(14, 13, 19, 0.98));
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
+}
+
+.cbet-practice-hud > span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 50px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.cbet-practice-hud b {
+  color: var(--text);
+  font-size: 1.25rem;
+}
+
+.cbet-deal-table,
+.cbet-practice-table {
+  --shell-action-gutter: 112px;
+  --shell-table-plane-height-cap: 430px;
+  position: relative;
+  min-height: 548px;
+  padding: 0 3px 116px;
+  container-type: inline-size;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(154, 101, 214, 0.09), transparent 42%),
+    rgba(8, 7, 13, 0.45);
+}
+
+.cbet-deal-table .ff-shell-simulator-snapshot.table-grid,
+.cbet-practice-table .ff-shell-simulator-snapshot.table-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
+  min-height: 430px;
+}
+
+.cbet-deal-table .ff-shell-simulator-snapshot,
+.cbet-practice-table .ff-shell-simulator-snapshot {
+  --trainer-table-plane-height: min(430px, calc(100cqw * 9 / 16), calc(100svh - 338px));
+}
+
+@media (min-width: 621px) {
+  .cbet-deal-table .ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt.has-board,
+  .cbet-practice-table .ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt.has-board {
+    --hero-card-width: clamp(72px, 7.9vh, 76px) !important;
+    --hero-card-cap: clamp(72px, 7.9vh, 76px) !important;
+    --board-card-width: clamp(45px, 5.3vh, 48px) !important;
+    --pot-y-bottom: 61.5% !important;
+  }
+}
+
+@media (min-width: 621px) and (max-width: 820px) {
+  .cbet-deal-table .ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt.has-board,
+  .cbet-practice-table .ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt.has-board {
+    --hero-card-width: 62px !important;
+    --hero-card-cap: 62px !important;
+    --board-card-width: 40px !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .cbet-deal-table .ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt.has-board,
+  .cbet-practice-table .ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt.has-board {
+    --pot-y-bottom: 64% !important;
+  }
+}
+
+.cbet-deal-table .action-bar,
+.cbet-practice-table .action-bar {
+  top: calc(100% + 6px) !important;
+}
+
+.cbet-deal-table .client-controls > .client-row,
+.cbet-practice-table .client-controls > .client-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.cbet-deal-table .table-action,
+.cbet-practice-table .table-action {
+  min-height: 72px !important;
+}
+
+.cbet-deal-table .table-action[data-option-key="check"]:not(.is-correct):not(.is-wrong),
+.cbet-practice-table .table-action[data-option-key="check"]:not(.is-correct):not(.is-wrong) {
+  color: #ffe8e8;
+  border-color: rgba(231, 106, 102, 0.28);
+  background: linear-gradient(180deg, rgba(128, 49, 62, 0.76), rgba(59, 24, 32, 0.96));
+}
+
+.cbet-deal-table .table-action[data-option-key="small"]:not(.is-correct):not(.is-wrong),
+.cbet-practice-table .table-action[data-option-key="small"]:not(.is-correct):not(.is-wrong) {
+  color: var(--text);
+  border-color: rgba(176, 131, 240, 0.46);
+  background: linear-gradient(180deg, rgba(91, 61, 139, 0.86), rgba(49, 35, 77, 0.98));
+}
+
+.cbet-deal-table .table-action[data-option-key="large"]:not(.is-correct):not(.is-wrong),
+.cbet-practice-table .table-action[data-option-key="large"]:not(.is-correct):not(.is-wrong) {
+  color: var(--brand-ink);
+  border-color: #e3c84a;
+  background: linear-gradient(180deg, #ffe780, #d8bd4f);
+}
+
+@media (min-width: 861px) {
+  html[data-step="practice"] .lesson-header {
+    position: static;
+  }
 }
 
 .trainer-progress {
@@ -1473,6 +1664,24 @@ a:focus-visible,
 
 .trainer-feedback {
   border-color: rgba(176, 131, 240, 0.23);
+}
+
+.trainer-feedback.is-correct {
+  border-color: rgba(109, 227, 170, 0.55);
+  background: linear-gradient(145deg, rgba(18, 45, 34, 0.96), rgba(13, 23, 19, 0.96));
+}
+
+.trainer-feedback.is-wrong {
+  border-color: rgba(255, 140, 140, 0.55);
+  background: linear-gradient(145deg, rgba(54, 24, 30, 0.96), rgba(25, 16, 20, 0.96));
+}
+
+.trainer-feedback.is-correct .eyebrow {
+  color: var(--lesson-green);
+}
+
+.trainer-feedback.is-wrong .eyebrow {
+  color: var(--lesson-red);
 }
 
 .trainer-lesson {
@@ -1529,7 +1738,44 @@ a:focus-visible,
 }
 
 .trainer-actions {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 8px;
+  background: rgba(8, 7, 12, 0.72);
+}
+
+.trainer-actions button {
+  display: grid;
+  place-content: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 72px;
+  border-radius: 10px;
+  font-size: clamp(1.02rem, 1.8vw, 1.22rem);
+  font-weight: 880;
+}
+
+.trainer-actions button small {
+  color: inherit;
+  font-size: 0.66rem;
+  font-weight: 760;
+  opacity: 0.72;
+}
+
+.trainer-actions button.is-check {
+  border-color: rgba(255, 140, 140, 0.3);
+  background: linear-gradient(180deg, rgba(76, 31, 42, 0.62), rgba(41, 20, 27, 0.92));
+}
+
+.trainer-actions button.is-small {
+  border-color: rgba(176, 131, 240, 0.46);
+  background: linear-gradient(180deg, rgba(91, 61, 139, 0.76), rgba(49, 35, 77, 0.96));
+}
+
+.trainer-actions button.is-large {
+  color: var(--brand-ink);
+  border-color: #e3c84a;
+  background: linear-gradient(180deg, #ffe780, #d8bd4f);
 }
 
 .trainer-actions button.is-answer {
@@ -3059,6 +3305,12 @@ html[data-embed="true"] .field-controls {
     white-space: nowrap;
   }
 
+  html[data-step="practice"] .scope-strip {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    white-space: normal;
+  }
+
   .screen-heading {
     display: grid;
     align-items: start;
@@ -3095,6 +3347,22 @@ html[data-embed="true"] .field-controls {
 
   .felt-table {
     min-height: 430px;
+  }
+
+  .cbet-deal-table,
+  .cbet-practice-table {
+    min-height: 470px;
+    padding: 0 0 116px;
+  }
+
+  .cbet-deal-table .ff-shell-simulator-snapshot,
+  .cbet-practice-table .ff-shell-simulator-snapshot {
+    --trainer-table-plane-height: min(340px, calc(100cqw * 9 / 16));
+  }
+
+  .cbet-deal-table .ff-shell-simulator-snapshot.table-grid,
+  .cbet-practice-table .ff-shell-simulator-snapshot.table-grid {
+    min-height: 340px;
   }
 
   .coach-card {
@@ -3250,6 +3518,21 @@ html[data-embed="true"] .field-controls {
     min-height: 430px;
   }
 
+  .cbet-deal-table,
+  .cbet-practice-table {
+    min-height: 430px;
+  }
+
+  .cbet-deal-table .ff-shell-simulator-snapshot,
+  .cbet-practice-table .ff-shell-simulator-snapshot {
+    --trainer-table-plane-height: min(310px, calc(100cqw * 9 / 16));
+  }
+
+  .cbet-deal-table .ff-shell-simulator-snapshot.table-grid,
+  .cbet-practice-table .ff-shell-simulator-snapshot.table-grid {
+    min-height: 310px;
+  }
+
   .felt-table::before {
     inset: 46px 3%;
   }
@@ -3258,77 +3541,77 @@ html[data-embed="true"] .field-controls {
     inset: 59px 7%;
   }
 
-  .board-cards .cbet-color-block-card {
+  .felt-table .board-cards .cbet-color-block-card {
     --poker-card-width: 62px;
   }
 
-  .hero-cards {
+  .felt-table .hero-cards {
     bottom: 82px;
   }
 
-  .hero-cards .cbet-color-block-card {
+  .felt-table .hero-cards .cbet-color-block-card {
     --poker-card-width: 46px;
   }
 
-  .seat {
+  .felt-table .seat {
     min-width: 158px;
     padding: 7px 9px;
   }
 
-  .seat-villain {
+  .felt-table .seat-villain {
     top: 60px;
     left: 3%;
   }
 
-  .folded-seat {
+  .felt-table .folded-seat {
     gap: 4px;
     min-width: 58px;
     padding: 5px 6px;
   }
 
-  .folded-seat-hj {
+  .felt-table .folded-seat-hj {
     top: 64px;
     right: 3%;
   }
 
-  .folded-seat-co {
+  .felt-table .folded-seat-co {
     right: 3%;
     bottom: 104px;
   }
 
-  .folded-seat-sb {
+  .felt-table .folded-seat-sb {
     bottom: 104px;
     left: 3%;
   }
 
-  .dealer-button {
+  .felt-table .dealer-button {
     top: -10px;
     right: -10px;
     width: 25px;
     height: 25px;
   }
 
-  .seat-avatar {
+  .felt-table .seat-avatar {
     flex-basis: 34px;
     width: 34px;
     height: 34px;
   }
 
-  .pot-label {
+  .felt-table .pot-label {
     top: 41%;
     left: 7%;
   }
 
-  .action-row {
+  .felt-table + .action-row {
     grid-template-columns: repeat(5, minmax(50px, 1fr));
     overflow-x: auto;
   }
 
   .trainer-actions {
-    grid-template-columns: repeat(5, minmax(50px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .action-row button {
+  .felt-table + .action-row button {
     padding: 0 10px;
   }
 
@@ -3419,6 +3702,28 @@ html[data-embed="true"] .field-controls {
   .trainer-footer .primary-button,
   .trainer-footer .secondary-button {
     width: 100%;
+  }
+
+  .cbet-practice-integrity,
+  .cbet-practice-launch {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .cbet-practice-legend {
+    justify-content: flex-start;
+  }
+
+  .cbet-practice-launch .primary-button {
+    width: 100%;
+  }
+
+  .cbet-practice-hud {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cbet-practice-hud .secondary-button {
+    grid-column: 1 / -1;
   }
 
   .contrast-card,

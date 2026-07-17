@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -29,6 +30,14 @@ const data = context.window.FF_POKER_FIELD_LESSON_DATA;
 assert.equal(data.schemaVersion, 1);
 assert.equal(data.key, "flop-checkraise");
 assert.equal(data.wisdom.length, 3);
+assert.equal(data.wisdom[1].rule, undefined, "the second wisdom slide has no extra rule callout");
+assert.equal(data.wisdom[2].rule, undefined, "the third wisdom slide has no extra rule callout");
+assert.doesNotMatch(
+  shared,
+  /makeElement\("footer", "wisdom-board-folds-foot"\)/,
+  "the third wisdom slide does not render the technical HH footer"
+);
+assert.match(shared, /Порог выгодности чистого блефа/, "the breakeven label explains that the threshold is about profitability");
 assert.deepEqual(Array.from(data.cohorts, (cohort) => cohort.key), ["league1", "league2", "league3", "rank15_17"]);
 assert(data.cohorts.every((cohort) => cohort.display === "independent"));
 assert.equal(
@@ -200,7 +209,7 @@ assert.deepEqual(
 for (const terminal of Object.values(data.intro.continuation.nodes).filter((node) => node.terminal)) {
   const reveal = terminal.table.seats.find((seat) => seat.revealCardsAfterAnswer);
   assert.deepEqual(Array.from(reveal.cards), ["Kd", "Ks"]);
-  assert.match(terminal.result.summary, /Hero T♥ 9♥: флеш до дамы.*BTN K♦ K♠: сет королей/i);
+  assert.match(terminal.result.summary, /Hero T♥ 9♥: стрит-флеш до дамы.*BTN K♦ K♠: сет королей/i);
 }
 assert.equal(byId.get("xr-97-double-backdoor").continuation, undefined, "continuation is explicit, never synthesized");
 
@@ -238,6 +247,9 @@ assert.deepEqual(
   "check-raise practice opts into the immediate c-bet-style loop"
 );
 assert.match(byId.get("xr-22-set").question, /2♣2♠/, "displayed pocket deuces match the table cards");
+assert.match(byId.get("xr-22-set").title, /K92hh/, "the two-tone K-heart board is not mislabeled as rainbow");
+assert.doesNotMatch(data.intro.title, /как кандидат/i, "the intro title does not reveal the teaching answer");
+assert.match(shared, /pluralRu\(folds, "фолд", "фолда", "фолдов"\)/, "field evidence uses Russian plural forms for fold counts");
 assert.match(byId.get("fold-j5-weak-backdoor").options.find((option) => option.key === "checkraise").feedback, /эксплойт.*оверфолд.*дисциплинированнее/i);
 assert.match(byId.get("fold-t8-backdoor-only").answer, /эксплойт.*gutshot.*один.*runner-runner/i);
 assert.doesNotMatch(source, /Лишн(?:ий|их) (?:check-raise|рейз|X\/R)/i, "optimistic check-raises are not framed as automatic blunders");
@@ -248,6 +260,18 @@ for (const requestedId of ["xr-jt-gutshot", "xr-qt-gutshot", "xr-qj-gutshot", "x
 assert.equal(data.examples.tree, "bb_vs_late_rfi");
 assert.equal(data.examples.value.length, 3, "value examples are grouped by category, not duplicated per combo");
 assert.equal(data.examples.bluff.length, 2, "bluff examples are grouped by category, not duplicated per combo");
+const setExample = data.examples.value.find((example) => example.id === "example-set");
+assert.deepEqual(
+  Array.from(setExample.sourceSpotIds),
+  ["xr-set-value", "xr-22-set", "xr-99-set"],
+  "the set card leads with 77 on Q72tt and shows 22 then 99 as the extra hands"
+);
+assert.deepEqual(Array.from(setExample.representatives, (representative) => representative.hand), ["77", "22", "99"]);
+assert.equal(
+  setExample.playbook.summary.why,
+  "Сильные руки не нужно слоуплеить: оппоненты чаще слишком пассивны, чтобы рассчитывать на их ставки. Блеф-кетчить можно с более слабыми руками — например, A9 или K3."
+);
+assert.equal(setExample.playbook.summary.turn, "Спокойно добирай, пока не получишь рейз.");
 for (const example of [...data.examples.value, ...data.examples.bluff]) {
   assert.equal(example.tree, data.examples.tree);
   assert(byId.has(example.sourceSpotId), `${example.id} points to a practice spot`);
@@ -306,6 +330,11 @@ assert.match(data.examples.bluff[1].contrast.copy, /один runner-runner.*эк
 
 assert.match(html, /data-intro-table/);
 assert.match(html, /data-step-target="examples"/);
+assert.doesNotMatch(
+  html,
+  /3 короткие мысли|стрелки, точки или свайп/,
+  "wisdom heading has no redundant carousel instructions"
+);
 assert.doesNotMatch(html, /example-group-index/, "examples use aligned section headings without decorative counters");
 assert.doesNotMatch(html, /data-examples-note/, "scenario scope is not repeated as a technical footnote");
 assert.doesNotMatch(html, /data-practice-mode=/, "the old finite-pack focus picker is gone");
@@ -320,15 +349,27 @@ assert.match(html, /data-practice-continuation-external hidden/);
 assert.doesNotMatch(html, /data-practice-start/, "practice opens directly on the first playable hand");
 assert.doesNotMatch(html, /data-practice-xr-rate|data-practice-missed-xr|data-practice-extra-xr/, "technical X/R counters do not crowd the main loop");
 assert.doesNotMatch(html, /Функциональный snapshot|T♥9♥ до showdown|Оптимистичных X\/R/, "setup and methodological copy stay out of the playable screen");
-assert.match(html, /6d0a6c0374a4/);
+const sharedCssHash = createHash("sha256")
+  .update(sharedCss.replace(/\r\n/g, "\n").replace(/\r/g, "\n"))
+  .digest("hex")
+  .slice(0, 12);
+assert.match(html, new RegExp(`assets/poker-field-lesson/lesson\\.css\\?v=${sharedCssHash}`));
 assert.match(html, /ca84428f46bf/);
-assert.match(html, /d87ccb300d60/);
-assert.match(html, /98c6cd491c82/);
+const sourceHash = createHash("sha256")
+  .update(source.replace(/\r\n/g, "\n").replace(/\r/g, "\n"))
+  .digest("hex")
+  .slice(0, 12);
+assert.match(html, new RegExp(`assets/poker-flop-checkraise-lesson/data\\.js\\?v=${sourceHash}`));
+const sharedHash = createHash("sha256")
+  .update(shared.replace(/\r\n/g, "\n").replace(/\r/g, "\n"))
+  .digest("hex")
+  .slice(0, 12);
+assert.match(html, new RegExp(`assets/poker-field-lesson/lesson\\.js\\?v=${sharedHash}`));
 assert.match(html, /data-structure-league-matrix/);
 assert.match(html, /field-matrix\.css\?v=20260716-structures-1/);
 assert.match(html, /field-matrix\.js\?v=20260716-structures-1/);
 assert.match(html, /simulator-continuation\.js\?v=20260716-full-hand-1/);
-assert.match(html, /poker-flop-checkraise-lesson\/continuations\.js\?v=20260716-full-hand-1/);
+assert.match(html, /poker-flop-checkraise-lesson\/continuations\.js\?v=e5a2e89fd1c0/);
 assert.doesNotMatch(html, /data-cohort-cards/, "check-raise field tab is now structure-first rather than four aggregate cards");
 assert.ok(html.indexOf("simulator-snapshot.js") < html.indexOf("poker-flop-checkraise-lesson/data.js"));
 assert.ok(html.indexOf("simulator-practice.js") < html.indexOf("simulator-continuation.js"));
@@ -352,6 +393,16 @@ assert.doesNotMatch(
   /\.example-variant-chip span\s*\{/,
   "variant labels never cascade into the card rank"
 );
+for (const actionKey of ["fold", "call", "checkraise"]) {
+  assert.match(
+    sharedCss,
+    new RegExp(`\\.flop-checkraise-lesson \\[data-step="deal"\\][\\s\\S]*?\\.table-action\\[data-option-key="${actionKey}"\\]`),
+    `${actionKey} gets a scoped opening-decision color`
+  );
+}
+assert.match(sharedCss, /data-option-key="fold"[\s\S]*?rgba\(72, 18, 17, \.36\)/, "fold stays red");
+assert.match(sharedCss, /data-option-key="call"[\s\S]*?rgba\(255, 255, 255, \.035\)/, "call stays neutral");
+assert.match(sharedCss, /data-option-key="checkraise"[\s\S]*?#b697e1[\s\S]*?#dabe58/, "check-raise stays gold");
 assert.match(
   sharedCss,
   /\.example-list\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/,

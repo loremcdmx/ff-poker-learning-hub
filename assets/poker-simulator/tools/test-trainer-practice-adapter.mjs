@@ -30,7 +30,7 @@ const window = {
       calls.build.push(options);
       const url = new URL(options.url, "http://localhost:4173/");
       url.searchParams.set("embedded", "1");
-      for (const key of ["practice", "hands", "tables", "tempo", "run"]) if (options[key]) url.searchParams.set(key, String(options[key]));
+      for (const key of ["practice", "hands", "tables", "tempo", "handMode", "run"]) if (options[key]) url.searchParams.set(key, String(options[key]));
       return url;
     },
     mount(target, options) { calls.mount.push({ target, options }); return { target, options }; }
@@ -48,7 +48,7 @@ assert.equal(calls.snapshot[0].state.answered, true);
 
 adapter.mountPractice(host, { practice: "resteal", hands: 25, tables: 1, tempo: "fast", run: "run-1" });
 assert.equal(calls.mount.length, 1, "container mode delegates to PokerSimulatorEmbed.mount");
-adapter.mountPractice("#frame", { practice: "rfi-open", hands: 10, tables: 1, tempo: "fast", run: "run-2" });
+adapter.mountPractice("#frame", { practice: "rfi-open", hands: 10, tables: 1, tempo: "fast", handMode: "preflop", run: "run-2" });
 const url = new URL(iframe.src);
 assert.deepEqual(Object.fromEntries(url.searchParams), {
   embedded: "1",
@@ -56,6 +56,7 @@ assert.deepEqual(Object.fromEntries(url.searchParams), {
   hands: "10",
   tables: "1",
   tempo: "fast",
+  handMode: "preflop",
   run: "run-2"
 });
 adapter.mountPractice("#frame", { practice: "rfi-open", tables: 1, tempo: "fast", run: "run-endless" });

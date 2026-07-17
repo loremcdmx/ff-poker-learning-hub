@@ -575,9 +575,13 @@
 
     .table-grid[data-count="1"] .seat.seat-slot-model .seat-position,
     .table-grid[data-count="1"] .seat.seat-slot-model .seat-position.has-avatar {
-      width: calc(var(--avatar) * 0.38);
-      height: calc(var(--avatar) * 0.38);
-      min-width: calc(var(--avatar) * 0.38);
+      /* The current position marker is a text pill, not the old avatar disc.
+         Keep its intrinsic width so UTG/BTN cannot outgrow the container on
+         hero and left-side seats, where this data-count rule wins the cascade. */
+      width: auto;
+      min-width: 34px;
+      height: 22px;
+      padding: 0 7px;
     }
 
     .dealer-dot {
@@ -7648,8 +7652,12 @@
       --seat-cards-tx: 0px !important;
     }
 
+    /* Side-seat backs used to receive a second downward tuck on top of the
+       slot resolver's authoritative Y dock, leaving only a 1-2px red sliver in
+       dense four-table layouts. Let the slot model own the vertical position:
+       it keeps a readable pocket while preserving the intended panel overlap. */
     .table-grid .seat.seat-slot-model:is(.seat-zone-left, .seat-zone-right):not(.is-hero) .seat-cards.is-hidden:not(.is-empty) {
-      --seat-cards-box-tuck-y: clamp(8px, 3.5cqh, 12px);
+      --seat-cards-box-tuck-y: 0px;
     }
 
     .table-grid .seat.seat-slot-model.seat-zone-top:not(.is-hero) .seat-cards.is-hidden:not(.is-empty) {

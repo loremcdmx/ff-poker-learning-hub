@@ -42,6 +42,51 @@ The combined comparison shows that the source's right-side abstract `≈43%` blo
 
 final result: passed
 
+---
+
+# Design QA — RFI practice card pocket
+
+Source visual truth: `/var/folders/3x/hpz4jz_d1tb79j8fjbk1z0tw0000gn/T/TemporaryItems/NSIRD_screencaptureui_hXJVxP/Снимок экрана — 2026-07-17 в 1.19.44 PM.png`
+
+Implementation screenshot: `/tmp/rfi-practice-cards-final-1704.png`
+
+Responsive screenshot: `/tmp/rfi-practice-cards-final-390.png`
+
+Combined source/implementation comparison: `/tmp/rfi-practice-cards-comparison.png`
+
+Viewport and state:
+
+- Source and implementation: 1704 × 1100, dark theme, RFI «Практика» after the first decision with revealed opponent cards.
+- Responsive checks: 390 × 844, 620 × 900 and 621 × 900.
+- The source represents the former enlarged table composition. The scoped visual target was the card-to-player-box docking relationship, not the surrounding coach layout or overall table scale.
+
+## Findings
+
+No actionable P0/P1/P2 mismatch remains.
+
+- Fonts and typography: unchanged; the patch touches only positional custom properties.
+- Spacing and layout rhythm: every revealed pair is horizontally centered on its owner plate with a measured centre delta of 0 px. Hero and all opponent pairs overlap their plate by 19.9–20.0%.
+- Colors and visual tokens: unchanged; existing deck, felt, plate and state colors remain intact.
+- Image and asset fidelity: existing PokerDeckKit cards are reused without replacement, cropping or synthetic assets.
+- Copy and content: unchanged.
+- Responsive behavior: 390, 620, 621 and 1704 px all retain 19.9–20.0% overlap, zero card-to-card collisions and zero document horizontal overflow.
+
+## Focused comparison evidence
+
+The combined comparison exposes the changed relationship clearly: the source has side hands displaced toward the centre of the felt and inconsistent plate overlap, while the implementation centres every hand on the plate. Non-top hands open upward; top-row hands open downward. A focused numeric geometry pass was also required because the exact 20% tuck cannot be judged reliably from the full-page image alone.
+
+## Comparison history
+
+1. Initial measurement found 0–74% overlap depending on seat and horizontal card-centre errors up to roughly 79 px.
+2. The first normalized pass produced exact centring and 19.9–20.0% overlap everywhere except top seats, which still measured 24.6%.
+3. The top-row offset was recalibrated; the final browser pass measured 19.9–20.0% on every visible hand at desktop and responsive widths.
+
+## Follow-up polish
+
+- No P3 issue is required for this scoped card-pocket change.
+
+final result: passed
+
 ## Field-tab structure matrix follow-up
 
 The field tab now renders the eight exclusive flop structures against League 1–3. Every league cell keeps two independent rates and samples: CO/BTN c-bet after the BB check, then the same aggressor's fold after facing X/R. The fold control switches between all observed sizes and one shared `30–36% c-bet → 95–105% starting-pot X/R-to` window.

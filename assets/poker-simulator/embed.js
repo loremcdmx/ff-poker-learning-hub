@@ -59,6 +59,7 @@
     if (options.handTempo || options.tempo) {
       url.searchParams.set("tempo", String(options.handTempo || options.tempo));
     }
+    if (options.handMode) url.searchParams.set("handMode", String(options.handMode));
     if (options.pack) url.searchParams.set("pack", String(options.pack));
     if (options.autoStart || options.autostart) url.searchParams.set("autostart", "1");
     if (options.run || options.runKey) url.searchParams.set("run", String(options.run || options.runKey));

@@ -8,11 +8,6 @@ const dataSource = readFileSync(new URL("assets/poker-flop-cbet-hu-lesson/data.j
 const lessonSource = readFileSync(new URL("assets/poker-flop-cbet-hu-lesson/lesson.js", repo), "utf8");
 const lessonCss = readFileSync(new URL("assets/poker-flop-cbet-hu-lesson/lesson.css", repo), "utf8");
 const engineSource = readFileSync(new URL("assets/poker-kit/simulator/engine-core.js", repo), "utf8");
-const settingsSource = readFileSync(new URL("assets/poker-simulator/simulator-settings.js", repo), "utf8");
-const embedSource = readFileSync(new URL("assets/poker-simulator/embed.js", repo), "utf8");
-const appLaunchSource = readFileSync(new URL("assets/poker-simulator/simulator-app-launch.js", repo), "utf8");
-const appShellSource = readFileSync(new URL("assets/poker-simulator/simulator-app-shell-composition.js", repo), "utf8");
-const simulatorHtml = readFileSync(new URL("poker-simulator.html", repo), "utf8");
 
 const dataContext = { window: {} };
 vm.runInNewContext(dataSource, dataContext, { filename: "data.js" });
@@ -27,15 +22,22 @@ assert.equal(data.meta.overallCbetIsFullPopulation, true);
 assert.ok(Array.isArray(data.overallCbet) && data.overallCbet.length >= 17, "rank-level c-bet population is present");
 assert.ok(data.boardExamples && Object.keys(data.boardExamples).length > 0, "real board examples are present");
 
-for (const id of ["dealScreen", "mainScreen", "practiceScreen", "examplesScreen", "simulatorScreen"]) {
+for (const id of ["dealScreen", "mainScreen", "practiceScreen", "examplesScreen"]) {
   assert.match(html, new RegExp(`id="${id}"`), `${id} exists`);
 }
 for (const token of [
   "data-wisdom-slide",
-  "data-trainer-action=\"check\"",
+  "data-deal-table",
+  "data-trainer-table",
+  "data-trainer-hands",
+  "data-trainer-correct",
+  "data-trainer-misses",
+  "data-trainer-start",
+  "data-trainer-exit",
   "data-board-example-library",
-  "data-cbet-simulator",
-  "assets/poker-simulator/embed.js",
+  "assets/poker-trainer-shell/shell.css",
+  "assets/poker-trainer-shell/simulator-snapshot.js",
+  "assets/poker-trainer-shell/simulator-practice.js",
   "assets/poker-flop-cbet-hu-lesson/data.js",
   "assets/poker-flop-cbet-hu-lesson/lesson.js",
   "href=\"/flop-checkraise-lesson\""
@@ -43,22 +45,26 @@ for (const token of [
   assert.match(html, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), token);
 }
 
-assert.match(lessonSource, /pack:\s*"cbet-rvbb"/);
-assert.match(html, /poker-flop-cbet-hu-lesson\/lesson\.css\?v=bfc15268b81c/);
+assert.match(html, /poker-flop-cbet-hu-lesson\/lesson\.css\?v=[a-f0-9]{12}/);
 assert.match(lessonCss, /@media \(max-width: 860px\)[\s\S]*?\.lesson-header \{\s*position: static;\s*top: auto;/, "mobile lesson header does not cover trainer actions");
-assert.match(lessonSource, /autoStart:\s*true/);
-assert.match(lessonSource, /function ensureSimulator\(/);
+assert.doesNotMatch(html, /simulatorTab|simulatorScreen|data-cbet-simulator|assets\/poker-simulator\/embed\.js/, "lesson has one practice surface and no generic simulator tab");
+assert.doesNotMatch(html, /felt-table|data-deal-action|data-trainer-action/, "interactive c-bet decisions never pair a static table with external action buttons");
+assert.match(lessonSource, /requestedStepRaw === "simulator" \? "practice"/, "old simulator deep links route to practice");
+assert.match(lessonSource, /function trainerActionGroup\([\s\S]*\["25", "33", "small"\][\s\S]*\["50", "67", "large"\]/, "exact sizes collapse into three decision classes");
+assert.match(lessonSource, /const SNAPSHOT_ACTIONS = \[[\s\S]*key: "check"[\s\S]*key: "small"[\s\S]*key: "large"/, "shared snapshot receives the same three decision classes");
+assert.match(lessonSource, /window\.FFTrainerSimulator\.renderDecision/, "intro and practice render through the shared simulator adapter");
+assert.match(lessonSource, /closest\("\[data-option-key\]"\)/, "action clicks are delegated from the functional table");
+assert.match(lessonSource, /function introSnapshotSpot\([\s\S]*return snapshotSpot/, "intro and practice share one native snapshot spot builder");
+assert.match(lessonSource, /accepted\.length !== 1/, "every generated c-bet spot has one unambiguous correct action class");
+assert.doesNotMatch(lessonSource, /queryAll\("\[data-(?:deal|trainer)-action\]"/, "lesson code has no external poker-action controls");
+assert.match(lessonSource, /function updateTrainerHud\([\s\S]*data-trainer-hands[\s\S]*data-trainer-correct[\s\S]*data-trainer-misses/, "practice HUD tracks hands, correct answers and misses");
+assert.match(lessonCss, /\.cbet-practice-table \.client-controls > \.client-row \{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/, "practice renders three equal shared action columns");
+assert.match(lessonCss, /\.cbet-practice-table \.table-action \{[^}]*min-height:\s*72px/, "shared practice actions keep the large hit target");
+for (const action of ["check", "small", "large"]) {
+  assert.match(lessonCss, new RegExp(`\\.cbet-practice-table \\.table-action\\[data-option-key="${action}"\\]`), `practice colors the shared ${action} action`);
+}
 assert.match(lessonSource, /function renderBoardExamples\(/);
 assert.match(lessonSource, /function renderTrainer\(/);
 assert.match(engineSource, /"cbet-rvbb":\s*\{[\s\S]*key:\s*"btn-vs-bb-cbet"[\s\S]*startStreet:\s*"flop"/);
-assert.match(settingsSource, /bootPack === "cbet-rvbb"/);
-assert.match(settingsSource, /settings\.postflopBetPercents = "25,33,50,67,allin"/);
-assert.match(embedSource, /url\.searchParams\.set\("pack"/);
-assert.match(embedSource, /url\.searchParams\.set\("autostart", "1"\)/);
-assert.match(appShellSource, /bootParams:\s*appFoundation\.bootParams/);
-assert.match(appLaunchSource, /const embeddedAutoStart = embeddedMode/);
-assert.match(appLaunchSource, /state\.restoreTableSnapshots = \[\]/);
-assert.match(appLaunchSource, /if \(embeddedAutoStart\)[\s\S]*options\.dealNextAllTables\?\.\(\)/);
-assert.match(simulatorHtml, /simulator-cbet-embed\.css/);
 
 console.log("flop c-bet lesson contract: ok");

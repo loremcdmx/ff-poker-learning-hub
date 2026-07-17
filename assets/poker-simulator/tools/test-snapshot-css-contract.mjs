@@ -6,6 +6,13 @@ import { fileURLToPath } from "node:url";
 const repo = resolve(fileURLToPath(new URL("../../..", import.meta.url)));
 const read = (path) => readFileSync(resolve(repo, path), "utf8");
 const shell = read("assets/poker-trainer-shell/shell.css");
+const simulatorPolish = read("assets/poker-simulator/simulator-polish.css");
+
+assert.match(
+  simulatorPolish,
+  /\.table-grid\[data-count="1"\] \.seat\.seat-slot-model \.seat-position,[^{]+\{[^}]*width:\s*auto;[^}]*min-width:\s*34px;[^}]*height:\s*22px;[^}]*padding:\s*0 7px;/s,
+  "single-table position pills size to their labels instead of the retired avatar disc"
+);
 
 assert.match(
   shell,
@@ -72,8 +79,18 @@ const geometryTokens = [
   "--mini-card-width"
 ];
 
+const rfiLessonPath = "assets/poker-rfi-open-lesson/lesson.css";
+const rfiLesson = read(rfiLessonPath);
+const rfiPracticePocket = rfiLesson.match(
+  /\/\* Curated RFI practice keeps every revealed hand attached[\s\S]*?\.rfi-open-lesson #practiceTable \.seat\.seat-slot-model\.is-hero \.hero-cards\s*\{[\s\S]*?\n\}/
+)?.[0] || "";
+assert.match(rfiPracticePocket, /#practiceTable \.seat\.seat-slot-model:not\(\.is-hero\)[\s\S]*?--reveal-card-tx:0cqw!important/);
+assert.match(rfiPracticePocket, /\.seat-zone-top:not\(\.is-hero\)[\s\S]*?--reveal-card-ty:calc\(\(var\(--seat-h\)\*\.5\) \+ \(var\(--mini-card-width\)\*\.74\)\)!important/);
+assert.match(rfiPracticePocket, /:not\(\.seat-zone-top\):not\(\.is-hero\)[\s\S]*?--reveal-card-ty:calc\(\(var\(--seat-h\)\*-\.5\) - \(var\(--mini-card-width\)\*\.64\)\)!important/);
+assert.match(rfiPracticePocket, /\.is-hero \.hero-cards[\s\S]*?--hero-card-pocket-y:calc\(\(var\(--seat-h\)\*-\.5\) - \(var\(--hero-card-width\)\*\.425\) - var\(--seat-cards-ty,0px\)\)/);
+
 for (const file of lessonCssFiles) {
-  const source = read(file);
+  const source = file === rfiLessonPath ? read(file).replace(rfiPracticePocket, "") : read(file);
   for (const token of geometryTokens) {
     assert(!source.includes(token), `${file} does not own simulator geometry token ${token}`);
   }

@@ -12,18 +12,19 @@
   const catalog = Object.freeze({
     "rfi-open": Object.freeze({
       aliases: Object.freeze(["rfi-open-position"]),
-      styles: Object.freeze(["assets/poker-rfi-open-lesson/simulator-pack.css?v=20260714-prod-refresh-1"]),
+      styles: Object.freeze(["assets/poker-rfi-open-lesson/simulator-pack.css?v=d6893391b223"]),
       scripts: Object.freeze([
         "assets/poker-rfi-open-lesson/data.js?v=20260714-prod-refresh-1",
-        "assets/poker-rfi-open-lesson/simulator-pack.js?v=20260714-endless-practice"
+        "assets/poker-rfi-open-lesson/practice-stats.js?v=8264ad18789d",
+        "assets/poker-rfi-open-lesson/simulator-pack.js?v=42d23f5e7306"
       ])
     }),
     resteal: Object.freeze({
       aliases: Object.freeze(["bb-resteal"]),
-      styles: Object.freeze(["assets/poker-resteal-lesson/simulator-pack.css?v=20260714-practice-geometry"]),
+      styles: Object.freeze(["assets/poker-resteal-lesson/simulator-pack.css?v=d2ab724e7c02"]),
       scripts: Object.freeze([
         "assets/poker-resteal-lesson/advice.js?v=20260713-2",
-        "assets/poker-resteal-lesson/simulator-pack.js?v=20260714-practice-api"
+        "assets/poker-resteal-lesson/simulator-pack.js?v=19b26307536f"
       ])
     })
   });

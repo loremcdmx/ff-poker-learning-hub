@@ -60,7 +60,7 @@
    *     heroCards, boardCards, street, actionLine, historyLine,
    *     toCall, currentBet, dealerPosition
    *   },
-   *   options: [{ key, label, correct, feedback, acceptableExploit? }],
+   *   options: [{ key, label, correct, feedback, acceptableExploit?, acceptableMix? }],
    *   continuation?: {
    *     schemaVersion: 1, start,
    *     nodes: { [id]: FULL_SNAPSHOT_NODE | TERMINAL_SHOWDOWN_NODE },
@@ -136,6 +136,16 @@
   function formatCount(value) {
     const number = numberOrNull(value);
     return number === null ? "—" : Math.round(number).toLocaleString("ru-RU");
+  }
+
+  function pluralRu(value, one, few, many) {
+    const number = Math.abs(Math.round(Number(value) || 0));
+    const mod100 = number % 100;
+    const mod10 = number % 10;
+    if (mod100 >= 11 && mod100 <= 14) return many;
+    if (mod10 === 1) return one;
+    if (mod10 >= 2 && mod10 <= 4) return few;
+    return many;
   }
 
   function formatPercent(value) {
@@ -491,6 +501,7 @@
 
   function decisionOutcomeFor(chosen, expected) {
     if (chosen?.correct === true || (cleanText(chosen?.key) && cleanText(chosen?.key) === cleanText(expected?.key))) return "correct";
+    if (chosen?.acceptableMix === true) return "alternative";
     if (chosen?.acceptableExploit === true && cleanText(chosen?.key) === "checkraise" && cleanText(expected?.key) !== "checkraise") return "alternative";
     return "wrong";
   }
@@ -553,11 +564,12 @@
     const outcome = decisionOutcomeFor(chosen, expected);
     const correct = outcome === "correct";
     const alternative = outcome === "alternative";
+    const mix = alternative && chosen?.acceptableMix === true;
     feedbackShell(
       host,
       correct ? "is-correct" : alternative ? "is-alternative" : "is-wrong",
-      correct ? "Верное решение" : alternative ? "Допустимый эксплойт · при большом оверфолде" : "Разберём промах",
-      correct ? (spot.title || "Линия совпала") : alternative ? `База дисциплинированнее: ${expected?.label || "—"}` : `Базовая линия: ${expected?.label || "—"}`,
+      correct ? "Верное решение" : mix ? "Допустимый микс" : alternative ? "Допустимый эксплойт · при большом оверфолде" : "Разберём промах",
+      correct ? (spot.title || "Линия совпала") : mix ? `Основная линия: ${expected?.label || "—"}` : alternative ? `База дисциплинированнее: ${expected?.label || "—"}` : `Базовая линия: ${expected?.label || "—"}`,
       chosen?.feedback || spot.answer || "Сравни выбранное действие с базовой линией этого спота."
     );
     const answer = cleanText(spot.answer);
@@ -643,20 +655,14 @@
       const sample = makeElement(
         "small",
         "wisdom-fold-sample",
-        `${formatCount(folds)} фолда из ${formatCount(faced)} · ${formatCount(row.players)} игроков`
+        `${formatCount(folds)} ${pluralRu(folds, "фолд", "фолда", "фолдов")} из ${formatCount(faced)} · ${formatCount(row.players)} игроков`
       );
       itemRow.append(rowHead, meter, sample);
       list.append(itemRow);
     });
 
-    const threshold = makeElement("p", "wisdom-threshold", `Порог чистого блефа: ${formatPercent(breakeven)}`);
-    const foot = makeElement("footer", "wisdom-board-folds-foot");
-    foot.append(
-      makeElement("span", "", config.period || ""),
-      makeElement("small", "", config.boardScope || ""),
-      makeElement("small", "", config.note || "")
-    );
-    card.append(head, sizeLine, example, list, threshold, foot);
+    const threshold = makeElement("p", "wisdom-threshold", `Порог выгодности чистого блефа: ${formatPercent(breakeven)}`);
+    card.append(head, sizeLine, example, list, threshold);
     return card;
   }
 

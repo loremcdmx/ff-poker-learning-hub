@@ -137,11 +137,13 @@
         const facingRaiseDecision = Number(table.toCall || 0) > 0;
         const practiceDecisionClass = root.PokerSimulatorPracticePacks?.decisionClass?.({ table, settings: getState().settings }) || "";
         const practiceDecisionClassName = practiceDecisionClass ? ` ${practiceDecisionClass}` : "";
-        const aggressiveVerb = table.toCall > 0 ? "Рейз" : (table.street === "preflop" ? "Рейз" : "Бет");
+        const fixedRfiOpeningDecision = practiceDecisionClass.split(/\s+/).includes("is-rfi-opening");
+        const fixedRestealDecision = practiceDecisionClass.split(/\s+/).includes("is-resteal-decision");
+        const aggressiveVerb = fixedRfiOpeningDecision ? "Опен" : (table.toCall > 0 ? "Рейз" : (table.street === "preflop" ? "Рейз" : "Бет"));
         // Action buttons show the verb only — the live size is already on the
         // slider/stepper, and a bare label avoids the "Рейз ..." truncation seen
         // on narrow and multi-table layouts.
-        const aggressiveLabel = aggressiveVerb === "Рейз" ? "Рейз" : "Бет";
+        const aggressiveLabel = aggressiveVerb;
         const isAllInOnly = bounds.max > 0 && bounds.min >= bounds.max;
         const foldLabel = "Пас";
         const checkLabel = "Чек";
@@ -177,6 +179,19 @@
         };
         const timebankHtml = inlineHeroTimebank(table);
 
+        if (fixedRestealDecision) {
+          return `
+            <div class="client-controls is-facing-raise${practiceDecisionClassName}" data-commit-action="allin">
+              ${timebankHtml}
+              <div class="client-row">
+                ${actionButton("fold", foldLabel, "is-fold")}
+                ${actionButton("call", callContext)}
+                ${actionButton("allin", "Рестил", "is-main", "R")}
+              </div>
+            </div>
+          `;
+        }
+
         if (facingRaiseDecision) {
           if ((finalAllInDecision || callOnlyRaiseDecision) && !shortAllInDecision) {
             return `
@@ -204,7 +219,7 @@
           return `
             <div class="client-controls is-facing-raise${practiceDecisionClassName}" data-commit-action="raise-custom">
               ${timebankHtml}
-              ${renderBetWidget(table, "raise-custom")}
+              ${fixedRfiOpeningDecision ? "" : renderBetWidget(table, "raise-custom")}
               <div class="client-row">
                 ${actionButton("fold", foldLabel, "is-fold")}
                 ${actionButton("call", callContext)}

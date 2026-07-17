@@ -408,7 +408,7 @@
       xMin: 14,
       xMax: 86,
       yMin: 14,
-      yMax: 79,
+      yMax: 84,
       heroYMax: 89
     });
 
@@ -430,8 +430,11 @@
         const cos = Math.cos(ang);
         const cy = 54;
         const betCy = 54;
-        const rx = 40;
-        const ry = hero ? 35 : Math.abs(sin) > 0.72 ? 40 : 34;
+        /* Keep the safety envelope added for revealed cards, but use most of
+           the felt again: the previous 40x34 ellipse pulled an 8-max ring into
+           the board and made every seat look gathered around the pot. */
+        const rx = 44;
+        const ry = hero ? 35 : Math.abs(sin) > 0.55 ? 42 : 34;
         const brx = 34;
         const bry = 26;
         const betX = hero ? 68 : round1(50 + brx * cos);

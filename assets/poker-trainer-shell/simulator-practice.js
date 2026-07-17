@@ -73,6 +73,7 @@
       hands: options.hands,
       tables: options.tables || 1,
       tempo: options.tempo || "fast",
+      handMode: options.handMode,
       run: options.run
     }).toString();
   }
@@ -87,6 +88,7 @@
       hands: options.hands,
       tables: options.tables || 1,
       tempo: options.tempo || "fast",
+      handMode: options.handMode,
       run: options.run,
       title: options.title,
       timeoutMs: options.timeoutMs

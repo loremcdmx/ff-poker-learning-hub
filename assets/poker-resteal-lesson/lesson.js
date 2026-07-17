@@ -156,7 +156,7 @@
     });
     if (next === "practice") renderPracticeSetup();
     if (next === "wisdom") requestAnimationFrame(() => renderWisdomStory(state.wisdomStory));
-    if (next !== "idea" && next !== "practice") {
+    if (next === "wisdom" || next === "deep") {
       ensureData().then(() => {
         if (next === "deep") {
           renderTheory();
@@ -428,6 +428,7 @@
           hand,
           openPct: controls.openPct,
           callPct: controls.callPct,
+          foldEquity: metrics.useObservedFold ? metrics.fold : undefined,
           callWeights: weights,
           stack: controls.stack,
           openSize: controls.openSize,
@@ -545,7 +546,9 @@
     $("#callPctOut").textContent = `${call}% рук`;
     $("#thresholdOut").textContent = signed(state.controls.threshold, 1);
     $("#foldSummary").textContent = usesFieldProfile
-      ? `В выборке пасовал ${Math.round(foldAfterOpen)} раз из 100 узких пушей. Матрица считает отдельный диапазон продолжения ${Math.round(field.call * 100)}%.`
+      ? field.useObservedFold
+        ? `Опен этого типа уже 12%-ного учебного минимума: матрица использует наблюдаемые ${Math.round(foldAfterOpen)}% пасов и около ${Math.round(field.call * 100)}% продолжения.`
+        : `В выборке на уже сделанные пуши пасовал ${Math.round(foldAfterOpen)} раз из 100. Эту частоту не переносим на все руки: матрица считает отдельный диапазон продолжения ${Math.round(field.call * 100)}%.`
       : `После опена выбросит примерно ${Math.round(foldAfterOpen)} раз из 100.`;
   }
 
@@ -573,14 +576,17 @@
       : opens[category]?.BTN?.open_clean_pct || 0;
     const fold = weightedField(category, vsJam, "fold_pct");
     const empiricalCall = open * (1 - fold);
-    // Field fold-to-jam is selected on naturally narrow jams. Keep it as
-    // evidence, but build recommendations from a structural continuation
-    // range that is never narrower than the 12% teaching baseline at 25-40 BB.
-    const call = Math.min(open, Math.max(empiricalCall, 0.12));
+    // Field fold-to-jam is selected on naturally narrow jams. Keep the 12%
+    // structural continuation floor for normal opening ranges. When the whole
+    // opening range is itself below 12%, that floor cannot fit inside it; use
+    // the observed continuation instead of collapsing fold equity to zero.
+    const useObservedFold = open < 0.12;
+    const call = useObservedFold ? empiricalCall : Math.max(empiricalCall, 0.12);
     return {
       open,
       fold,
       call,
+      useObservedFold,
       n: category === "overall"
         ? Object.values(vsJam).reduce((sum, item) => sum + (item.n_faced || 0), 0)
         : vsJam[category]?.n_faced || 0
@@ -935,7 +941,7 @@
     if (restoredUnlock) {
       state.unlocked = true;
       $$(".step-tab").forEach((tab) => { tab.disabled = false; });
-      if (["idea", "wisdom", "deep", "practice"].includes(saved.step)) showStep(saved.step);
+      if (["idea", "wisdom", "data", "deep", "practice"].includes(saved.step)) showStep(saved.step);
     }
     setTimeout(() => ensureData().catch(() => {}), 180);
   }

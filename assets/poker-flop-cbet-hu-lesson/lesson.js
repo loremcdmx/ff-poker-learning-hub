@@ -332,8 +332,16 @@
     }
   };
 
+  const SNAPSHOT_ACTIONS = [
+    { key: "check", label: "Чек" },
+    { key: "small", label: "С-бет 25–33%" },
+    { key: "large", label: "С-бет 50–67%" }
+  ];
+  const SNAPSHOT_SEAT_ORDER = ["UTG", "HJ", "CO", "BTN", "SB", "BB"];
+
   const state = {
     step: "deal",
+    dealChoice: "",
     cohortMode: "rank",
     rank: 15,
     leagueBand: "11-17",
@@ -345,19 +353,21 @@
     trainerIndex: 0,
     trainerScore: 0,
     trainerAnswered: false,
+    trainerChoice: "",
+    trainerRunning: false,
     trainerSpot: null,
     trainerQueue: [],
     trainerLastKey: ""
   };
 
   const pageParams = new URLSearchParams(window.location.search);
-  const requestedStep = pageParams.get("step");
+  const requestedStepRaw = pageParams.get("step");
+  const requestedStep = requestedStepRaw === "simulator" ? "practice" : requestedStepRaw;
   const isEmbedded = pageParams.get("embed") === "1" || window.self !== window.top;
   document.documentElement.dataset.embed = String(isEmbedded);
 
   const rawData = window.FF_FLOP_CBET_HU_DATA || null;
   const model = buildModel(rawData);
-  let simulatorController = null;
 
   function query(selector, root) {
     return (root || document).querySelector(selector);
@@ -1135,52 +1145,6 @@
     renderField();
   }
 
-  function ensureSimulator() {
-    if (simulatorController) return simulatorController;
-    const host = query("[data-cbet-simulator]");
-    if (!host) return null;
-    const embed = window.PokerSimulatorEmbed;
-    if (!embed || typeof embed.mount !== "function") {
-      host.textContent = "Не удалось открыть симулятор. Обнови страницу и попробуй ещё раз.";
-      host.classList.add("is-unavailable");
-      return null;
-    }
-
-    host.setAttribute("aria-busy", "true");
-    host.classList.add("is-loading");
-    simulatorController = embed.mount(host, {
-      tableCount: 1,
-      tempo: "calm",
-      pack: "cbet-rvbb",
-      autoStart: true,
-      cacheKey: "cbet-rvbb-v3",
-      timeoutMs: 6000,
-      title: "C-bet BTN против BB"
-    });
-
-    simulatorController.ready.then(() => {
-      host.setAttribute("aria-busy", "false");
-      host.classList.remove("is-loading");
-    }).catch(() => {
-      const simulatorUrl = simulatorController?.url || "poker-simulator.html?embedded=1&pack=cbet-rvbb&autostart=1";
-      simulatorController?.destroy?.();
-      host.classList.remove("is-loading", "poker-simulator-embed");
-      host.classList.add("is-unavailable");
-      host.setAttribute("aria-busy", "false");
-
-      const message = document.createElement("p");
-      message.textContent = "Встроенный симулятор не загрузился в этом окне.";
-      const link = document.createElement("a");
-      link.className = "simulator-fallback-link";
-      link.href = simulatorUrl;
-      link.target = "_blank";
-      link.rel = "noopener";
-      link.textContent = "Открыть симулятор отдельно";
-      host.replaceChildren(message, link);
-    });
-    return simulatorController;
-  }
-
   function setStep(step, focusTab) {
     const screen = query(`[data-step="${step}"]`);
     const tab = query(`[data-step-target="${step}"]`);
@@ -1198,7 +1162,6 @@
       item.setAttribute("aria-selected", String(active));
       item.tabIndex = active ? 0 : -1;
     });
-    if (step === "simulator") ensureSimulator();
     if (focusTab && tab) tab.focus();
     const reduceMotion = typeof window.matchMedia === "function"
       && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1242,40 +1205,121 @@
     host.append(eyebrow, heading, paragraph, button);
   }
 
-  function initDeal() {
-    hydrateStaticColorBlockCards();
-    queryAll("[data-deal-action]").forEach((button) => {
-      button.addEventListener("click", () => {
-        queryAll("[data-deal-action]").forEach((item) => {
-          const selected = item === button;
-          item.classList.toggle("is-selected", selected);
-          item.setAttribute("aria-pressed", String(selected));
-        });
-        const action = button.dataset.dealAction;
-        if (action === "25" || action === "33") {
-          replaceCoachFeedback(
-            "Да — это простой c-bet",
-            "На сухом A-high не нужно искать редкую причину для чека. 25–33% — понятный базовый план для широкого диапазона Hero.",
-            "Верный учебный ориентир"
-          );
-          return;
-        }
-        if (action === "check") {
-          replaceCoachFeedback(
-            "Ты переусложнил простой спот",
-            "Q-high кажется слабой рукой, но весь диапазон Hero силён на A-high. Для новичка полезнее сначала освоить широкий мелкий c-bet, а тонкие чеки добавить позже.",
-            "Слабая рука ≠ слабый диапазон"
-          );
-          return;
-        }
-        replaceCoachFeedback(
-          "С воздухом достаточно меньшего",
-          "50–67% оставь для понятной причины — например, сильного вэлью против соперника, который часто коллирует. На сухом A-high базовый широкий размер — 25–33%.",
-          "Крупный сайз — не range size"
-        );
+  function snapshotSeats() {
+    return SNAPSHOT_SEAT_ORDER.map((label) => ({
+      label,
+      state: label === "BTN" ? "hero" : label === "BB" ? "waiting" : "folded",
+      stackBb: label === "BTN" || label === "BB" ? 38 : label === "SB" ? 39.5 : 40
+    }));
+  }
+
+  function snapshotOptions(correctKey) {
+    return SNAPSHOT_ACTIONS.map((option) => ({
+      ...option,
+      correct: option.key === correctKey
+    }));
+  }
+
+  function snapshotSpot(spot, options = {}) {
+    const correctKey = spot.accepted && spot.accepted[0] || "small";
+    const opponent = spot.opponent || "чек · ридов нет";
+    return {
+      id: options.id || spot.key || trainerSpotKey(spot.board, spot.hand),
+      title: spot.structure,
+      hand: spot.hand.map(normalizeCardCode).join(" "),
+      question: `BB чекнул (${opponent}). Что делаешь?`,
+      answer: spot.explanation || "",
+      context: "BTN открыл 2 BB, BB заколлировал и прочекал флоп.",
+      table: {
+        seats: snapshotSeats(),
+        heroPosition: "BTN",
+        heroStack: "38 BB",
+        effectiveStack: "38 BB",
+        pot: "4.5 BB",
+        anteBb: 0,
+        heroCards: spot.hand,
+        boardCards: spot.board,
+        street: "flop",
+        actionLine: ["BB check"],
+        historyLine: "UTG, HJ, CO и SB выбросили · BTN открыл 2 BB · BB заколлировал",
+        toCall: 0,
+        currentBet: 0,
+        dealerPosition: "BTN"
+      },
+      options: snapshotOptions(correctKey)
+    };
+  }
+
+  function renderSnapshotDecision(host, spot, selectedKey) {
+    if (!host) return null;
+    if (!window.FFTrainerSimulator || typeof window.FFTrainerSimulator.renderDecision !== "function") {
+      host.innerHTML = '<p class="table-load-error">Функциональный стол не загрузился. Обнови страницу.</p>';
+      return null;
+    }
+    try {
+      return window.FFTrainerSimulator.renderDecision(host, spot, {
+        answered: Boolean(selectedKey),
+        selectedKey: selectedKey || "",
+        finished: false
+      }, {
+        decimalComma: true
       });
-      button.setAttribute("aria-pressed", "false");
+    } catch (error) {
+      host.innerHTML = '<p class="table-load-error">Не удалось собрать ситуацию. Обнови страницу.</p>';
+      return null;
+    }
+  }
+
+  function introSnapshotSpot() {
+    return snapshotSpot({
+      key: "cbet-intro-a-high-dry",
+      structure: "A-high · сухая",
+      board: ["Ac", "7d", "2h"],
+      hand: ["Qs", "Js"],
+      opponent: "чек · ридов нет",
+      accepted: ["small"],
+      explanation: "На сухом A-high базовый широкий размер — 25–33% банка."
     });
+  }
+
+  function renderDeal() {
+    renderSnapshotDecision(query("[data-deal-table]"), introSnapshotSpot(), state.dealChoice);
+  }
+
+  function answerDeal(action) {
+    if (state.dealChoice || !SNAPSHOT_ACTIONS.some((option) => option.key === action)) return;
+    state.dealChoice = action;
+    renderDeal();
+    if (action === "small") {
+      replaceCoachFeedback(
+        "Да — это простой c-bet",
+        "На сухом A-high не нужно искать редкую причину для чека. 25–33% — понятный базовый план для широкого диапазона Hero.",
+        "Верный учебный ориентир"
+      );
+      return;
+    }
+    if (action === "check") {
+      replaceCoachFeedback(
+        "Ты переусложнил простой спот",
+        "Q-high кажется слабой рукой, но весь диапазон Hero силён на A-high. Для новичка полезнее сначала освоить широкий мелкий c-bet, а тонкие чеки добавить позже.",
+        "Слабая рука ≠ слабый диапазон"
+      );
+      return;
+    }
+    replaceCoachFeedback(
+      "С воздухом достаточно меньшего",
+      "50–67% оставь для понятной причины — например, сильного вэлью против соперника, который часто коллирует. На сухом A-high базовый широкий размер — 25–33%.",
+      "Крупный сайз — не range size"
+    );
+  }
+
+  function initDeal() {
+    const host = query("[data-deal-table]");
+    host.addEventListener("click", (event) => {
+      const action = event.target.closest("[data-option-key]");
+      if (action) answerDeal(action.dataset.optionKey);
+    });
+    renderDeal();
   }
 
   function initRankSelect() {
@@ -2050,6 +2094,8 @@
 
   function replaceTrainerFeedback(kicker, title, copy, lesson) {
     const host = query("[data-trainer-feedback]");
+    host.classList.toggle("is-correct", kicker === "Верно");
+    host.classList.toggle("is-wrong", kicker === "Не совсем");
     host.replaceChildren();
     host.append(
       textElement("p", "eyebrow", kicker),
@@ -2063,6 +2109,13 @@
     return `${board.join(",")}|${hand.slice().sort().join(",")}`;
   }
 
+  function trainerActionGroup(action) {
+    if (action === "check") return "check";
+    if (["25", "33", "small"].includes(action)) return "small";
+    if (["50", "67", "large"].includes(action)) return "large";
+    return "";
+  }
+
   function normalizedTrainerSpot(spot) {
     const board = (Array.isArray(spot && spot.board) ? spot.board : [])
       .map(normalizeCardCode)
@@ -2071,10 +2124,17 @@
       .map(normalizeCardCode)
       .filter(Boolean);
     if (board.length !== 3 || hand.length !== 2 || new Set([...board, ...hand]).size !== 5) return null;
+    const accepted = Array.from(new Set(
+      (Array.isArray(spot && spot.accepted) ? spot.accepted : [])
+        .map(trainerActionGroup)
+        .filter(Boolean)
+    ));
+    if (accepted.length !== 1) return null;
     return {
       ...spot,
       board,
       hand,
+      accepted,
       key: trainerSpotKey(board, hand)
     };
   }
@@ -2180,6 +2240,13 @@
     return spot;
   }
 
+  function updateTrainerHud() {
+    const completed = state.trainerIndex + (state.trainerAnswered ? 1 : 0);
+    query("[data-trainer-hands]").textContent = String(completed);
+    query("[data-trainer-correct]").textContent = String(state.trainerScore);
+    query("[data-trainer-misses]").textContent = String(Math.max(0, completed - state.trainerScore));
+  }
+
   function renderTrainer() {
     const spot = state.trainerSpot || takeTrainerSpot();
     const isLoose = spot.opponentClass === "is-loose";
@@ -2187,51 +2254,35 @@
     context.textContent = isLoose ? `ФИШ · ${spot.structure}` : spot.structure;
     context.classList.toggle("is-loose", isLoose);
     query("[data-trainer-title]").textContent = `Раздача ${state.trainerIndex + 1}`;
-    const opponent = query("[data-trainer-opponent]");
-    opponent.textContent = spot.opponent;
-    opponent.classList.toggle("is-loose", isLoose);
-    const villainSeat = opponent.closest(".seat-villain");
-    villainSeat.classList.toggle("is-loose", isLoose);
-    villainSeat.setAttribute(
-      "aria-label",
-      isLoose ? `Big Blind, фиш: ${spot.opponent}` : `Big Blind: ${spot.opponent}`
+    renderSnapshotDecision(
+      query("[data-trainer-table]"),
+      snapshotSpot(spot),
+      state.trainerAnswered ? state.trainerChoice : ""
     );
-    renderTrainerCards(query("[data-trainer-board]"), spot.board, "Флоп");
-    renderTrainerCards(query("[data-trainer-hand]"), spot.hand, "Карты Hero");
-    const completed = state.trainerIndex + (state.trainerAnswered ? 1 : 0);
-    query("[data-trainer-score]").textContent = `${state.trainerScore} / ${completed}`;
+    updateTrainerHud();
 
-    queryAll("[data-trainer-action]").forEach((button) => {
-      button.disabled = state.trainerAnswered;
-      button.classList.remove("is-selected", "is-answer", "is-wrong");
-      button.setAttribute("aria-pressed", "false");
-    });
     const next = query("[data-trainer-next]");
     next.disabled = !state.trainerAnswered;
     next.textContent = "Следующая раздача";
-    replaceTrainerFeedback(
-      spot.structure,
-      "Что делаешь?"
-    );
+    if (!state.trainerAnswered) {
+      replaceTrainerFeedback(
+        spot.structure,
+        "Что делаешь?",
+        `BB ${spot.opponent}.`
+      );
+    }
   }
 
   function answerTrainer(action) {
     if (state.trainerAnswered) return;
     const spot = state.trainerSpot;
+    if (!SNAPSHOT_ACTIONS.some((option) => option.key === action)) return;
     const correct = spot.accepted.includes(action);
     state.trainerAnswered = true;
+    state.trainerChoice = action;
     if (correct) state.trainerScore += 1;
 
-    queryAll("[data-trainer-action]").forEach((button) => {
-      const accepted = spot.accepted.includes(button.dataset.trainerAction);
-      const chosen = button.dataset.trainerAction === action;
-      button.disabled = true;
-      button.classList.toggle("is-answer", accepted);
-      button.classList.toggle("is-wrong", chosen && !correct);
-      button.classList.toggle("is-selected", chosen);
-      button.setAttribute("aria-pressed", String(chosen));
-    });
-    query("[data-trainer-score]").textContent = `${state.trainerScore} / ${state.trainerIndex + 1}`;
+    renderTrainer();
     query("[data-trainer-next]").disabled = false;
     query("[data-trainer-next]").textContent = "Следующая раздача";
     const incorrectLead = action === "check" && spot.checkFeedback
@@ -2243,36 +2294,69 @@
       `${correct ? "Хороший учебный выбор. " : incorrectLead}${spot.explanation}`,
       "Сначала структура → потом размер."
     );
-    query("[data-trainer-next]").focus();
+    query("[data-trainer-next]").focus({ preventScroll: true });
+    if (window.matchMedia("(max-width: 860px)").matches) {
+      window.requestAnimationFrame(() => {
+        query("[data-trainer-feedback]").scrollIntoView({ block: "nearest", behavior: "auto" });
+      });
+    }
   }
 
   function resetTrainer() {
     state.trainerIndex = 0;
     state.trainerScore = 0;
     state.trainerAnswered = false;
+    state.trainerChoice = "";
     state.trainerSpot = null;
     state.trainerQueue = [];
     state.trainerLastKey = "";
     takeTrainerSpot();
     renderTrainer();
-    query("[data-trainer-action]").focus();
+  }
+
+  function setTrainerRunning(running) {
+    state.trainerRunning = Boolean(running);
+    query("[data-trainer-setup]").hidden = state.trainerRunning;
+    query("[data-trainer-run]").hidden = !state.trainerRunning;
+    query("#practiceScreen").classList.toggle("is-running", state.trainerRunning);
+  }
+
+  function focusTrainerActions() {
+    window.requestAnimationFrame(() => {
+      const action = query("[data-trainer-table] .table-action");
+      action?.focus({ preventScroll: true });
+      action?.closest(".client-controls")?.scrollIntoView({ block: "end", behavior: "auto" });
+    });
+  }
+
+  function startTrainer() {
+    resetTrainer();
+    setTrainerRunning(true);
+    focusTrainerActions();
+  }
+
+  function exitTrainer() {
+    setTrainerRunning(false);
+    query("[data-trainer-start]").focus();
   }
 
   function initTrainer() {
-    queryAll("[data-trainer-action]").forEach((button) => {
-      button.addEventListener("click", () => answerTrainer(button.dataset.trainerAction));
+    query("[data-trainer-table]").addEventListener("click", (event) => {
+      const action = event.target.closest("[data-option-key]");
+      if (action) answerTrainer(action.dataset.optionKey);
     });
     query("[data-trainer-next]").addEventListener("click", () => {
       if (!state.trainerAnswered) return;
       state.trainerIndex += 1;
       state.trainerAnswered = false;
+      state.trainerChoice = "";
       takeTrainerSpot();
       renderTrainer();
-      query("[data-trainer-action]").focus();
+      focusTrainerActions();
     });
-    query("[data-trainer-reset]").addEventListener("click", resetTrainer);
-    takeTrainerSpot();
-    renderTrainer();
+    query("[data-trainer-start]").addEventListener("click", startTrainer);
+    query("[data-trainer-exit]").addEventListener("click", exitTrainer);
+    setTrainerRunning(false);
   }
 
   initNavigation();
@@ -2283,7 +2367,7 @@
   renderDataMeta();
   renderField();
   renderBoardExamples();
-  if (["deal", "main", "field", "practice", "examples", "simulator"].includes(requestedStep)) {
+  if (["deal", "main", "field", "practice", "examples"].includes(requestedStep)) {
     setStep(requestedStep, false);
   } else {
     document.documentElement.dataset.step = state.step;

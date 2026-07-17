@@ -57,9 +57,27 @@ for (const [hand, expected] of Object.entries(wisdomExpected)) {
 }
 
 const vsJam = JSON.parse(readFileSync(new URL("data/field_vs_jam.json", toolRoot), "utf8"));
+const fieldCalls = JSON.parse(readFileSync(new URL("data/field_call_range.json", toolRoot), "utf8"));
 assert.equal(vsJam.pooled.good_reg.fold_pct, 0.7997);
 assert.equal(vsJam.pooled.weak_reg.fold_pct, 0.753);
 assert.equal(vsJam.pooled.aggro_fish.fold_pct, 0.6415);
 assert.equal(vsJam.pooled.passive_fish.fold_pct, 0.5015);
+
+const passiveFishWeights = fieldCalls.by_category.passive_fish.hands;
+const passiveFishQJo = engine.fieldHand({
+  hand: "QJo",
+  openPct: 10.56,
+  callPct: 5.26416,
+  foldEquity: vsJam.pooled.passive_fish.fold_pct,
+  callWeights: passiveFishWeights,
+  stack: 40,
+  openSize: 2,
+  ante: 1,
+  bounty: 0,
+  ranking,
+  equityFor
+});
+assert.equal(passiveFishQJo.foldEquity, 0.5015);
+assert.ok(Math.abs(passiveFishQJo.ev - (-1.9102)) < 0.001, `passive-fish QJo EV ${passiveFishQJo.ev}`);
 
 console.log(`PASS resteal presets: standard ${(standard.pct * 100).toFixed(1)}%, worst ${(worst.pct * 100).toFixed(1)}%, field FE anchors`);

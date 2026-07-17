@@ -252,7 +252,7 @@
     }),
     leagueDefenseModel: Object.freeze({
       file: "assets/poker-bb-call-defense-lesson/data/ff-bb-defense-ranks.json",
-      version: "ff-bb-defense-ranks-20260715-v2"
+      version: "ff-bb-defense-ranks-20260717-stack-bands-v3"
     }),
     firstSpot: Object.freeze(firstSpot),
     practiceSpots: Object.freeze(practiceSpots)

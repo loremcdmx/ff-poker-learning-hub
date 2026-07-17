@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,6 +17,7 @@ const mediaPlayerJs = fs.readFileSync(path.join(repoRoot, "assets/ffstart-course
 const ffRealization = JSON.parse(fs.readFileSync(path.join(lessonRoot, "data/ff-bb-call-realization.json"), "utf8"));
 const leagueDefenseDataPath = path.join(lessonRoot, "data/ff-bb-defense-ranks.json");
 const practiceAdapter = fs.readFileSync(path.join(repoRoot, "assets/poker-trainer-shell/simulator-practice.js"), "utf8");
+const assetHash = (file) => createHash("sha256").update(fs.readFileSync(path.join(lessonRoot, file))).digest("hex").slice(0, 12);
 
 const ids = [
   "ideaScreen", "wisdomScreen", "dataScreen", "deepScreen", "videoScreen", "practiceScreen", "memoryScreen",
@@ -24,7 +26,7 @@ const ids = [
   "oddsSizeTabs", "rangeSizeTabs", "positionTabs", "rangeChart",
   "realizationRatio", "realizationDetail",
   "leagueDefenseSlide", "leagueDefenseTitle",
-  "leaguePositionTabs", "leagueSizeTabs", "leagueTabs", "leagueDefenseComparison",
+  "leagueStackTabs", "leaguePositionTabs", "leagueSizeTabs", "leagueTabs", "leagueDefenseComparison",
   "noviceDefenseChart", "selectedLeagueDefenseChart", "leagueDefenseSource",
   "practiceSetup", "practiceRun", "practiceTable", "practiceCoach",
   "startPracticeSession", "exitPractice",
@@ -53,9 +55,9 @@ assert.doesNotMatch(html, /Позиция меняет силу ренджа|М�
 assert.doesNotMatch(css, /\.position-contrast/);
 assert.match(js, /button\.className = "wisdom-story-dot"/);
 assert.ok(fs.existsSync(leagueDefenseDataPath), "FF league-defense data file");
-assert.match(contentJs, /leagueDefenseModel:\s*Object\.freeze\(\{[\s\S]*?file:\s*"assets\/poker-bb-call-defense-lesson\/data\/ff-bb-defense-ranks\.json"[\s\S]*?version:\s*"ff-bb-defense-ranks-20260715-v2"/);
+assert.match(contentJs, /leagueDefenseModel:\s*Object\.freeze\(\{[\s\S]*?file:\s*"assets\/poker-bb-call-defense-lesson\/data\/ff-bb-defense-ranks\.json"[\s\S]*?version:\s*"ff-bb-defense-ranks-20260717-stack-bands-v3"/);
 assert.match(html, /Слева — ранги 15–18; ранг 15 также остаётся внутри 3 лиги справа/);
-assert.match(html, /poker-bb-call-defense-lesson\/data\.js\?v=20260715-ffstart-handoff-v18/);
+assert.ok(html.includes(`poker-bb-call-defense-lesson/data.js?v=${assetHash("data.js")}`), "BB data JS cache token");
 assert.match(js, /function ensureLeagueDefenseData\(\)/);
 assert.match(js, /fetch\(config\.file \+ "\?v=" \+ config\.version\)/);
 assert.match(js, /!payload \|\| !payload\.meta \|\| !payload\.aggregates \|\| !payload\.hands/);
@@ -65,27 +67,34 @@ const dataScreenMarkup = html.slice(html.indexOf('<section class="screen league-
 assert.doesNotMatch(wisdomScreenMarkup, /id="leagueDefenseSlide"/, "main carousel no longer owns the FF data slide");
 assert.match(dataScreenMarkup, /id="leagueDefenseSlide"/, "FF comparison lives in its own lesson tab");
 assert.doesNotMatch(dataScreenMarkup, /data-wisdom-slide/, "standalone FF comparison is not carousel-controlled");
+assert.match(dataScreenMarkup, /Как играют в FF/);
+assert.match(dataScreenMarkup, /Кто лучше защищает BB — лучше повышается по ABI/);
+assert.doesNotMatch(dataScreenMarkup, /Данные FunFarm · связь по когортам|Навык защиты BB растёт вместе с ABI/);
 assert.match(js, /event\.target\.closest && event\.target\.closest\('\[role="tablist"\], \.league-range-matrix'\)/, "carousel arrows ignore league controls and matrices");
 assert.match(js, /function renderLeagueRangeCard\([\s\S]*?Content\.matrixHandAt\(rowIndex, columnIndex\)[\s\S]*?data-league-hand=/);
 assert.match(js, /class="league-range-matrix" role="grid"/);
 assert.match(js, /function setupLeagueDefenseInteractions\(\)[\s\S]*?event\.preventDefault\(\);\s*event\.stopPropagation\(\);[\s\S]*?cell\.closest\("\.league-range-matrix"\)/, "matrix arrows stay inside the active chart");
 assert.match(js, /function leagueCohortItems\(\)[\s\S]*?league3[\s\S]*?league2[\s\S]*?league1/);
-assert.match(js, /leaguePositionTabs:\s*"leagueDefenseComparison"[\s\S]*?leagueSizeTabs:\s*"leagueDefenseComparison"[\s\S]*?leagueTabs:\s*"selectedLeagueDefenseChart"/);
+assert.match(js, /leagueStackTabs:\s*"leagueDefenseComparison"[\s\S]*?leaguePositionTabs:\s*"leagueDefenseComparison"[\s\S]*?leagueSizeTabs:\s*"leagueDefenseComparison"[\s\S]*?leagueTabs:\s*"selectedLeagueDefenseChart"/);
 assert.match(js, /button\.addEventListener\("keydown"[\s\S]*?event\.preventDefault\(\);\s*event\.stopPropagation\(\);[\s\S]*?var tabs = Array\.from\(root\.querySelectorAll\('\[role="tab"\]'\)\)/, "segmented-control arrows do not advance the carousel");
 assert.doesNotMatch(html, /id="leagueAbiSummary"|id="leagueHandDetail"/);
 assert.doesNotMatch(js, /renderLeagueHandDetail|#leagueAbiSummary|abiCorrelation/);
 assert.doesNotMatch(css, /\.league-abi-summary|\.league-hand-detail/);
-assert.match(html, /class="league-filter-group is-position"[\s\S]*class="league-filter-group is-size"[\s\S]*class="league-filter-group is-league"/);
+assert.match(html, /class="league-filter-group is-stack"[\s\S]*class="league-filter-group is-position"[\s\S]*class="league-filter-group is-size"[\s\S]*class="league-filter-group is-league"/);
 assert.match(css, /\.league-filter-group\.is-position \.segmented-control \{ grid-template-columns: repeat\(5, minmax\(0, 1fr\)\); \}/);
-assert.match(css, /\.league-filter-group\.is-size \.segmented-control,[\s\S]*?\.league-filter-group\.is-league \.segmented-control \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}/);
+assert.match(css, /\.league-filter-group\.is-stack \.segmented-control,[\s\S]*?\.league-filter-group\.is-size \.segmented-control,[\s\S]*?\.league-filter-group\.is-league \.segmented-control \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}/);
+assert.match(js, /leagueStackKey:\s*"40_70"/);
+assert.match(js, /\{ key: "70_plus", label: "70 BB\+" \}[\s\S]*?\{ key: "40_70", label: "40–70 BB" \}[\s\S]*?\{ key: "0_40", label: "0–40 BB" \}/);
 assert.equal((html.match(/data-step-target=/g) || []).length, 7);
 assert.equal((html.match(/<small>Стек 60 BB<\/small>/g) || []).length, 2, "intro table keeps both players at 60 BB");
-assert.match(html, />3\. Данные</);
+assert.match(html, />3\. Видео</);
 assert.match(html, />4\. Чарты</);
 assert.doesNotMatch(html, />4\. Подробнее</);
-assert.match(html, />5\. Видео</);
+assert.match(html, />5\. Данные</);
 assert.match(html, />6\. Практика</);
 assert.match(html, />7\. Проверка памяти</);
+const stepTabsMarkup = html.match(/<nav class="step-tabs"[\s\S]*?<\/nav>/)?.[0] || "";
+assert.match(stepTabsMarkup, /data-step-target="idea"[\s\S]*?>1\. Раздача<[\s\S]*?data-step-target="wisdom"[\s\S]*?>2\. Главное<[\s\S]*?data-step-target="video"[\s\S]*?>3\. Видео<[\s\S]*?data-step-target="deep"[\s\S]*?>4\. Чарты<[\s\S]*?data-step-target="data"[\s\S]*?>5\. Данные<[\s\S]*?data-step-target="practice"[\s\S]*?>6\. Практика<[\s\S]*?data-step-target="memory"[\s\S]*?>7\. Проверка памяти</);
 assert.match(html, /Седьмой шаг · восстанови чарт/);
 const deepScreenMarkup = html.slice(html.indexOf('<section class="screen deep-screen"'), html.indexOf('<section class="screen video-screen"'));
 const videoScreenMarkup = html.slice(html.indexOf('<section class="screen video-screen"'), html.indexOf('<section class="screen practice-screen"'));
@@ -106,6 +115,8 @@ assert.match(html, /маленький лишний фолд повторяет�
 assert.match(html, /против минрейза с батона эти руки надо защищать/);
 assert.match(html, /Рука входит в диапазон защиты\?/);
 assert.doesNotMatch(html, /Где рука\?/);
+assert.match(html, /Работает для банков 1 на 1/);
+assert.doesNotMatch(html, /Чарт работает один на один/);
 assert.equal((html.match(/data-leak-cards=/g) || []).length, 5);
 assert.match(js, /deckKit\.renderCard\(card, \{ theme: "color-block", mini: true, fourColor: true, className: "leak-color-card" \}\)/);
 assert.match(css, /\.leak-hand-cards \.poker-deck-card \{[\s\S]*?--poker-card-width:/);
@@ -179,10 +190,15 @@ assert.doesNotMatch(html + js + css, /rangeFacts|range-facts|renderRangeFacts|ra
 assert.match(html, /assets\/poker-bb-call-defense-lesson\/base\.css/);
 assert.doesNotMatch(html, /assets\/poker-resteal-lesson/);
 assert.match(js, /if \(chosen\.correct\) state\.stats\.correct \+= 1/);
-assert.match(js, /function focusProgress\(target\)/);
-assert.match(js, /target\.scrollIntoView\(\{ block: "center", inline: "nearest" \}\)/);
+assert.match(js, /function focusProgress\(target, shouldScroll\)/);
+assert.match(js, /shouldScroll !== false[\s\S]*?target\.scrollIntoView\(\{ block: "center", inline: "nearest" \}\)/);
+assert.match(js, /function answerPractice\(key\)[\s\S]*?focusProgress\(next, false\)/, "answering BB practice preserves focus without jumping the viewport");
+assert.match(js, /function restorePracticeViewport\(viewportX, viewportY\)[\s\S]*?requestAnimationFrame[\s\S]*?window\.scrollTo\(viewportX, viewportY\)/, "BB practice restores the current viewport after browser scroll anchoring");
+assert.match(js, /function advancePractice\(\)[\s\S]*?restorePracticeViewport\(viewportX, viewportY\)/, "advancing BB practice preserves the current viewport");
+assert.match(js, /function answerPractice\(key\)[\s\S]*?restorePracticeViewport\(viewportX, viewportY\)/, "answering BB practice preserves the current viewport");
 assert.match(js, /#openWisdom[\s\S]+focusProgress\(next\)/);
-assert.match(js, /#practiceTable \[data-practice-next\][\s\S]+focusProgress\(next\)/);
+assert.match(js, /#practiceTable \[data-practice-next\][\s\S]+focusProgress\(next, false\)/);
+assert.match(js, /function advancePractice\(\)[\s\S]+focusProgress\(action, false\)/);
 assert.match(js, /function renderPracticeRangeProof\(spot\)/);
 assert.match(js, /data-matrix-row/);
 assert.match(js, /data-practice-next/);
@@ -216,6 +232,16 @@ assert.match(css, /\.bb-call-lesson \.practice-screen\.is-running \.practice-run
 assert.match(css, /\.bb-call-lesson \.practice-layout\.has-answer #practiceCoach \{[^}]*max-height: none;[^}]*overflow: visible/);
 assert.match(html, /id="startPracticeSession">Попробовать<\/button>/);
 assert.doesNotMatch(html, /data-session-hands|Количество решений|0 \/ 10/);
+assert.match(html, /class="panel practice-run" id="practiceRun"/);
+assert.match(html, /class="practice-hud-overall"/);
+assert.match(html, /Промахи <b id="practiceMisses">0<\/b>/);
+assert.match(html, /<small>Пропущен колл<\/small><b id="practiceMissedCalls">0<\/b>/);
+assert.match(html, /<small>Колл вместо паса<\/small><b id="practiceWideCalls">0<\/b>/);
+assert.match(html, /<small>Пропущен 3-бет<\/small><b id="practiceMissedThreeBets">0<\/b>/);
+assert.doesNotMatch(html, /Пропущенные коллы|Лишние коллы|Пропущенные 3-беты/);
+assert.match(js, /#practiceMisses"\)\.textContent = String\(Math\.max\(0, played - state\.stats\.correct\)\)/);
+assert.match(js, /key === "call" && spot\.correct === "fold"/);
+for (const token of [".practice-hud-overall", ".practice-error-insights", ".practice-error-summary"]) assert.ok(css.includes(token), token);
 assert.match(js, /var cycle = Math\.floor\(state\.practiceIndex \/ spots\.length\)/);
 assert.match(js, /var offset = \(state\.practiceRun \+ cycle \* 3\) % spots\.length/);
 assert.match(js, /tableOptions\.nextLabel = "Следующая раздача"/);
@@ -270,14 +296,19 @@ assert.match(js, /\["idea", "wisdom", "data", "deep", "video", "practice", "memo
 assert.doesNotMatch(js, /Реализуем примерно 72% сырого эквити/);
 assert.doesNotMatch(html, /<svg\b/i);
 assert.match(html, /poker-progress\/progress\.js\?v=20260715-ffstart-handoff-v16/);
-assert.match(html, /poker-bb-call-defense-lesson\/lesson\.css\?v=20260716-hide-video-learning-v24/);
+assert.ok(html.includes(`poker-bb-call-defense-lesson/lesson.css?v=${assetHash("lesson.css")}`), "BB lesson CSS cache token");
 assert.match(html, /poker-bb-call-defense-lesson\/recall\.js\?v=20260716-memory-review-v20/);
-assert.match(html, /poker-bb-call-defense-lesson\/lesson\.js\?v=20260716-memory-review-v20/);
+assert.ok(html.includes(`poker-bb-call-defense-lesson/lesson.js?v=${assetHash("lesson.js")}`), "BB lesson JS cache token");
 assert.match(js, /new URLSearchParams\(window\.location\.search\)\.get\("from"\) === "ffstart"/);
 assert.match(js, /function configureFfStartNavigation\(\)[\s\S]*\/ffstart\/blind-versus-blind/);
 assert.match(js, /function reportFfStartPractice\(\)[\s\S]*attempts < 21[\s\S]*api\.setResult\("ffstart_bb-call-defense"/);
 assert.match(js, /score >= 78 \? "passed" : "repeat"/);
 assert.match(js, /reportFfStartPractice\(\);\s*renderPracticeSpot\(\)/);
+const bbActionsSlide = html.match(/<article class="panel wisdom-slide bb-actions-slide"[\s\S]*?<\/article>/)?.[0] || "";
+assert.match(bbActionsSlide, /Цель тренажёра — довести принятие решений по защите BB до автоматизма/);
+assert.match(bbActionsSlide, /В реальной игре 3-й лиги против опена BTN до 2 BB/);
+for (const value of ["14%", "60%", "26%"]) assert.match(bbActionsSlide, new RegExp(value));
+assert.match(css, /\.action-split \{[\s\S]*?grid-template-columns: 14fr 60fr 26fr/);
 assert.match(css, /\.spot-fact\.is-price i \{[^}]*width: 40px/);
 assert.match(css, /@media \(max-width: 1180px\)[\s\S]*?\.topline \{[\s\S]*?flex-direction: column/);
 assert.match(css, /@media \(min-width: 761px\)[\s\S]*?\.league-data-screen \.league-range-matrix \{[\s\S]*?clamp\(260px, 45svh, 440px\)/);
@@ -288,7 +319,7 @@ assert.doesNotMatch(css, /\.league-range-cell\.is-low-sample \{[^}]*background:/
 assert.match(js, /Серый угол — малая выборка/);
 assert.match(js, /Ранг 15 входит в обе когорты/);
 assert.match(html, /poker-bb-call-defense-lesson\/base\.css\?v=20260716-practice-scroll-v18/);
-assert.match(html, /poker-bb-call-defense-lesson\/lesson\.css\?v=20260716-hide-video-learning-v24/);
+assert.ok(html.includes(`poker-bb-call-defense-lesson/lesson.css?v=${assetHash("lesson.css")}`), "BB lesson CSS cache token remains current");
 assert.match(css, /\.bb-call-lesson \[data-media-learning\]\s*\{\s*display:\s*none;/);
 assert.match(css, /@media \(max-width: 1180px\)[\s\S]*?grid-template-columns: repeat\(7, minmax\(0, 1fr\)\)/);
 assert.match(baseCss, /body\.practice-is-running \.step-tabs \{[\s\S]*?grid-template-columns: repeat\(7, minmax\(0, 1fr\)\)/);
@@ -300,8 +331,8 @@ assert.doesNotMatch(css, /@media \(max-width: 920px\) \{[\s\S]*?\.practice-scree
 assert.match(css, /@media \(max-width: 620px\)[\s\S]*?\.lesson-brand h1 \{[\s\S]*?grid-column: 1 \/ -1/);
 assert.doesNotMatch(css, /\.bb-call-lesson \.step-tab:last-child/);
 assert.doesNotMatch(baseCss, /body\.practice-is-running \.step-tab:last-child/);
-assert.match(css, /\.practice-screen\.is-running \.practice-layout \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) clamp\(320px, 24vw, 350px\)/);
-assert.doesNotMatch(css, /practice-layout\.has-answer\s*\{[^}]*minmax\(350px, 0\.78fr\)/);
+assert.match(css, /\.practice-screen\.is-running \.practice-layout \{[\s\S]*?grid-template-columns: minmax\(0, 1\.25fr\) minmax\(320px, \.75fr\)/);
+assert.match(css, /\.practice-screen\.is-running \.practice-layout\.has-answer \{[\s\S]*?grid-template-columns: minmax\(0, 1\.25fr\) minmax\(320px, \.75fr\)/);
 assert.match(css, /\.bb-range-matrix \{[\s\S]*?grid-template-columns: repeat\(13, minmax\(0, 1fr\)\)/);
 assert.match(css, /\.bb-range-cell\[aria-selected="true"\]/);
 assert.match(css, /\.bb-range-cell:focus-visible/);

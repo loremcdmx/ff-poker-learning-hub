@@ -17,7 +17,7 @@ const rankComparison = readFileSync(new URL("assets/poker-resteal-lesson/rank-co
 const rankCss = readFileSync(new URL("assets/poker-resteal-lesson/rank-comparison.css", repo), "utf8");
 const rankData = readFileSync(new URL("assets/poker-resteal-lesson/data/resteal-rank-data.js", repo), "utf8");
 
-for (const id of ["lessonIntro", "startLesson", "introBtnChips", "introPotChips", "introJamChips", "introHeroCards", "introDealerButton", "firstEncounter", "firstTable", "firstCoach", "wisdomScreen", "wisdomCarouselTrack", "wisdomStoryCounter", "wisdomStoryDots", "wisdomFoldRate", "wisdomHandSummary", "wisdomHandPicker", "wisdomPassRate", "wisdomCallRate", "wisdomDoubleRate", "wisdomRiskDots", "rankEvidenceSlide", "rankGrowthStrip", "rankComparisonFilters", "rankPositionTabs", "rankSizeTabs", "rankDepthTabs", "rankNoviceTitle", "rankNoviceStats", "rankNoviceActionBar", "rankNoviceMatrix", "rankLeagueTitle", "rankLeagueStats", "rankLeagueTabs", "rankLeagueActionBar", "rankLeagueMatrix", "rankHandReadout", "rankEvidenceSource", "deepScreen", "deepMathPanel", "deepFieldPanel", "opponentTabs", "foldSummary", "handMatrix", "practiceSimulatorShell", "restealSimulator", "startPracticeSession", "exitPractice", "infoPopover"]) {
+for (const id of ["lessonIntro", "startLesson", "introBtnChips", "introPotChips", "introJamChips", "introHeroCards", "introDealerButton", "firstEncounter", "firstTable", "firstCoach", "wisdomScreen", "wisdomCarouselTrack", "wisdomStoryCounter", "wisdomStoryDots", "wisdomFoldRate", "wisdomHandSummary", "wisdomHandPicker", "wisdomPassRate", "wisdomCallRate", "wisdomDoubleRate", "wisdomRiskDots", "dataScreen", "rankEvidenceSlide", "rankGrowthStrip", "rankDatasetFacts", "rankComparisonFilters", "rankPositionTabs", "rankSizeTabs", "rankDepthTabs", "rankSpotSummary", "rankNoviceTitle", "rankNoviceStats", "rankNoviceActionBar", "rankNoviceMatrix", "rankLeagueTitle", "rankLeagueStats", "rankLeagueTabs", "rankLeagueActionBar", "rankLeagueMatrix", "rankHandReadout", "rankEvidenceSource", "deepScreen", "deepMathPanel", "deepFieldPanel", "opponentTabs", "foldSummary", "handMatrix", "practiceSimulatorShell", "restealSimulator", "startPracticeSession", "exitPractice", "infoPopover"]) {
   assert.match(html, new RegExp(`id=["']${id}["']`), `${id} exists`);
 }
 for (const script of [
@@ -40,7 +40,10 @@ const restealCatalog = practiceRegistry.slice(practiceRegistry.indexOf("resteal:
 assert.ok(restealCatalog.indexOf("advice.js") < restealCatalog.indexOf("simulator-pack.js"), "advice catalog loads before the practice pack");
 assert.match(featureLoader, /function readyForBoot\(\)[\s\S]*loadPracticePack\(\)/, "simulator boot waits for the requested practice pack");
 assert.match(html, /poker-progress\/progress\.js\?v=20260715-ffstart-handoff-v16/);
-assert.match(html, /poker-resteal-lesson\/lesson\.js\?v=20260715-ffstart-handoff-v16/);
+assert.match(html, /poker-resteal-lesson\/engine\.js\?v=b2b87c4f94e4/);
+assert.match(html, /poker-resteal-lesson\/lesson\.js\?v=87ce01dc1642/);
+assert.match(html, /poker-resteal-lesson\/rank-comparison\.css\?v=a9ab61b4f539/);
+assert.match(html, /poker-resteal-lesson\/rank-comparison\.js\?v=bb66bafdd61b/);
 assert.match(html, /poker-resteal-lesson\/lesson\.css\?v=e9e2767a08ac/);
 assert.match(css, /@media \(max-width:620px\)\{[\s\S]*?\.step-tabs\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\);overflow:visible\}/, "mobile lesson tabs use a visible 2x2 grid");
 assert.match(css, /\.practice-screen\.is-running\{grid-template-columns:minmax\(0,1fr\)\}/, "mobile practice grid cannot expand to child max-content width");
@@ -51,11 +54,16 @@ assert.doesNotMatch(html, /data-control=["']ante["']|pkoToggle|waterfall|<detail
 assert.match(html, /Всегда включён · 1 BB/);
 assert.match(html, />Сыграть раздачу<\/button>/);
 assert.match(html, /class="intro-action-routes"/);
-assert.equal((html.match(/data-wisdom-slide/g) || []).length, 7, "wisdom carousel has seven distinct slides");
-assert.match(html, /id="wisdomStoryCounter"[^>]*>1 из 7</);
+assert.equal((html.match(/data-wisdom-slide/g) || []).length, 6, "wisdom carousel has six focused concept slides");
+assert.match(html, /id="wisdomStoryCounter"[^>]*>1 из 6</);
+const wisdomTrack = html.slice(html.indexOf('id="wisdomCarouselTrack"'), html.indexOf('class="wisdom-carousel-controls"'));
+assert.doesNotMatch(wisdomTrack, /id="rankEvidenceSlide"/, "rank evidence is not trapped inside the wisdom carousel");
+assert.ok(html.indexOf('id="dataScreen"') < html.indexOf('id="rankEvidenceSlide"'), "rank evidence belongs to the standalone data screen");
 assert.match(html, /id="rankNoviceTitle">Совсем новички</, "left comparison cohort stays fixed to novices");
 assert.match(html, /data-step-target="wisdom"/);
+assert.match(html, /data-step-target="data"/);
 assert.match(html, /data-step-target="deep"/);
+assert.match(html, /data-step-target="deep"[^>]*>4\. Математика рестила<\/button>/, "deep-dive tab uses the requested title");
 assert.doesNotMatch(html, /data-step-target="(?:math|field)"/);
 assert.doesNotMatch(html, /data-deep-target=/, "deep content should be one continuous page without duplicate inner tabs");
 assert.doesNotMatch(html, /id="deepFieldPanel"[^>]*hidden/, "opponent adjustment should be visible below ranges and math");
@@ -114,6 +122,9 @@ assert.match(rankData, /"depthOrder":\["25-40","25-30","30-35","35-40"\]/, "rank
 assert.match(rankComparison, /var Data = window\.PokerRestealRankData/);
 assert.match(rankComparison, /league:\s*"league3"/, "league-three is the default comparison cohort");
 assert.match(rankComparison, /chartFor\("novice"\)/, "novice chart is rendered independently of the selected league");
+assert.match(rankComparison, /function renderSpotSummary\(\)/, "data screen summarizes every cohort for the selected spot");
+assert.match(rankComparison, /function renderDatasetFacts\(\)/, "data screen exposes the authoritative cube volume");
+assert.match(rankComparison, /function gradientColor\(value\)/, "matrix fill uses a bounded sequential colour scale");
 for (const league of ["league3", "league2", "league1"]) {
   assert.match(rankComparison, new RegExp(`\\{ key: "${league}", label: "[123] лига" \\}`), `${league} comparison option exists`);
 }
@@ -123,8 +134,11 @@ for (const dimension of ["rankPositionTabs", "rankSizeTabs", "rankDepthTabs"]) {
 assert.match(rankComparison, /\["folds", "Пас"[\s\S]*\["calls", "Колл"[\s\S]*\["small3bets", "3-бет"[\s\S]*\["jams", "Олл-ин"/, "action bars separate folds, calls, small 3-bets, and direct jams");
 assert.match(rankCss, /\.rank-evidence-compare\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/, "rank evidence keeps two equal desktop charts");
 assert.match(rankCss, /\.rank-matrix\s*\{[^}]*grid-template-columns:\s*repeat\(13,\s*minmax\(0,\s*1fr\)\)/, "each rank chart is a 13x13 hand matrix");
-assert.match(rankCss, /@media \(max-width:\s*760px\)[\s\S]*\.wisdom-slide\.rank-evidence-slide\s*\{[^}]*overflow-y:\s*auto/, "rank evidence remains scrollable on narrow screens");
-assert.match(rankCss, /@media \(max-width:\s*760px\)[\s\S]*\.rank-evidence-compare\s*\{[^}]*grid-template-columns:\s*1fr/, "rank charts stack on narrow screens");
+assert.doesNotMatch(rankCss, /\.wisdom-slide\.rank-evidence-slide|max-height:\s*72svh/, "standalone data screen uses page scroll instead of a nested carousel scroller");
+assert.match(rankCss, /@media \(max-width:\s*980px\)[\s\S]*\.rank-evidence-compare\s*\{[^}]*grid-template-columns:\s*1fr/, "rank charts stack before their cells become too small");
+assert.match(rankCss, /\.rank-matrix[^}]*width:\s*min\(100%,\s*440px\)/, "rank matrices are large enough for readable hand labels");
+assert.match(rankCss, /\.rank-cell\s*\{[^}]*color:\s*#f7f7f4[^}]*background:\s*var\(--jam-color/, "cell labels keep fixed high contrast across the gradient");
+assert.match(rankCss, /\.rank-cell\.is-thin:not\(\.is-empty\)[\s\S]*rgba\(255,\s*198,\s*89,\s*\.20\)/, "small samples use an explicit amber hatch");
 
 assert.match(js, /firstChoice:\s*"",\s*\n\s*unlocked:\s*false/, "first-hand answer and persistent lesson unlock are separate state");
 assert.match(js, /if \(!state\.unlocked && next !== "idea"\) return;/, "saved lesson unlock controls tab navigation");
@@ -132,6 +146,7 @@ assert.match(js, /JSON\.stringify\(\{ step: state\.step, unlocked: state\.unlock
 assert.doesNotMatch(js, /JSON\.stringify\(\{[^}]*firstChoice/, "first-hand answer is never persisted");
 assert.match(js, /state\.firstChoice = key;\s*state\.unlocked = true;/, "answering the first hand unlocks the lesson");
 assert.match(js, /const restoredUnlock = Boolean\(saved\.unlocked \|\| saved\.firstChoice\);/, "legacy saved answers migrate to unlock-only progress");
+assert.match(js, /\["idea", "wisdom", "data", "deep", "practice"\]\.includes\(saved\.step\)/, "saved progress can reopen the standalone data screen");
 assert.match(js, /new URLSearchParams\(window\.location\.search\)\.get\("from"\) === "ffstart"/);
 assert.match(js, /practiceHands: FFSTART_COURSE_CONTEXT \? 25 : 10/);
 assert.match(js, /function configureFfStartNavigation\(\)[\s\S]*\/ffstart\/play-session\?session=short-stack-run/);

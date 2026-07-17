@@ -319,7 +319,7 @@
           actionLine: ["BB all-in 24.5 BB", "BTN call 24.5 BB", "Showdown"],
           history: "Три барреля после check-raise",
           reveal: true,
-          result: { winner: "hero", payoutBb: 85.5, heroHand: "Q-high flush", villainHand: "set of Kings" }
+          result: { winner: "hero", payoutBb: 85.5, heroHand: "Q-high straight flush", villainHand: "set of Kings" }
         })
       },
       "showdown-barrel-check": {
@@ -335,7 +335,7 @@
           actionLine: ["BB check", "BTN check", "Showdown"],
           history: "Turn barrel-call · River check-check",
           reveal: true,
-          result: { winner: "hero", payoutBb: 36.5, heroHand: "Q-high flush", villainHand: "set of Kings" }
+          result: { winner: "hero", payoutBb: 36.5, heroHand: "Q-high straight flush", villainHand: "set of Kings" }
         })
       },
       "showdown-checkback-bet": {
@@ -351,7 +351,7 @@
           actionLine: ["BB bet 12 BB", "BTN call 12 BB", "Showdown"],
           history: "Turn check-check · River value bet-call",
           reveal: true,
-          result: { winner: "hero", payoutBb: 40.5, heroHand: "Q-high flush", villainHand: "set of Kings" }
+          result: { winner: "hero", payoutBb: 40.5, heroHand: "Q-high straight flush", villainHand: "set of Kings" }
         })
       },
       "showdown-checkback-check": {
@@ -367,7 +367,7 @@
           actionLine: ["BB check", "BTN check", "Showdown"],
           history: "Turn check-check · River check-check",
           reveal: true,
-          result: { winner: "hero", payoutBb: 16.5, heroHand: "Q-high flush", villainHand: "set of Kings" }
+          result: { winner: "hero", payoutBb: 16.5, heroHand: "Q-high straight flush", villainHand: "set of Kings" }
         })
       }
     }
@@ -434,7 +434,7 @@
     const suits = { c: "♣", d: "♦", h: "♥", s: "♠" };
     const showCards = (cards) => cards.map((card) => `${card[0]}${suits[card[1]] || card[1]}`).join(" ");
     const handLabels = {
-      "Q-high flush": "флеш до дамы",
+      "Q-high straight flush": "стрит-флеш до дамы",
       "set of Kings": "сет королей"
     };
     const hero = showCards(graphSource.hero.cards);

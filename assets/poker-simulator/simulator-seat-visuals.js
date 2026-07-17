@@ -190,7 +190,10 @@
       if (!settings().revealOpponentCardsOnFinish || !table || !seat || seat.isHero) return false;
       if (table.status === "playing" || actionLocked || showdownSeatVisibilityLockActive(table)) return false;
       if (!seat.folded || !seat.foldedAt) return false;
-      if (streetRank(seat.foldedAt) <= streetRank("preflop")) return false;
+      if (
+        streetRank(seat.foldedAt) <= streetRank("preflop")
+        && !settings().revealPreflopFoldedCardsOnFinish
+      ) return false;
       return Array.isArray(seat.cards) && seat.cards.length === 2;
     }
 

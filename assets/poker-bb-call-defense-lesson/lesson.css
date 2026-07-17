@@ -461,7 +461,7 @@
 
 .action-split {
   display: grid;
-  grid-template-columns: 0.7fr 3.4fr 0.8fr;
+  grid-template-columns: 14fr 60fr 26fr;
   gap: 10px;
   min-height: 210px;
   align-items: stretch;
@@ -531,7 +531,7 @@
 
 .league-defense-controls {
   display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 3fr) minmax(0, 3fr);
+  grid-template-columns: minmax(0, 4.5fr) minmax(0, 5fr) minmax(0, 3fr) minmax(0, 3fr);
   gap: 8px;
   padding: 9px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -565,6 +565,7 @@
 }
 
 .league-filter-group.is-position .segmented-control { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.league-filter-group.is-stack .segmented-control,
 .league-filter-group.is-size .segmented-control,
 .league-filter-group.is-league .segmented-control { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
@@ -1414,7 +1415,8 @@
 
 .practice-run {
   display: grid;
-  gap: 14px;
+  gap: 0;
+  padding: 18px;
 }
 
 .bb-call-lesson .practice-screen.is-running {
@@ -1426,18 +1428,22 @@
 
 .bb-call-lesson .practice-screen.is-running .practice-run {
   grid-template-rows: auto auto;
-  gap: 8px;
+  gap: 0;
   min-height: 0;
   height: auto;
 }
 
 .bb-call-lesson .practice-screen.is-running .practice-layout {
-  grid-template-columns: minmax(0, 1fr) clamp(320px, 24vw, 350px);
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr);
   min-height: 0;
 }
 
 .bb-call-lesson .practice-screen.is-running .practice-layout.has-answer {
-  grid-template-columns: minmax(0, 1fr) clamp(320px, 24vw, 350px);
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr);
+}
+
+.bb-call-lesson .practice-screen.is-running .practice-layout .room-stage-head {
+  display: none;
 }
 
 .bb-call-lesson .practice-screen.is-running #practiceCoach {
@@ -1499,36 +1505,138 @@
   display: none;
 }
 
-.practice-hud {
+.bb-call-lesson .practice-hud {
+  position: relative;
+  z-index: 8;
   display: grid;
-  grid-template-columns: repeat(5, minmax(110px, 1fr)) auto;
-  gap: 6px;
-  align-items: stretch;
+  gap: 10px;
+  margin: 0 0 clamp(24px, 2vw, 32px);
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)), rgba(10, 8, 13, 0.92);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.045), 0 14px 28px rgba(0, 0, 0, 0.2);
 }
 
-.practice-hud > span {
+.practice-hud-overall {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 2px 8px;
-  align-content: center;
+  grid-template-columns: repeat(3, minmax(116px, max-content)) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.practice-hud-overall > span {
+  display: flex;
   align-items: baseline;
-  min-height: 46px;
-  padding: 6px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 11px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.035);
+  font-size: 12px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.practice-hud-overall > span b {
+  color: var(--text);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.practice-hud-overall #exitPractice {
+  position: static;
+  justify-self: end;
+  min-height: 44px;
+  margin-left: 0;
+  padding-inline: 18px;
+  border-color: rgba(255, 255, 255, 0.13);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.045);
+}
+
+.practice-error-insights {
+  display: grid;
+  gap: 8px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.practice-error-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 3px;
+}
+
+.practice-error-heading strong {
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.practice-error-heading span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.practice-error-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.practice-error-summary > span {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: 50px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 11px;
   background: rgba(255, 255, 255, 0.03);
 }
 
-.practice-hud small {
-  color: rgba(255, 255, 255, 0.47);
+.practice-error-summary > span::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--bb-call);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bb-call) 16%, transparent);
+}
+
+.practice-error-summary > span.is-wide-call::before {
+  background: var(--bb-fold);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bb-fold) 18%, transparent);
+}
+
+.practice-error-summary > span.is-missed-three-bet::before {
+  background: var(--bb-raise);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bb-raise) 16%, transparent);
+}
+
+.practice-error-summary small {
+  min-width: 0;
   overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.practice-hud b {
-  color: #f7f7fb;
-  font-size: 1rem;
+.practice-error-summary b {
+  color: var(--text);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
 .practice-answer-card {
@@ -2758,13 +2866,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .practice-hud {
-    grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
-  }
-
-  .practice-hud .btn {
-    grid-column: auto;
-  }
 }
 
 @media (max-width: 920px) {
@@ -2966,12 +3067,74 @@
     grid-template-columns: 1fr;
   }
 
-  .practice-hud {
-    grid-template-columns: 1fr 1fr;
-  }
 }
 
 @media (max-width: 620px) {
+  .bb-call-lesson .practice-run {
+    padding: 10px;
+  }
+
+  .bb-call-lesson .practice-hud {
+    gap: 6px;
+    margin-bottom: 22px;
+    padding: 8px;
+  }
+
+  .practice-hud-overall {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .practice-hud-overall > span {
+    gap: 5px;
+    min-height: 40px;
+    padding: 7px 5px;
+    font-size: 10px;
+  }
+
+  .practice-hud-overall > span b {
+    font-size: 15px;
+  }
+
+  .practice-hud-overall #exitPractice {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .practice-error-heading span {
+    display: none;
+  }
+
+  .practice-error-summary {
+    gap: 4px;
+  }
+
+  .practice-error-summary > span {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 3px;
+    min-height: 55px;
+    padding: 6px 3px;
+    text-align: center;
+  }
+
+  .practice-error-summary > span::before {
+    display: none;
+  }
+
+  .practice-error-summary small {
+    overflow: visible;
+    font-size: 8px;
+    line-height: 1.15;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .practice-error-summary b {
+    font-size: 13px;
+  }
+
   .bb-call-lesson .lesson-brand {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);

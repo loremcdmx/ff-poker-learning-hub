@@ -112,6 +112,7 @@ assert.deepEqual(
   [
     "assets/poker-rfi-open-lesson/simulator-pack.css",
     "assets/poker-rfi-open-lesson/data.js",
+    "assets/poker-rfi-open-lesson/practice-stats.js",
     "assets/poker-rfi-open-lesson/simulator-pack.js"
   ],
   "RFI style and scripts load in the allowlisted order"

@@ -87,12 +87,16 @@
     return { hand, foldEquity, equity, ev: jamEv({ stack, openSize, ante, foldEquity, equity, bounty }), callCombos, openCombos };
   }
 
-  function fieldHand({ hand, openPct, callPct, callWeights, stack, openSize, ante, bounty, ranking, equityFor }) {
+  function fieldHand({ hand, openPct, callPct, foldEquity: observedFoldEquity, callWeights, stack, openSize, ante, bounty, ranking, equityFor }) {
     const openRange = buildRange(ranking, openPct, hand);
     const callRange = buildRange(ranking, Math.min(callPct, openPct), hand);
     const openCombos = rangeCombos(openRange);
     const callCombos = rangeCombos(callRange);
-    const foldEquity = openCombos ? Math.max(0, Math.min(0.999, 1 - callCombos / openCombos)) : 0;
+    const rangeFoldEquity = openCombos ? Math.max(0, Math.min(0.999, 1 - callCombos / openCombos)) : 0;
+    const observed = Number(observedFoldEquity);
+    const foldEquity = Number.isFinite(observed)
+      ? Math.max(0, Math.min(0.999, observed))
+      : rangeFoldEquity;
     const entries = Object.entries(callWeights || {}).filter(([candidate]) => candidate !== "unknown" && combosLeft(candidate, hand) > 0);
     const weighted = entries.reduce((out, [candidate, count]) => {
       const weight = Number(count) * (combosLeft(candidate, hand) / totalCombos(candidate));
@@ -101,7 +105,7 @@
       return out;
     }, { total: 0, equity: 0 });
     const equity = weighted.total ? weighted.equity / weighted.total : 0;
-    return { hand, foldEquity, equity, ev: jamEv({ stack, openSize, ante, foldEquity, equity, bounty }), callCombos, openCombos };
+    return { hand, foldEquity, rangeFoldEquity, equity, ev: jamEv({ stack, openSize, ante, foldEquity, equity, bounty }), callCombos, openCombos };
   }
 
   return { RANKS, parseHand, combosLeft, totalCombos, jamEv, handFromPosition, buildRange, theoreticalHand, fieldHand };

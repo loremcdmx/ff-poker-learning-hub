@@ -825,9 +825,21 @@
   function settlePreflopAfterHero(table, settings, heroAction = "") {
     const positions = preflopOrderAfterHero(table);
     const { bigBlind } = blindPositions(table.positions);
+    const practiceActions = Array.isArray(table.practiceScenario?.afterHero)
+      ? table.practiceScenario.afterHero
+      : [];
+    const practiceActionByPosition = new Map(practiceActions
+      .map((action) => [String(action?.position || "").toUpperCase(), action])
+      .filter(([position]) => position));
+    const defaultPracticeAction = table.practiceScenario?.defaultAfterHero || null;
 
     const settleOnce = (position) => {
       const seat = seatByPosition(table, position);
+      const practiceAction = practiceActionByPosition.get(String(position).toUpperCase()) || defaultPracticeAction;
+      if (practiceAction) {
+        resolvePracticePreflopAction(table, seat, practiceAction, settings);
+        return;
+      }
       resolvePreflopBotTurn(table, seat, settings, {
         skipMatched: true,
         checkOption: position === bigBlind,

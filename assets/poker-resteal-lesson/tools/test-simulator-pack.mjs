@@ -106,6 +106,32 @@ assert(!packCss.includes("seat-cards:is(.is-revealed"), "practice preserves the 
 assert(/client-controls:has\(\.bet-widget\) > \.bet-widget[^{]*\{[^}]*width:\s*100%[^}]*min-width:\s*0/.test(packCss), "practice bet widget fills the widened action dock on every street");
 assert(/bet-widget\.is-preflop-amount \.bet-preset,[\s\S]*?bet-widget\.is-postflop-percent \.bet-preset[^{]*\{[^}]*min-height:\s*68px[^}]*font-size:\s*clamp\(21px,\s*calc\(15px \* var\(--sim-stage-inverse-scale,\s*1\)\),\s*30px\)/.test(packCss), "practice bet presets restore height and compensate typography for stage downscaling");
 assert(packCss.includes("--resteal-slider-thumb: clamp(28px, calc(20px * var(--sim-stage-inverse-scale, 1)), 40px)"), "practice slider thumb keeps a readable physical target");
+assert(/client-controls\.is-resteal-decision > \.client-row\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/.test(packCss), "resteal decision renders three equal action columns");
+assert(/client-controls\.is-resteal-decision > \.client-row \.table-action\s*\{[^}]*min-height:\s*max\(72px,\s*calc\(var\(--sim-1t-action-control-min,\s*40px\) \+ 22px\)\)/.test(packCss), "resteal actions match the large RFI practice height");
+
+const restealActionControls = loadBrowserKit("assets/poker-simulator/simulator-action-controls.js", "PokerSimulatorActionControls", {
+  PokerSimulatorPracticePacks: { decisionClass: () => "is-resteal-decision" }
+});
+const restealActionModel = restealActionControls.model({
+  getState: () => ({ settings: { tableCount: 1 } }),
+  canHeroAct: () => true,
+  betBounds: () => ({ min: 4, max: 30, step: 0.5, value: 30 }),
+  formatAmount: (value) => `${value} BB`,
+  formatCompactAmount: (value) => `${value} BB`
+});
+const restealActionMarkup = restealActionModel.renderActions({
+  status: "playing",
+  heroTurn: true,
+  busy: false,
+  street: "preflop",
+  toCall: 1,
+  canCheck: false
+});
+assert((restealActionMarkup.match(/class="table-action /g) || []).length === 3, "resteal decision exposes exactly three action buttons");
+assert(/data-action="fold"[\s\S]*?>Пас</.test(restealActionMarkup), "first resteal action is Pass");
+assert(/data-action="call"[\s\S]*?>Колл</.test(restealActionMarkup), "second resteal action is Call");
+assert(/data-action="allin"[\s\S]*?>Рестил</.test(restealActionMarkup), "third resteal action is a real all-in labeled Resteal");
+assert(!restealActionMarkup.includes("bet-widget") && !restealActionMarkup.includes("table-action-amount"), "resteal decision has no sizing widget or duplicate amount label");
 
 function contextForTip(tip) {
   const context = { entryId: `fixture:${tip.id}`, handNo: 1 };
@@ -263,6 +289,8 @@ const hands = Array.from({ length: 100 }, (_, index) => engine.createTable({
 
 assert(hands.every((table) => table.status === "playing" && table.heroTurn), "every queued hand reaches a legal Hero decision");
 assert(hands.every((table) => table.heroPosition === "BB"), "Hero is always seated on the big blind");
+assert(hands.every((table) => Number(table.toCall || 0) > 0), "every queued hand keeps Pass, Call and Resteal legally available");
+assert(hands.every((table) => pack.practiceDescriptor.decisionClass({ table }) === "is-resteal-decision"), "every initial preflop decision receives the three-button practice class");
 assert(hands.every((table) => table.anteMode === "big-blind" && table.anteTotal === 1), "every hand posts exactly one BB ante");
 assert(hands.every((table) => {
   const hero = table.seats.find((seat) => seat.isHero);
@@ -324,7 +352,7 @@ assert(
   "a real engine jam reaches a terminal result and produces advice-ready context"
 );
 const trickKinds = hands.filter((table) => table.restealDrill.target.trick).map((table) => table.restealDrill.actual.kind);
-assert(trickKinds.includes("early-open") && trickKinds.includes("open-call") && trickKinds.includes("limp"), "attention checks rotate early open, open-call and limp");
+assert(trickKinds.includes("early-open") && trickKinds.includes("open-call") && !trickKinds.includes("limp"), "attention checks rotate only spots with a legal call decision");
 
 const walkLikeTable = {
   seats: [],

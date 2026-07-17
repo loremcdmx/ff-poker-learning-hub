@@ -22,6 +22,7 @@
     ffRealizationData: null,
     ffRealizationLoading: null,
     ffRealizationError: "",
+    leagueStackKey: "40_70",
     leaguePosition: "BTN",
     leagueSizeKey: "2_0",
     leagueCohort: "league3",
@@ -211,12 +212,19 @@
     try { window.localStorage.setItem(PROGRESS_KEY, JSON.stringify({ step: state.step, unlocked: state.unlocked })); } catch (error) {}
   }
 
-  function focusProgress(target) {
+  function focusProgress(target, shouldScroll) {
     if (!target) return;
     target.focus({ preventScroll: true });
-    if (window.matchMedia("(max-width: 900px)").matches) {
+    if (shouldScroll !== false && window.matchMedia("(max-width: 900px)").matches) {
       target.scrollIntoView({ block: "center", inline: "nearest" });
     }
+  }
+
+  function restorePracticeViewport(viewportX, viewportY) {
+    window.scrollTo(viewportX, viewportY);
+    requestAnimationFrame(function () {
+      window.scrollTo(viewportX, viewportY);
+    });
   }
 
   function optionFor(spot, key) {
@@ -571,11 +579,26 @@
   }
 
   function leagueAggregateKey(cohort) {
-    return [cohort, state.leaguePosition, state.leagueSizeKey].join(":");
+    return [cohort, state.leagueStackKey, state.leaguePosition, state.leagueSizeKey].join(":");
   }
 
   function leagueHandKey(cohort, hand) {
-    return [cohort, state.leaguePosition, state.leagueSizeKey, hand].join(":");
+    return [cohort, state.leagueStackKey, state.leaguePosition, state.leagueSizeKey, hand].join(":");
+  }
+
+  function leagueStackItems() {
+    return [
+      { key: "70_plus", label: "70 BB+" },
+      { key: "40_70", label: "40–70 BB" },
+      { key: "0_40", label: "0–40 BB" }
+    ];
+  }
+
+  function leagueStackLabel() {
+    var item = leagueStackItems().find(function (candidate) {
+      return candidate.key === state.leagueStackKey;
+    });
+    return item ? item.label : state.leagueStackKey;
   }
 
   function leaguePositionItems() {
@@ -593,6 +616,10 @@
   }
 
   function renderLeagueDefenseControls() {
+    makeSegmented($("#leagueStackTabs"), leagueStackItems(), state.leagueStackKey, function (key) {
+      state.leagueStackKey = key;
+      renderLeagueDefense();
+    });
     makeSegmented($("#leaguePositionTabs"), leaguePositionItems(), state.leaguePosition, function (key) {
       state.leaguePosition = key;
       renderLeagueDefense();
@@ -715,7 +742,7 @@
     renderLeagueRangeCard(noviceRoot, "novice", noviceAggregate);
     renderLeagueRangeCard(leagueRoot, state.leagueCohort, noviceAggregate);
     var selectedAggregate = payload.aggregates[leagueAggregateKey(state.leagueCohort)];
-    source.textContent = 'FF, ' + payload.meta.window.label + ' · ранг на момент раздачи · ' + state.leaguePosition + ' / ' + Content.sizes[state.leagueSizeKey].label + ' · N ' + fmtCount(noviceAggregate ? noviceAggregate.n : 0) + ' против ' + fmtCount(selectedAggregate ? selectedAggregate.n : 0) + '. Ранг 15 входит в обе когорты. Серый угол — малая выборка.';
+    source.textContent = 'FF, ' + payload.meta.window.label + ' · ранг на момент раздачи · ' + leagueStackLabel() + ' / ' + state.leaguePosition + ' / ' + Content.sizes[state.leagueSizeKey].label + ' · N ' + fmtCount(noviceAggregate ? noviceAggregate.n : 0) + ' против ' + fmtCount(selectedAggregate ? selectedAggregate.n : 0) + '. Ранг 15 входит в обе когорты. Серый угол — малая выборка; пустая клетка — рук не было.';
   }
 
   function makeSegmented(root, items, selected, onSelect, options) {
@@ -725,6 +752,7 @@
       oddsSizeTabs: "oddsSummary",
       rangeSizeTabs: "rangeChart",
       positionTabs: "rangeChart",
+      leagueStackTabs: "leagueDefenseComparison",
       leaguePositionTabs: "leagueDefenseComparison",
       leagueSizeTabs: "leagueDefenseComparison",
       leagueTabs: "selectedLeagueDefenseChart",
@@ -1558,7 +1586,7 @@
     renderPracticeSpot();
     requestAnimationFrame(function () {
       var action = $("#practiceTable .table-action");
-      focusProgress(action);
+      focusProgress(action, false);
     });
   }
 
@@ -1575,6 +1603,7 @@
     var played = state.practiceIndex + (state.practiceAnswered ? 1 : 0);
     $("#practiceHands").textContent = String(played);
     $("#practiceCorrect").textContent = String(state.stats.correct);
+    $("#practiceMisses").textContent = String(Math.max(0, played - state.stats.correct));
     $("#practiceMissedCalls").textContent = String(state.stats.missedCalls);
     $("#practiceWideCalls").textContent = String(state.stats.wideCalls);
     $("#practiceMissedThreeBets").textContent = String(state.stats.missedThreeBets);
@@ -1607,13 +1636,16 @@
   }
 
   function advancePractice() {
+    var viewportX = window.scrollX;
+    var viewportY = window.scrollY;
     state.practiceIndex += 1;
     state.practiceChoice = "";
     state.practiceAnswered = false;
     renderPracticeSpot();
     requestAnimationFrame(function () {
       var action = $("#practiceTable .table-action");
-      focusProgress(action);
+      focusProgress(action, false);
+      restorePracticeViewport(viewportX, viewportY);
     });
   }
 
@@ -1632,17 +1664,20 @@
     var spot = currentPracticeSpot();
     var chosen = optionFor(spot, key);
     if (!spot || !chosen || state.practiceAnswered) return;
+    var viewportX = window.scrollX;
+    var viewportY = window.scrollY;
     state.practiceChoice = key;
     state.practiceAnswered = true;
     if (chosen.correct) state.stats.correct += 1;
     if (spot.correct === "call" && key !== "call") state.stats.missedCalls += 1;
-    if (key === "call" && spot.correct !== "call") state.stats.wideCalls += 1;
+    if (key === "call" && spot.correct === "fold") state.stats.wideCalls += 1;
     if (spot.correct === "raise" && key !== "raise") state.stats.missedThreeBets += 1;
     reportFfStartPractice();
     renderPracticeSpot();
     requestAnimationFrame(function () {
       var next = $("#practiceTable [data-practice-next]");
-      focusProgress(next);
+      focusProgress(next, false);
+      restorePracticeViewport(viewportX, viewportY);
     });
   }
 

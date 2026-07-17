@@ -22,6 +22,27 @@ for (const path of [
 const renderer = context.FFTrainerSimulatorSnapshot;
 assert.ok(renderer?.renderTable, "snapshot renderer is available");
 
+const lessonCss = readFileSync(new URL("poker-rfi-open-lesson/lesson.css", assets), "utf8");
+for (const token of [
+  "#practiceTable .seat.seat-slot-model:not(.is-hero)",
+  "--reveal-card-tx:0cqw!important",
+  "#practiceTable .seat.seat-slot-model.seat-zone-top:not(.is-hero)",
+  "#practiceTable .seat.seat-slot-model:not(.seat-zone-top):not(.is-hero)",
+  "--hero-card-pocket-y:calc((var(--seat-h)*-.5)",
+  ".curated-practice .practice-hud",
+  "grid-template-columns:repeat(3,minmax(116px,max-content))",
+  "margin:0 0 clamp(24px,2vw,32px)",
+  ".curated-practice .practice-hud #stopCurated",
+  "grid-column:1/-1",
+  ".curated-practice .practice-room-stage",
+  ".practice-feedback",
+  "grid-template-columns:minmax(0,1fr) auto",
+  ".practice-feedback .rfi-next-hand",
+  "transform:none"
+]) {
+  assert.ok(lessonCss.includes(token), `RFI practice visual contract: ${token}`);
+}
+
 const revealedCards = {
   CO: ["Qh", "Jd"],
   BTN: ["9c", "8s"],

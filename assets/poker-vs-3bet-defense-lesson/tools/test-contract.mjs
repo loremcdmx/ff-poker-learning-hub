@@ -55,6 +55,23 @@ assert.deepEqual(Array.from(model.cohorts, (cohort) => cohort.key), ["reference"
 assert.equal(model.hands.length, 169);
 assert.equal(new Set(model.hands).size, 169);
 
+const introScenario = model.scenario({
+  position: "CO",
+  relation: "OOP",
+  stack: "31-50",
+  size: 3,
+  cohort: "reference"
+});
+assert.deepEqual(
+  JSON.parse(JSON.stringify(introScenario.cells.JJ)),
+  { fold: 0, call: 0, fourbet: 72, jam: 28 },
+  "the intro JJ cell stays tied to the canonical reference scenario"
+);
+assert.equal(data.intro.id, "intro-jj-co-vs-btn");
+assert.equal(data.intro.options.find((option) => option.correct)?.key, "fourbet");
+assert.equal(data.intro.options.find((option) => option.key === "jam")?.acceptableMix, true);
+assert.doesNotMatch(data.intro.answer, /колл сохраняет/i);
+
 const exactChecks = [
   ["EP", "QJs", { fold: 90, call: 10, fourbet: 0, jam: 0 }],
   ["MP", "JJ", { fold: 0, call: 50, fourbet: 50, jam: 0 }],
