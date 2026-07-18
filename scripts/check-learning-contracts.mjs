@@ -22,9 +22,10 @@ const ranking = ranks.hands
 const equity = json("assets/poker-resteal-lesson/data/equity169.json");
 const handIndex = new Map(equity.hands.map((hand, index) => [hand, index]));
 const equityFor = (hero, villain) => equity.equity[handIndex.get(hero)][handIndex.get(villain)];
-const fieldCalls = json("assets/poker-resteal-lesson/data/field_call_range.json");
+const exactRestealField = json("assets/poker-resteal-lesson/data/field-exact-bb-btn-2bb.json");
+const fieldCalls = exactRestealField.callRange;
 const fieldOpens = json("assets/poker-resteal-lesson/data/field_opens.json").pooled_25_40;
-const fieldVsJam = json("assets/poker-resteal-lesson/data/field_vs_jam.json").pooled;
+const fieldVsJam = exactRestealField.response;
 
 assert.equal(engine.combosLeft("AKs", "AKs"), 3, "suited same-rank blocker leaves three suited combos");
 assert.equal(engine.buildRange(ranking, 12, "AA").at(-1).hand, engine.buildRange(ranking, 12, "QJo").at(-1).hand, "Hero cards do not move the nominal range boundary");
@@ -75,17 +76,17 @@ const passiveFishQJo = engine.fieldHand({
   ranking,
   equityFor
 });
-assert.equal(passiveFishQJo.foldEquity, 0.5015, "passive-fish field fold equity stays independent from the structural call range");
-assert(Math.abs(passiveFishQJo.ev - (-1.9102)) < 0.001, `passive-fish QJo EV stays near -1.91 BB (actual ${passiveFishQJo.ev})`);
+assert.equal(passiveFishQJo.foldEquity, 0.5515, "passive-fish fold equity stays tied to exact BB / BTN / 2 BB responses");
+assert(Math.abs(passiveFishQJo.ev - (-0.8196)) < 0.001, `passive-fish QJo EV stays near -0.82 BB in the exact spot (actual ${passiveFishQJo.ev})`);
 
 const goodRegGrid = fieldGridPct("good_reg");
 const nitGrid = fieldGridPct("nit");
 const activeFishGrid = fieldGridPct("aggro_fish");
 const passiveFishGrid = fieldGridPct("passive_fish");
-assert(Math.abs(goodRegGrid - 38.1599) < 0.01, `good-reg keeps the structural teaching grid (actual ${goodRegGrid.toFixed(4)}%)`);
-assert(Math.abs(nitGrid - 12.0664) < 0.01, `nit keeps the structural teaching grid (actual ${nitGrid.toFixed(4)}%)`);
-assert(Math.abs(activeFishGrid - 31.8250) < 0.01, `active-fish keeps the empirical continuation grid (actual ${activeFishGrid.toFixed(4)}%)`);
-assert(Math.abs(passiveFishGrid - 9.9548) < 0.01, `passive-fish uses observed fold equity when its whole open is below the 12% floor (actual ${passiveFishGrid.toFixed(4)}%)`);
+assert(Math.abs(goodRegGrid - 39.0649) < 0.01, `good-reg keeps the structural teaching grid (actual ${goodRegGrid.toFixed(4)}%)`);
+assert(Math.abs(nitGrid - 12.5189) < 0.01, `nit keeps the exact-spotted teaching grid (actual ${nitGrid.toFixed(4)}%)`);
+assert(Math.abs(activeFishGrid - 22.4736) < 0.01, `active-fish keeps the exact-spotted continuation grid (actual ${activeFishGrid.toFixed(4)}%)`);
+assert(Math.abs(passiveFishGrid - 14.0271) < 0.01, `passive-fish uses the exact-spotted response grid when its whole open is below the 12% floor (actual ${passiveFishGrid.toFixed(4)}%)`);
 assert(passiveFishGrid < activeFishGrid, `passive-fish grid stays narrower than active-fish (${passiveFishGrid.toFixed(1)}% < ${activeFishGrid.toFixed(1)}%)`);
 
 assert.deepEqual(rfi.enginePositions, ["UTG", "LJ", "HJ", "CO", "BTN"], "RFI pack uses the 7-max engine vocabulary");
@@ -133,12 +134,11 @@ assert(trainerSnapshotSource.includes('potTotalLabel: "БАНК"'), "trainer pos
 const restealDataSource = readFileSync(resolve(root, "assets/poker-resteal-lesson/data.js"), "utf8");
 const restealLessonSource = readFileSync(resolve(root, "assets/poker-resteal-lesson/lesson.js"), "utf8");
 const restealLessonHtml = readFileSync(resolve(root, "resteal-lesson.html"), "utf8");
-assert(restealDataSource.includes("comparisonFoldBaselineBb: -1.12"), "resteal comparison defines the canonical BB fold baseline");
-assert(restealLessonSource.includes("const foldBaselineBb = Number(Content?.comparisonFoldBaselineBb"), "resteal comparison reads the canonical BB fold baseline");
-assert(!restealLessonSource.includes("[category]?.fold?.avg_ev_bb"), "mixed SB/BB category folds do not leak into the BB tooltip or bars");
-assert(restealLessonSource.includes("EV паса (${compactSigned(foldBaselineBb, 2)} BB)"), "resteal tooltip uses the exact BB fold price in its formula");
-assert(restealLessonSource.includes("Показанное число — преимущество над пасом, а не абсолютный EV"), "resteal tooltip names the displayed metric as advantage over folding");
-assert(restealLessonHtml.includes("Плюс по эквити считаем относительно паса: исходный EV действия − EV паса"), "resteal methodology documents the fixed BB rebase");
+assert(!restealLessonSource.includes("state.data.hero_outcomes.pooled.ALL"), "mixed SB/BB outcomes no longer drive the BB lesson panel");
+assert(restealLessonSource.includes('RankData?.charts?.[cohort]?.BTN?.["2.0"]?.["25-40"]'), "resteal panel reads the exact BB / BTN 2 BB / 25-40 BB cube");
+for (const action of ["folds", "calls", "small3bets", "jams"]) assert(restealLessonSource.includes(`key: "${action}"`), `resteal panel exposes observed ${action}`);
+assert(restealLessonHtml.includes("Наблюдаемая игра поля · точно BB"), "resteal panel names the exact hero position");
+assert(restealLessonHtml.includes("Не рекомендация"), "resteal panel separates observed play from strategic advice");
 
 console.log(`✓ resteal field grids: reg ${goodRegGrid.toFixed(1)}% · nit ${nitGrid.toFixed(1)}% · active fish ${activeFishGrid.toFixed(1)}%`);
 console.log("✓ learning contracts passed");

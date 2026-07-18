@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+import { normalizeHandClass } from "./field-action-quality.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -11,9 +12,11 @@ const STACKS = ["70+", "30-70", "20-30", "15-20", "12-15", "10-12", "8-10", "6-8
 const POSITIONS = ["EP", "MP", "HJ", "CO", "BTN", "SB"];
 const RECOMMENDATION_POSITIONS = ["EP", "MP", "HJ", "CO", "BTN"];
 const SHORT_STACKS = ["20-30", "15-20", "12-15", "10-12", "8-10", "6-8", "<6"];
+const PUBLIC_CELL_MIN_N = 30;
 const GROUP = { EP: "early", MP: "middle", HJ: "middle", CO: "co", BTN: "btn" };
 const HANDS = realizer.HAND_CLASSES.map((item) => item.key);
 const PRIOR_STRENGTH_GRID = [4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256];
+const FIELD_ESTIMATE_PRIOR_HANDS = 60;
 
 const COHORT_META = {
   l3top: {
@@ -41,7 +44,7 @@ const COHORT_META = {
     description: "Активные реальные игроки текущей Лиги 1 с минимум 30 000 рук в окне FFEV."
   }
 };
-const OBSERVED_PLAYERS = { l3top: 161, l3: 946, l2: 471, l1: 165 };
+const DEFAULT_OBSERVED_PLAYERS = { l3top: 161, l3: 945, l2: 471, l1: 165 };
 
 function args() {
   return Object.fromEntries(process.argv.slice(2).map((item) => {
@@ -163,30 +166,85 @@ function posteriorRate(successes, trials, priorSuccesses, priorTrials, priorHand
 }
 
 function indexRows(rows) {
-  return new Map(rows.map((row) => [[row.stack_bucket, row.position_group, row.hand_class].join("|"), row]));
+  const index = new Map();
+  for (const row of rows) {
+    const hand = normalizeHandClass(row.hand_class);
+    if (!STACKS.includes(row.stack_bucket)) throw new Error(`Invalid stack bucket: ${row.stack_bucket}`);
+    if (!POSITIONS.includes(row.position_group)) throw new Error(`Invalid position group: ${row.position_group}`);
+    const key = [row.stack_bucket, row.position_group, hand].join("|");
+    if (index.has(key)) throw new Error(`Duplicate normalized field-action row: ${key}`);
+    index.set(key, { ...row, hand_class: hand });
+  }
+  return index;
 }
 
-function buildChart(index, stack, position) {
+function mergeIndexes(indexes) {
+  const merged = new Map();
+  for (const index of indexes) for (const [key, row] of index) {
+    const current = actions(merged.get(key) || {});
+    const incoming = actions(row);
+    merged.set(key, {
+      stack_bucket: row.stack_bucket,
+      position_group: row.position_group,
+      hand_class: row.hand_class,
+      opportunities: current.opportunities + incoming.opportunities,
+      regular_raise: current.raise + incoming.raise,
+      open_shove: current.shove + incoming.shove,
+      limp: current.limp + incoming.limp
+    });
+  }
+  return merged;
+}
+
+function fallbackIndex(primary, fallback) {
+  const result = new Map(fallback);
+  for (const [key, value] of primary) result.set(key, value);
+  return result;
+}
+
+function estimatedActions(cell, prior, aggregate) {
+  const priorTotal = prior.opportunities || 0;
+  const priorRates = priorTotal ? {
+    raise: prior.raise / priorTotal,
+    shove: prior.shove / priorTotal,
+    limp: prior.limp / priorTotal
+  } : aggregate;
+  const denominator = cell.opportunities + FIELD_ESTIMATE_PRIOR_HANDS;
+  return {
+    raise: (cell.raise + FIELD_ESTIMATE_PRIOR_HANDS * priorRates.raise) / denominator,
+    shove: (cell.shove + FIELD_ESTIMATE_PRIOR_HANDS * priorRates.shove) / denominator,
+    limp: (cell.limp + FIELD_ESTIMATE_PRIOR_HANDS * priorRates.limp) / denominator
+  };
+}
+
+function buildChart(index, estimatePriorIndex, stack, position) {
   const cells = HANDS.map((hand) => {
     const row = index.get([stack, position, hand].join("|"));
     return actions(row || {});
   });
+  const estimatePriors = HANDS.map((hand) => actions(estimatePriorIndex.get([stack, position, hand].join("|")) || {}));
+  const publicCells = cells.map((cell) => cell.opportunities < PUBLIC_CELL_MIN_N
+    ? { opportunities: 0, raise: 0, shove: 0, limp: 0, players: 0, months: 0 }
+    : cell);
   const total = cells.reduce((sum, cell) => sum + cell.opportunities, 0);
   const raiseTotal = cells.reduce((sum, cell) => sum + cell.raise, 0);
   const shoveTotal = cells.reduce((sum, cell) => sum + cell.shove, 0);
   const limpTotal = cells.reduce((sum, cell) => sum + cell.limp, 0);
+  const aggregate = total ? { raise: raiseTotal / total, shove: shoveTotal / total, limp: limpTotal / total } : { raise: 0, shove: 0, limp: 0 };
+  const estimates = cells.map((cell, index) => estimatedActions(cell, estimatePriors[index], aggregate));
   return {
-    n: packU32(cells.map((cell) => cell.opportunities)),
-    r: packU16(cells.map((cell) => Math.round(roundedPct(cell.raise, cell.opportunities) * 10))),
-    j: packU16(cells.map((cell) => Math.round(roundedPct(cell.shove, cell.opportunities) * 10))),
-    l: packU16(cells.map((cell) => Math.round(roundedPct(cell.limp, cell.opportunities) * 10))),
-    p: packU16(cells.map((cell) => cell.players)),
-    m: packU8(cells.map((cell) => cell.months)),
+    n: packU32(publicCells.map((cell) => cell.opportunities)),
+    r: packU16(cells.map((cell, index) => cell.opportunities < PUBLIC_CELL_MIN_N ? Math.round(estimates[index].raise * 1000) : Math.round(roundedPct(cell.raise, cell.opportunities) * 10))),
+    j: packU16(cells.map((cell, index) => cell.opportunities < PUBLIC_CELL_MIN_N ? Math.round(estimates[index].shove * 1000) : Math.round(roundedPct(cell.shove, cell.opportunities) * 10))),
+    l: packU16(cells.map((cell, index) => cell.opportunities < PUBLIC_CELL_MIN_N ? Math.round(estimates[index].limp * 1000) : Math.round(roundedPct(cell.limp, cell.opportunities) * 10))),
+    p: packU16(publicCells.map((cell) => cell.players)),
+    m: packU8(publicCells.map((cell) => cell.months)),
     opportunities: total,
     raisePct: roundedPct(raiseTotal, total),
     shovePct: roundedPct(shoveTotal, total),
     limpPct: roundedPct(limpTotal, total),
     rfiPct: roundedPct(raiseTotal + shoveTotal, total),
+    privacySuppressedCells: cells.filter((cell) => cell.opportunities < PUBLIC_CELL_MIN_N).length,
     veryLowSampleCells: cells.filter((cell) => cell.opportunities < 30).length,
     lowSampleCells: cells.filter((cell) => cell.opportunities < 100).length
   };
@@ -285,15 +343,23 @@ const indexes = Object.fromEntries(Object.entries(rowsByCohort).map(([key, rows]
 if (!options.l3prior) throw new Error("Missing --l3prior=path.csv");
 const priorRows = parseCsv(fs.readFileSync(options.l3prior, "utf8"));
 const priorIndex = indexRows(priorRows);
+const pooledLeagueIndex = mergeIndexes([indexes.l1, indexes.l2, indexes.l3]);
+const estimatePriorIndexes = {
+  l1: mergeIndexes([indexes.l2, indexes.l3]),
+  l2: mergeIndexes([indexes.l1, indexes.l3]),
+  l3: mergeIndexes([indexes.l1, indexes.l2]),
+  l3top: fallbackIndex(priorIndex, pooledLeagueIndex)
+};
+const priorSelectedPlayers = Math.max(...priorRows.map((row) => number(row, "cohort_players", "cohort_selected_players")), 0);
 const cohorts = {};
 for (const [key, meta] of Object.entries(COHORT_META)) {
   const rows = rowsByCohort[key];
   const selectedPlayers = Math.max(...rows.map((row) => number(row, "cohort_players", "cohort_selected_players")), 0);
-  const players = OBSERVED_PLAYERS[key] || selectedPlayers;
+  const players = Number(options[`${key}-observed`] || DEFAULT_OBSERVED_PLAYERS[key] || selectedPlayers);
   const charts = {};
   for (const stack of STACKS) {
     charts[stack] = {};
-    for (const position of POSITIONS) charts[stack][position] = buildChart(indexes[key], stack, position);
+    for (const position of POSITIONS) charts[stack][position] = buildChart(indexes[key], estimatePriorIndexes[key], stack, position);
   }
   cohorts[key] = { ...meta, players, selectedPlayers, charts };
 }
@@ -306,29 +372,36 @@ for (const stack of SHORT_STACKS) {
 
 const output = {
   schema: "ff-rfi-field-actions-v2",
-  version: "2026-07-17",
+  version: options.version || "2026-07-18",
   handOrder: HANDS,
   stackOrder: STACKS,
   positions: POSITIONS,
   cohortOrder: ["l3top", "l3", "l2", "l1"],
   methodology: {
-    period: { from: "2025-10-01", to: "2026-06-30", label: "1 октября 2025 — 30 июня 2026" },
+    period: {
+      from: options["period-from"] || "2025-10-01",
+      to: options["period-to"] || "2026-07-16",
+      label: options["period-label"] || "1 октября 2025 — 16 июля 2026"
+    },
     table: "7–9 max",
     opportunity: "неоткрытый банк, известные карманные карты, эффективный стек",
     actionSplit: "пас / обычный рейз / open-push / лимп",
     cohortRule: "текущий ранг, активный реальный игрок, без кикнутых аккаунтов, минимум 30 000 рук FFEV",
     knownCardsPct: Number(options["known-cards-pct"] || 0),
     top25: {
-      eligiblePlayers: 651,
-      selectedPlayers: 163,
+      eligiblePlayers: Number(options["top25-eligible"] || priorSelectedPlayers || 651),
+      selectedPlayers: Number(options["top25-selected"] || cohorts.l3top.selectedPlayers || 163),
       minHands: 30000,
-      minFFev: 10.050272,
+      minFFev: Number(options["top25-min-ffev"] || 10.050272),
       ranks: "11–14",
       metric: "ev_2_weighted",
       periodType: "last_100k_hands",
       selection: "верхние 25% по текущему FFEV; deterministic rank, ceil(N × 0.25)"
     },
     recommendation: "Ширина диапазона равна наблюдаемому RFI top-25%; состав рук ранжирован по empirical-Bayes posterior: top-25 как основной срез, все eligible L3 R11–14 как hand-level prior. Сила сглаживания подбирается beta-binomial marginal likelihood отдельно для каждого стека и позиции.",
+    fieldCellEstimate: `Для hand-level клеток с N < ${PUBLIC_CELL_MIN_N} вместо нуля показана Dirichlet-сглаженная оценка (${FIELD_ESTIMATE_PRIOR_HANDS} эквивалентных рук prior). Для top-25 prior — все eligible L3 R11–14 там, где этот срез доступен, иначе pooled leagues; для лиг — leave-one-league-out пул. Точное N и сырые частоты малой клетки не публикуются.`,
+    fieldCellEstimatePriorHands: FIELD_ESTIMATE_PRIOR_HANDS,
+    privacy: "Публичный payload не содержит идентификаторов игроков. Для hand-level клеток с N < 30 точные N, сырые частоты, число игроков и число месяцев подавлены; вместо ложного нуля отображается явно помеченная сглаженная оценка. Агрегаты стека/позиции и рекомендации считаются по полному read-only срезу.",
     sourceSnapshot: {
       rows: Number(options["source-rows"] || 0),
       sha256: options["source-sha256"] || "",
@@ -337,7 +410,12 @@ const output = {
       l3topCellsLt100: Number(options["l3top-cells-lt100"] || 0),
       priorRows: priorRows.length,
       priorSha256: options["prior-sha256"] || "",
-      priorUsable: Number(options["prior-usable"] || 0)
+      priorUsable: Number(options["prior-usable"] || 0),
+      membershipRows: Number(options["membership-rows"] || 0),
+      membershipSha256: options["membership-sha256"] || "",
+      cohortJobId: options["cohort-job-id"] || "",
+      actionJobId: options["action-job-id"] || "",
+      extractionSql: "tools/q_ff_rfi_field_actions.sql"
     }
   },
   recommendations: {

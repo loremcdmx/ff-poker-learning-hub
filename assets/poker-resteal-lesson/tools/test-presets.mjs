@@ -58,17 +58,38 @@ for (const [hand, expected] of Object.entries(wisdomExpected)) {
 
 const vsJam = JSON.parse(readFileSync(new URL("data/field_vs_jam.json", toolRoot), "utf8"));
 const fieldCalls = JSON.parse(readFileSync(new URL("data/field_call_range.json", toolRoot), "utf8"));
-assert.equal(vsJam.pooled.good_reg.fold_pct, 0.7997);
-assert.equal(vsJam.pooled.weak_reg.fold_pct, 0.753);
-assert.equal(vsJam.pooled.aggro_fish.fold_pct, 0.6415);
-assert.equal(vsJam.pooled.passive_fish.fold_pct, 0.5015);
+const exactBbBtn = JSON.parse(readFileSync(new URL("data/field-exact-bb-btn-2bb.json", toolRoot), "utf8"));
+assert.equal(vsJam.pooled.good_reg.fold_pct, 0.7814);
+assert.equal(vsJam.pooled.weak_reg.fold_pct, 0.7301);
+assert.equal(vsJam.pooled.aggro_fish.fold_pct, 0.6063);
+assert.equal(vsJam.pooled.passive_fish.fold_pct, 0.4719);
+assert.match(vsJam.meta.description, /original opener/i, "field frequency is scoped to the original opener");
+assert.match(vsJam.meta.spot, /direct all-in/i, "field frequency is scoped to a direct Hero jam");
+assert.match(fieldCalls.meta.description, /observed/i, "continuing cards are labelled as observed field data");
+assert.equal(vsJam.meta.source.sha256, fieldCalls.meta.source.sha256, "fold and call-range files share one reconciled source");
+assert.equal(vsJam.meta.source.mcpJobIds.length, 3);
+assert.equal(vsJam.meta.source.heroJamsTotal, 179341);
+assert.equal(vsJam.meta.source.candidateResponsesTotal, 128718);
+assert.equal(vsJam.meta.source.ambiguousHeroJamsTotal, 30);
+assert.equal(vsJam.meta.source.matchedOpenerResponsesTotal, 128658);
+assert.equal(vsJam.meta.source.matchedUniqueHeroJamsTotal, 128658);
+assert.equal(vsJam.meta.source.maxCandidateResponsesPerHeroJam, 2);
+assert.equal(vsJam.meta.source.maxResponsesPerHeroJam, 1);
+assert.equal(vsJam.meta.source.matchPct, 71.7393);
+assert.ok(vsJam.meta.source.shards.every((shard) => /^[a-f0-9]{64}$/.test(shard.querySha256)), "each rendered query is fingerprinted");
+assert.equal(fieldCalls.pooled.n_total, 36569);
+assert.equal(fieldCalls.pooled.n_known_holecards, 36553);
+assert.deepEqual(exactBbBtn.meta.slice, { heroPosition: "BB", openerPosition: "BTN", openSizeBb: "2.0", effectiveStackBb: "25-40" });
+assert.deepEqual(exactBbBtn.response.passive_fish, { n_faced: 165, fold_pct: 0.5515, continue_pct: 0.4485 });
+assert.equal(exactBbBtn.response.aggro_fish.fold_pct, 0.7075);
+assert.equal(exactBbBtn.response.semipassive_fish.fold_pct, 0.6888);
 
-const passiveFishWeights = fieldCalls.by_category.passive_fish.hands;
+const passiveFishWeights = exactBbBtn.callRange.super_groups.fish.hands;
 const passiveFishQJo = engine.fieldHand({
   hand: "QJo",
   openPct: 10.56,
-  callPct: 5.26416,
-  foldEquity: vsJam.pooled.passive_fish.fold_pct,
+  callPct: 4.73616,
+  foldEquity: exactBbBtn.response.passive_fish.fold_pct,
   callWeights: passiveFishWeights,
   stack: 40,
   openSize: 2,
@@ -77,7 +98,7 @@ const passiveFishQJo = engine.fieldHand({
   ranking,
   equityFor
 });
-assert.equal(passiveFishQJo.foldEquity, 0.5015);
-assert.ok(Math.abs(passiveFishQJo.ev - (-1.9102)) < 0.001, `passive-fish QJo EV ${passiveFishQJo.ev}`);
+assert.equal(passiveFishQJo.foldEquity, 0.5515);
+assert.ok(Math.abs(passiveFishQJo.ev - (-0.8196)) < 0.001, `exact BB/BTN passive-fish QJo EV ${passiveFishQJo.ev}`);
 
 console.log(`PASS resteal presets: standard ${(standard.pct * 100).toFixed(1)}%, worst ${(worst.pct * 100).toFixed(1)}%, field FE anchors`);

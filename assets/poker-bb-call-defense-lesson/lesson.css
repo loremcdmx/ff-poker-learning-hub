@@ -461,7 +461,7 @@
 
 .action-split {
   display: grid;
-  grid-template-columns: 14fr 60fr 26fr;
+  grid-template-columns: 13.6fr 62fr 24.4fr;
   gap: 10px;
   min-height: 210px;
   align-items: stretch;
@@ -1010,6 +1010,14 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.realization-stack-controls {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.realization-stack-controls .segmented-control button {
+  min-width: 112px;
 }
 
 .range-workspace {

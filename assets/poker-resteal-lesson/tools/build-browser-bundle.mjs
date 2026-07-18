@@ -9,6 +9,7 @@ const files = [
   "field_opens.json",
   "field_vs_jam.json",
   "field_call_range.json",
+  "field-exact-bb-btn-2bb.json",
   "hero_outcomes.json",
   "hero_bustouts.json",
   "cleanup_waterfall.json"

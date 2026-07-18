@@ -2,6 +2,122 @@
   "use strict";
 
   var Data = window.PokerRestealRankData;
+  var LOW_N_ESTIMATE_BELOW = 5;
+  var LOW_N_PRIOR_STRENGTH = 16;
+
+  function dataChartFor(data, cohort, position, size, depth) {
+    var cohortCharts = data && data.charts && data.charts[cohort];
+    var positionCharts = cohortCharts && cohortCharts[position];
+    var sizeCharts = positionCharts && positionCharts[size];
+    return sizeCharts && sizeCharts[depth] || null;
+  }
+
+  function addCellCounts(target, cell) {
+    if (!cell) return;
+    target.opportunities += Number(cell[0] || 0);
+    target.jams += Number(cell[4] || 0);
+  }
+
+  function otherCohorts(data, cohort) {
+    return (data && data.meta && data.meta.cohortOrder || []).filter(function (candidate) {
+      return candidate !== cohort;
+    });
+  }
+
+  function priorFromSameSpotHand(data, cohort, position, size, depth, handIndex) {
+    var counts = { opportunities: 0, jams: 0 };
+    otherCohorts(data, cohort).forEach(function (candidate) {
+      var chart = dataChartFor(data, candidate, position, size, depth);
+      addCellCounts(counts, chart && chart.cells[handIndex]);
+    });
+    return counts;
+  }
+
+  function priorFromSameSpot(data, cohort, position, size, depth) {
+    var counts = { opportunities: 0, jams: 0 };
+    otherCohorts(data, cohort).forEach(function (candidate) {
+      var chart = dataChartFor(data, candidate, position, size, depth);
+      (chart && chart.cells || []).forEach(function (cell) { addCellCounts(counts, cell); });
+    });
+    return counts;
+  }
+
+  function priorFromSamePositionSizeHand(data, cohort, position, size, handIndex) {
+    var counts = { opportunities: 0, jams: 0 };
+    var depths = data && data.meta && data.meta.sourceDepthOrder || ["25-30", "30-35", "35-40"];
+    otherCohorts(data, cohort).forEach(function (candidate) {
+      depths.forEach(function (depth) {
+        var chart = dataChartFor(data, candidate, position, size, depth);
+        addCellCounts(counts, chart && chart.cells[handIndex]);
+      });
+    });
+    return counts;
+  }
+
+  function priorFromComparablePool(data, cohort) {
+    var counts = { opportunities: 0, jams: 0 };
+    var positions = data && data.meta && data.meta.positionOrder || ["CO", "BTN"];
+    var sizes = data && data.meta && data.meta.sizeOrder || ["2.0", "2.5", "3.0"];
+    var depths = data && data.meta && data.meta.sourceDepthOrder || ["25-30", "30-35", "35-40"];
+    otherCohorts(data, cohort).forEach(function (candidate) {
+      positions.forEach(function (position) {
+        sizes.forEach(function (size) {
+          depths.forEach(function (depth) {
+            var chart = dataChartFor(data, candidate, position, size, depth);
+            (chart && chart.cells || []).forEach(function (cell) { addCellCounts(counts, cell); });
+          });
+        });
+      });
+    });
+    return counts;
+  }
+
+  function priorForCell(data, cohort, position, size, depth, handIndex) {
+    var candidates = [
+      ["same-spot-hand", function () { return priorFromSameSpotHand(data, cohort, position, size, depth, handIndex); }],
+      ["same-spot-all-hands", function () { return priorFromSameSpot(data, cohort, position, size, depth); }],
+      ["same-position-size-hand", function () { return priorFromSamePositionSizeHand(data, cohort, position, size, handIndex); }],
+      ["comparable-pool", function () { return priorFromComparablePool(data, cohort); }]
+    ];
+    for (var index = 0; index < candidates.length; index += 1) {
+      var counts = candidates[index][1]();
+      if (counts.opportunities > 0) {
+        return {
+          source: candidates[index][0],
+          opportunities: counts.opportunities,
+          rate: counts.jams / counts.opportunities * 100
+        };
+      }
+    }
+    return { source: "neutral-fallback", opportunities: 0, rate: 0 };
+  }
+
+  function lowNDisplayCell(data, cohort, position, size, depth, handIndex, cell) {
+    var opportunities = Number(cell && cell[0] || 0);
+    var jams = Number(cell && cell[4] || 0);
+    if (!opportunities) return { available: false, estimated: false, rate: 0, opportunities: 0, prior: null };
+    if (opportunities >= LOW_N_ESTIMATE_BELOW) {
+      return { available: true, estimated: false, rate: jams / opportunities * 100, opportunities: opportunities, prior: null };
+    }
+    var prior = priorForCell(data, cohort, position, size, depth, handIndex);
+    var estimatedRate = (jams + LOW_N_PRIOR_STRENGTH * prior.rate / 100) /
+      (opportunities + LOW_N_PRIOR_STRENGTH) * 100;
+    return {
+      available: true,
+      estimated: true,
+      rate: estimatedRate,
+      opportunities: opportunities,
+      prior: prior
+    };
+  }
+
+  window.PokerRestealRankLowN = Object.freeze({
+    estimateBelow: LOW_N_ESTIMATE_BELOW,
+    priorStrength: LOW_N_PRIOR_STRENGTH,
+    displayCell: lowNDisplayCell,
+    priorForCell: priorForCell
+  });
+
   var root = document.getElementById("rankEvidenceSlide");
   if (!root) return;
 
@@ -34,11 +150,12 @@
     ["jams", "Олл-ин", "is-jam"]
   ];
   var gradientStops = [
-    [0, [21, 24, 28]],
-    [5, [23, 42, 36]],
-    [15, [22, 58, 46]],
-    [30, [21, 77, 58]],
-    [50, [18, 100, 78]]
+    [0, [17, 21, 26]],
+    [1, [26, 42, 50]],
+    [5, [24, 61, 70]],
+    [15, [18, 83, 82]],
+    [30, [13, 103, 86]],
+    [50, [9, 116, 86]]
   ];
 
   function byId(id) { return document.getElementById(id); }
@@ -80,8 +197,9 @@
     return chart && index >= 0 ? chart.cells[index] : null;
   }
 
-  function cellRate(cell) {
-    return cell && cell[0] ? Number(cell[4] || 0) / Number(cell[0]) * 100 : 0;
+  function displayCellFor(cohort, hand, cell) {
+    var index = Data.meta.handOrder.indexOf(hand);
+    return lowNDisplayCell(Data, cohort, state.position, state.size, state.depth, index, cell || cellFor(cohort, hand));
   }
 
   function actionRate(chart, key) {
@@ -208,34 +326,6 @@
     byId("rankSpotSummary").innerHTML = '<div class="rank-spot-summary-head"><strong>Текущий срез · все уровни</strong><span>' + spot + '</span></div><div class="rank-spot-cards">' + cards + '</div>';
   }
 
-  function renderDatasetFacts() {
-    var totals = { opportunities: 0, known: 0, jams: 0, charts: 0 };
-    var cohorts = Data.meta.cohortOrder || ["novice", "league3", "league2", "league1"];
-    var positions = Data.meta.positionOrder || ["CO", "BTN"];
-    var sizes = Data.meta.sizeOrder || ["2.0", "2.5", "3.0"];
-    var depths = Data.meta.sourceDepthOrder || ["25-30", "30-35", "35-40"];
-    cohorts.forEach(function (cohort) {
-      positions.forEach(function (position) {
-        sizes.forEach(function (size) {
-          depths.forEach(function (depth) {
-            var chart = chartFor(cohort, position, size, depth);
-            if (!chart) return;
-            totals.charts += 1;
-            totals.opportunities += totalFor(chart, "opportunities");
-            totals.jams += totalFor(chart, "jams");
-            totals.known += Number(chart.knownOpportunities != null ? chart.knownOpportunities : chart.totals && chart.totals.knownOpportunities || 0);
-          });
-        });
-      });
-    });
-    var coverage = totals.opportunities ? totals.known / totals.opportunities * 100 : 0;
-    byId("rankDatasetFacts").innerHTML =
-      '<div><strong>' + integer.format(totals.opportunities) + '</strong><span>решений на BB</span></div>' +
-      '<div><strong>' + integer.format(totals.jams) + '</strong><span>прямых олл-инов</span></div>' +
-      '<div><strong>' + percent(coverage, 1) + '</strong><span>решений с картами</span></div>' +
-      '<div><strong>' + integer.format(totals.charts) + '</strong><span>независимых среза</span></div>';
-  }
-
   function statsMarkup(chart, delta) {
     var opportunities = totalFor(chart, "opportunities");
     var known = Number(chart && (chart.knownOpportunities != null ? chart.knownOpportunities : chart.totals && chart.totals.knownOpportunities) || 0);
@@ -259,20 +349,25 @@
     }
     Data.meta.handOrder.forEach(function (hand, index) {
       var cell = chart.cells[index] || [0, 0, 0, 0, 0];
-      var rate = cellRate(cell);
+      var display = lowNDisplayCell(Data, cohort, state.position, state.size, state.depth, index, cell);
+      var rate = display.rate;
       var button = document.createElement("button");
       button.type = "button";
       button.className = "rank-cell" +
-        (cell[0] < 5 ? " is-empty" : cell[0] < 20 ? " is-thin" : "") +
+        (!display.available ? " is-empty" : display.estimated ? " is-estimated" : cell[0] < 20 ? " is-thin" : "") +
         (cell[0] >= 50 ? " is-reliable" : "") +
         (hand === state.hand ? " is-selected" : "");
-      button.style.setProperty("--jam-color", cell[0] < 5 ? "#15171b" : gradientColor(rate));
+      button.style.setProperty("--jam-color", display.available ? gradientColor(rate) : "#15171b");
       button.dataset.hand = hand;
       button.dataset.index = String(index);
+      button.dataset.rateKind = display.estimated ? "estimate" : display.available ? "observed" : "none";
       button.setAttribute("role", "gridcell");
-      button.setAttribute("aria-label", hand + ": рестил-пуш " + percent(rate, 1) + ", выборка " + integer.format(cell[0]));
-      button.title = hand + " · пуш " + percent(rate, 1) + " · N " + integer.format(cell[0]);
-      button.innerHTML = "<b>" + hand + "</b><small>" + (cell[0] < 5 ? "—" : percent(rate, 0)) + "</small>";
+      var rateLabel = display.estimated ? "сглаженная оценка рестил-пуша " : "рестил-пуш ";
+      button.setAttribute("aria-label", hand + ": " + (display.available ? rateLabel + percent(rate, 1) + ", выборка " + integer.format(cell[0]) : "нет данных"));
+      button.title = display.available
+        ? hand + " · " + (display.estimated ? "оценка пуша ≈ " : "пуш ") + percent(rate, 1) + " · N " + integer.format(cell[0])
+        : hand + " · нет данных";
+      button.innerHTML = "<b>" + hand + "</b><small>" + (!display.available ? "—" : (display.estimated ? "≈" : "") + percent(rate, 0)) + "</small>";
       button.addEventListener("click", function () {
         state.hand = hand;
         render();
@@ -296,14 +391,16 @@
   function renderReadout() {
     var novice = cellFor("novice", state.hand) || [0, 0, 0, 0, 0];
     var league = cellFor(state.league, state.hand) || [0, 0, 0, 0, 0];
-    var noviceRate = cellRate(novice);
-    var leagueRate = cellRate(league);
-    var delta = leagueRate - noviceRate;
+    var noviceDisplay = displayCellFor("novice", state.hand, novice);
+    var leagueDisplay = displayCellFor(state.league, state.hand, league);
+    var noviceRate = noviceDisplay.rate;
+    var leagueRate = leagueDisplay.rate;
+    var delta = noviceDisplay.available && leagueDisplay.available ? leagueRate - noviceRate : null;
     byId("rankHandReadout").innerHTML =
       '<div><span>Выбранная рука</span><strong>' + state.hand + '</strong><small>' + state.position + ' · ' + sizeLabels[state.size] + ' · ' + depthLabels[state.depth] + ' BB</small></div>' +
-      '<div><span>Совсем новички</span><strong>' + percent(noviceRate, 1) + '</strong><small>N ' + integer.format(novice[0]) + '</small></div>' +
-      '<div><span>' + cohortLabels[state.league] + '</span><strong>' + percent(leagueRate, 1) + '</strong><small>N ' + integer.format(league[0]) + '</small></div>' +
-      '<div class="' + (delta > 0 ? 'is-up' : delta < 0 ? 'is-down' : 'is-flat') + '"><span>Разница</span><strong>' + signed(delta) + '</strong><small>процентных пункта</small></div>';
+      '<div><span>Совсем новички</span><strong>' + (noviceDisplay.available ? (noviceDisplay.estimated ? "≈" : "") + percent(noviceRate, 1) : "—") + '</strong><small>' + (noviceDisplay.estimated ? "оценка · " : "") + 'N ' + integer.format(novice[0]) + '</small></div>' +
+      '<div><span>' + cohortLabels[state.league] + '</span><strong>' + (leagueDisplay.available ? (leagueDisplay.estimated ? "≈" : "") + percent(leagueRate, 1) : "—") + '</strong><small>' + (leagueDisplay.estimated ? "оценка · " : "") + 'N ' + integer.format(league[0]) + '</small></div>' +
+      '<div class="' + (delta > 0 ? 'is-up' : delta < 0 ? 'is-down' : 'is-flat') + '"><span>Разница</span><strong>' + (delta == null ? "—" : signed(delta)) + '</strong><small>' + (delta == null ? "нет сравнения" : "процентных пункта") + '</small></div>';
   }
 
   function summaryJamRate(cohort) {
@@ -337,7 +434,7 @@
     var meta = Data.meta || {};
     var start = String(meta.windowStartInclusive || "2026-01-01").slice(0, 10);
     var end = String(meta.windowEndExclusive || "2026-07-14").slice(0, 10);
-    byId("rankEvidenceSource").innerHTML = '<strong>Как читать:</strong> цвет показывает наблюдаемую частоту прямого рестил-пуша; янтарная штриховка — малая выборка N 5–19, тире — данных недостаточно (N меньше 5). Матрицы построены только по раздачам с известными картами. ' +
+    byId("rankEvidenceSource").innerHTML = '<strong>Как читать:</strong> цвет показывает частоту прямого рестил-пуша. Янтарный угол — малая выборка N 5–19; фиолетовый угол и знак ≈ — сглаженная оценка при N 1–4. К редкой ячейке добавлены 16 условных рук: сначала та же рука и спот в других когортах, затем более широкий сопоставимый срез. Тире означает N 0. Матрицы построены только по раздачам с известными картами. ' +
       'Текущий срез: BB против одного ' + state.position + ', опен ' + sizeLabels[state.size] + ', стек ' + depthLabels[state.depth] + ' BB; ' +
       'N ' + integer.format(totalFor(noviceChart, "opportunities")) + ' против N ' + integer.format(totalFor(leagueChart, "opportunities")) + '. ' +
       '<span>FF, ' + start + '—' + end + '; лига присвоена на момент раздачи.</span>';
@@ -361,7 +458,6 @@
   }
 
   renderGrowth();
-  renderDatasetFacts();
   render();
   window.PokerRestealRankView = Object.freeze({ state: state, render: render });
 })();

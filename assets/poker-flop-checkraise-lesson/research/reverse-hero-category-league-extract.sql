@@ -36,6 +36,11 @@
 --       League 3 (R11-17) 66,136 / 488,230
 --     If the raw-HH parser cannot reproduce those totals, publish neither the
 --     category rates nor an apparently close approximation.
+--
+-- Before exporting raw HH, run the same mart_latest/ranked_candidates CTEs and
+-- aggregate the prepared flop node by league.  The 2026-07-18 preflight is
+-- recorded in reverse-hero-category-reconciliation.json and is deliberately
+-- blocked: the current rank bridge no longer reproduces the frozen controls.
 
 -- ---------------------------------------------------------------------------
 -- BigQuery: one dominant-overlap rank per player and calendar month.
@@ -147,11 +152,15 @@ mart_latest AS
     AND h.tourney_id IS NOT NULL
     AND h.hand_id IS NOT NULL
     AND h.hand_player_id IS NOT NULL
+    AND h.is_3_9_max = 1
     AND h.is_bb = 1
     AND h.cnt_players BETWEEN 3 AND 9
+    AND h.is_preflop_first_actor_not_sb = 1
     AND h.val_preflop_action_facing = 4
     AND ifNull(h.cnt_preflop_face_limpers, 0) = 0
-    AND h.preflop_raiser_count = 1
+    -- preflop_raiser_count belongs to tracked Hero. Requiring it to equal one
+    -- together with preflop_action = 'C' makes this candidate set empty.
+    AND h.is_one_preflop_action_before_player = 1
     AND (h.is_first_aggressor_co = 1 OR h.is_first_aggressor_btn = 1)
     AND h.preflop_2bet_and_blind_facing_amount_bb <= 3.0
     AND h.stack_size_bb >= 20

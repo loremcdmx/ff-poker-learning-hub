@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "status": "blocked_control_mismatch",
+  "publishEligible": false,
+  "generatedAt": "2026-07-18T00:36:24Z",
+  "window": {
+    "startInclusive": "2026-04-01T00:00:00Z",
+    "endExclusive": "2026-07-01T00:00:00Z",
+    "timezone": "UTC"
+  },
+  "grain": "one tracked Hero-BB perspective per physical hand",
+  "cohortContract": "dominant monthly rank overlap",
+  "rankBridge": {
+    "rows": 6078,
+    "users": 2200,
+    "bigqueryJobId": "mcp_bq_job_ebbf8bce84a6484b98106aa6cbdf28ca",
+    "sha256": "2bf359e00b616fcb7a220ecbe837478b60f5bc80972a33ba82c8ee619514d46c"
+  },
+  "source": {
+    "clickhouseTable": "analytics.int_tracker_hand_joined",
+    "q2MaxVersion": 1784201643,
+    "q2MaxVersionUtc": "2026-07-16T11:34:03Z",
+    "failedZeroRowExportJobId": "mcp_ch_job_6f4177cee9e34d6e8e349c404a624842",
+    "failedZeroRowCause": "preflop_raiser_count = 1 was combined with preflop_action = 'C'"
+  },
+  "controls": {
+    "league1": { "xraises": 24170, "opportunities": 151874 },
+    "league2": { "xraises": 60081, "opportunities": 378226 },
+    "league3": { "xraises": 66136, "opportunities": 488230 }
+  },
+  "currentPreflight": {
+    "league1": { "xraises": 24150, "opportunities": 151553, "players": 180 },
+    "league2": { "xraises": 59886, "opportunities": 377208, "players": 528 },
+    "league3": { "xraises": 66386, "opportunities": 489904, "players": 1279 }
+  },
+  "deltaCurrentMinusControl": {
+    "league1": { "xraises": -20, "opportunities": -321 },
+    "league2": { "xraises": -195, "opportunities": -1018 },
+    "league3": { "xraises": 250, "opportunities": 1674 },
+    "allLeagues": { "xraises": 35, "opportunities": 335 }
+  },
+  "publicationThresholds": {
+    "minimumPublishDenominator": 200,
+    "minimumExploratoryDenominator": 50,
+    "cardsKnownCoverageMinimum": 0.8
+  },
+  "blocker": "The current monthly rank bridge and mart snapshot do not exactly reproduce the frozen league controls. BigQuery time travel to the original lesson snapshot is unavailable because the readonly rank table was replaced. No category rate or browser artifact may be generated from this run.",
+  "nextSafeStep": "Restore the exact rank-bridge export used for the frozen controls, or intentionally rebuild and review all canonical controls and lesson headlines under one new source snapshot. Then rerun the reverse-Hero parser and all publication gates."
+}

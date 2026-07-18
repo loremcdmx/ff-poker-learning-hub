@@ -22,6 +22,7 @@
     ffRealizationData: null,
     ffRealizationLoading: null,
     ffRealizationError: "",
+    realizationStackKey: "40_70",
     leagueStackKey: "40_70",
     leaguePosition: "BTN",
     leagueSizeKey: "2_0",
@@ -475,21 +476,6 @@
     });
   }
 
-  function comboWeightedDefensePct(sizeKey) {
-    var defendedCombos = 0;
-    var totalCombos = 0;
-    for (var row = 0; row < 13; row += 1) {
-      for (var column = 0; column < 13; column += 1) {
-        var hand = Content.matrixHandAt(row, column);
-        var cell = Content.rangeCellFor(sizeKey, "BTN", hand);
-        var combos = row === column ? 6 : row < column ? 4 : 12;
-        defendedCombos += combos * (cell.raisePct + cell.callPct) / 100;
-        totalCombos += combos;
-      }
-    }
-    return totalCombos ? defendedCombos / totalCombos * 100 : 0;
-  }
-
   function renderSizeDefensePreview(sizeKey) {
     var copy = SIZE_DEFENSE_PREVIEW_COPY[sizeKey];
     var root = $("#sizeDefensePreview");
@@ -498,18 +484,20 @@
     var scenario = Content.rangeScenarios[sizeKey] && Content.rangeScenarios[sizeKey].BTN;
     if (!copy || !root || !defaultCopy || !size || !scenario) return;
 
-    var defendPct = 100 - scenario.foldPct;
-    var matrixDefendPct = comboWeightedDefensePct(sizeKey);
+    var summary = Content.rangeSummaryFor(sizeKey, "BTN");
+    var defendPct = summary.defendPct;
+    var defendLabel = fmt(defendPct, 1);
+    var foldLabel = fmt(summary.foldPct, 1);
     var toCall = fmt(size.toCall, 1).replace(",0", "");
     var finalPot = fmt(size.finalPot, 1).replace(",0", "");
-    root.innerHTML = '<div class="size-preview-head"><div><p class="eyebrow">Базовый чарт · BTN</p><h3>' + copy.title + '</h3></div><strong>' + String(defendPct) + '%</strong></div>' +
+    root.innerHTML = '<div class="size-preview-head"><div><p class="eyebrow">Базовый чарт · BTN</p><h3>' + copy.title + '</h3></div><strong>' + defendLabel + '%</strong></div>' +
       '<div class="size-preview-matrix" aria-hidden="true"></div>' +
       '<div class="size-preview-copy">' +
         '<div class="size-preview-legend" aria-label="Розовый — 3-бет, зелёный — колл, белый — пас"><span><i class="is-raise"></i>3-бет</span><span><i class="is-call"></i>Колл</span><span><i class="is-fold"></i>Пас</span></div>' +
         '<p class="size-preview-equation">' + toCall + ' ÷ ' + finalPot + ' = ' + fmt(size.potOddsPct, 1) + '%</p>' +
-        '<p><strong>' + String(defendPct) + '% = 100% − ' + String(scenario.foldPct) + '% паса</strong> в базовом чарте.</p>' +
+        '<p><strong>' + defendLabel + '% защиты · ' + foldLabel + '% паса</strong> в базовом чарте.</p>' +
         '<p>' + copy.boundary + '</p>' +
-        '<small>Ориентир защиты: ' + String(defendPct) + '%. Если взвесить все 169 клеток по числу комбинаций: ≈' + fmt(matrixDefendPct, 1) + '%. Цена колла объясняет сужение, но не задаёт точную границу в одиночку.</small>' +
+        '<small>Доли посчитаны по ' + fmt(summary.totalCombos, 0) + ' комбинациям стартовых рук из учебной матрицы. Цена колла объясняет сужение, но не задаёт точную границу в одиночку.</small>' +
       '</div>';
 
     var matrix = root.querySelector(".size-preview-matrix");
@@ -527,7 +515,7 @@
     }
     matrix.appendChild(fragment);
     root.dataset.sizeKey = sizeKey;
-    root.setAttribute("aria-label", "Разбор защиты BB против BTN " + size.label + ": " + String(defendPct) + " процентов");
+    root.setAttribute("aria-label", "Разбор защиты BB против BTN " + size.label + ": " + defendLabel + " процента");
     root.hidden = false;
     defaultCopy.hidden = true;
     $$('[data-size-preview]').forEach(function (button) {
@@ -594,11 +582,15 @@
     ];
   }
 
-  function leagueStackLabel() {
+  function stackLabel(key) {
     var item = leagueStackItems().find(function (candidate) {
-      return candidate.key === state.leagueStackKey;
+      return candidate.key === key;
     });
-    return item ? item.label : state.leagueStackKey;
+    return item ? item.label : key;
+  }
+
+  function leagueStackLabel() {
+    return stackLabel(state.leagueStackKey);
   }
 
   function leaguePositionItems() {
@@ -756,6 +748,7 @@
       leaguePositionTabs: "leagueDefenseComparison",
       leagueSizeTabs: "leagueDefenseComparison",
       leagueTabs: "selectedLeagueDefenseChart",
+      realizationStackTabs: "realizationDetail",
       memorySizeTabs: "memoryChart",
       memoryPositionTabs: "memoryChart"
     };
@@ -897,13 +890,14 @@
   }
 
   function ffRealizationKey() {
-    return state.sizeKey + ":" + state.position + ":" + state.selectedHand;
+    return [state.realizationStackKey, state.sizeKey, state.position, state.selectedHand].join(":");
   }
 
   function renderFfRealization(model, position, size) {
     var config = Content.ffRealizationModel;
+    var stack = stackLabel(state.realizationStackKey);
     if (!state.ffRealizationData) {
-      return '<section class="ff-realization-card is-pending"><div><span class="ff-realization-kicker">База рук FF · 25–40 BB</span><strong>' +
+      return '<section class="ff-realization-card is-pending"><div><span class="ff-realization-kicker">База рук FF · ' + stack + '</span><strong>' +
         (state.ffRealizationError ? "Срез недоступен" : "Загружаем фактические коллы…") +
         '</strong></div><p>Теоретическая математика выше работает независимо от этого среза.</p></section>';
     }
@@ -912,21 +906,21 @@
     var record = payload.rows[ffRealizationKey()];
     var minDisplay = Number(payload.meta.minDisplayN || config.minDisplayN);
     var minReliable = Number(payload.meta.minReliableN || config.minReliableN);
-    var scope = position.label + " · " + size.label + " · столы FF на 3–9 игроков";
+    var scope = position.label + " · " + size.label + " · " + stack + " · столы FF на 3–9 игроков";
 
     if (!record || record.n < minDisplay) {
       var observed = record ? fmtCount(record.n) : "0";
       var exactObserved = record && record.exact7 ? fmtCount(record.exact7.n) : "0";
-      return '<section class="ff-realization-card is-low-sample"><div class="ff-realization-head"><div><span class="ff-realization-kicker">База рук FF · 25–40 BB</span><strong>Пока мало данных</strong></div><b>Раздач: ' + observed + '</b></div>' +
+      return '<section class="ff-realization-card is-low-sample"><div class="ff-realization-head"><div><span class="ff-realization-kicker">База рук FF · ' + stack + '</span><strong>Пока мало данных</strong></div><b>Раздач: ' + observed + '</b></div>' +
         '<p>Для ' + state.selectedHand + " · " + scope + " нужно минимум " + fmtCount(minDisplay) + ' фактических коллов. Процент не показываем, чтобы не выдавать шум за закономерность.</p>' +
-        '<small>Раздачи за столом на 7 игроков считаются отдельно: ' + exactObserved + "; в общий результат они не добавлены.</small></section>";
+        '<small>Из них за столом ровно на 7 игроков: ' + exactObserved + ". Эти раздачи уже входят в общий срез 3–9 max и второй раз не прибавляются.</small></section>";
     }
 
     var eqrPct = model.rawEquityPct > 0 ? record.meanRealizedEquityPct / model.rawEquityPct * 100 : 0;
     var reliable = record.n >= minReliable;
 
     return '<section class="ff-realization-card ' + (reliable ? "is-reliable" : "is-preliminary") + '">' +
-      '<div class="ff-realization-head"><div><span class="ff-realization-kicker">Реально в базе FF · 25–40 BB</span><strong>' +
+      '<div class="ff-realization-head"><div><span class="ff-realization-kicker">Реально в базе FF · ' + stack + '</span><strong>' +
         (reliable ? "Достаточный срез" : "Предварительный срез") +
         '</strong></div><b>' + fmt(eqrPct, 1) + "%</b></div>" +
       '<p class="ff-realization-lead">Игроки реализовали примерно <strong>' + fmt(eqrPct, 1) + "%</strong> модельного эквити " + state.selectedHand + ". Это соответствует " + fmt(record.meanRealizedEquityPct, 1) + '% эквивалентной доли банка.</p>' +
@@ -935,6 +929,13 @@
   }
 
   function renderRealization() {
+    var stackTabs = $("#realizationStackTabs");
+    if (stackTabs) {
+      makeSegmented(stackTabs, leagueStackItems(), state.realizationStackKey, function (key) {
+        state.realizationStackKey = key;
+        renderRealization();
+      });
+    }
     var cell = Content.rangeCellFor(state.sizeKey, state.position, state.selectedHand);
     var size = Content.sizes[state.sizeKey];
     var position = Content.positions[state.position];

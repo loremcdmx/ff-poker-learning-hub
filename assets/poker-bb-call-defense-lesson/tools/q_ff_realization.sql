@@ -1,7 +1,7 @@
 /*
   FF BB-call realization export for the lesson UI.
 
-  Frozen window: [2026-01-01 00:00:00, 2026-07-14 00:00:00).
+  Frozen window: [2026-01-01 00:00:00, 2026-07-17 00:00:00).
   Primary and diagnostic cohorts stay separate:
     - all_ff_3_9max: the sample large enough for per-hand display;
     - exact_7max: a sparse diagnostic matching the illustrated table.
@@ -52,14 +52,14 @@ raw_latest AS
     WHERE month_start_date >= toDate('2026-01-01')
       AND month_start_date < toDate('2026-08-01')
       AND played_at >= toDateTime('2026-01-01 00:00:00')
-      AND played_at < toDateTime('2026-07-14 00:00:00')
+      AND played_at < toDateTime('2026-07-17 00:00:00')
       AND is_bb = 1
       AND val_preflop_action_facing = 4
       AND preflop_action = 'C'
       AND is_preflop_allin = 0
       AND cnt_flop_players = 2
       AND cnt_players BETWEEN 3 AND 9
-      AND preflop_effective_stack_size_bb BETWEEN 25 AND 40
+      AND preflop_effective_stack_size_bb > 0
       AND bb_amount > 0
       AND hand_player_id IS NOT NULL
       AND hand_id IS NOT NULL
@@ -122,18 +122,21 @@ cohorts AS
 ),
 expanded AS
 (
-    SELECT '25-40' AS stack_bucket, * FROM cohorts
-
-    UNION ALL
-
     SELECT
         multiIf(
-            effective_stack_bb < 30, '25-30',
-            effective_stack_bb < 35, '30-35',
-            '35-40'
+            effective_stack_bb < 40, '0_40',
+            effective_stack_bb < 70, '40_70',
+            '70_plus'
         ) AS stack_bucket,
         *
     FROM cohorts
+
+    UNION ALL
+
+    /* Compatibility slice retained for comparison with the 2026-07-14 build. */
+    SELECT '25_40' AS stack_bucket, *
+    FROM cohorts
+    WHERE effective_stack_bb BETWEEN 25 AND 40
 )
 SELECT
     cohort,

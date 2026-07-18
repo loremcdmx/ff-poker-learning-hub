@@ -25,7 +25,7 @@ const content = context.PokerRestealData;
 assert.ok(renderer?.renderTable, "snapshot renderer is available");
 assert.ok(context.PokerChipKit?.renderAmount, "shared chip pack is available");
 assert.ok(context.PokerDeckKit?.renderCard, "shared deck pack is available");
-assert.equal(content.comparisonFoldBaselineBb, -1.12, "comparison chart anchors fold to BB plus ante");
+assert.equal(content.comparisonFoldBaselineBb, -1.12, "historical outcome export keeps its documented fold baseline");
 
 const lessonCss = readFileSync(new URL("poker-resteal-lesson/lesson.css", assets), "utf8");
 const lessonHtml = readFileSync(new URL("../resteal-lesson.html", assets), "utf8");
@@ -49,11 +49,12 @@ assert.equal((lessonHtml.match(/id="openPctOut"/g) || []).length, 1, "open frequ
 assert.match(lessonHtml, /class="fold-summary" id="foldSummary"/);
 assert.match(lessonJs, /const field = usesFieldProfile \? fieldMetrics\(state\.opponent\) : null/, "field profile summary keeps observed fold data separate from the recommendation model");
 assert.match(lessonJs, /openPct: controls\.openPct,[\s\S]*callPct: controls\.callPct/, "field matrix uses a structural open and continuation range");
-assert.match(lessonJs, /const foldBaselineBb = Number\(Content\?\.comparisonFoldBaselineBb[\s\S]*advantageOverFold = \(rawEvBb\) => Number\(rawEvBb \|\| 0\) - foldBaselineBb/, "comparison lines use the canonical BB fold baseline");
-assert.doesNotMatch(lessonJs, /hero_outcomes\?\.pooled\?\.ALL\?\.\[category\]\?\.fold/, "mixed SB/BB category folds never replace the BB baseline");
-assert.match(lessonJs, /const difference = jamRaw - callRaw/, "jam-call delta stays on the original unrounded observations");
-assert.match(lessonJs, /comparisonVsFoldTooltip[\s\S]*EV паса \(\$\{compactSigned\(foldBaselineBb, 2\)\} BB\)[\s\S]*преимущество над пасом, а не абсолютный EV/, "tooltip explains the displayed EV as action minus fold");
-assert.match(lessonHtml, /Плюс по эквити считаем относительно паса: исходный EV действия − EV паса/, "comparison methodology explains the fixed BB rebase");
+assert.match(lessonJs, /const RankData = window\.PokerRestealRankData/, "observed panel reads the exact rank-at-hand cube");
+assert.match(lessonJs, /RankData\?\.charts\?\.\[cohort\]\?\.BTN\?\.\["2\.0"\]\?\.\["25-40"\]/, "observed panel fixes hero BB, BTN 2 BB, and 25–40 BB");
+assert.match(lessonJs, /\{ key: "folds"[\s\S]*\{ key: "calls"[\s\S]*\{ key: "small3bets"[\s\S]*\{ key: "jams"/, "observed panel separates all four preflop actions");
+assert.doesNotMatch(lessonJs, /state\.data\.hero_outcomes\.pooled\.ALL/, "mixed SB+BB outcomes no longer power the visible comparison");
+assert.match(lessonHtml, /Наблюдаемая игра поля · точно BB/, "comparison is labelled as observed exact-BB field play");
+assert.match(lessonHtml, /не сравнивают EV и не говорят, что нажимать/, "observed frequencies are explicitly not strategic advice");
 
 const introPot = context.PokerChipKit.renderAmount(4.5, { maxVisual: 3, detail: true });
 assert.match(introPot, /poker-chip--one/);

@@ -101,15 +101,25 @@ html[data-rfi-open-drill="true"] .client-controls.is-rfi-opening .table-action-a
   margin:0;
 }
 
+html[data-rfi-open-drill="true"] .workspace:has(> .rfi-range-review.is-visible) {
+  grid-template-columns:minmax(0,1fr) minmax(320px,380px);
+  grid-template-rows:auto;
+  align-content:start;
+  align-items:start;
+  column-gap:8px;
+}
+.rfi-stage-viewport { display:grid; place-items:center; align-self:stretch; grid-column:1; grid-row:1; width:100%; height:100%; min-width:0; max-width:100%; }
+.rfi-stage-viewport > .simulator-stage-shell { min-width:0; max-width:100%; }
 .rfi-range-review {
   --rfi-chart-pair:#a7c8ad;
   --rfi-chart-pair-open:color-mix(in srgb,#ffdf51 82%,var(--rfi-chart-pair));
-  position: fixed;
-  z-index: 260;
-  top: 126px;
-  right: 12px;
-  width: min(380px, calc(100vw - 24px));
+  position:relative;
+  z-index:15;
+  width:100%;
+  min-width:0;
   display: block;
+  grid-column:2;
+  grid-row:1;
   padding: 0;
   color: #f4f1ec;
   opacity: 0;
@@ -118,11 +128,11 @@ html[data-rfi-open-drill="true"] .client-controls.is-rfi-opening .table-action-a
   transition: opacity .2s ease, visibility .2s ease;
 }
 .rfi-range-review.is-visible { opacity: 1; visibility: visible; pointer-events: auto; }
-.rfi-review-backdrop { display:none; }
+.rfi-range-review[aria-hidden="true"] { display:none; }
 .rfi-review-board {
   position: relative;
   width: 100%;
-  max-height: calc(100dvh - 138px);
+  max-height:calc(100dvh - 138px);
   overflow: auto;
   padding: 14px;
   border: 1px solid rgba(255,255,255,.16);
@@ -134,11 +144,14 @@ html[data-rfi-open-drill="true"] .client-controls.is-rfi-opening .table-action-a
 .rfi-range-review.is-visible .rfi-review-board { animation:rfiTargetPullIn .34s cubic-bezier(.18,.88,.28,1.18) forwards; }
 .rfi-review-board.is-correct { border-color:rgba(87,214,154,.55); }
 .rfi-review-board.is-wrong { border-color:rgba(240,113,121,.58); }
-.rfi-review-header { display:grid; gap:6px; margin-bottom:9px; }
+.rfi-review-header { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px 10px; margin-bottom:9px; }
 .rfi-review-header div { display:grid; gap:2px; }
 .rfi-review-header span { color:#ffdf51; font-size:11px; font-weight:850; letter-spacing:.09em; text-transform:uppercase; }
 .rfi-review-header strong { font-size:24px; line-height:1; }
-.rfi-review-header p { margin:0; color:#aaa4b0; font-size:11px; }
+.rfi-review-header p { grid-column:1/-1; margin:0; color:#aaa4b0; font-size:11px; }
+.rfi-review-toggle { display:none; align-self:start; min-height:32px; padding:6px 9px; border:1px solid rgba(255,255,255,.16); border-radius:9px; color:#f4f1ec; background:rgba(255,255,255,.06); font:inherit; font-size:11px; font-weight:850; }
+.rfi-review-toggle:focus-visible { outline:2px solid #63b8ff; outline-offset:2px; }
+.rfi-review-details { display:grid; }
 .rfi-review-legend { display:flex; align-items:center; flex-wrap:wrap; gap:8px 15px; margin:0 0 10px; color:#aaa4b0; font-size:11px; }
 .rfi-review-legend span { display:flex; align-items:center; gap:6px; font-weight:750; }
 .rfi-review-legend span:before { content:""; width:10px; height:10px; border-radius:3px; border:1px solid rgba(255,255,255,.14); }
@@ -225,7 +238,16 @@ html[data-rfi-open-drill="true"] .table-action.has-amount .table-action-amount {
 }
 html[data-rfi-open-drill="true"] .table-action.has-amount .table-action-amount { font-size:.72em; line-height:1; }
 
-@media(max-width:800px) {
+@media(max-width:900px) {
+  html[data-rfi-open-drill="true"] .workspace:has(> .rfi-range-review.is-visible) { grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto; align-content:start; row-gap:8px; overflow-y:auto; }
+  html[data-rfi-open-drill="true"] .workspace:has(> .rfi-range-review.is-visible) > .rfi-stage-viewport { grid-column:1; grid-row:1; }
+  .rfi-range-review { grid-column:1; grid-row:2; width:100%; }
+  .rfi-review-board { max-height:none; overflow:visible; transform:translateY(18px) scale(.98); }
+  .rfi-review-toggle { display:inline-flex; align-items:center; justify-content:center; }
+  .rfi-range-review[data-collapsed="true"] .rfi-review-details { display:none; }
+  .rfi-range-review[data-collapsed="true"] .rfi-review-header { margin-bottom:0; }
+  .rfi-range-review[data-collapsed="true"] .rfi-review-header p { display:none; }
+  .rfi-range-review[data-collapsed="true"] .rfi-review-footer { margin-top:9px; }
   .rfi-drill-copy { grid-template-columns:1fr; gap:1px; }
   .rfi-drill-copy span,.rfi-drill-copy small { grid-column:1; }
   .rfi-drill-copy span { font-size:10px; }
@@ -240,8 +262,7 @@ html[data-rfi-open-drill="true"] .table-action.has-amount .table-action-amount {
 }
 
 @media(max-width:420px) {
-  .rfi-range-review { top:118px; right:5px; width:min(316px,calc(100vw - 10px)); }
-  .rfi-review-board { max-height:calc(100dvh - 123px); padding:11px; border-radius:15px; }
+  .rfi-review-board { padding:11px; border-radius:15px; }
   .rfi-position-stat { grid-template-columns:1fr; justify-items:center; padding:4px 2px; text-align:center; }
   .rfi-position-stat b { justify-self:center; padding-right:0; }
   .rfi-position-stat span { font-size:7px; }

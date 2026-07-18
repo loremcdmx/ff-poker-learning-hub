@@ -12,7 +12,9 @@ const files = {
   continuations: "assets/poker-vs-3bet-defense-lesson/continuations.js",
   model: "assets/poker-vs-3bet-defense-lesson/range-model.js",
   data: "assets/poker-vs-3bet-defense-lesson/data.js",
+  fieldData: "assets/poker-vs-3bet-defense-lesson/data/vs3bet-field-data.js",
   explorer: "assets/poker-vs-3bet-defense-lesson/range-explorer.js",
+  fieldExplorer: "assets/poker-vs-3bet-defense-lesson/field-explorer.js",
   sharedLesson: "assets/poker-field-lesson/lesson.js",
   research: "assets/poker-vs-3bet-defense-lesson/research/README.md",
   transcript: "assets/poker-vs-3bet-defense-lesson/research/methodics-ranges.md"
@@ -23,7 +25,7 @@ const source = Object.fromEntries(await Promise.all(Object.entries(files).map(as
 
 const context = { window: {}, console };
 vm.createContext(context);
-for (const key of ["controller", "continuations", "model", "data"]) {
+for (const key of ["controller", "continuations", "model", "data", "fieldData"]) {
   vm.runInContext(source[key], context, { filename: files[key] });
 }
 
@@ -31,6 +33,7 @@ const data = context.window.FF_POKER_FIELD_LESSON_DATA;
 const model = context.window.FF_VS3BET_RANGE_MODEL;
 const continuationApi = context.window.FFTrainerSimulatorContinuation;
 const continuationRegistry = context.window.FF_VS3BET_CONTINUATIONS;
+const fieldData = context.window.FF_VS3BET_FIELD_DATA;
 
 assert.equal(data.schemaVersion, 1);
 assert.equal(data.key, "vs-3bet-defense");
@@ -45,6 +48,14 @@ assert.equal(data.cohorts[0].actions[2].pct, 16.30);
 assert.equal(data.cohorts[2].actions[0].pct, 59.96);
 assert.equal(data.cohorts[3].sample, 861445);
 assert.equal(data.cohorts[3].players, 953);
+assert.doesNotMatch(source.data, /42,6 → 21,0%/);
+assert.equal(fieldData.version, "vs3bet-field-cube-20260717-v3");
+assert.equal(fieldData.meta.windowEndExclusive, "2026-07-17T00:00:00Z");
+assert.equal(fieldData.meta.hands.length, 169);
+assert.equal(Object.keys(fieldData.charts).length, 778, "20 chart slices below the public N threshold stay omitted");
+assert.equal(fieldData.summaries.league3.opportunities, 2483604);
+assert.equal(fieldData.meta.filters.squeezeExcluded, true);
+assert.match(fieldData.meta.aggregation, /descriptive|integer|count/i);
 
 assert.equal(model.schemaVersion, 1);
 assert.deepEqual(Array.from(model.positions), ["EP", "MP", "HJ", "CO", "BTN", "SB"]);
@@ -206,6 +217,7 @@ const stepOrder = Array.from(
 );
 assert.deepEqual(stepOrder, ["deal", "wisdom", "field", "leaks", "practice"]);
 assert.match(source.html, /data-vs3-range-explorer/);
+assert.match(source.html, /data-vs3-field-explorer/);
 assert.match(source.html, /data-vs3-leaks/);
 assert.match(source.html, /data-vs3-practice-filters/);
 const expectedScriptOrder = [
@@ -215,7 +227,9 @@ const expectedScriptOrder = [
   "poker-vs-3bet-defense-lesson/continuations.js",
   "poker-vs-3bet-defense-lesson/range-model.js",
   "poker-vs-3bet-defense-lesson/data.js",
+  "poker-vs-3bet-defense-lesson/data/vs3bet-field-data.js",
   "poker-vs-3bet-defense-lesson/range-explorer.js",
+  "poker-vs-3bet-defense-lesson/field-explorer.js",
   "poker-field-lesson/lesson.js"
 ];
 for (let index = 1; index < expectedScriptOrder.length; index += 1) {
@@ -224,12 +238,27 @@ for (let index = 1; index < expectedScriptOrder.length; index += 1) {
     `${expectedScriptOrder[index - 1]} loads before ${expectedScriptOrder[index]}`
   );
 }
-assert.match(source.html, /href="\/flop-checkraise-lesson"/);
+const finalCourseLink = source.html.match(/<a href="([^"]+)" data-footer-next>([^<]+)<\/a>/);
+assert.deepEqual(
+  finalCourseLink?.slice(1),
+  ["/", "Завершить курс →"],
+  "the final lesson returns to the learning hub instead of looping to check-raise"
+);
+assert.doesNotMatch(
+  source.html,
+  /<a href="\/flop-checkraise-lesson" data-footer-next>/,
+  "the final lesson must not loop back to check-raise"
+);
 assert.match(source.explorer, /4-бет пуш/);
 assert.match(source.explorer, /В позиции/);
 assert.match(source.explorer, /Без позиции/);
+assert.match(source.fieldExplorer, /Это наблюдаемое поведение поля, не рекомендация/);
+assert.match(source.fieldExplorer, /unavailableBelow/);
 assert.match(source.sharedLesson, /continuationUi/);
 assert.match(source.research, /mcp_bq_80039683391746b3bc0cda01a00f1260/);
+assert.match(source.research, /mcp_ch_job_1dc4dcea6c5644578ddb72c9f90a32f2/);
+assert.match(source.research, /5 051 115/);
+assert.match(source.research, /is_face_squeeze=0/);
 assert.match(source.research, /98\.4%/);
 assert.match(source.research, /учебной адаптацией/);
 assert.match(source.research, /не являются измеренными hand-level/);

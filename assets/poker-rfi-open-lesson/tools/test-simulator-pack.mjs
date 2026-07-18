@@ -89,6 +89,16 @@ assert(rfiActions.includes('table-action-amount" data-bet-display>2 BB'), "fixed
 const rfiPackCss = readFileSync(resolve(repo, "assets/poker-rfi-open-lesson/simulator-pack.css"), "utf8");
 assert.match(rfiPackCss, /\.client-controls\.is-rfi-opening\s*\{[^}]*min-height:0;/s, "fixed RFI actions collapse the reserved betbox height");
 assert(rfiPackCss.includes('.client-controls.is-rfi-opening > .client-row .table-action'), "fixed RFI actions retain full-size button targets");
+assert.match(rfiPackCss, /\.workspace:has\(> \.rfi-range-review\.is-visible\)\s*\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(320px,380px\)/s, "desktop review is a real side column beside the table");
+assert.match(rfiPackCss, /@media\(max-width:900px\)[\s\S]*?\.workspace:has\(> \.rfi-range-review\.is-visible\)\s*\{[^}]*grid-template-columns:minmax\(0,1fr\)[^}]*grid-template-rows:auto auto/s, "narrow review moves below the table");
+assert.match(rfiPackCss, /\.rfi-stage-viewport\s*\{[^}]*align-self:stretch[^}]*width:100%[^}]*height:100%[^}]*min-width:0/s, "docked review gives the simulator a measurable, non-recursively shrinking stage viewport");
+assert(rfiPackCss.includes('.rfi-range-review[data-collapsed="true"] .rfi-review-details'), "narrow review chart can collapse without hiding the verdict or next action");
+const rfiPackSource = readFileSync(resolve(repo, "assets/poker-rfi-open-lesson/simulator-pack.js"), "utf8");
+assert(rfiPackSource.includes('querySelector(".workspace") || root.document.body'), "review is mounted beside the simulator stage inside the workspace layout");
+assert(rfiPackSource.includes('feedback.setAttribute("role", "region")'), "review is non-modal and does not claim dialog focus ownership");
+assert(!rfiPackSource.includes('feedback.querySelector("[data-rfi-review-next]")?.focus'), "review no longer steals focus from the completed table");
+for (const token of ["function setFeedbackCollapsed", "function resetAnalysis", 'querySelector(".table-grid.is-idle")', '[data-action="start-simulator"], #reset-session-button']) assert(rfiPackSource.includes(token), `RFI review lifecycle includes ${token}`);
+for (const token of ["function ensureStageViewport", "function syncStageToViewport", "data-rfi-stage-viewport", "PokerSimulatorStage", "api.syncStage(shell, stage, viewport)"]) assert(rfiPackSource.includes(token), `RFI review stage fit includes ${token}`);
 
 const preflopOpen = engine.createTable({ id: 7, handNo: 11, settings: pack.applyBootSettings({}) });
 const preflopOpenStart = engine.startHeroAction(preflopOpen, "raise-custom", pack.applyBootSettings({}), { amount: 2 });

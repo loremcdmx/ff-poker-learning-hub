@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
   <link rel="stylesheet" href="assets/poker-bb-call-defense-lesson/base.css?v=20260716-practice-scroll-v18">
-  <link rel="stylesheet" href="assets/poker-bb-call-defense-lesson/lesson.css?v=645d5a65ad44">
+  <link rel="stylesheet" href="assets/poker-bb-call-defense-lesson/lesson.css?v=100a3a7312e5">
   <link rel="stylesheet" href="assets/ffstart-course/media-player.css?v=20260715-ffstart-v20">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
 </head>
@@ -125,15 +125,15 @@
                 <div class="wisdom-copy-block" id="sizeDefenseDefaultCopy">
                   <p class="eyebrow">Защита BB против BTN</p>
                   <h3>Чем крупнее опен, тем уже защита</h3>
-                  <p>Защита — это колл плюс 3-бет. Против BTN она сужается с 90% на минрейз до 27% против 3 BB.</p>
+                  <p>Защита — это колл плюс 3-бет. Против BTN она сужается с 88,2% на минрейз до 27,0% против 3 BB.</p>
                 </div>
                 <aside class="size-defense-preview" id="sizeDefensePreview" aria-label="Разбор выбранного процента защиты" aria-live="polite" hidden></aside>
               </div>
               <div class="size-ladder" aria-label="Защита BB против BTN по размерам рейза: колл плюс 3-бет">
-                <div><span>Опен BTN 2 BB</span><strong>+1 BB</strong><b>90%</b></div>
-                <div><span>Опен BTN 2,5 BB</span><strong>+1,5 BB</strong><button class="size-defense-trigger" type="button" data-size-preview="2_5" aria-controls="sizeDefensePreview" aria-describedby="sizeDefenseHint" aria-expanded="false">55%<small>чарт</small></button></div>
-                <div><span>Опен BTN 3 BB</span><strong>+2 BB</strong><button class="size-defense-trigger" type="button" data-size-preview="3_0" aria-controls="sizeDefensePreview" aria-describedby="sizeDefenseHint" aria-expanded="false">27%<small>чарт</small></button></div>
-                <p class="size-ladder-hint" id="sizeDefenseHint">Наведи на 55% или 27% — увидишь матрицу и объяснение границы.</p>
+                <div><span>Опен BTN 2 BB</span><strong>+1 BB</strong><b>88,2%</b></div>
+                <div><span>Опен BTN 2,5 BB</span><strong>+1,5 BB</strong><button class="size-defense-trigger" type="button" data-size-preview="2_5" aria-controls="sizeDefensePreview" aria-describedby="sizeDefenseHint" aria-expanded="false">53,8%<small>чарт</small></button></div>
+                <div><span>Опен BTN 3 BB</span><strong>+2 BB</strong><button class="size-defense-trigger" type="button" data-size-preview="3_0" aria-controls="sizeDefensePreview" aria-describedby="sizeDefenseHint" aria-expanded="false">27,0%<small>чарт</small></button></div>
+                <p class="size-ladder-hint" id="sizeDefenseHint">Наведи на 53,8% или 27,0% — увидишь матрицу и объяснение границы.</p>
               </div>
             </article>
 
@@ -177,12 +177,12 @@
               <div class="wisdom-copy-block">
                 <p class="eyebrow">Защита — не синоним колла</p>
                 <h3>Доведи три цвета до автоматизма</h3>
-                <p>Цель тренажёра — довести принятие решений по защите BB до автоматизма. В реальной игре 3-й лиги против опена BTN до 2 BB: 14% решений — 3-бет, 60% — колл, 26% — пас.</p>
+                <p>Цель тренажёра — довести принятие решений по защите BB до автоматизма. В данных FF за 1 января — 16 июля 2026: 3-я лига против опена BTN 2 BB при стеке 40–70 BB играет 13,6% рук через 3-бет, 62,0% — через колл и 24,4% — через пас.</p>
               </div>
-              <div class="action-split" aria-label="Как реально играет 3-я лига против рейза BTN до 2 BB">
-                <div class="is-raise"><span>3-бет</span><strong>14%</strong></div>
-                <div class="is-call"><span>Колл</span><strong>60%</strong></div>
-                <div class="is-fold"><span>Пас</span><strong>26%</strong></div>
+              <div class="action-split" aria-label="Как играет 3-я лига против опена BTN 2 BB при стеке 40–70 BB, 1 января — 16 июля 2026">
+                <div class="is-raise"><span>3-бет</span><strong>13,6%</strong></div>
+                <div class="is-call"><span>Колл</span><strong>62,0%</strong></div>
+                <div class="is-fold"><span>Пас</span><strong>24,4%</strong></div>
               </div>
             </article>
 
@@ -279,6 +279,9 @@
           <div><p class="eyebrow">Шаг 3 · выбранная рука</p><h3 id="realizationTitle">Эквити и нужная реализация</h3></div>
           <strong class="realization-ratio" id="realizationRatio">—</strong>
         </div>
+        <div class="range-controls realization-stack-controls">
+          <div><span>Эффективный стек в базе FF</span><div class="segmented-control" id="realizationStackTabs" role="tablist" aria-label="Стек для фактической реализации колла"></div></div>
+        </div>
         <div class="realization-detail" id="realizationDetail" aria-live="polite"></div>
       </section>
     </section>
@@ -371,10 +374,10 @@
   <script defer src="assets/poker-trainer-shell/simulator-practice.js?v=591b8e2f6784"></script>
   <script defer src="assets/poker-bb-call-defense-lesson/engine.js?v=20260715-ffstart-handoff-v16"></script>
   <script defer src="assets/poker-bb-call-defense-lesson/range-data.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-bb-call-defense-lesson/data.js?v=de5ee8e8909e"></script>
+  <script defer src="assets/poker-bb-call-defense-lesson/data.js?v=d805eb9f1169"></script>
   <script defer src="assets/poker-bb-call-defense-lesson/recall.js?v=20260716-memory-review-v20"></script>
   <script defer src="assets/poker-progress/progress.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-bb-call-defense-lesson/lesson.js?v=2024de1054e8"></script>
+  <script defer src="assets/poker-bb-call-defense-lesson/lesson.js?v=9e936a5025fe"></script>
   <script defer src="assets/ffstart-course/media-player.js?v=20260716-native-metadata-v22"></script>
   <script defer src="assets/ffstart-course/legacy-media.js?v=20260716-bb-direct-video-v2"></script>
 </body>

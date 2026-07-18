@@ -59,6 +59,11 @@ assert.equal(field.role, "aggressor");
 assert.equal(field.rankRole, "preflop_aggressor");
 assert.deepEqual(Array.from(field.positions), ["CO", "BTN"]);
 assert.equal(field.canonicalNode, false);
+assert.deepEqual(
+  Object.fromEntries(Object.entries(field.reliability)),
+  { directionalMin: 50, solidMin: 200 },
+  "field matrix publishes the same sample-size contract as the c-bet cube"
+);
 assert.equal(field.sample.kind, "deterministic_hh_sample");
 assert.equal(field.sample.percent, 70);
 assert.equal(field.sample.analysisIncluded, true);
@@ -111,6 +116,21 @@ for (const row of field.rows) {
   }
 }
 assert.equal(fieldCells.size, 24);
+const thinMatchedCell = field.rows.find((row) => row.key === "low_connected").values.league1.foldVsXr.matched;
+const directionalMatchedCell = field.rows.find((row) => row.key === "broadway").values.league1.foldVsXr.matched;
+assert.deepEqual([thinMatchedCell.folds, thinMatchedCell.faced], [14, 38]);
+assert.deepEqual([directionalMatchedCell.folds, directionalMatchedCell.faced], [69, 144]);
+assert.match(
+  fieldMatrixSource,
+  /function reliabilityFor\(denominator\)[\s\S]*denominator < directionalMin[\s\S]*"thin"[\s\S]*denominator < solidMin[\s\S]*"directional"/,
+  "matrix classifies thin and directional denominators"
+);
+assert.match(
+  fieldMatrixSource,
+  /reliability === "thin" \? "Мало данных"[\s\S]*процент скрыт[\s\S]*reliability === "directional"[\s\S]*направление/,
+  "matrix hides thin percentages and labels directional samples"
+);
+assert.match(fieldMatrixCss, /data-reliability="thin"[\s\S]*font-size:/, "thin values fit as copy instead of a percentage");
 
 for (const league of field.leagues) {
   const totals = field.rows.reduce((sum, row) => {
@@ -171,6 +191,7 @@ for (const artifact of fieldMatrixArtifactRows) {
 assert.match(data.wisdom[2].copy, /43%/);
 const foldVisual = data.wisdom[2].visual;
 assert.equal(foldVisual.type, "board-folds");
+assert.equal(foldVisual.sampleId, "strict-k-high-size-window-q2-2026");
 assert.equal(foldVisual.cohortRole, "aggressor");
 assert.deepEqual(Array.from(foldVisual.boardCards), ["Kc", "8h", "2s"]);
 assert.equal(new Set(foldVisual.boardCards).size, 3);
@@ -193,6 +214,15 @@ assert.deepEqual(
   [["league1", 46, 93, 69], ["league2", 110, 242, 178], ["league3", 162, 269, 211]],
   "browser data stays aligned with the published aggregate artifact"
 );
+const fieldKHighLeague2 = field.rows.find((row) => row.key === "k_high_dry").values.league2.foldVsXr.matched;
+assert.equal(field.sample.id, "nearby-rvbb-structure-matrix-q2-2026");
+assert.notEqual(field.sample.id, foldVisual.sampleId, "the strict card and nearby structure matrix keep distinct sample contracts");
+assert.deepEqual(
+  [foldVisual.rows.find((row) => row.key === "league2").faced, fieldKHighLeague2.faced],
+  [242, 243],
+  "the one-hand denominator difference is explicit rather than silently conflated"
+);
+assert.match(field.foldViews.find((view) => view.key === "matched").note, /обзорный.*N не обязан совпадать/i);
 
 assert.equal(data.practice.length, 23, "one canonical practice catalog feeds all modes");
 const byId = new Map(data.practice.map((spot) => [spot.id, spot]));
@@ -366,8 +396,16 @@ const sharedHash = createHash("sha256")
   .slice(0, 12);
 assert.match(html, new RegExp(`assets/poker-field-lesson/lesson\\.js\\?v=${sharedHash}`));
 assert.match(html, /data-structure-league-matrix/);
-assert.match(html, /field-matrix\.css\?v=20260716-structures-1/);
-assert.match(html, /field-matrix\.js\?v=20260716-structures-1/);
+const fieldMatrixCssHash = createHash("sha256")
+  .update(fieldMatrixCss.replace(/\r\n/g, "\n").replace(/\r/g, "\n"))
+  .digest("hex")
+  .slice(0, 12);
+const fieldMatrixHash = createHash("sha256")
+  .update(fieldMatrixSource.replace(/\r\n/g, "\n").replace(/\r/g, "\n"))
+  .digest("hex")
+  .slice(0, 12);
+assert.match(html, new RegExp(`field-matrix\\.css\\?v=${fieldMatrixCssHash}`));
+assert.match(html, new RegExp(`field-matrix\\.js\\?v=${fieldMatrixHash}`));
 assert.match(html, /simulator-continuation\.js\?v=20260716-full-hand-1/);
 assert.match(html, /poker-flop-checkraise-lesson\/continuations\.js\?v=e5a2e89fd1c0/);
 assert.doesNotMatch(html, /data-cohort-cards/, "check-raise field tab is now structure-first rather than four aggregate cards");

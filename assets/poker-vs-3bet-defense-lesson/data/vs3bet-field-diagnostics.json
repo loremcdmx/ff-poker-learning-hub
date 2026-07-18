@@ -1,0 +1,170 @@
+{
+  "version": "vs3bet-field-cube-20260717-v3",
+  "csvRows": 109449,
+  "duplicateRows": 0,
+  "chartCount": 798,
+  "publicChartCount": 778,
+  "structurallyValidChartCount": 800,
+  "missingStructurallyValidCharts": 2,
+  "missingStructurallyValidChartKeys": [
+    "novice|EP|IP|20-30|10+",
+    "novice|EP|IP|20-30|8-10"
+  ],
+  "privacySuppressedCharts": 20,
+  "privacySuppressedChartKeys": [
+    "league1|EP|IP|20-30|10+",
+    "league1|EP|IP|20-30|8-10",
+    "novice|CO|OOP|20-30|8-10",
+    "novice|EP|IP|20-30|6-8",
+    "novice|EP|IP|31-50|10+",
+    "novice|EP|IP|31-50|8-10",
+    "novice|EP|IP|51-80|10+",
+    "novice|EP|IP|51-80|8-10",
+    "novice|EP|IP|80+|10+",
+    "novice|EP|IP|80+|8-10",
+    "novice|EP|OOP|20-30|10+",
+    "novice|EP|OOP|20-30|8-10",
+    "novice|EP|OOP|31-50|8-10",
+    "novice|HJ|IP|20-30|10+",
+    "novice|HJ|IP|20-30|8-10",
+    "novice|HJ|OOP|20-30|8-10",
+    "novice|MP|IP|20-30|10+",
+    "novice|MP|IP|20-30|8-10",
+    "novice|SB|OOP|20-30|10+",
+    "novice|SB|OOP|20-30|8-10"
+  ],
+  "firstHandAt": "2026-01-01T00:00:02",
+  "lastHandAt": "2026-07-16T09:03:47",
+  "global": {
+    "opportunities": 5051115,
+    "folds": 2948669,
+    "calls": 1429754,
+    "fourbets": 281440,
+    "jams": 391252,
+    "knownOpportunities": 4395871,
+    "missingOpportunities": 655244,
+    "knownCoveragePct": 87.028
+  },
+  "byCohort": {
+    "novice": {
+      "opportunities": 40938,
+      "folds": 24127,
+      "calls": 12330,
+      "fourbets": 2005,
+      "jams": 2476,
+      "knownOpportunities": 37018,
+      "missingOpportunities": 3920,
+      "knownCoveragePct": 90.425,
+      "foldPct": 58.935,
+      "callPct": 30.119,
+      "fourbetPct": 4.898,
+      "jamPct": 6.048
+    },
+    "league3": {
+      "opportunities": 2483604,
+      "folds": 1499411,
+      "calls": 695872,
+      "fourbets": 124844,
+      "jams": 163477,
+      "knownOpportunities": 2090008,
+      "missingOpportunities": 393596,
+      "knownCoveragePct": 84.152,
+      "foldPct": 60.372,
+      "callPct": 28.019,
+      "fourbetPct": 5.027,
+      "jamPct": 6.582
+    },
+    "league2": {
+      "opportunities": 1853956,
+      "folds": 1056653,
+      "calls": 525174,
+      "fourbets": 109395,
+      "jams": 162734,
+      "knownOpportunities": 1645299,
+      "missingOpportunities": 208657,
+      "knownCoveragePct": 88.745,
+      "foldPct": 56.995,
+      "callPct": 28.327,
+      "fourbetPct": 5.901,
+      "jamPct": 8.778
+    },
+    "league1": {
+      "opportunities": 672617,
+      "folds": 368478,
+      "calls": 196378,
+      "fourbets": 45196,
+      "jams": 62565,
+      "knownOpportunities": 623546,
+      "missingOpportunities": 49071,
+      "knownCoveragePct": 92.704,
+      "foldPct": 54.783,
+      "callPct": 29.196,
+      "fourbetPct": 6.719,
+      "jamPct": 9.302
+    }
+  },
+  "dimensionTotals": {
+    "heroPosition": {
+      "EP": 375626,
+      "MP": 1442177,
+      "HJ": 1002500,
+      "CO": 1030724,
+      "BTN": 997257,
+      "SB": 202831
+    },
+    "relation": {
+      "IP": 2163481,
+      "OOP": 2887634
+    },
+    "stackBand": {
+      "20-30": 395372,
+      "31-50": 1101377,
+      "51-80": 1411950,
+      "80+": 2142416
+    },
+    "sizeBucket": {
+      "<6": 3028647,
+      "6-8": 1472667,
+      "8-10": 360737,
+      "10+": 189064
+    }
+  },
+  "cellCoverage": {
+    "nonEmptyCells": 81364,
+    "unavailableCells": 45108,
+    "lowConfidenceCells": 16126,
+    "strongCells": 11250
+  },
+  "defaultSlice": {
+    "key": "league3|BTN|IP|31-50|all",
+    "totals": {
+      "opportunities": 116868,
+      "folds": 84455,
+      "calls": 20442,
+      "fourbets": 2152,
+      "jams": 9819,
+      "knownOpportunities": 101463,
+      "missingOpportunities": 15405,
+      "knownCoveragePct": 86.818,
+      "suppressedCellCount": 0,
+      "exactCellCount": 169,
+      "estimatedCellCount": 0
+    },
+    "populatedHands": 169,
+    "estimatedHands": 0
+  },
+  "provenance": {
+    "rankIntervals": {
+      "rows": 6542,
+      "queryJobId": "mcp_bq_7ec39be98a71484d8c845ba5df7ac2b9",
+      "sha256": "2c2222910fd1b44e7b56d060244e11487ee96f6f0484cc57ba9b90ffafb5fc64",
+      "storage": "External private build input; individual user_id rank histories are not shipped as a public lesson asset."
+    },
+    "handCube": {
+      "rows": 109449,
+      "queryJobId": "mcp_ch_job_1dc4dcea6c5644578ddb72c9f90a32f2",
+      "sha256": "93d53426b9b9017a4362f36db96a41e39226c053439936c5ec814346f96b7329",
+      "sourceQueryTemplateSha256": "a36f7957cd14b5838d829c6d0b17944da3aaa44f0ad896c39ad6deb863196717"
+    }
+  }
+}

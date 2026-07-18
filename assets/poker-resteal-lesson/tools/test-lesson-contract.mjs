@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
 const repo = new URL("../../../", import.meta.url);
@@ -16,8 +17,13 @@ const featureLoader = readFileSync(new URL("assets/poker-simulator/simulator-fea
 const rankComparison = readFileSync(new URL("assets/poker-resteal-lesson/rank-comparison.js", repo), "utf8");
 const rankCss = readFileSync(new URL("assets/poker-resteal-lesson/rank-comparison.css", repo), "utf8");
 const rankData = readFileSync(new URL("assets/poker-resteal-lesson/data/resteal-rank-data.js", repo), "utf8");
+const browserBundle = readFileSync(new URL("assets/poker-resteal-lesson/data/browser-bundle.js", repo), "utf8");
+const assetHash = (source) => createHash("sha256")
+  .update(source.replace(/\r\n/g, "\n").replace(/\r/g, "\n"))
+  .digest("hex")
+  .slice(0, 12);
 
-for (const id of ["lessonIntro", "startLesson", "introBtnChips", "introPotChips", "introJamChips", "introHeroCards", "introDealerButton", "firstEncounter", "firstTable", "firstCoach", "wisdomScreen", "wisdomCarouselTrack", "wisdomStoryCounter", "wisdomStoryDots", "wisdomFoldRate", "wisdomHandSummary", "wisdomHandPicker", "wisdomPassRate", "wisdomCallRate", "wisdomDoubleRate", "wisdomRiskDots", "dataScreen", "rankEvidenceSlide", "rankGrowthStrip", "rankDatasetFacts", "rankComparisonFilters", "rankPositionTabs", "rankSizeTabs", "rankDepthTabs", "rankSpotSummary", "rankNoviceTitle", "rankNoviceStats", "rankNoviceActionBar", "rankNoviceMatrix", "rankLeagueTitle", "rankLeagueStats", "rankLeagueTabs", "rankLeagueActionBar", "rankLeagueMatrix", "rankHandReadout", "rankEvidenceSource", "deepScreen", "deepMathPanel", "deepFieldPanel", "opponentTabs", "foldSummary", "handMatrix", "practiceSimulatorShell", "restealSimulator", "startPracticeSession", "exitPractice", "infoPopover"]) {
+for (const id of ["lessonIntro", "startLesson", "introBtnChips", "introPotChips", "introJamChips", "introHeroCards", "introDealerButton", "firstEncounter", "firstTable", "firstCoach", "wisdomScreen", "wisdomCarouselTrack", "wisdomStoryCounter", "wisdomStoryDots", "wisdomFoldRate", "wisdomHandSummary", "wisdomHandPicker", "wisdomPassRate", "wisdomCallRate", "wisdomDoubleRate", "wisdomRiskDots", "dataScreen", "rankEvidenceSlide", "rankGrowthStrip", "rankComparisonFilters", "rankPositionTabs", "rankSizeTabs", "rankDepthTabs", "rankSpotSummary", "rankNoviceTitle", "rankNoviceStats", "rankNoviceActionBar", "rankNoviceMatrix", "rankLeagueTitle", "rankLeagueStats", "rankLeagueTabs", "rankLeagueActionBar", "rankLeagueMatrix", "rankHandReadout", "rankEvidenceSource", "deepScreen", "deepMathPanel", "deepFieldPanel", "exactBbObservedPanel", "exactBbActionOverview", "exactBbCategoryRows", "exactBbSource", "opponentTabs", "foldSummary", "handMatrix", "practiceSimulatorShell", "restealSimulator", "startPracticeSession", "exitPractice", "infoPopover"]) {
   assert.match(html, new RegExp(`id=["']${id}["']`), `${id} exists`);
 }
 for (const script of [
@@ -41,10 +47,11 @@ assert.ok(restealCatalog.indexOf("advice.js") < restealCatalog.indexOf("simulato
 assert.match(featureLoader, /function readyForBoot\(\)[\s\S]*loadPracticePack\(\)/, "simulator boot waits for the requested practice pack");
 assert.match(html, /poker-progress\/progress\.js\?v=20260715-ffstart-handoff-v16/);
 assert.match(html, /poker-resteal-lesson\/engine\.js\?v=b2b87c4f94e4/);
-assert.match(html, /poker-resteal-lesson\/lesson\.js\?v=87ce01dc1642/);
-assert.match(html, /poker-resteal-lesson\/rank-comparison\.css\?v=a9ab61b4f539/);
-assert.match(html, /poker-resteal-lesson\/rank-comparison\.js\?v=bb66bafdd61b/);
-assert.match(html, /poker-resteal-lesson\/lesson\.css\?v=e9e2767a08ac/);
+assert.match(html, new RegExp(`poker-resteal-lesson/data/browser-bundle\\.js\\?v=${assetHash(browserBundle)}`));
+assert.match(html, new RegExp(`poker-resteal-lesson/lesson\\.js\\?v=${assetHash(js)}`));
+assert.match(html, new RegExp(`poker-resteal-lesson/rank-comparison\\.css\\?v=${assetHash(rankCss)}`));
+assert.match(html, new RegExp(`poker-resteal-lesson/rank-comparison\\.js\\?v=${assetHash(rankComparison)}`));
+assert.match(html, new RegExp(`poker-resteal-lesson/lesson\\.css\\?v=${assetHash(css)}`));
 assert.match(css, /@media \(max-width:620px\)\{[\s\S]*?\.step-tabs\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\);overflow:visible\}/, "mobile lesson tabs use a visible 2x2 grid");
 assert.match(css, /\.practice-screen\.is-running\{grid-template-columns:minmax\(0,1fr\)\}/, "mobile practice grid cannot expand to child max-content width");
 assert.match(css, /\.practice-screen\.is-running \.practice-disclaimer\{grid-template-columns:minmax\(0,1fr\);min-width:0;max-width:100%\}/, "mobile bot legend cannot force a 430px grid track");
@@ -72,9 +79,10 @@ assert.equal((html.match(/id="(?:hand|field)Matrix"/g) || []).length, 1, "deep l
 assert.doesNotMatch(html, /id="fieldMatrix"|id="fieldHandReadout"/, "duplicate field matrix and readout are removed");
 assert.doesNotMatch(html, /class="panel risk-card"|id="bustHeadline"/, "generic bustout card is removed");
 assert.ok(html.indexOf("pko-card-under-matrix") < html.indexOf('id="deepFieldPanel"'), "PKO controls sit directly below the shared matrix section");
-assert.match(html, /Реальные раздачи · январь–июнь 2026/);
-assert.match(html, /Плюс по эквити считаем относительно паса: исходный EV действия − EV паса/);
-assert.match(html, /абсолютный EV действия может быть отрицательным/);
+assert.match(html, /Наблюдаемая игра поля · точно BB/);
+assert.match(html, /один рейзер BTN[^]*эффективный стек 25–40 BB/);
+assert.match(html, /частоты фактических действий[^]*не сравнивают EV и не говорят, что нажимать/);
+assert.doesNotMatch(html, /Сколько олл-ин и колл выигрывали относительно паса/, "mixed SB+BB EV comparison is no longer presented");
 assert.doesNotMatch(html, /это не две линии одной и той же раздачи|class="comparison-caveat"/, "removed methodology caveat stays removed");
 assert.doesNotMatch(html, /class="comparison-method"|Игроки проекта с известными картами|Один фильтр спота/, "removed methodology cards stay removed");
 assert.doesNotMatch(html, /class="comparison-footnote"|Значение линии|Разницы около 0,1 BB/, "removed methodology footnote stays removed");
@@ -94,14 +102,26 @@ assert.match(html, /Синий[\s\S]*средняя сила/);
 assert.match(html, /Зелёный[\s\S]*слабый бот/);
 for (const hands of [10, 25, 50, 100]) assert.match(html, new RegExp(`data-session-hands=["']${hands}["']`));
 
-for (const contract of ["renderIntroTableArt", "startLesson", "renderFirstTable", "answerFirst", "renderPracticeSetup", "practiceSimulatorOptions", "startPracticeSession", "renderWisdomEvidence", "renderWisdomHandPicker", "selectWisdomHand", "renderWisdomStory", "setupWisdomCarousel", "applyOpponentProfile", "showInfo", "closeInfo"]) {
+for (const contract of ["renderIntroTableArt", "startLesson", "renderFirstTable", "answerFirst", "renderPracticeSetup", "practiceSimulatorOptions", "clearPracticeReadyTimer", "handlePracticeSimulatorReady", "startPracticeSession", "renderWisdomEvidence", "renderExactBbObservedField", "renderWisdomHandPicker", "selectWisdomHand", "renderWisdomStory", "setupWisdomCarousel", "applyOpponentProfile", "showInfo", "closeInfo"]) {
   assert.match(js, new RegExp(`function ${contract}\\(`), `${contract} runtime exists`);
 }
 assert.match(js, /data-option-key/);
 assert.match(js, /practice:\s*"resteal"/);
 assert.match(js, /FFTrainerSimulator\.mountPractice/);
+assert.match(js, /message\.type !== "poker-simulator:event" \|\| message\.name !== "ready"/, "practice waits for the simulator ready handshake");
+assert.match(js, /event\.source !== frame\.contentWindow \|\| event\.origin !== window\.location\.origin/, "ready handshake validates iframe source and origin");
+assert.match(js, /frame\.contentDocument\?\.querySelector\("\.table-shell"\)/, "ready handshake confirms that the first table exists");
+assert.match(js, /Стол не загрузился\. Нажми «Начать заново»\./, "failed cold boots expose a retry instead of an empty workspace");
+assert.doesNotMatch(js, /restealSimulator"\)\.addEventListener\("load"[^\n]*setPracticeSimulatorLoading\(false\)/, "raw iframe load cannot hide the loading state before simulator boot");
 assert.match(js, /result\.foldEquity/);
-assert.match(js, /Плюс по эквити считаем относительно паса:[\s\S]*Показанное число — преимущество над пасом, а не абсолютный EV/);
+assert.match(js, /const RankData = window\.PokerRestealRankData/);
+assert.match(js, /RankData\?\.charts\?\.\[cohort\]\?\.BTN\?\.\["2\.0"\]\?\.\["25-40"\]/, "observed panel reads the exact BB / BTN 2 BB / 25–40 BB cube");
+assert.match(js, /state\.data\.field_exact_bb_btn_2bb\?\.callRange/, "EV call weights prefer the exact BB / BTN / 2 BB slice");
+assert.match(js, /const exact = state\.data\.field_exact_bb_btn_2bb;/, "field fold equity prefers the exact canonical slice");
+assert.match(js, /\{ key: "folds"[\s\S]*\{ key: "calls"[\s\S]*\{ key: "small3bets"[\s\S]*\{ key: "jams"/, "observed panel renders all four exhaustive actions");
+assert.doesNotMatch(js, /state\.data\.hero_outcomes\.pooled\.ALL/, "mixed SB+BB outcome data no longer powers the visible panel");
+assert.match(css, /\.observed-action-overview[^}]*grid-template-columns:\s*repeat\(4/, "exact BB panel gives every action an equal desktop summary card");
+assert.match(css, /\.observed-action-stack \.is-small-raise[^}]*background:\s*#b786f3/, "non-all-in 3-bets have their own visible segment");
 assert.doesNotMatch(js, /hero_bustouts|bustHeadline|bustVisual/);
 assert.doesNotMatch(js, /BB ante 1 BB · стек/, "ready matrix status does not repeat visible controls");
 assert.doesNotMatch(js, /pointerover|focusin|renderFirstWisdom|metricContent|showMetric|cleanup_waterfall|answerPractice/);
@@ -123,7 +143,9 @@ assert.match(rankComparison, /var Data = window\.PokerRestealRankData/);
 assert.match(rankComparison, /league:\s*"league3"/, "league-three is the default comparison cohort");
 assert.match(rankComparison, /chartFor\("novice"\)/, "novice chart is rendered independently of the selected league");
 assert.match(rankComparison, /function renderSpotSummary\(\)/, "data screen summarizes every cohort for the selected spot");
-assert.match(rankComparison, /function renderDatasetFacts\(\)/, "data screen exposes the authoritative cube volume");
+assert.doesNotMatch(html, /rankDatasetFacts|rank-dataset-facts/, "dataset fact strip stays removed from the lesson");
+assert.doesNotMatch(rankComparison, /renderDatasetFacts|rankDatasetFacts/, "dataset fact strip has no runtime renderer");
+assert.doesNotMatch(rankCss, /\.rank-dataset-facts/, "dataset fact strip has no dead styles");
 assert.match(rankComparison, /function gradientColor\(value\)/, "matrix fill uses a bounded sequential colour scale");
 for (const league of ["league3", "league2", "league1"]) {
   assert.match(rankComparison, new RegExp(`\\{ key: "${league}", label: "[123] лига" \\}`), `${league} comparison option exists`);
@@ -138,7 +160,14 @@ assert.doesNotMatch(rankCss, /\.wisdom-slide\.rank-evidence-slide|max-height:\s*
 assert.match(rankCss, /@media \(max-width:\s*980px\)[\s\S]*\.rank-evidence-compare\s*\{[^}]*grid-template-columns:\s*1fr/, "rank charts stack before their cells become too small");
 assert.match(rankCss, /\.rank-matrix[^}]*width:\s*min\(100%,\s*440px\)/, "rank matrices are large enough for readable hand labels");
 assert.match(rankCss, /\.rank-cell\s*\{[^}]*color:\s*#f7f7f4[^}]*background:\s*var\(--jam-color/, "cell labels keep fixed high contrast across the gradient");
-assert.match(rankCss, /\.rank-cell\.is-thin:not\(\.is-empty\)[\s\S]*rgba\(255,\s*198,\s*89,\s*\.20\)/, "small samples use an explicit amber hatch");
+assert.match(rankComparison, /\[0, \[17, 21, 26\]\][\s\S]*\[1, \[26, 42, 50\]\][\s\S]*\[50, \[9, 116, 86\]\]/, "frequency gradient separates zero, low, and high rates");
+assert.match(rankCss, /\.rank-cell::after[^}]*--sample-marker/, "sample quality uses a compact corner marker");
+assert.match(rankCss, /\.rank-cell\.is-thin:not\(\.is-empty\)[^}]*--sample-marker:\s*#ffc659/, "small samples use an amber corner marker");
+assert.doesNotMatch(rankCss, /repeating-linear-gradient/, "sample quality no longer obscures the frequency colour");
+assert.match(rankComparison, /LOW_N_PRIOR_STRENGTH = 16/, "low-N cells use the agreed prior strength");
+assert.match(rankComparison, /display\.estimated \? " is-estimated"/, "N 1-4 cells render as estimates instead of empty cells");
+assert.match(rankCss, /\.rank-cell\.is-estimated[^}]*--sample-marker:\s*#c49af8/, "estimated cells have a distinct violet corner marker");
+assert.match(html, /≈ оценка · N 1–4/, "legend labels the low-N estimate explicitly");
 
 assert.match(js, /firstChoice:\s*"",\s*\n\s*unlocked:\s*false/, "first-hand answer and persistent lesson unlock are separate state");
 assert.match(js, /if \(!state\.unlocked && next !== "idea"\) return;/, "saved lesson unlock controls tab navigation");

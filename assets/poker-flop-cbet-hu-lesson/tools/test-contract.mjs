@@ -22,6 +22,20 @@ assert.equal(data.meta.overallCbetIsFullPopulation, true);
 assert.ok(Array.isArray(data.overallCbet) && data.overallCbet.length >= 17, "rank-level c-bet population is present");
 assert.ok(data.boardExamples && Object.keys(data.boardExamples).length > 0, "real board examples are present");
 
+const rank15AHighSizes = data.cbetSizes.filter((row) => row.rank === 15 && row.structure === "a_high_dry");
+const rank15AHighPot = rank15AHighSizes.find((row) => row.size_bin === "88–125%");
+const rank15AHighOverbet = rank15AHighSizes.find((row) => row.size_bin === ">125%");
+assert.deepEqual(
+  [rank15AHighPot.folds, rank15AHighPot.valid_responses, rank15AHighPot.xr_count, rank15AHighPot.xr_valid_responses],
+  [15, 16, 0, 16],
+  "the default rank/structure includes a thin pot-size outcome that must not look precise"
+);
+assert.deepEqual(
+  [rank15AHighOverbet.folds, rank15AHighOverbet.valid_responses, rank15AHighOverbet.xr_count, rank15AHighOverbet.xr_valid_responses],
+  [18, 18, 0, 9],
+  "the default overbet outcome has only nine X/R-eligible responses"
+);
+
 for (const id of ["dealScreen", "mainScreen", "practiceScreen", "examplesScreen"]) {
   assert.match(html, new RegExp(`id="${id}"`), `${id} exists`);
 }
@@ -58,6 +72,13 @@ assert.match(lessonSource, /function introSnapshotSpot\([\s\S]*return snapshotSp
 assert.match(lessonSource, /accepted\.length !== 1/, "every generated c-bet spot has one unambiguous correct action class");
 assert.doesNotMatch(lessonSource, /queryAll\("\[data-(?:deal|trainer)-action\]"/, "lesson code has no external poker-action controls");
 assert.match(lessonSource, /function updateTrainerHud\([\s\S]*data-trainer-hands[\s\S]*data-trainer-correct[\s\S]*data-trainer-misses/, "practice HUD tracks hands, correct answers and misses");
+assert.match(
+  lessonSource,
+  /function observedRateDisplay\([\s\S]*reliabilityFor\(denominator\)[\s\S]*reliability === "thin"[\s\S]*Мало данных[\s\S]*процент скрыт[\s\S]*reliability === "directional"[\s\S]*направление/,
+  "thin observed rates are hidden and directional samples are labelled"
+);
+assert.match(lessonSource, /observedRateDisplay\(entry\.observedFe, entry\.validResponses\)/);
+assert.match(lessonSource, /observedRateDisplay\(entry\.xrRate, entry\.xrValidResponses, "eligible N"\)/);
 assert.match(lessonCss, /\.cbet-practice-table \.client-controls > \.client-row \{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/, "practice renders three equal shared action columns");
 assert.match(lessonCss, /\.cbet-practice-table \.table-action \{[^}]*min-height:\s*72px/, "shared practice actions keep the large hit target");
 for (const action of ["check", "small", "large"]) {

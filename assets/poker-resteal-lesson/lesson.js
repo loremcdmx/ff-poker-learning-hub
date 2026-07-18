@@ -3,16 +3,20 @@
 
   const Engine = window.PokerRestealEngine;
   const Content = window.PokerRestealData;
+  const RankData = window.PokerRestealRankData;
   const PROGRESS_KEY = "ff-learning-hub:resteal:v1";
   const FFSTART_COURSE_CONTEXT = new URLSearchParams(window.location.search).get("from") === "ffstart";
   const DATA_ROOT = "assets/poker-resteal-lesson/data/";
   const DATA_VERSION = "20260711-v2";
+  const PRACTICE_READY_TIMEOUT_MS = 12000;
+  let practiceReadyTimer = 0;
   const files = [
     "equity169.json",
     "rank_vs_random169.json",
     "field_opens.json",
     "field_vs_jam.json",
     "field_call_range.json",
+    "field-exact-bb-btn-2bb.json",
     "hero_outcomes.json"
   ];
   const state = {
@@ -68,9 +72,27 @@
     pair_77_99: "77, 88, 99",
     pair_TT_plus: "TT, JJ, QQ, KK, AA",
     ax_strong: "AT, AJ, AQ, AK · одной и разных мастей",
+    ax_weak: "A2–A9 · одной и разных мастей",
+    broadway_suited: "KQs, KJs, KTs, QJs, QTs, JTs",
     broadway_offsuit: "KQo, KJo, KTo, QJo, QTo, JTo",
     suited_conn_low: "T9s, 98s, 87s, 76s, 65s, 54s"
   };
+  const exactBbCategories = [
+    ["pair_22_66", ["22", "33", "44", "55", "66"]],
+    ["pair_77_99", ["77", "88", "99"]],
+    ["pair_TT_plus", ["TT", "JJ", "QQ", "KK", "AA"]],
+    ["ax_strong", ["ATs", "AJs", "AQs", "AKs", "ATo", "AJo", "AQo", "AKo"]],
+    ["ax_weak", ["A2s", "A3s", "A4s", "A5s", "A6s", "A7s", "A8s", "A9s", "A2o", "A3o", "A4o", "A5o", "A6o", "A7o", "A8o", "A9o"]],
+    ["broadway_suited", ["KQs", "KJs", "KTs", "QJs", "QTs", "JTs"]],
+    ["broadway_offsuit", ["KQo", "KJo", "KTo", "QJo", "QTo", "JTo"]],
+    ["suited_conn_low", ["T9s", "98s", "87s", "76s", "65s", "54s"]]
+  ];
+  const exactBbActions = [
+    { key: "folds", label: "Пас", className: "is-fold", cellIndex: 1 },
+    { key: "calls", label: "Колл", className: "is-call", cellIndex: 2 },
+    { key: "small3bets", label: "3-бет не all-in", className: "is-small-raise", cellIndex: 3 },
+    { key: "jams", label: "Прямой all-in", className: "is-jam", cellIndex: 4 }
+  ];
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -346,12 +368,30 @@
     };
   }
 
-  function setPracticeSimulatorLoading(loading) {
+  function clearPracticeReadyTimer() {
+    if (!practiceReadyTimer) return;
+    window.clearTimeout(practiceReadyTimer);
+    practiceReadyTimer = 0;
+  }
+
+  function setPracticeSimulatorLoading(loading, message = "Загружаем настоящий стол…") {
     const shell = $("#practiceSimulatorShell");
     const indicator = $("#practiceSimulatorLoading");
     shell.classList.toggle("is-loading", loading);
     shell.setAttribute("aria-busy", String(loading));
+    indicator.textContent = message;
     indicator.hidden = !loading;
+  }
+
+  function handlePracticeSimulatorReady(event) {
+    const frame = $("#restealSimulator");
+    const message = event.data;
+    if (!frame || event.source !== frame.contentWindow || event.origin !== window.location.origin) return false;
+    if (!message || message.type !== "poker-simulator:event" || message.name !== "ready") return false;
+    if (!frame.contentDocument?.querySelector(".table-shell")) return false;
+    clearPracticeReadyTimer();
+    setPracticeSimulatorLoading(false);
+    return true;
   }
 
   function startPracticeSession() {
@@ -362,8 +402,12 @@
     document.body.classList.add("practice-is-running");
     $("#practiceScreen").classList.add("is-running");
     $("#practiceSimulatorShell").hidden = false;
+    clearPracticeReadyTimer();
     setPracticeSimulatorLoading(true);
     window.FFTrainerSimulator.mountPractice("#restealSimulator", practiceSimulatorOptions());
+    practiceReadyTimer = window.setTimeout(() => {
+      setPracticeSimulatorLoading(true, "Стол не загрузился. Нажми «Начать заново».");
+    }, PRACTICE_READY_TIMEOUT_MS);
     renderPracticeSetup();
   }
 
@@ -559,17 +603,21 @@
   }
 
   function callWeights(category) {
-    const calls = state.data.field_call_range;
+    const exact = state.data.field_exact_bb_btn_2bb?.callRange;
+    const calls = exact || state.data.field_call_range;
     if (category === "overall") return calls.pooled?.hands || calls.pooled || {};
     const record = calls.by_category[category];
     if ((record?.n_known_holecards || 0) >= 500) return record.hands || {};
     const group = ["good_reg", "mid_reg", "weak_reg", "nit"].includes(category) ? "reg" : "fish";
-    return calls.super_groups[group]?.hands || calls.super_groups[group] || {};
+    const grouped = calls.super_groups[group];
+    if ((grouped?.n_known_holecards || 0) >= 500) return grouped.hands || {};
+    return calls.pooled?.hands || calls.pooled || {};
   }
 
   function fieldMetrics(category) {
     const opens = state.data.field_opens.pooled_25_40;
-    const vsJam = state.data.field_vs_jam.pooled;
+    const exact = state.data.field_exact_bb_btn_2bb;
+    const vsJam = exact?.response || state.data.field_vs_jam.pooled;
     const shares = state.data.field_opens.category_share.window_25_40.BTN;
     const open = category === "overall"
       ? Object.entries(shares).reduce((sum, [key, weight]) => sum + weight * (opens[key]?.BTN?.open_clean_pct || 0), 0)
@@ -587,6 +635,7 @@
       fold,
       call,
       useObservedFold,
+      exactSpot: Boolean(exact),
       n: category === "overall"
         ? Object.values(vsJam).reduce((sum, item) => sum + (item.n_faced || 0), 0)
         : vsJam[category]?.n_faced || 0
@@ -634,38 +683,87 @@
     renderTheory();
   }
 
-  function renderOutcomeBars() {
-    const all = state.data.hero_outcomes.pooled.ALL;
-    const keys = ["pair_22_66", "pair_77_99", "ax_strong", "broadway_offsuit", "pair_TT_plus", "suited_conn_low"].filter((key) => all[key]);
-    const max = Math.max(...keys.flatMap((key) => [
-      Math.abs(advantageOverFold(all[key].jam?.avg_ev_bb)),
-      Math.abs(advantageOverFold(all[key].call?.avg_ev_bb))
-    ]), 1);
-    $("#outcomeBars").innerHTML = keys.map((key) => {
-      const jamRow = all[key].jam;
-      const callRow = all[key].call;
-      const jamRaw = Number(jamRow?.avg_ev_bb) || 0;
-      const callRaw = Number(callRow?.avg_ev_bb) || 0;
-      const jam = advantageOverFold(jamRaw);
-      const call = advantageOverFold(callRaw);
-      const difference = jamRaw - callRaw;
-      const smallerAction = Number(jamRow?.n) < Number(callRow?.n) ? "олл-инов" : "коллов";
-      const thinSample = Math.min(Number(jamRow?.n) || 0, Number(callRow?.n) || 0) < 5000;
-      return `<div class="compare-row ${thinSample ? "is-thin-sample" : ""}">
-        <div class="compare-category"><strong>${categoryLabels[key] || key}</strong><small>${categoryDetails[key] || ""}</small>${thinSample ? `<span>меньше 5 000 ${smallerAction}</span>` : ""}</div>
-        <div class="compare-lines">
-          <div class="compare-line ${jam < 0 ? "is-negative" : ""}" title="${comparisonVsFoldTooltip("олл-ина", jamRaw, jam)}"><span class="compare-action"><b>Олл-ин</b><small>${sampleSize(jamRow?.n)} раздач</small></span><i><b style="width:${Math.abs(jam) / max * 100}%"></b></i><strong>${compactSigned(jam, 2)} BB</strong></div>
-          <div class="compare-line is-call ${call < 0 ? "is-negative" : ""}" title="${comparisonVsFoldTooltip("колла", callRaw, call)}"><span class="compare-action"><b>Колл</b><small>${sampleSize(callRow?.n)} раздач</small></span><i><b style="width:${Math.abs(call) / max * 100}%"></b></i><strong>${compactSigned(call, 2)} BB</strong></div>
-        </div>
-        <div class="compare-delta ${difference < 0 ? "is-negative" : Math.abs(difference) < 0.2 ? "is-close" : ""}"><span>Олл-ин − колл</span><strong>${compactSigned(difference, 2)} BB</strong></div>
+  function exactBbPooledSlice() {
+    const handOrder = RankData?.meta?.handOrder || [];
+    const cohorts = RankData?.meta?.cohortOrder || [];
+    if (!handOrder.length || !cohorts.length) return null;
+    const totals = { opportunities: 0, folds: 0, calls: 0, small3bets: 0, jams: 0 };
+    const cells = handOrder.map(() => [0, 0, 0, 0, 0]);
+    cohorts.forEach((cohort) => {
+      const chart = RankData?.charts?.[cohort]?.BTN?.["2.0"]?.["25-40"];
+      if (!chart) return;
+      Object.keys(totals).forEach((key) => { totals[key] += Number(chart.totals?.[key]) || 0; });
+      chart.cells?.forEach((cell, handIndex) => {
+        cell.forEach((count, actionIndex) => { cells[handIndex][actionIndex] += Number(count) || 0; });
+      });
+    });
+    return { handOrder, totals, cells };
+  }
+
+  function exactBbCategoryCounts(slice, hands) {
+    const counts = { opportunities: 0, folds: 0, calls: 0, small3bets: 0, jams: 0 };
+    hands.forEach((hand) => {
+      const index = slice.handOrder.indexOf(hand);
+      const cell = index >= 0 ? slice.cells[index] : null;
+      if (!cell) return;
+      counts.opportunities += Number(cell[0]) || 0;
+      exactBbActions.forEach((action) => { counts[action.key] += Number(cell[action.cellIndex]) || 0; });
+    });
+    return counts;
+  }
+
+  function observedActionMarkup(action, counts, compact = false) {
+    const total = Number(counts.opportunities) || 0;
+    const count = Number(counts[action.key]) || 0;
+    const rate = total ? count / total : 0;
+    if (compact) return `<span class="${action.className}"><i aria-hidden="true"></i><small>${action.label}</small><b>${pct(rate, 1)}</b></span>`;
+    return `<article class="observed-action-card ${action.className}"><span><i aria-hidden="true"></i><b>${action.label}</b></span><strong>${pct(rate, 1)}</strong><small>${sampleSize(count)} решений</small></article>`;
+  }
+
+  function formatObservedDate(iso) {
+    const parts = String(iso || "").slice(0, 10).split("-");
+    return parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : "—";
+  }
+
+  function renderExactBbObservedField() {
+    const overview = $("#exactBbActionOverview");
+    const categories = $("#exactBbCategoryRows");
+    const source = $("#exactBbSource");
+    if (!overview || !categories || !source) return;
+    const slice = exactBbPooledSlice();
+    if (!slice || !slice.totals.opportunities) {
+      overview.innerHTML = `<p class="observed-data-missing">Точный BB-срез временно не загрузился.</p>`;
+      categories.replaceChildren();
+      source.textContent = "";
+      return;
+    }
+
+    overview.innerHTML = exactBbActions.map((action) => observedActionMarkup(action, slice.totals)).join("");
+    categories.innerHTML = exactBbCategories.map(([key, hands]) => {
+      const counts = exactBbCategoryCounts(slice, hands);
+      const stack = exactBbActions.map((action) => {
+        const rate = counts.opportunities ? counts[action.key] / counts.opportunities : 0;
+        return `<span class="${action.className}" style="width:${(rate * 100).toFixed(4)}%" title="${action.label}: ${pct(rate, 1)}"></span>`;
+      }).join("");
+      const aria = exactBbActions.map((action) => {
+        const rate = counts.opportunities ? counts[action.key] / counts.opportunities : 0;
+        return `${action.label} ${pct(rate, 1)}`;
+      }).join(", ");
+      return `<div class="observed-category-row">
+        <div class="observed-category-label"><strong>${categoryLabels[key] || key}</strong><small>${categoryDetails[key] || ""}</small><span>N ${sampleSize(counts.opportunities)}</span></div>
+        <div class="observed-action-stack" role="img" aria-label="${aria}">${stack}</div>
+        <div class="observed-category-rates">${exactBbActions.map((action) => observedActionMarkup(action, counts, true)).join("")}</div>
       </div>`;
     }).join("");
+
+    const meta = RankData.meta || {};
+    source.textContent = `FF · с ${formatObservedDate(meta.windowStartInclusive)} до ${formatObservedDate(meta.windowEndExclusive)}, не включая правую границу · N ${sampleSize(slice.totals.opportunities)}. Ранг взят на момент раздачи; проценты получены суммированием целых счётчиков по рангам 1–18. Общий N включает решения с неизвестными картами; строки групп рук — только по известным картам.`;
   }
 
   function renderEvidence() {
     if (!state.loaded) return;
     renderWisdomEvidence();
-    renderOutcomeBars();
+    renderExactBbObservedField();
   }
 
   function renderWisdomEvidence() {
@@ -899,8 +997,11 @@
       renderPracticeSetup();
     }));
     $("#startPracticeSession").addEventListener("click", startPracticeSession);
-    $("#exitPractice").addEventListener("click", () => showStep("wisdom", { focusHeading: true }));
-    $("#restealSimulator").addEventListener("load", () => setPracticeSimulatorLoading(false));
+    $("#exitPractice").addEventListener("click", () => {
+      clearPracticeReadyTimer();
+      showStep("wisdom", { focusHeading: true });
+    });
+    window.addEventListener("message", handlePracticeSimulatorReady);
     window.addEventListener("message", reportFfStartCompletion);
     $$("[data-select-hand]").forEach((button) => button.addEventListener("click", () => selectHand(button.dataset.selectHand, "theory")));
     $$(".info-button").forEach((button) => {

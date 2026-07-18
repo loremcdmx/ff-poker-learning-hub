@@ -763,6 +763,18 @@
     return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(value);
   }
 
+  function observedRateDisplay(value, denominator, denominatorLabel = "N") {
+    const reliability = reliabilityFor(denominator);
+    const base = `${denominatorLabel} ${formatCount(denominator)}`;
+    if (reliability === "thin") {
+      return { value: "Мало данных", note: `${base} · процент скрыт` };
+    }
+    return {
+      value: formatPercent(value),
+      note: reliability === "directional" ? `${base} · направление` : base
+    };
+  }
+
   function formatMetric(summary) {
     if (!summary) return "—";
     return state.metric === "cbet_size" ? summary.mode : formatPercent(summary.value);
@@ -1745,11 +1757,13 @@
       const actual = Number.isFinite(entry.meanBetPctPot)
         ? `среднее ${formatPercent(entry.meanBetPctPot)}`
         : "";
+      const observedFe = observedRateDisplay(entry.observedFe, entry.validResponses);
+      const xrRate = observedRateDisplay(entry.xrRate, entry.xrValidResponses, "eligible N");
       appendOutcomeCell(row, entry.label, actual);
       appendOutcomeCell(row, formatPercent(entry.value), `N ставок ${formatCount(entry.count)}`);
-      appendOutcomeCell(row, formatPercent(entry.observedFe), `N ${formatCount(entry.validResponses)}`);
+      appendOutcomeCell(row, observedFe.value, observedFe.note);
       appendOutcomeCell(row, formatPercent(entry.breakevenFe), "порог без equity");
-      appendOutcomeCell(row, formatPercent(entry.xrRate), `eligible N ${formatCount(entry.xrValidResponses)}`);
+      appendOutcomeCell(row, xrRate.value, xrRate.note);
       appendOutcomeCell(
         row,
         formatCount(entry.validResponses),

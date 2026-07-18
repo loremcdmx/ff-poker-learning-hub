@@ -92,6 +92,8 @@ Observed aggregate fold R15–17 выше этой границы на `11,87 п
 
 Лига в этой карточке относится к CO/BTN aggressor, который встретил check-raise, а не к BB/checkraiser. Соседний RvBB extract не сохраняет все строгие фильтры canonical-узла урока по размеру опена, эффективному стеку и числу мест за столом. Даже после фиксации структуры и размеров это описательная частота: выбор руки, позиция внутри CO/BTN, стек и другие признаки не рандомизированы.
 
+Поэтому два опубликованных знаменателя K-high / League 2 намеренно различаются: отдельная строгая карточка использует `110 / 242`, а обзорная матрица структур — `110 / 243`. Это не две версии одного агрегата: `strict-k-high-size-window-q2-2026` и `nearby-rvbb-structure-matrix-q2-2026` закреплены разными `sampleId`, а интерфейс прямо называет матрицу обзорным RvBB-срезом.
+
 ## 3.2. Структура × League для вкладки «Поле»
 
 Матрица вкладки «Поле» использует тот же hand-level RvBB extract, но считает все восемь взаимоисключающих `lesson_structure` и только префлоп-агрессоров CO/BTN. В каждой ячейке две независимые частоты:
@@ -140,6 +142,20 @@ python3 build-structure-league-field-matrix.py \
 Overall X/R по лиге описывает весь диапазон BB на всех досках, а не KQ, T9s или сет в показанном примере. Рядом с одной рукой такой процент читается как условная частота, которой в текущих агрегатах нет, поэтому Examples оставляют только методическую классификацию руки.
 
 Спецификация совместного reverse-Hero extract лежит в `reverse-hero-category-league-extract.sql`. Перед публикацией category rate его parsed output обязан сохранить все opportunities и отдельный `cards_unknown`, не иметь дублей физических рук и точно восстановить canonical league totals `24 170 / 151 874`, `60 081 / 378 226`, `66 136 / 488 230`. Каждая опубликованная ячейка дополнительно должна содержать numerator, denominator, число игроков и coverage точных карт; backdoor-категории требуют exact suits, а не только `holecards_str`.
+
+### 4.2. Reverse-Hero preflight от 18 июля 2026
+
+Проверка закрылась fail-closed до raw-HH/category публикации. В первоначальном SQL одновременно стояли `preflop_raiser_count = 1` (рейз сделал отслеживаемый Hero) и `preflop_action = 'C'`; такое пересечение вернуло ноль строк. Контракт исправлен на подготовленный признак `is_one_preflop_action_before_player = 1`.
+
+На текущем monthly-rank bridge (`6 078` player-month строк, `2 200` игроков) исправленный mart preflight получил:
+
+| League | Current X/R / opportunities | Frozen control | Delta |
+| --- | ---: | ---: | ---: |
+| League 1 | 24 150 / 151 553 | 24 170 / 151 874 | −20 / −321 |
+| League 2 | 59 886 / 377 208 | 60 081 / 378 226 | −195 / −1 018 |
+| League 3 | 66 386 / 489 904 | 66 136 / 488 230 | +250 / +1 674 |
+
+Итого текущий снимок отличается на `+35 / +335`, но внутри league произошёл более крупный перенос. BigQuery time travel к снимку, использованному при подготовке урока, недоступен: readonly rank table была заменена. Поэтому exact category rates, browser artifact и feedback не публикуются; `data.js` остаётся в `pending_exact_extract`. Machine-readable provenance, job IDs, SHA rank bridge, thresholds и deltas сохранены в `reverse-hero-category-reconciliation.json`.
 
 ## Ограничения
 

@@ -173,6 +173,16 @@
 
 .flop-checkraise-lesson .structure-league-kpi.is-cbet strong { color: var(--brand-yellow); }
 .flop-checkraise-lesson .structure-league-kpi.is-fold strong { color: var(--lesson-good); }
+.flop-checkraise-lesson .structure-league-kpi[data-reliability="directional"] {
+  border-style: dashed;
+}
+
+.flop-checkraise-lesson .structure-league-kpi[data-reliability="thin"] strong {
+  color: var(--muted);
+  font-size: clamp(13px, 1.05vw, 16px);
+  line-height: 1.15;
+}
+
 .flop-checkraise-lesson .structure-league-kpi small {
   display: block;
   margin-top: 7px;

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
 
 const inputPath = process.argv[2];
 const outputPath = process.argv[3] || path.resolve(
@@ -85,25 +86,42 @@ function diagnosticStats(row) {
   };
 }
 
-const sourceRows = parseCsv(fs.readFileSync(inputPath, "utf8"));
+const sourceText = fs.readFileSync(inputPath, "utf8");
+const sourceRows = parseCsv(sourceText);
+const sourceSha256 = crypto.createHash("sha256").update(sourceText).digest("hex");
+const stackBuckets = ["0_40", "40_70", "70_plus"];
 const output = {
   meta: {
-    version: "2026-07-14.1",
+    version: "2026-07-17.1",
     window: {
       startInclusive: "2026-01-01T00:00:00",
-      endExclusive: "2026-07-14T00:00:00"
+      endExclusive: "2026-07-17T00:00:00"
     },
-    snapshot: "2026-07-14",
-    scope: "FF tracker · BB call vs one raiser · heads-up flop · effective stack 25–40 BB · open 2.0/2.5/3.0 BB ±0.05",
+    snapshot: "2026-07-17",
+    scope: "FF tracker · BB call vs one raiser · heads-up flop · effective stack 0–40 / 40–70 / 70+ BB · open 2.0/2.5/3.0 BB ±0.05",
+    stackBuckets: {
+      "0_40": "0–40 BB",
+      "40_70": "40–70 BB",
+      "70_plus": "70 BB+"
+    },
+    compatibilityStackBucket: "25_40",
     primaryCohort: "all_ff_3_9max",
     primaryCohortLabel: "Все столы FF 3–9 max",
     diagnosticCohort: "exact_7max",
-    diagnosticCohortLabel: "Только 7-max; не смешивается с primary",
+    diagnosticCohortLabel: "Только 7-max; subset общего 3–9 max, не добавляется повторно",
     minDisplayN: 500,
     minReliableN: 2000,
     passBaseline: "fold = -(1 BB + hero ante); meanEvVsFoldBb = meanNetEvBb + 1 + meanHeroAnteBb",
     realizedEquityFormula: "SUM(netEvBb + openBb + heroAnteBb) / SUM(2*openBb + 0.5 + totalAnteBb)",
     totalAnteMethod: "hero ante per player × cnt_players",
+    source: {
+      hands: "analytics.int_tracker_hand_joined",
+      query: "assets/poker-bb-call-defense-lesson/tools/q_ff_realization.sql",
+      mcpJobId: "mcp_ch_job_7aa792eb4d33408091aafc334479202f",
+      file: path.basename(inputPath),
+      sha256: sourceSha256,
+      csvRows: sourceRows.length
+    },
     knowledgeContext: {
       entryId: "1a324dc9-3cc3-421a-b71c-fee46c00dac2",
       status: "validated",
@@ -114,45 +132,50 @@ const output = {
 };
 
 for (const row of sourceRows) {
-  if (row.cohort !== "all_ff_3_9max" || row.stack_bucket !== "25-40") continue;
-  const key = `${sizeKey(row.open_size_bb)}:${row.opener_position}:${row.holecards_str}`;
+  if (row.cohort !== "all_ff_3_9max") continue;
+  if (![...stackBuckets, "25_40"].includes(row.stack_bucket)) continue;
+  const key = `${row.stack_bucket}:${sizeKey(row.open_size_bb)}:${row.opener_position}:${row.holecards_str}`;
   if (output.rows[key]) throw new Error(`Duplicate primary key: ${key}`);
-  output.rows[key] = { ...primaryStats(row), bands: {} };
+  output.rows[key] = primaryStats(row);
 }
 
 for (const row of sourceRows) {
-  const key = `${sizeKey(row.open_size_bb)}:${row.opener_position}:${row.holecards_str}`;
+  if (row.cohort !== "exact_7max") continue;
+  const key = `${row.stack_bucket}:${sizeKey(row.open_size_bb)}:${row.opener_position}:${row.holecards_str}`;
   const target = output.rows[key];
   if (!target) continue;
-
-  if (row.cohort === "all_ff_3_9max" && row.stack_bucket !== "25-40") {
-    const band = row.stack_bucket.replace("-", "_");
-    if (target.bands[band]) throw new Error(`Duplicate band key: ${key}/${band}`);
-    target.bands[band] = {
-      n: numeric(row.hand_count, "hand_count"),
-      meanRealizedEquityPct: numeric(row.realized_equity_pct, "realized_equity_pct"),
-      meanEvVsFoldBb: numeric(row.mean_ev_vs_fold_bb, "mean_ev_vs_fold_bb")
-    };
-  }
-
-  if (row.cohort === "exact_7max" && row.stack_bucket === "25-40") {
-    if (target.exact7) throw new Error(`Duplicate exact7 key: ${key}`);
-    target.exact7 = diagnosticStats(row);
-  }
+  if (target.exact7) throw new Error(`Duplicate exact7 key: ${key}`);
+  target.exact7 = diagnosticStats(row);
 }
 
 const keys = Object.keys(output.rows);
-const primaryHands = keys.reduce((sum, key) => sum + output.rows[key].n, 0);
+const coverageByStack = Object.fromEntries([...stackBuckets, "25_40"].map((stackBucket) => {
+  const stackKeys = keys.filter((key) => key.startsWith(`${stackBucket}:`));
+  return [stackBucket, {
+    observedCells: stackKeys.length,
+    hands: stackKeys.reduce((sum, key) => sum + output.rows[key].n, 0),
+    cellsAtOrAboveMinDisplayN: stackKeys.filter((key) => output.rows[key].n >= output.meta.minDisplayN).length,
+    cellsAtOrAboveMinReliableN: stackKeys.filter((key) => output.rows[key].n >= output.meta.minReliableN).length
+  }];
+}));
 output.meta.coverage = {
-  observedPrimaryCells: keys.length,
-  primaryHands,
-  cellsAtOrAboveMinDisplayN: keys.filter((key) => output.rows[key].n >= output.meta.minDisplayN).length,
-  cellsAtOrAboveMinReliableN: keys.filter((key) => output.rows[key].n >= output.meta.minReliableN).length,
-  expectedGridCells: 169 * 5 * 3
+  byStack: coverageByStack,
+  broadObservedCells: stackBuckets.reduce((sum, key) => sum + coverageByStack[key].observedCells, 0),
+  broadHands: stackBuckets.reduce((sum, key) => sum + coverageByStack[key].hands, 0),
+  expectedGridCellsPerStack: 169 * 5 * 3
 };
 
-if (keys.length !== 2443 || primaryHands !== 1061045) {
-  throw new Error(`Snapshot reconciliation failed: ${keys.length} cells / ${primaryHands} hands`);
+const expected = {
+  "0_40": { observedCells: 2509, hands: 2236490 },
+  "40_70": { observedCells: 2470, hands: 1279289 },
+  "70_plus": { observedCells: 2495, hands: 1342346 }
+};
+for (const stackBucket of stackBuckets) {
+  const actual = coverageByStack[stackBucket];
+  const frozen = expected[stackBucket];
+  if (actual.observedCells !== frozen.observedCells || actual.hands !== frozen.hands) {
+    throw new Error(`Snapshot reconciliation failed for ${stackBucket}: ${actual.observedCells} cells / ${actual.hands} hands`);
+  }
 }
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });

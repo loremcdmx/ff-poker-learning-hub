@@ -41,6 +41,14 @@
     return `${value.toLocaleString("ru-RU", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
   }
 
+  function reliabilityFor(denominator) {
+    const directionalMin = Number(source?.reliability?.directionalMin) || 50;
+    const solidMin = Number(source?.reliability?.solidMin) || 200;
+    if (!Number.isFinite(denominator) || denominator < directionalMin) return "thin";
+    if (denominator < solidMin) return "directional";
+    return "solid";
+  }
+
   function matrixErrors(matrix) {
     const errors = [];
     if (!matrix || typeof matrix !== "object") return ["нет fieldMatrix"];
@@ -111,10 +119,16 @@
 
   function appendKpi(parent, label, numerator, denominator, className) {
     const kpi = element("div", `structure-league-kpi ${className}`);
+    const reliability = reliabilityFor(denominator);
+    const value = reliability === "thin" ? "Мало данных" : percent(rate(numerator, denominator));
+    const base = `${count(numerator)} / ${count(denominator)}`;
+    kpi.dataset.reliability = reliability;
     kpi.append(
       element("span", "structure-league-kpi-label", label),
-      element("strong", "", percent(rate(numerator, denominator))),
-      element("small", "", `${count(numerator)} / ${count(denominator)}`)
+      element("strong", "", value),
+      element("small", "", reliability === "thin"
+        ? `${base} · процент скрыт`
+        : (reliability === "directional" ? `${base} · направление` : base))
     );
     parent.append(kpi);
   }

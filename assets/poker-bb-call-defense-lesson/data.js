@@ -19,25 +19,25 @@
 
   var rangeScenarios = {
     "2_0": {
-      EP: { foldPct: 37, threeBetPct: 5, chart: "source/range-2_0-vs-ep.png" },
-      MP: { foldPct: 30, threeBetPct: 6, chart: "source/range-2_0-vs-mp.png" },
-      HJ: { foldPct: 20, threeBetPct: 7, chart: "source/range-2_0-vs-hj.png" },
-      CO: { foldPct: 15, threeBetPct: 8, chart: "source/range-2_0-vs-co.png" },
-      BTN: { foldPct: 10, threeBetPct: 9, chart: "source/range-2_0-vs-btn.png" }
+      EP: { chart: "source/range-2_0-vs-ep.png" },
+      MP: { chart: "source/range-2_0-vs-mp.png" },
+      HJ: { chart: "source/range-2_0-vs-hj.png" },
+      CO: { chart: "source/range-2_0-vs-co.png" },
+      BTN: { chart: "source/range-2_0-vs-btn.png" }
     },
     "2_5": {
-      EP: { foldPct: 76, chart: "source/range-2_5-vs-ep.png" },
-      MP: { foldPct: 71, chart: "source/range-2_5-vs-mp.png" },
-      HJ: { foldPct: 54, chart: "source/range-2_5-vs-hj.png" },
-      CO: { foldPct: 47, chart: "source/range-2_5-vs-co.png" },
-      BTN: { foldPct: 45, chart: "source/range-2_5-vs-btn.png" }
+      EP: { chart: "source/range-2_5-vs-ep.png" },
+      MP: { chart: "source/range-2_5-vs-mp.png" },
+      HJ: { chart: "source/range-2_5-vs-hj.png" },
+      CO: { chart: "source/range-2_5-vs-co.png" },
+      BTN: { chart: "source/range-2_5-vs-btn.png" }
     },
     "3_0": {
-      EP: { foldPct: 87, chart: "source/range-3_0-vs-ep.png" },
-      MP: { foldPct: 86, chart: "source/range-3_0-vs-mp.png" },
-      HJ: { foldPct: 75, chart: "source/range-3_0-vs-hj.png" },
-      CO: { foldPct: 74, chart: "source/range-3_0-vs-co.png" },
-      BTN: { foldPct: 73, chart: "source/range-3_0-vs-btn.png" }
+      EP: { chart: "source/range-3_0-vs-ep.png" },
+      MP: { chart: "source/range-3_0-vs-mp.png" },
+      HJ: { chart: "source/range-3_0-vs-hj.png" },
+      CO: { chart: "source/range-3_0-vs-co.png" },
+      BTN: { chart: "source/range-3_0-vs-btn.png" }
     }
   };
 
@@ -90,6 +90,32 @@
       raisePct: split.raisePct,
       callPct: split.callPct,
       foldPct: split.foldPct
+    });
+  }
+
+  function rangeSummaryFor(sizeKey, position) {
+    var totals = { raise: 0, call: 0, fold: 0, combos: 0 };
+    for (var row = 0; row < 13; row += 1) {
+      for (var column = 0; column < 13; column += 1) {
+        var cell = rangeCellFor(sizeKey, position, matrixHandAt(row, column));
+        var combos = row === column ? 6 : row < column ? 4 : 12;
+        totals.raise += combos * cell.raisePct / 100;
+        totals.call += combos * cell.callPct / 100;
+        totals.fold += combos * cell.foldPct / 100;
+        totals.combos += combos;
+      }
+    }
+    var pct = function (value) { return totals.combos ? value / totals.combos * 100 : 0; };
+    var raisePct = pct(totals.raise);
+    var callPct = pct(totals.call);
+    var foldPct = pct(totals.fold);
+    return Object.freeze({
+      basis: "combo_weighted_teaching_chart",
+      totalCombos: totals.combos,
+      raisePct: raisePct,
+      callPct: callPct,
+      foldPct: foldPct,
+      defendPct: raisePct + callPct
     });
   }
 
@@ -237,6 +263,7 @@
     matrixHandAt: matrixHandAt,
     matrixCellForHand: matrixCellForHand,
     rangeCellFor: rangeCellFor,
+    rangeSummaryFor: rangeSummaryFor,
     rangeDataVersion: RangeData && RangeData.version,
     equityRealization: Object.freeze({ rawEquityPct: 38.5, realizedEquityPct: 27.8, scope: "range-example" }),
     equityModel: Object.freeze({
@@ -246,7 +273,7 @@
     }),
     ffRealizationModel: Object.freeze({
       file: "assets/poker-bb-call-defense-lesson/data/ff-bb-call-realization.json",
-      version: "ff-bb-call-realization-20260714-v1",
+      version: "ff-bb-call-realization-20260717-stack-bands-v2",
       minDisplayN: 500,
       minReliableN: 2000
     }),

@@ -442,6 +442,7 @@
         copy: "Берём сопоставимый срез: CO/BTN против BB, сухой K-high флоп, c-bet 30–36% банка и check-raise примерно до стартового банка. В Q2 2026 игроки League 1 фолдили 49,5%, League 2 — 45,5%, League 3 — 60,2%. Учебный размер 1,8 → 5,5 BB попадает в этот бакет; чистому блефу нужно около 43% фолдов.",
         visual: {
           type: "board-folds",
+          sampleId: "strict-k-high-size-window-q2-2026",
           boardCards: ["Kc", "8h", "2s"],
           boardLabel: "K-high dry · пример K82r",
           boardScope: "K♣8♥2♠ — представитель класса; проценты собраны по всем сухим K-high флопам, не только по точной K82r.",
@@ -458,7 +459,7 @@
             { key: "league2", label: "League 2", ranks: "R6–10", folds: 110, faced: 242, players: 178 },
             { key: "league3", label: "League 3", ranks: "R11–17", folds: 162, faced: 269, players: 211 }
           ],
-          note: "Лига — ранг CO/BTN, который получил X/R; это близкий HH-срез, не полный canonical denominator."
+          note: "Лига — ранг CO/BTN, который получил X/R. Это отдельный строгий срез карточки, не обзорная матрица вкладки «Поле»."
         }
       }
     ],
@@ -470,7 +471,12 @@
       tree: "CO/BTN RFI → BB call → BB check",
       canonicalNode: false,
       period: "Q2 2026 · 01.04–30.06",
+      reliability: {
+        directionalMin: 50,
+        solidMin: 200
+      },
       sample: {
+        id: "nearby-rvbb-structure-matrix-q2-2026",
         kind: "deterministic_hh_sample",
         percent: 70,
         analysisIncluded: true,
@@ -495,7 +501,7 @@
           key: "matched",
           label: "Один сайз",
           shortLabel: "≈⅓ → ≈банк",
-          note: "C-bet 30–36% стартового банка → X/R-to 95–105% стартового банка. Одно окно сайза для всех структур и лиг."
+          note: "C-bet 30–36% стартового банка → X/R-to 95–105%. Это обзорный RvBB-срез для всех досок; его N не обязан совпадать с отдельной карточкой на «Главном»."
         }
       ],
       defaultFoldView: "overall",

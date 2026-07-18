@@ -23,8 +23,9 @@ assert.deepEqual([Data.matrixCellForHand("AKo").row, Data.matrixCellForHand("AKo
 assert.throws(() => Data.matrixCellForHand("AK"));
 assert.throws(() => Data.matrixCellForHand("TTs"));
 assert.match(Data.rangeDataVersion, /source-png-pages-10-11/);
-assert.equal(100 - Data.rangeScenarios["2_5"].BTN.foldPct, 55);
-assert.equal(100 - Data.rangeScenarios["3_0"].BTN.foldPct, 27);
+assert.equal(Number(Data.rangeSummaryFor("2_0", "BTN").defendPct.toFixed(1)), 88.2);
+assert.equal(Number(Data.rangeSummaryFor("2_5", "BTN").defendPct.toFixed(1)), 53.8);
+assert.equal(Number(Data.rangeSummaryFor("3_0", "BTN").defendPct.toFixed(1)), 27.0);
 assert.equal(Data.sizes["2_5"].potOddsPct, 23.1);
 assert.equal(Data.sizes["3_0"].potOddsPct, 26.7);
 assert.equal(Data.rangeCellFor("2_0", "BTN", "84o").code, "F");
@@ -39,7 +40,7 @@ for (const sizeKey of ["2_0", "2_5", "3_0"]) {
   for (const position of ["EP", "MP", "HJ", "CO", "BTN"]) {
     const scenario = Data.rangeScenarios[sizeKey][position];
     assert.ok(scenario);
-    assert.ok(scenario.foldPct >= 0 && scenario.foldPct <= 100);
+    assert.deepEqual(Object.keys(scenario), ["chart"], sizeKey + ":" + position + " has no parallel percentage headline");
     const chartPath = path.join(root, scenario.chart);
     assert.ok(fs.existsSync(chartPath), scenario.chart);
     const png = fs.readFileSync(chartPath);
@@ -63,12 +64,13 @@ for (const sizeKey of ["2_0", "2_5", "3_0"]) {
       }
     }
     assert.equal(hands.size, 169, sizeKey + ":" + position);
-    const extractedFoldPct = actionCombos.fold / actionCombos.total * 100;
-    assert.ok(Math.abs(extractedFoldPct - scenario.foldPct) <= 4, sizeKey + ":" + position + " extracted fold aggregate");
-    if (Number.isFinite(scenario.threeBetPct)) {
-      const extractedRaisePct = actionCombos.raise / actionCombos.total * 100;
-      assert.ok(Math.abs(extractedRaisePct - scenario.threeBetPct) <= 1, sizeKey + ":" + position + " extracted 3-bet aggregate");
-    }
+    const summary = Data.rangeSummaryFor(sizeKey, position);
+    assert.equal(summary.basis, "combo_weighted_teaching_chart");
+    assert.equal(summary.totalCombos, 1326);
+    assert.equal(Number(summary.foldPct.toFixed(10)), Number((actionCombos.fold / actionCombos.total * 100).toFixed(10)));
+    assert.equal(Number(summary.raisePct.toFixed(10)), Number((actionCombos.raise / actionCombos.total * 100).toFixed(10)));
+    assert.equal(Number(summary.callPct.toFixed(10)), Number((actionCombos.call / actionCombos.total * 100).toFixed(10)));
+    assert.equal(Number((summary.foldPct + summary.defendPct).toFixed(10)), 100);
   }
 }
 

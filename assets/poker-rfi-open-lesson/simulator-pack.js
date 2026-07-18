@@ -16,6 +16,8 @@
   let limpReturnFocus = null;
   let positionPreview = "";
   let positionPinned = "";
+  let stageViewportObserver = null;
+  let stageSyncFrame = 0;
 
   function handMode(value = params.get("handMode")) {
     return String(value || "").toLowerCase() === "full" ? "full" : "preflop";
@@ -305,19 +307,67 @@
     }).join("")).join("");
   }
 
+  function syncStageToViewport(viewport) {
+    if (!viewport) return;
+    const shell = viewport.querySelector(".simulator-stage-shell");
+    const stage = shell?.querySelector?.(".simulator-stage");
+    const api = root.PokerSimulatorStage;
+    if (!shell || !stage || typeof api?.syncStage !== "function") return;
+    if (stageSyncFrame) root.cancelAnimationFrame?.(stageSyncFrame);
+    stageSyncFrame = root.requestAnimationFrame?.(() => {
+      stageSyncFrame = 0;
+      api.syncStage(shell, stage, viewport);
+    }) || 0;
+  }
+
+  function ensureStageViewport(workspace) {
+    if (!workspace) return null;
+    let viewport = Array.from(workspace.children).find((node) => node?.hasAttribute?.("data-rfi-stage-viewport"));
+    const directShell = Array.from(workspace.children).find((node) => node?.classList?.contains("simulator-stage-shell"));
+    const shell = viewport?.querySelector?.(".simulator-stage-shell") || directShell;
+    if (!shell) return viewport || null;
+    if (!viewport) {
+      viewport = root.document.createElement("div");
+      viewport.className = "rfi-stage-viewport";
+      viewport.dataset.rfiStageViewport = "";
+      workspace.insertBefore(viewport, shell);
+      viewport.appendChild(shell);
+    }
+    if (!stageViewportObserver && typeof root.ResizeObserver === "function") {
+      stageViewportObserver = new root.ResizeObserver(() => syncStageToViewport(viewport));
+      stageViewportObserver.observe(viewport);
+    }
+    syncStageToViewport(viewport);
+    return viewport;
+  }
+
   function ensureFeedback() {
     if (!root.document) return null;
     let feedback = root.document.querySelector("[data-rfi-feedback]");
-    if (feedback) return feedback;
-    feedback = root.document.createElement("aside");
-    feedback.className = "rfi-range-review";
-    feedback.dataset.rfiFeedback = "";
-    feedback.setAttribute("role", "dialog");
-    feedback.setAttribute("aria-modal", "false");
-    feedback.setAttribute("aria-labelledby", "rfi-review-title");
-    feedback.setAttribute("aria-hidden", "true");
-    root.document.body.appendChild(feedback);
+    if (!feedback) {
+      feedback = root.document.createElement("aside");
+      feedback.className = "rfi-range-review";
+      feedback.dataset.rfiFeedback = "";
+      feedback.setAttribute("role", "region");
+      feedback.setAttribute("aria-live", "polite");
+      feedback.setAttribute("aria-labelledby", "rfi-review-title");
+      feedback.setAttribute("aria-hidden", "true");
+    }
+    const host = root.document.querySelector(".workspace") || root.document.body;
+    ensureStageViewport(host);
+    if (feedback.parentElement !== host) host.appendChild(feedback);
     return feedback;
+  }
+
+  function setFeedbackCollapsed(feedback, collapsed) {
+    if (!feedback) return;
+    const value = Boolean(collapsed);
+    feedback.dataset.collapsed = value ? "true" : "false";
+    const toggle = feedback.querySelector("[data-rfi-review-toggle]");
+    if (!toggle) return;
+    toggle.setAttribute("aria-expanded", value ? "false" : "true");
+    const label = toggle.querySelector("[data-rfi-review-toggle-label]");
+    if (label) label.textContent = value ? "Показать чарт" : "Скрыть чарт";
   }
 
   function showGrade(grade) {
@@ -325,33 +375,50 @@
     if (!feedback || !grade.combo || !grade.action) return;
     const verdict = reviewVerdict(grade);
     const lastHand = sessionLimitReached(grade.handNo);
+    const compact = Boolean(root.matchMedia?.("(max-width: 900px)")?.matches);
     feedback.innerHTML = `
-      <div class="rfi-review-backdrop" aria-hidden="true"></div>
       <section class="rfi-review-board ${verdict.tone === "correct" ? "is-correct" : "is-wrong"}">
         <header class="rfi-review-header">
           <div><span>Разбор завершённой раздачи ${grade.handNo}</span><strong>${grade.position} · ${grade.combo}</strong></div>
           <p>Твоя мишень — чарт позиции. Кольцо показывает сыгранную руку.</p>
+          <button class="rfi-review-toggle" type="button" data-rfi-review-toggle aria-controls="rfi-review-details"><span data-rfi-review-toggle-label>Скрыть чарт</span></button>
         </header>
-        <div class="rfi-review-legend"><span class="is-open">Диапазон</span><span class="is-pair">Пары</span><span class="is-suited">Suited</span><span class="is-offsuit">Offsuit</span><small>Учебный чарт: жёлтая клетка — рейз, если частота в исходнике выше 75%</small></div>
-        <div class="rfi-review-chart" aria-label="Чарт ${grade.position}; сыгранная рука ${grade.combo}">${reviewChart(grade)}</div>
+        <div class="rfi-review-details" id="rfi-review-details">
+          <div class="rfi-review-legend"><span class="is-open">Диапазон</span><span class="is-pair">Пары</span><span class="is-suited">Suited</span><span class="is-offsuit">Offsuit</span><small>Учебный чарт: жёлтая клетка — рейз, если частота в исходнике выше 75%</small></div>
+          <div class="rfi-review-chart" aria-label="Чарт ${grade.position}; сыгранная рука ${grade.combo}">${reviewChart(grade)}</div>
+        </div>
         <footer class="rfi-review-footer">
           <div><strong id="rfi-review-title">${verdict.title}</strong><p>${verdict.text}</p><small>Ты выбрал: ${actionLabel(grade.action)} · База: ${actionLabel(grade.expected)}</small></div>
           <button class="rfi-review-next" type="button" data-rfi-review-next data-final="${lastHand ? "true" : "false"}">${lastHand ? "Посмотреть итог" : "Следующая раздача"}</button>
         </footer>
       </section>`;
+    setFeedbackCollapsed(feedback, compact);
     feedback.classList.remove("is-visible");
     feedback.setAttribute("aria-hidden", "false");
     root.requestAnimationFrame?.(() => {
       feedback.classList.add("is-visible");
-      feedback.querySelector("[data-rfi-review-next]")?.focus({ preventScroll: true });
+      syncStageToViewport(feedback.parentElement?.querySelector?.("[data-rfi-stage-viewport]"));
     });
   }
 
-  function hideGrade() {
+  function hideGrade({ reset = false } = {}) {
     const feedback = root.document?.querySelector?.("[data-rfi-feedback]");
     if (!feedback) return;
     feedback.classList.remove("is-visible");
     feedback.setAttribute("aria-hidden", "true");
+    if (reset) {
+      feedback.innerHTML = "";
+      feedback.dataset.collapsed = "false";
+    }
+    syncStageToViewport(feedback.parentElement?.querySelector?.("[data-rfi-stage-viewport]"));
+  }
+
+  function resetAnalysis() {
+    hideGrade({ reset: true });
+    hideLimpWarning();
+    positionPinned = "";
+    positionPreview = "";
+    processedEntries.clear();
   }
 
   function playLimpTone() {
@@ -429,12 +496,24 @@
     if (!active || !root.document || learningUiHandlersInstalled) return;
     learningUiHandlersInstalled = true;
     root.document.addEventListener("click", (event) => {
+      if (event.target?.closest?.('[data-action="start-simulator"], #reset-session-button')) {
+        resetAnalysis();
+        return;
+      }
       const dismissLimp = event.target?.closest?.("[data-rfi-limp-dismiss]");
       if (dismissLimp) {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation?.();
         hideLimpWarning();
+        return;
+      }
+      const toggle = event.target?.closest?.("[data-rfi-review-toggle]");
+      if (toggle) {
+        event.preventDefault();
+        event.stopPropagation();
+        const feedback = toggle.closest("[data-rfi-feedback]");
+        setFeedbackCollapsed(feedback, feedback?.dataset.collapsed !== "true");
         return;
       }
       const next = event.target?.closest?.("[data-rfi-review-next]");
@@ -525,6 +604,11 @@
         const payload = root.PokerSimulatorApp?.currentSessionPayload?.() || {};
         const entries = completedEntries(payload);
         const grades = entries.map(gradeEntry).filter((grade) => grade.action);
+        if (!grades.length || root.document.querySelector(".table-grid.is-idle")) {
+          const review = root.document.querySelector("[data-rfi-feedback]");
+          const hasReviewState = Boolean(review && (review.innerHTML || review.getAttribute("aria-hidden") !== "true"));
+          if (hasReviewState || processedEntries.size || positionPinned || positionPreview) resetAnalysis();
+        }
         const stats = statsForGrades(grades);
         const correct = grades.filter((grade) => grade.correct).length;
         hud.querySelector("[data-rfi-score]").textContent = sessionLimit > 0

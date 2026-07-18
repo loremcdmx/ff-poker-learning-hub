@@ -17,8 +17,8 @@
   <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=a19790bf2596">
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
-  <link rel="stylesheet" href="assets/poker-resteal-lesson/lesson.css?v=e9e2767a08ac">
-  <link rel="stylesheet" href="assets/poker-resteal-lesson/rank-comparison.css?v=a9ab61b4f539">
+  <link rel="stylesheet" href="assets/poker-resteal-lesson/lesson.css?v=57750976d09a">
+  <link rel="stylesheet" href="assets/poker-resteal-lesson/rank-comparison.css?v=d1a958ad1207">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
 </head>
 <body>
@@ -225,8 +225,6 @@
           <div class="rank-growth-strip" id="rankGrowthStrip" aria-label="ABI и частота рестил-пушей по уровню FF"></div>
         </div>
 
-        <div class="rank-dataset-facts" id="rankDatasetFacts" aria-label="Объём набора данных"></div>
-
         <div class="rank-evidence-controls" id="rankComparisonFilters" aria-label="Условия сравнения рестил-пушей">
           <fieldset>
             <legend>Кто открыл</legend>
@@ -273,7 +271,8 @@
           <span><i class="is-rate-3"></i>30%</span>
           <span><i class="is-rate-4"></i>50%+</span>
           <span class="is-thin-sample"><i></i>N 5–19</span>
-          <span class="is-no-sample"><i></i>N &lt; 5</span>
+          <span class="is-estimated-sample"><i></i>≈ оценка · N 1–4</span>
+          <span class="is-no-sample"><i></i>нет данных · N 0</span>
         </div>
         <div class="rank-hand-readout" id="rankHandReadout" aria-live="polite"></div>
         <p class="rank-evidence-source" id="rankEvidenceSource"></p>
@@ -321,10 +320,12 @@
 
       <div class="deep-panel field-insights" id="deepFieldPanel">
       <div class="field-grid field-grid-single">
-        <article class="panel comparison-panel">
-          <div class="comparison-heading"><div><p class="eyebrow">Реальные раздачи · январь–июнь 2026</p><h3>Сколько олл-ин и колл выигрывали относительно паса</h3></div><span>Не солвер</span></div>
-          <p class="comparison-note">Плюс по эквити считаем относительно паса: исходный EV действия − EV паса. Пас принят за 0 на общей шкале, а его исходная цена здесь −1,12 BB — большой блайнд и средний уже поставленный ante. Поэтому абсолютный EV действия может быть отрицательным, но действие всё равно может быть лучше паса.</p>
-          <div class="bars" id="outcomeBars"></div>
+        <article class="panel comparison-panel exact-bb-observed" id="exactBbObservedPanel">
+          <div class="comparison-heading"><div><p class="eyebrow">Наблюдаемая игра поля · точно BB</p><h3>Что игроки нажимали против опена BTN 2 BB</h3></div><span>Не рекомендация</span></div>
+          <p class="comparison-note">Фиксированный срез: Hero точно на BB, перед ним один рейзер BTN, лимперов нет, эффективный стек 25–40 BB. Это частоты фактических действий. Они не сравнивают EV и не говорят, что нажимать.</p>
+          <div class="observed-action-overview" id="exactBbActionOverview" aria-label="Частоты четырёх действий в точном BB-срезе"></div>
+          <div class="observed-category-list" id="exactBbCategoryRows" aria-label="Частоты действий по группам рук"></div>
+          <p class="observed-source" id="exactBbSource"></p>
         </article>
       </div>
       </div>
@@ -384,12 +385,12 @@
   <script defer src="assets/poker-trainer-shell/simulator-snapshot.js?v=20260715-ffstart-handoff-v16"></script>
   <script defer src="assets/poker-simulator/embed.js?v=d3bdd7d52145"></script>
   <script defer src="assets/poker-trainer-shell/simulator-practice.js?v=591b8e2f6784"></script>
-  <script defer src="assets/poker-resteal-lesson/data/browser-bundle.js?v=63cee47708b4"></script>
+  <script defer src="assets/poker-resteal-lesson/data/browser-bundle.js?v=d83e065bf574"></script>
   <script defer src="assets/poker-resteal-lesson/data.js?v=20260713-2"></script>
   <script defer src="assets/poker-resteal-lesson/data/resteal-rank-data.js?v=c522607916cc"></script>
   <script defer src="assets/poker-resteal-lesson/engine.js?v=b2b87c4f94e4"></script>
-  <script defer src="assets/poker-resteal-lesson/rank-comparison.js?v=bb66bafdd61b"></script>
+  <script defer src="assets/poker-resteal-lesson/rank-comparison.js?v=b9933c2936c0"></script>
   <script defer src="assets/poker-progress/progress.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-resteal-lesson/lesson.js?v=87ce01dc1642"></script>
+  <script defer src="assets/poker-resteal-lesson/lesson.js?v=6f1193bc8dd8"></script>
 </body>
 </html>

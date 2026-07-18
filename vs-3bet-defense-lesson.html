@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
   <link rel="stylesheet" href="assets/poker-field-lesson/lesson.css?v=05323337d3f2">
-  <link rel="stylesheet" href="assets/poker-vs-3bet-defense-lesson/range-explorer.css?v=12cadf11b2e1">
+  <link rel="stylesheet" href="assets/poker-vs-3bet-defense-lesson/range-explorer.css?v=cadeb069ef93">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
 </head>
 <body class="poker-field-lesson vs-3bet-defense-lesson" data-lesson-key="vs-3bet-defense">
@@ -101,6 +101,29 @@
       <article class="vs3-range-explorer panel" data-vs3-range-explorer aria-label="Интерактивный чарт защиты против 3-бета">
         <p class="vs3-loading">Чарт и фильтры загружаются…</p>
       </article>
+
+      <section class="vs3-measured-field" aria-labelledby="measuredFieldTitle">
+        <div class="vs3-section-head">
+          <div>
+            <p class="eyebrow">Как играет поле · реальные решения</p>
+            <h3 id="measuredFieldTitle">Тот же спот в истории раздач</h3>
+          </div>
+          <div class="data-stamp" aria-label="Источник и период измеренного полевого куба">
+            <span>FunFarm HH · exact rank-at-hand</span>
+            <span>1 января — 16 июля 2026</span>
+          </div>
+        </div>
+        <p class="vs3-evidence-boundary">Выбери позицию, IP/OOP, стек и абсолютный размер 3-бета. Здесь показано, что игроки реально нажимали с каждой рукой. Это не оптимальная стратегия и не источник правильного ответа в практике.</p>
+        <article class="vs3-field-explorer panel" data-vs3-field-explorer aria-label="Наблюдаемые решения поля против 3-бета">
+          <p class="vs3-loading">Измеренный полевой куб загружается…</p>
+        </article>
+        <details class="vs3-field-methodology panel">
+          <summary>Что именно измерено</summary>
+          <p>Строгий узел один на один: Hero сделал RFI, получил первый 3-бет без колд-коллера и мог ответить 4-бетом. Сквизы исключены, ранг взят в момент раздачи. Исходная выгрузка сохраняет точную позицию 3-беттора; публичный экран объединяет её только в IP/OOP.</p>
+          <p>Размер — сумма, до которой соперник сделал 3-бет, в BB. Множитель не показываем: исходный размер RFI нельзя достоверно восстановить из Hero-row без отдельного action-history join.</p>
+          <p>Клетки с N&lt;20 полностью подавлены: их counts не попадают в публичный payload. При N 20–79 частоты показаны как малая выборка. Mix над матрицей пересчитан только по опубликованным клеткам с известными картами.</p>
+        </details>
+      </section>
 
       <section class="vs3-aggregate-evidence" aria-labelledby="aggregateTitle">
         <div class="vs3-section-head">
@@ -199,7 +222,7 @@
 
   <footer class="lesson-footer">
     <a href="/">← Все уроки</a>
-    <a href="/flop-checkraise-lesson" data-footer-next>К уроку: чек-рейз флопа →</a>
+    <a href="/" data-footer-next>Завершить курс →</a>
   </footer>
 
   <script src="assets/poker-kit/decks/deck-library.js?v=b03058b680c1"></script>
@@ -213,8 +236,10 @@
   <script src="assets/poker-trainer-shell/simulator-continuation.js?v=20260716-full-hand-1"></script>
   <script src="assets/poker-vs-3bet-defense-lesson/continuations.js?v=2e94ce5a0155"></script>
   <script src="assets/poker-vs-3bet-defense-lesson/range-model.js?v=c3851f3fda19"></script>
-  <script src="assets/poker-vs-3bet-defense-lesson/data.js?v=c28d72273890"></script>
+  <script src="assets/poker-vs-3bet-defense-lesson/data.js?v=a7eaf02a9123"></script>
+  <script src="assets/poker-vs-3bet-defense-lesson/data/vs3bet-field-data.js?v=79b189ed6a4b"></script>
   <script src="assets/poker-vs-3bet-defense-lesson/range-explorer.js?v=f5de27b4fe73"></script>
+  <script src="assets/poker-vs-3bet-defense-lesson/field-explorer.js?v=9791a93d958e"></script>
   <script src="assets/poker-field-lesson/lesson.js?v=2118e4ba6ad8"></script>
 </body>
 </html>
