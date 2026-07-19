@@ -17,24 +17,29 @@
   <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=a19790bf2596">
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
-  <link rel="stylesheet" href="assets/poker-resteal-lesson/lesson.css?v=57750976d09a">
+  <link rel="stylesheet" href="assets/poker-resteal-lesson/lesson.css?v=2106de3e0d8a">
   <link rel="stylesheet" href="assets/poker-resteal-lesson/rank-comparison.css?v=d1a958ad1207">
+  <link rel="stylesheet" href="assets/poker-kit/lesson-header.css?v=9641ee805ef9">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
+  <script defer src="assets/poker-kit/lesson-header.js?v=1b28bacb3505"></script>
 </head>
 <body>
   <main class="app">
-    <header class="topline">
-      <div class="lesson-brand">
-        <a class="lesson-home" href="/">← В лабораторию</a>
-        <p class="eyebrow">Префлоп · стек 25–40 BB</p>
-        <h1>Рестил</h1>
+    <header class="topline lesson-chrome" data-lesson-header>
+      <div class="lesson-brand lesson-chrome__identity">
+        <a class="lesson-home lesson-chrome__back" href="/">← В лабораторию</a>
+        <div class="lesson-chrome__copy">
+          <p class="eyebrow lesson-chrome__eyebrow">Префлоп · стек 25–40 BB</p>
+          <h1 class="lesson-chrome__title">Рестил</h1>
+        </div>
       </div>
-      <nav class="step-tabs" role="tablist" aria-label="Шаги урока">
+      <nav class="step-tabs lesson-chrome__steps" role="tablist" aria-label="Шаги урока">
         <button class="step-tab" role="tab" type="button" aria-selected="true" aria-controls="ideaScreen" data-step-target="idea">1. Раздача</button>
         <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="wisdomScreen" data-step-target="wisdom" disabled>2. Главное</button>
         <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="dataScreen" data-step-target="data" disabled>3. Данные</button>
         <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="deepScreen" data-step-target="deep" disabled>4. Математика рестила</button>
-        <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="practiceScreen" data-step-target="practice" disabled>5. Практика</button>
+        <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="reactionScreen" data-step-target="reaction" disabled>5. Реакция на рестилы</button>
+        <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="practiceScreen" data-step-target="practice" disabled>6. Практика</button>
       </nav>
     </header>
 
@@ -320,15 +325,58 @@
 
       <div class="deep-panel field-insights" id="deepFieldPanel">
       <div class="field-grid field-grid-single">
-        <article class="panel comparison-panel exact-bb-observed" id="exactBbObservedPanel">
-          <div class="comparison-heading"><div><p class="eyebrow">Наблюдаемая игра поля · точно BB</p><h3>Что игроки нажимали против опена BTN 2 BB</h3></div><span>Не рекомендация</span></div>
-          <p class="comparison-note">Фиксированный срез: Hero точно на BB, перед ним один рейзер BTN, лимперов нет, эффективный стек 25–40 BB. Это частоты фактических действий. Они не сравнивают EV и не говорят, что нажимать.</p>
-          <div class="observed-action-overview" id="exactBbActionOverview" aria-label="Частоты четырёх действий в точном BB-срезе"></div>
-          <div class="observed-category-list" id="exactBbCategoryRows" aria-label="Частоты действий по группам рук"></div>
-          <p class="observed-source" id="exactBbSource"></p>
+        <article class="panel comparison-panel ev-comparison-panel" id="outcomeComparisonPanel">
+          <div class="comparison-heading"><div><p class="eyebrow">Наблюдаемый chipEV · реальные раздачи FF</p><h3>Олл-ин против колла</h3></div><span>Не солвер</span></div>
+          <p class="comparison-lead"><strong>На хороших кандидатах рестил-пуш в выборке был более чем на 1 BB выгоднее колла.</strong> Для сильных Ax разница составила +1,68 BB, для 77–99 — +1,20 BB.</p>
+          <div class="ev-takeaways" aria-label="Главные наблюдения сравнения chipEV">
+            <article><span>Сильные Ax</span><strong>+1,68 BB</strong><small>олл-ин минус колл</small></article>
+            <article><span>77–99</span><strong>+1,20 BB</strong><small>олл-ин минус колл</small></article>
+            <article class="is-caveat"><span>Не для каждой руки</span><strong>TT+ и связки</strong><small>в этой выборке колл не хуже</small></article>
+          </div>
+          <p class="comparison-note">Ниже — средний all-in-adjusted chipEV уже выбранных игроками действий в спотах SB/BB против одного CO/BTN, 25–40 BB. Это наблюдаемая выборка, а не две линии одной и той же раздачи: конкретные руки и соперники внутри групп могли отличаться.</p>
+          <div class="bars" id="outcomeBars" aria-label="Сравнение chipEV олл-ина и колла по группам рук"></div>
+          <div class="comparison-pko-note"><strong>Баунти здесь ещё не посчитано.</strong><span>Это преимущество только в chipEV. Когда ты покрываешь соперника, стоимость нокаута может сделать подходящий рестил ещё выгоднее — её отдельно добавляет переключатель в модели выше.</span></div>
+          <p class="comparison-source">FF · 01.01–01.06.2026 · известные карты · опен не больше 3 BB · без лимперов. Сравнение описывает сыгранную выборку и не является причинной оценкой стратегии.</p>
         </article>
       </div>
       </div>
+    </section>
+
+    <section class="screen reaction-screen" id="reactionScreen" role="tabpanel" data-step="reaction" aria-labelledby="reaction-title">
+      <div class="section-heading reaction-heading">
+        <div><p class="eyebrow">Наблюдаемая игра поля FF</p><h2 id="reaction-title">Как опен-рейзер отвечает на рестил</h2></div>
+        <p>Выбери исходную позицию опенера, откуда пришёл олл-ин, сайз и эффективный стек. Так проще понять, какой диапазон продолжения разумно закладывать сопернику.</p>
+      </div>
+
+      <article class="panel reaction-panel" id="reactionPanel">
+        <div class="reaction-controls" aria-label="Фильтры реакции на рестил">
+          <fieldset><legend>Кто открыл</legend><div class="reaction-segments" id="reactionOpenerTabs" role="tablist" aria-label="Позиция опен-рейзера"></div></fieldset>
+          <fieldset><legend>Откуда рестил</legend><div class="reaction-segments" id="reactionHeroTabs" role="tablist" aria-label="Позиция игрока, сделавшего рестил"></div></fieldset>
+          <fieldset><legend>Сайз опена</legend><div class="reaction-segments" id="reactionSizeTabs" role="tablist" aria-label="Размер опена"></div></fieldset>
+          <fieldset><legend>Эффективный стек</legend><div class="reaction-segments" id="reactionDepthTabs" role="tablist" aria-label="Глубина эффективного стека"></div></fieldset>
+        </div>
+
+        <div class="reaction-status" id="reactionStatus" role="status">Загружаем реакции поля…</div>
+        <div class="reaction-overview" id="reactionOverview" aria-label="Частоты ответа исходного опенера"></div>
+
+        <div class="reaction-range-layout">
+          <section class="reaction-range-card" aria-labelledby="reaction-range-title">
+            <div class="reaction-range-head">
+              <div><p class="eyebrow">Известные карты продолжения</p><h3 id="reaction-range-title">Из чего состоял рейз-колл</h3></div>
+              <div class="reaction-range-legend" aria-label="Цвета действий"><span><i class="is-call"></i>Колл</span><span><i class="is-reraise"></i>Ререйз поверх</span></div>
+            </div>
+            <div class="reaction-matrix-scroll" tabindex="0"><div class="reaction-matrix" id="reactionMatrix" role="grid" aria-label="Матрица известных рук продолжения"></div></div>
+          </section>
+          <aside class="reaction-reading" aria-labelledby="reaction-reading-title">
+            <p class="eyebrow">Как читать</p>
+            <h3 id="reaction-reading-title">Это состав диапазона, не готовый чарт</h3>
+            <p>Карты пасов почти всегда скрыты. Поэтому матрица показывает, какие известные руки дошли до колла или ререйза, а не вероятность продолжения каждой клетки.</p>
+            <div class="reaction-top-hands" id="reactionTopHands" aria-label="Самые частые известные руки продолжения"></div>
+            <p class="reaction-sample-note">Яркость нормирована на число комбинаций: пары, suited и offsuit руки можно сравнивать честнее. Наведи на клетку, чтобы увидеть N и распределение действий.</p>
+          </aside>
+        </div>
+        <p class="reaction-source" id="reactionSource"></p>
+      </article>
     </section>
 
     <section class="screen practice-screen" id="practiceScreen" role="tabpanel" data-step="practice" aria-labelledby="practice-title">
@@ -391,6 +439,6 @@
   <script defer src="assets/poker-resteal-lesson/engine.js?v=b2b87c4f94e4"></script>
   <script defer src="assets/poker-resteal-lesson/rank-comparison.js?v=b9933c2936c0"></script>
   <script defer src="assets/poker-progress/progress.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-resteal-lesson/lesson.js?v=6f1193bc8dd8"></script>
+  <script defer src="assets/poker-resteal-lesson/lesson.js?v=7f1eb3ba9524"></script>
 </body>
 </html>

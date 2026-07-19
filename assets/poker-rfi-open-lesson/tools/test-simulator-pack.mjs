@@ -92,11 +92,24 @@ assert(rfiPackCss.includes('.client-controls.is-rfi-opening > .client-row .table
 assert.match(rfiPackCss, /\.workspace:has\(> \.rfi-range-review\.is-visible\)\s*\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(320px,380px\)/s, "desktop review is a real side column beside the table");
 assert.match(rfiPackCss, /@media\(max-width:900px\)[\s\S]*?\.workspace:has\(> \.rfi-range-review\.is-visible\)\s*\{[^}]*grid-template-columns:minmax\(0,1fr\)[^}]*grid-template-rows:auto auto/s, "narrow review moves below the table");
 assert.match(rfiPackCss, /\.rfi-stage-viewport\s*\{[^}]*align-self:stretch[^}]*width:100%[^}]*height:100%[^}]*min-width:0/s, "docked review gives the simulator a measurable, non-recursively shrinking stage viewport");
-assert(rfiPackCss.includes('.rfi-range-review[data-collapsed="true"] .rfi-review-details'), "narrow review chart can collapse without hiding the verdict or next action");
+assert(rfiPackCss.includes('.rfi-range-review[data-collapsed="true"] .rfi-review-details'), "narrow review chart can collapse without hiding the verdict");
+assert.match(rfiPackCss, /\.rfi-range-review\s*\{[^}]*display:block[^}]*height:calc\(100dvh - 138px\)/s, "desktop review keeps its own bounded scroll surface");
+assert.match(rfiPackCss, /\.rfi-review-board\s*\{[^}]*height:100%[^}]*min-height:0[^}]*overflow: auto/s, "only the review board scrolls on desktop");
+assert.match(rfiPackCss, /\.rfi-review-action-dock\s*\{[^}]*position:fixed[^}]*bottom:max\(8px,env\(safe-area-inset-bottom\)\)/s, "next-hand control is independently pinned to the simulator viewport");
+assert.match(rfiPackCss, /@media\(max-width:900px\)[\s\S]*?\.workspace:has\(> \.rfi-review-action-dock\.is-visible\)\s*\{[^}]*padding-bottom:72px/s, "narrow practice reserves room for the independent next-hand dock");
+assert.match(rfiPackCss, /\.rfi-review-chart\s*\{[^}]*width:100%/s, "desktop review chart uses the available side-panel width");
+assert.match(rfiPackCss, /@media\(max-width:900px\)[\s\S]*?\.rfi-review-chart\s*\{[^}]*width:min\(520px,100%\)/s, "stacked review chart grows to a readable width without overflowing its board");
+assert.match(rfiPackCss, /\.rfi-review-cell b\s*\{[^}]*font-size:clamp\(8px,2\.1vw,11px\)/s, "review chart labels retain a readable floor");
+assert(!/\.rfi-review-chart\s*\{[^}]*width:min\(2(?:10|20)px,100%\)/s.test(rfiPackCss), "review chart is not squeezed by the obsolete 210/220 px caps");
 const rfiPackSource = readFileSync(resolve(repo, "assets/poker-rfi-open-lesson/simulator-pack.js"), "utf8");
 assert(rfiPackSource.includes('querySelector(".workspace") || root.document.body'), "review is mounted beside the simulator stage inside the workspace layout");
 assert(rfiPackSource.includes('feedback.setAttribute("role", "region")'), "review is non-modal and does not claim dialog focus ownership");
 assert(!rfiPackSource.includes('feedback.querySelector("[data-rfi-review-next]")?.focus'), "review no longer steals focus from the completed table");
+assert.match(rfiPackSource, /data-rfi-review-close aria-label="Закрыть разбор"/, "review has an explicit accessible close control");
+assert.match(rfiPackSource, /function ensureReviewActionDock[\s\S]*?host\.appendChild\(dock\)/, "next-hand dock is mounted directly in the workspace, outside the review region");
+assert(!/<\/section>\s*<div class="rfi-review-action-dock"/.test(rfiPackSource), "review markup does not own the next-hand dock");
+assert.match(rfiPackSource, /closeReview[\s\S]*?hideGrade\(\{ focusNext: true \}\)/, "closing the review preserves and focuses the independent next-hand action");
+assert.match(rfiPackSource, /const next = event\.target\?\.closest\?\.\("\[data-rfi-review-next\]"\)[\s\S]*?hideGrade\(\{ hideDock: true \}\)[\s\S]*?PokerSimulatorApp\?\.newHand/s, "next-hand control clears both surfaces and starts exactly one new hand");
 for (const token of ["function setFeedbackCollapsed", "function resetAnalysis", 'querySelector(".table-grid.is-idle")', '[data-action="start-simulator"], #reset-session-button']) assert(rfiPackSource.includes(token), `RFI review lifecycle includes ${token}`);
 for (const token of ["function ensureStageViewport", "function syncStageToViewport", "data-rfi-stage-viewport", "PokerSimulatorStage", "api.syncStage(shell, stage, viewport)"]) assert(rfiPackSource.includes(token), `RFI review stage fit includes ${token}`);
 

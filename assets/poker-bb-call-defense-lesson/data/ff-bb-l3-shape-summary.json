@@ -1,0 +1,59 @@
+{
+  "schema": "ff-bb-l3-shape-summary-v1",
+  "version": "2026-07-18.1",
+  "meta": {
+    "window": {
+      "startInclusive": "2026-01-01T00:00:00Z",
+      "endExclusive": "2026-07-17T00:00:00Z"
+    },
+    "cohort": "League 3 at hand time · ranks 11–15 · real FF players",
+    "spot": "BB call vs one BTN opener to 2 BB · 40–70 BB effective · heads-up flop · 3–9 max",
+    "rawEquityModel": "169×169 preflop all-in equity matrix weighted by observed League-3 30–70 BB BTN opens",
+    "openerRange": {
+      "cohort": "current active real League 3",
+      "window": {
+        "from": "2025-10-01",
+        "to": "2026-07-16",
+        "label": "1 октября 2025 — 16 июля 2026"
+      },
+      "table": "7–9 max",
+      "stack": "30–70 BB",
+      "position": "BTN",
+      "rfiPct": 64.5,
+      "observedOpenHands": 120638
+    },
+    "observedRealization": "all-in-adjusted net EV converted to equivalent pot share after actual calls",
+    "matching": "55 same-rank suited/offsuit pairs · minimum 500 EV-ready calls in each cell · each pair balanced to its smaller cell",
+    "caveat": "Raw equity and observed realization use separately documented League-3 source contracts. Realization is conditional on an actual call and is descriptive, not a strategy target or a causal suitedness estimate.",
+    "source": {
+      "rankJobId": "mcp_bq_job_c10205250a32416593375f1c6d68a6c4",
+      "realizationJobId": "mcp_ch_job_3058947119da4ab3aba57e12173e125f",
+      "openerRangeJobId": "mcp_ch_job_fd30df587eca46a4b0fb5d118e68a691",
+      "openerRangeVersion": "2026-07-18",
+      "query": "assets/poker-bb-call-defense-lesson/tools/q_ff_l3_shape_realization.sql"
+    }
+  },
+  "comparison": {
+    "eligiblePairs": 55,
+    "minCallsPerCell": 500,
+    "matchedCallsPerGroup": 32410,
+    "observedBtnOpenHands": 120638,
+    "observedBtnRfiPct": 64.5,
+    "suited": {
+      "matchedCalls": 32410,
+      "rawEquityPct": 46.6,
+      "realizedSharePct": 42.1,
+      "equityRealizationPct": 90.3
+    },
+    "offsuit": {
+      "matchedCalls": 32410,
+      "rawEquityPct": 43.7,
+      "realizedSharePct": 32.2,
+      "equityRealizationPct": 73.7
+    },
+    "delta": {
+      "rawEquityPp": 2.9,
+      "equityRealizationPp": 16.6
+    }
+  }
+}

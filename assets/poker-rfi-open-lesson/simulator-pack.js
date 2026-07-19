@@ -359,6 +359,38 @@
     return feedback;
   }
 
+  function ensureReviewActionDock() {
+    if (!root.document) return null;
+    let dock = root.document.querySelector("[data-rfi-review-action-dock]");
+    if (!dock) {
+      dock = root.document.createElement("div");
+      dock.className = "rfi-review-action-dock";
+      dock.dataset.rfiReviewActionDock = "";
+      dock.setAttribute("role", "group");
+      dock.setAttribute("aria-label", "Управление практикой");
+      dock.setAttribute("aria-hidden", "true");
+    }
+    const host = root.document.querySelector(".workspace") || root.document.body;
+    if (dock.parentElement !== host) host.appendChild(dock);
+    return dock;
+  }
+
+  function showReviewActionDock(lastHand) {
+    const dock = ensureReviewActionDock();
+    if (!dock) return;
+    dock.innerHTML = `<button class="rfi-review-next" type="button" data-rfi-review-next data-final="${lastHand ? "true" : "false"}">${lastHand ? "Посмотреть итог" : "Следующая раздача"}</button>`;
+    dock.setAttribute("aria-hidden", "false");
+    dock.classList.add("is-visible");
+  }
+
+  function hideReviewActionDock({ reset = false } = {}) {
+    const dock = root.document?.querySelector?.("[data-rfi-review-action-dock]");
+    if (!dock) return;
+    dock.classList.remove("is-visible");
+    dock.setAttribute("aria-hidden", "true");
+    if (reset) dock.innerHTML = "";
+  }
+
   function setFeedbackCollapsed(feedback, collapsed) {
     if (!feedback) return;
     const value = Boolean(collapsed);
@@ -379,9 +411,12 @@
     feedback.innerHTML = `
       <section class="rfi-review-board ${verdict.tone === "correct" ? "is-correct" : "is-wrong"}">
         <header class="rfi-review-header">
-          <div><span>Разбор завершённой раздачи ${grade.handNo}</span><strong>${grade.position} · ${grade.combo}</strong></div>
+          <div class="rfi-review-heading"><span>Разбор завершённой раздачи ${grade.handNo}</span><strong>${grade.position} · ${grade.combo}</strong></div>
+          <div class="rfi-review-header-actions">
+            <button class="rfi-review-toggle" type="button" data-rfi-review-toggle aria-controls="rfi-review-details"><span data-rfi-review-toggle-label>Скрыть чарт</span></button>
+            <button class="rfi-review-close" type="button" data-rfi-review-close aria-label="Закрыть разбор" title="Закрыть разбор">×</button>
+          </div>
           <p>Твоя мишень — чарт позиции. Кольцо показывает сыгранную руку.</p>
-          <button class="rfi-review-toggle" type="button" data-rfi-review-toggle aria-controls="rfi-review-details"><span data-rfi-review-toggle-label>Скрыть чарт</span></button>
         </header>
         <div class="rfi-review-details" id="rfi-review-details">
           <div class="rfi-review-legend"><span class="is-open">Диапазон</span><span class="is-pair">Пары</span><span class="is-suited">Suited</span><span class="is-offsuit">Offsuit</span><small>Учебный чарт: жёлтая клетка — рейз, если частота в исходнике выше 75%</small></div>
@@ -389,9 +424,9 @@
         </div>
         <footer class="rfi-review-footer">
           <div><strong id="rfi-review-title">${verdict.title}</strong><p>${verdict.text}</p><small>Ты выбрал: ${actionLabel(grade.action)} · База: ${actionLabel(grade.expected)}</small></div>
-          <button class="rfi-review-next" type="button" data-rfi-review-next data-final="${lastHand ? "true" : "false"}">${lastHand ? "Посмотреть итог" : "Следующая раздача"}</button>
         </footer>
       </section>`;
+    showReviewActionDock(lastHand);
     setFeedbackCollapsed(feedback, compact);
     feedback.classList.remove("is-visible");
     feedback.setAttribute("aria-hidden", "false");
@@ -401,7 +436,7 @@
     });
   }
 
-  function hideGrade({ reset = false } = {}) {
+  function hideGrade({ reset = false, focusNext = false, hideDock = false } = {}) {
     const feedback = root.document?.querySelector?.("[data-rfi-feedback]");
     if (!feedback) return;
     feedback.classList.remove("is-visible");
@@ -410,11 +445,16 @@
       feedback.innerHTML = "";
       feedback.dataset.collapsed = "false";
     }
+    if (hideDock) hideReviewActionDock({ reset });
     syncStageToViewport(feedback.parentElement?.querySelector?.("[data-rfi-stage-viewport]"));
+    if (focusNext) root.requestAnimationFrame?.(() => {
+      const control = root.document?.querySelector?.("[data-rfi-review-next]");
+      control?.focus?.({ preventScroll: true });
+    });
   }
 
   function resetAnalysis() {
-    hideGrade({ reset: true });
+    hideGrade({ reset: true, hideDock: true });
     hideLimpWarning();
     positionPinned = "";
     positionPreview = "";
@@ -508,6 +548,13 @@
         hideLimpWarning();
         return;
       }
+      const closeReview = event.target?.closest?.("[data-rfi-review-close]");
+      if (closeReview) {
+        event.preventDefault();
+        event.stopPropagation();
+        hideGrade({ focusNext: true });
+        return;
+      }
       const toggle = event.target?.closest?.("[data-rfi-review-toggle]");
       if (toggle) {
         event.preventDefault();
@@ -517,12 +564,15 @@
         return;
       }
       const next = event.target?.closest?.("[data-rfi-review-next]");
-      if (!next) return;
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation?.();
-      hideGrade();
-      if (next.dataset.final !== "true") root.PokerSimulatorApp?.newHand?.();
+      if (next) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        hideGrade({ hideDock: true });
+        if (next.dataset.final !== "true") root.PokerSimulatorApp?.newHand?.();
+        return;
+      }
+      if (event.target?.closest?.('[data-action="new-table-hand"], [data-action="rfi-play-again"]')) hideGrade({ hideDock: true });
     }, true);
     root.document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
@@ -535,7 +585,7 @@
         const review = root.document.querySelector('[data-rfi-feedback][aria-hidden="false"]');
         if (review) {
           event.preventDefault();
-          hideGrade();
+          hideGrade({ focusNext: true });
         }
         return;
       }

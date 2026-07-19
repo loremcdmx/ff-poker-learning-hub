@@ -8,6 +8,7 @@
   const FFSTART_COURSE_CONTEXT = new URLSearchParams(window.location.search).get("from") === "ffstart";
   const DATA_ROOT = "assets/poker-resteal-lesson/data/";
   const DATA_VERSION = "20260711-v2";
+  const REACTION_DATA_VERSION = "20260719-v1";
   const PRACTICE_READY_TIMEOUT_MS = 12000;
   let practiceReadyTimer = 0;
   const files = [
@@ -44,7 +45,10 @@
     practiceRun: 0,
     courseReported: false,
     courseSessionId: "",
-    infoTrigger: null
+    infoTrigger: null,
+    reactionData: null,
+    reactionLoading: null,
+    reactionFilters: { openerPosition: "BTN", heroPosition: "BB", openSizeBb: 2, depthBand: "25-40" }
   };
 
   const opponentTypes = [
@@ -77,22 +81,19 @@
     broadway_offsuit: "KQo, KJo, KTo, QJo, QTo, JTo",
     suited_conn_low: "T9s, 98s, 87s, 76s, 65s, 54s"
   };
-  const exactBbCategories = [
-    ["pair_22_66", ["22", "33", "44", "55", "66"]],
-    ["pair_77_99", ["77", "88", "99"]],
-    ["pair_TT_plus", ["TT", "JJ", "QQ", "KK", "AA"]],
-    ["ax_strong", ["ATs", "AJs", "AQs", "AKs", "ATo", "AJo", "AQo", "AKo"]],
-    ["ax_weak", ["A2s", "A3s", "A4s", "A5s", "A6s", "A7s", "A8s", "A9s", "A2o", "A3o", "A4o", "A5o", "A6o", "A7o", "A8o", "A9o"]],
-    ["broadway_suited", ["KQs", "KJs", "KTs", "QJs", "QTs", "JTs"]],
-    ["broadway_offsuit", ["KQo", "KJo", "KTo", "QJo", "QTo", "JTo"]],
-    ["suited_conn_low", ["T9s", "98s", "87s", "76s", "65s", "54s"]]
-  ];
-  const exactBbActions = [
-    { key: "folds", label: "Пас", className: "is-fold", cellIndex: 1 },
-    { key: "calls", label: "Колл", className: "is-call", cellIndex: 2 },
-    { key: "small3bets", label: "3-бет не all-in", className: "is-small-raise", cellIndex: 3 },
-    { key: "jams", label: "Прямой all-in", className: "is-jam", cellIndex: 4 }
-  ];
+  const reactionOptions = {
+    openerPosition: [["CO", "CO"], ["BTN", "BTN"]],
+    heroPosition: [["SB", "SB"], ["BB", "BB"]],
+    openSizeBb: [[2, "2 BB"], [2.5, "2,5 BB"], [3, "3 BB"]],
+    depthBand: [["25-40", "25–40 BB"], ["25-30", "25–30"], ["30-35", "30–35"], ["35-40", "35–40"]]
+  };
+  const reactionContainers = {
+    openerPosition: "#reactionOpenerTabs",
+    heroPosition: "#reactionHeroTabs",
+    openSizeBb: "#reactionSizeTabs",
+    depthBand: "#reactionDepthTabs"
+  };
+  const reactionRanks = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"];
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -178,6 +179,9 @@
     });
     if (next === "practice") renderPracticeSetup();
     if (next === "wisdom") requestAnimationFrame(() => renderWisdomStory(state.wisdomStory));
+    if (next === "reaction") {
+      ensureReactionData().then(() => renderReaction()).catch(() => renderReactionError());
+    }
     if (next === "wisdom" || next === "deep") {
       ensureData().then(() => {
         if (next === "deep") {
@@ -200,6 +204,29 @@
     const response = await fetch(`${DATA_ROOT}${name}?v=${DATA_VERSION}`);
     if (!response.ok) throw new Error(`${name}: HTTP ${response.status}`);
     return response.json();
+  }
+
+  function ensureReactionData() {
+    if (state.reactionData) return Promise.resolve(state.reactionData);
+    if (state.reactionLoading) return state.reactionLoading;
+    const status = $("#reactionStatus");
+    if (status) status.textContent = "Загружаем реакции поля…";
+    state.reactionLoading = fetch(`${DATA_ROOT}resteal-reaction-summary.json?v=${REACTION_DATA_VERSION}`)
+      .then((response) => {
+        if (!response.ok) throw new Error(`resteal-reaction-summary.json: HTTP ${response.status}`);
+        return response.json();
+      })
+      .then((data) => {
+        state.reactionData = data;
+        state.reactionLoading = null;
+        return data;
+      })
+      .catch((error) => {
+        state.reactionLoading = null;
+        console.error("Resteal reaction data load failed", error);
+        throw error;
+      });
+    return state.reactionLoading;
   }
 
   function hydrateData(data) {
@@ -683,41 +710,32 @@
     renderTheory();
   }
 
-  function exactBbPooledSlice() {
-    const handOrder = RankData?.meta?.handOrder || [];
-    const cohorts = RankData?.meta?.cohortOrder || [];
-    if (!handOrder.length || !cohorts.length) return null;
-    const totals = { opportunities: 0, folds: 0, calls: 0, small3bets: 0, jams: 0 };
-    const cells = handOrder.map(() => [0, 0, 0, 0, 0]);
-    cohorts.forEach((cohort) => {
-      const chart = RankData?.charts?.[cohort]?.BTN?.["2.0"]?.["25-40"];
-      if (!chart) return;
-      Object.keys(totals).forEach((key) => { totals[key] += Number(chart.totals?.[key]) || 0; });
-      chart.cells?.forEach((cell, handIndex) => {
-        cell.forEach((count, actionIndex) => { cells[handIndex][actionIndex] += Number(count) || 0; });
-      });
-    });
-    return { handOrder, totals, cells };
-  }
-
-  function exactBbCategoryCounts(slice, hands) {
-    const counts = { opportunities: 0, folds: 0, calls: 0, small3bets: 0, jams: 0 };
-    hands.forEach((hand) => {
-      const index = slice.handOrder.indexOf(hand);
-      const cell = index >= 0 ? slice.cells[index] : null;
-      if (!cell) return;
-      counts.opportunities += Number(cell[0]) || 0;
-      exactBbActions.forEach((action) => { counts[action.key] += Number(cell[action.cellIndex]) || 0; });
-    });
-    return counts;
-  }
-
-  function observedActionMarkup(action, counts, compact = false) {
-    const total = Number(counts.opportunities) || 0;
-    const count = Number(counts[action.key]) || 0;
-    const rate = total ? count / total : 0;
-    if (compact) return `<span class="${action.className}"><i aria-hidden="true"></i><small>${action.label}</small><b>${pct(rate, 1)}</b></span>`;
-    return `<article class="observed-action-card ${action.className}"><span><i aria-hidden="true"></i><b>${action.label}</b></span><strong>${pct(rate, 1)}</strong><small>${sampleSize(count)} решений</small></article>`;
+  function renderOutcomeBars() {
+    const host = $("#outcomeBars");
+    const all = state.data.hero_outcomes?.pooled?.ALL;
+    if (!host || !all) return;
+    const keys = ["ax_strong", "pair_77_99", "pair_22_66", "ax_weak", "broadway_suited", "broadway_offsuit", "pair_TT_plus", "suited_conn_low"].filter((key) => all[key]?.jam && all[key]?.call);
+    const max = Math.max(...keys.flatMap((key) => [
+      Math.abs(Number(all[key].jam.avg_ev_bb) || 0),
+      Math.abs(Number(all[key].call.avg_ev_bb) || 0)
+    ]), 1);
+    host.innerHTML = keys.map((key) => {
+      const jamRow = all[key].jam;
+      const callRow = all[key].call;
+      const jam = Number(jamRow.avg_ev_bb) || 0;
+      const call = Number(callRow.avg_ev_bb) || 0;
+      const difference = jam - call;
+      const thinSample = Math.min(Number(jamRow.n) || 0, Number(callRow.n) || 0) < 2500;
+      const barWidth = (value) => Math.max(4, Math.abs(value) / max * 100);
+      return `<div class="compare-row ${thinSample ? "is-thin-sample" : ""}">
+        <div class="compare-category"><strong>${categoryLabels[key] || key}</strong><small>${categoryDetails[key] || ""}</small>${thinSample ? "<span>небольшая выборка одного действия</span>" : ""}</div>
+        <div class="compare-lines">
+          <div class="compare-line ${jam < 0 ? "is-negative" : ""}"><span class="compare-action"><b>Олл-ин</b><small>N ${sampleSize(jamRow.n)}</small></span><i><b style="width:${barWidth(jam)}%"></b></i><strong>${signed(jam, 2)}</strong></div>
+          <div class="compare-line is-call ${call < 0 ? "is-negative" : ""}"><span class="compare-action"><b>Колл</b><small>N ${sampleSize(callRow.n)}</small></span><i><b style="width:${barWidth(call)}%"></b></i><strong>${signed(call, 2)}</strong></div>
+        </div>
+        <div class="compare-delta ${difference < 0 ? "is-negative" : Math.abs(difference) < 0.2 ? "is-close" : ""}"><span>Олл-ин − колл</span><strong>${signed(difference, 2)}</strong></div>
+      </div>`;
+    }).join("");
   }
 
   function formatObservedDate(iso) {
@@ -725,45 +743,135 @@
     return parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : "—";
   }
 
-  function renderExactBbObservedField() {
-    const overview = $("#exactBbActionOverview");
-    const categories = $("#exactBbCategoryRows");
-    const source = $("#exactBbSource");
-    if (!overview || !categories || !source) return;
-    const slice = exactBbPooledSlice();
-    if (!slice || !slice.totals.opportunities) {
-      overview.innerHTML = `<p class="observed-data-missing">Точный BB-срез временно не загрузился.</p>`;
-      categories.replaceChildren();
+  function renderReactionControls() {
+    Object.entries(reactionContainers).forEach(([key, selector]) => {
+      const host = $(selector);
+      if (!host) return;
+      host.replaceChildren(...reactionOptions[key].map(([value, label]) => {
+        const button = document.createElement("button");
+        const active = String(state.reactionFilters[key]) === String(value);
+        button.type = "button";
+        button.role = "tab";
+        button.textContent = label;
+        button.setAttribute("aria-selected", String(active));
+        button.addEventListener("click", () => {
+          state.reactionFilters[key] = value;
+          renderReactionControls();
+          renderReaction();
+        });
+        return button;
+      }));
+    });
+  }
+
+  function reactionHand(row, column) {
+    if (row === column) return `${reactionRanks[row]}${reactionRanks[column]}`;
+    if (row < column) return `${reactionRanks[row]}${reactionRanks[column]}s`;
+    return `${reactionRanks[column]}${reactionRanks[row]}o`;
+  }
+
+  function reactionComboCount(hand) {
+    if (hand.length === 2) return 6;
+    return hand.endsWith("s") ? 4 : 12;
+  }
+
+  function selectedReactionSlice() {
+    const data = state.reactionData;
+    if (!data?.spots?.length) return null;
+    const filters = state.reactionFilters;
+    const spots = data.spots.filter((spot) =>
+      spot.openerPosition === filters.openerPosition &&
+      spot.heroPosition === filters.heroPosition &&
+      Number(spot.openSizeBb) === Number(filters.openSizeBb) &&
+      (filters.depthBand === "25-40" || spot.depthBand === filters.depthBand)
+    );
+    if (!spots.length) return null;
+    const totals = { F: 0, C: 0, R: 0, N: 0 };
+    const hands = {};
+    spots.forEach((spot) => {
+      Object.keys(totals).forEach((key) => { totals[key] += Number(spot.totals?.[key]) || 0; });
+      Object.entries(spot.hands || {}).forEach(([hand, values]) => {
+        const target = hands[hand] || (hands[hand] = { C: 0, R: 0, N: 0 });
+        target.C += Number(values.C) || 0;
+        target.R += Number(values.R) || 0;
+        target.N += Number(values.N) || (Number(values.C) || 0) + (Number(values.R) || 0);
+      });
+    });
+    if (!totals.N) totals.N = totals.F + totals.C + totals.R;
+    return { totals, hands, spotCount: spots.length };
+  }
+
+  function renderReactionError() {
+    const status = $("#reactionStatus");
+    if (!status) return;
+    status.classList.add("is-error");
+    status.textContent = "Данные реакции поля не загрузились. Обнови страницу и попробуй ещё раз.";
+  }
+
+  function renderReaction() {
+    renderReactionControls();
+    if (!state.reactionData) return;
+    const slice = selectedReactionSlice();
+    const status = $("#reactionStatus");
+    const overview = $("#reactionOverview");
+    const matrix = $("#reactionMatrix");
+    const topHands = $("#reactionTopHands");
+    const source = $("#reactionSource");
+    if (!status || !overview || !matrix || !topHands || !source) return;
+    if (!slice?.totals?.N) {
+      status.classList.add("is-error");
+      status.textContent = "Для такого сочетания фильтров нет достаточной выборки.";
+      overview.replaceChildren();
+      matrix.replaceChildren();
+      topHands.replaceChildren();
       source.textContent = "";
       return;
     }
 
-    overview.innerHTML = exactBbActions.map((action) => observedActionMarkup(action, slice.totals)).join("");
-    categories.innerHTML = exactBbCategories.map(([key, hands]) => {
-      const counts = exactBbCategoryCounts(slice, hands);
-      const stack = exactBbActions.map((action) => {
-        const rate = counts.opportunities ? counts[action.key] / counts.opportunities : 0;
-        return `<span class="${action.className}" style="width:${(rate * 100).toFixed(4)}%" title="${action.label}: ${pct(rate, 1)}"></span>`;
-      }).join("");
-      const aria = exactBbActions.map((action) => {
-        const rate = counts.opportunities ? counts[action.key] / counts.opportunities : 0;
-        return `${action.label} ${pct(rate, 1)}`;
-      }).join(", ");
-      return `<div class="observed-category-row">
-        <div class="observed-category-label"><strong>${categoryLabels[key] || key}</strong><small>${categoryDetails[key] || ""}</small><span>N ${sampleSize(counts.opportunities)}</span></div>
-        <div class="observed-action-stack" role="img" aria-label="${aria}">${stack}</div>
-        <div class="observed-category-rates">${exactBbActions.map((action) => observedActionMarkup(action, counts, true)).join("")}</div>
-      </div>`;
+    status.classList.remove("is-error");
+    status.textContent = `${state.reactionFilters.openerPosition} открыл ${number(state.reactionFilters.openSizeBb)} BB · рестил из ${state.reactionFilters.heroPosition} · стек ${state.reactionFilters.depthBand.replace("-", "–")} BB`;
+    const total = slice.totals.N;
+    const actions = [
+      ["F", "Пас", "is-fold", "опенер выбросил"],
+      ["C", "Колл", "is-call", "принял олл-ин"],
+      ["R", "Ререйз поверх", "is-reraise", "покрыл и изолировал"],
+      ["continue", "Продолжил всего", "is-continue", "колл + ререйз"]
+    ];
+    overview.innerHTML = actions.map(([key, label, className, note]) => {
+      const count = key === "continue" ? slice.totals.C + slice.totals.R : slice.totals[key];
+      return `<article class="reaction-stat ${className}"><span>${label}</span><strong>${pct(count / total, 1)}</strong><small>${sampleSize(count)} · ${note}</small></article>`;
     }).join("");
 
-    const meta = RankData.meta || {};
-    source.textContent = `FF · с ${formatObservedDate(meta.windowStartInclusive)} до ${formatObservedDate(meta.windowEndExclusive)}, не включая правую границу · N ${sampleSize(slice.totals.opportunities)}. Ранг взят на момент раздачи; проценты получены суммированием целых счётчиков по рангам 1–18. Общий N включает решения с неизвестными картами; строки групп рук — только по известным картам.`;
+    const known = Object.entries(slice.hands).map(([hand, values]) => ({
+      hand,
+      C: Number(values.C) || 0,
+      R: Number(values.R) || 0,
+      N: Number(values.N) || (Number(values.C) || 0) + (Number(values.R) || 0),
+      density: (Number(values.N) || (Number(values.C) || 0) + (Number(values.R) || 0)) / reactionComboCount(hand)
+    }));
+    const byHand = new Map(known.map((item) => [item.hand, item]));
+    const maxDensity = Math.max(...known.map((item) => item.density), 1);
+    matrix.innerHTML = Array.from({ length: 169 }, (_, index) => {
+      const hand = reactionHand(Math.floor(index / 13), index % 13);
+      const values = byHand.get(hand) || { C: 0, R: 0, N: 0, density: 0 };
+      const callShare = values.N ? values.C / values.N * 100 : 50;
+      const strength = values.N ? 0.18 + 0.72 * Math.sqrt(values.density / maxDensity) : 0;
+      const title = values.N
+        ? `${hand}: N ${sampleSize(values.N)} · колл ${pct(values.C / values.N, 1)} · ререйз ${pct(values.R / values.N, 1)}`
+        : `${hand}: известных продолжений нет`;
+      return `<span class="reaction-cell ${values.N ? "" : "is-empty"}" role="gridcell" style="--call-share:${callShare.toFixed(2)}%;--reaction-strength:${strength.toFixed(3)}" title="${title}"><b>${hand}</b>${values.N ? `<small>${sampleSize(values.N)}</small>` : ""}</span>`;
+    }).join("");
+
+    const leaders = known.sort((left, right) => right.density - left.density || right.N - left.N).slice(0, 8);
+    topHands.innerHTML = leaders.map((item, index) => `<span><i>${index + 1}</i><b>${item.hand}</b><small>N ${sampleSize(item.N)} · колл ${pct(item.C / item.N, 0)}</small></span>`).join("");
+    const meta = state.reactionData.meta || {};
+    source.textContent = `FF · ${formatObservedDate(meta.windowStartInclusive)}–${formatObservedDate(meta.windowEndExclusive)} (правая граница не включена) · N ${sampleSize(total)} в выбранном срезе. В строгой выгрузке однозначно сопоставлено ${number((Number(meta.matchRatePct) || 0), 1)}% исходных опенеров; пропуски не считаются пасами. Только прямые all-in рестилы из SB/BB против CO/BTN, без лимперов. Наблюдение поля, не рекомендация.`;
   }
 
   function renderEvidence() {
     if (!state.loaded) return;
     renderWisdomEvidence();
-    renderExactBbObservedField();
+    renderOutcomeBars();
   }
 
   function renderWisdomEvidence() {
@@ -1033,6 +1141,7 @@
     renderControlButtons();
     renderOpponentTabs();
     renderBountySegments();
+    renderReactionControls();
     renderWisdomHandPicker();
     setupWisdomCarousel();
     setupEvents();
@@ -1042,7 +1151,7 @@
     if (restoredUnlock) {
       state.unlocked = true;
       $$(".step-tab").forEach((tab) => { tab.disabled = false; });
-      if (["idea", "wisdom", "data", "deep", "practice"].includes(saved.step)) showStep(saved.step);
+      if (["idea", "wisdom", "data", "deep", "reaction", "practice"].includes(saved.step)) showStep(saved.step);
     }
     setTimeout(() => ensureData().catch(() => {}), 180);
   }

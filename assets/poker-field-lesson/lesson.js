@@ -163,9 +163,11 @@
   }
 
   function replaceText(selector, value) {
-    const element = $(selector);
     const text = cleanText(value);
-    if (element && text) element.textContent = text;
+    if (!text) return;
+    $$(selector).forEach((element) => {
+      element.textContent = text;
+    });
   }
 
   function readProgress() {

@@ -13,6 +13,7 @@
 | `field_vs_jam.json` | Fold/continue **первоначального CO/BTN опенера** после прямого all-in Hero из SB/BB | 2026-01-01..2026-07-17 (правая граница не включена) |
 | `field_call_range.json` | Известные карты, с которыми тот же первоначальный опенер продолжил | то же окно |
 | `field-opener-response.json` | Проверяемый агрегированный куб исходной строгой выгрузки и provenance-контролы | то же окно |
+| `resteal-reaction-summary.json` | Компактный runtime-куб для вкладки «Реакция на рестилы»: 36 срезов позиции, сайза и глубины | то же окно |
 | `field-exact-bb-btn-2bb.json` | Компактный runtime-срез: Hero BB против BTN 2 BB, стек 25–40 BB | то же окно |
 | `browser-bundle.js` | File-safe bundle, которым пользуется страница урока | собирается из JSON выше |
 
@@ -122,6 +123,8 @@ semipassive_fish → aggro_sticky → aggro_foldy → unknown`.
      --manifest /private/tmp/ff-resteal-strict-opener-response-manifest.json \
      --data-dir assets/poker-resteal-lesson/data
    node assets/poker-resteal-lesson/tools/test-strict-opener-response.mjs
+   node assets/poker-resteal-lesson/tools/build-resteal-reaction-summary.mjs
+   node assets/poker-resteal-lesson/tools/test-resteal-reaction-summary.mjs
    node assets/poker-resteal-lesson/tools/build-exact-bb-btn-response.mjs
    node assets/poker-resteal-lesson/tools/build-browser-bundle.mjs
    node assets/poker-resteal-lesson/tools/test-presets.mjs

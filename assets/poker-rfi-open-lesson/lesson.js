@@ -1,4 +1,4 @@
- (function(){"use strict";var D=window.PokerRfiData,S=window.PokerRfiStackData,R=window.PokerRfiRecall,P=window.PokerRfiPracticeStats,ffStartCourseContext=new URLSearchParams(window.location.search).get('from')==='ffstart',state={screen:"hand",slide:0,pos:"EP",stack:"70+",fieldCohort:"l3top",fieldPos:"CO",fieldHand:"AA",introChoice:"",queue:[],index:0,score:0,miss:0,answered:false,practiceChoice:"",practiceHandNo:0,practiceDeal:null,practiceStats:P.create(),practiceStatsPreview:"",practiceStatsPinned:"",simulatorHandMode:"preflop",recallMiss:[],recallActive:false,recallWatching:false,recallPosition:null,recallDraft:{},recallTool:"open",recallReview:null,painting:false,paintValue:null,lastPaintCell:null,courseReported:false,courseSessionId:""};
+ (function(){"use strict";var D=window.PokerRfiData,S=window.PokerRfiStackData,R=window.PokerRfiRecall,P=window.PokerRfiPracticeStats,ffStartCourseContext=new URLSearchParams(window.location.search).get('from')==='ffstart',rangeStackKeys=["70+","30-70","20-30","15-20"],state={screen:"hand",slide:0,pos:"EP",stack:"70+",fieldStack:"70+",fieldCohort:"l3top",fieldPos:"CO",fieldHand:"AA",introChoice:"",queue:[],index:0,score:0,miss:0,answered:false,practiceChoice:"",practiceHandNo:0,practiceDeal:null,practiceStats:P.create(),practiceStatsPreview:"",practiceStatsPinned:"",simulatorHandMode:"preflop",recallMiss:[],recallActive:false,recallWatching:false,recallPosition:null,recallDraft:{},recallTool:"open",recallReview:null,painting:false,paintValue:null,lastPaintCell:null,courseReported:false,courseSessionId:""};
 function $(s){return document.querySelector(s)}function $$(s){return Array.from(document.querySelectorAll(s))}
 var progressKey='ff-learning-hub:rfi:v1';function readProgress(){try{return JSON.parse(localStorage.getItem(progressKey)||'null')||{}}catch(e){return{}}}function saveProgress(){try{localStorage.setItem(progressKey,JSON.stringify({screen:state.screen,unlocked:!$('.step-tabs button:disabled')}))}catch(e){}}
 function configureFfStartNavigation(){if(!ffStartCourseContext)return;var home=$('.lesson-home'),footerLinks=$$('.lesson-footer a');if(home){home.href='/ffstart#program';home.textContent='← К программе'}if(footerLinks[0]){footerLinks[0].href='/ffstart#program';footerLinks[0].textContent='← К программе'}if(footerLinks[1]){footerLinks[1].href='/ffstart/betting-purpose';footerLinks[1].textContent='Следующий урок: зачем ставить →'}}
@@ -26,18 +26,19 @@ function actionLabel(value){return value==='open'?'рейз':value==='shove'?'п
 function formatRate(value){return Number(value||0).toLocaleString('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1})+'%'}
 function recommendationAction(hand){var band=selectedStackBand();return band.mode==='deep'?(D.frequencies[state.pos][hand]?'open':'fold'):S.recommendationAction(state.stack,state.pos,hand)}
 function recommendationPct(position){var band=selectedStackBand(),chart=S.recommendation(state.stack,position);return band.mode==='deep'?D.positions[position].pct:chart?chart.actualPct:0}
-function renderStackGroups(selector,onSelect,locked){
- var host=$(selector);if(!host)return;host.innerHTML='';
+function renderStackGroups(selector,selectedStack,onSelect,locked,allowedStackKeys){
+ var host=$(selector),allowed=allowedStackKeys||S.stackBands.map(function(item){return item.key});if(!host)return;host.innerHTML='';
  S.stackGroups.forEach(function(group){
+  var visibleBands=group.bands.filter(function(stackKey){return allowed.indexOf(stackKey)!==-1});if(!visibleBands.length)return;
   var section=document.createElement('section'),heading=document.createElement('strong'),buttons=document.createElement('div');
   section.className='stack-group stack-group-'+group.key;section.setAttribute('aria-label',group.label);heading.className='stack-group-label';heading.textContent=group.label;buttons.className='stack-group-buttons';
-  group.bands.forEach(function(stackKey){var item=S.band(stackKey),b=document.createElement('button'),active=stackKey===state.stack;b.type='button';b.dataset.stack=stackKey;b.className=active?'active':'';b.disabled=!!locked;b.setAttribute('aria-pressed',String(active));b.innerHTML='<strong>'+item.label+'</strong><small>BB</small>';b.onclick=function(){if(state.stack===stackKey)return;if(state.recallActive||state.recallWatching||state.recallReview)resetRecallPanel();state.stack=stackKey;onSelect()};buttons.appendChild(b)});
+  visibleBands.forEach(function(stackKey){var item=S.band(stackKey),b=document.createElement('button'),active=stackKey===selectedStack;b.type='button';b.dataset.stack=stackKey;b.className=active?'active':'';b.disabled=!!locked;b.setAttribute('aria-pressed',String(active));b.innerHTML='<strong>'+item.label+'</strong><small>BB</small>';b.onclick=function(){if(selectedStack===stackKey)return;onSelect(stackKey)};buttons.appendChild(b)});
   section.appendChild(heading);section.appendChild(buttons);host.appendChild(section)
  })
 }
 function renderRange(){
  var band=selectedStackBand(),isDeep=band.mode==='deep',drawing=isDeep&&state.recallActive&&state.pos===state.recallPosition,review=isDeep&&state.recallReview&&state.pos===state.recallReview.position,tabs=$('#positionTabs'),memory=$('#rangeMemory'),layout=$('#rangeLayout');
- renderStackGroups('#stackTabs',renderRange,state.recallActive||state.recallWatching);memory.hidden=!isDeep;layout.classList.toggle('is-chart-only',!isDeep);
+ renderStackGroups('#stackTabs',state.stack,function(stackKey){if(state.recallActive||state.recallWatching||state.recallReview)resetRecallPanel();state.stack=stackKey;renderRange()},state.recallActive||state.recallWatching,rangeStackKeys);memory.hidden=!isDeep;layout.classList.toggle('is-chart-only',!isDeep);
  tabs.innerHTML='';
  Object.keys(D.positions).forEach(function(p){
   var b=document.createElement('button'),pct=recommendationPct(p),locked=state.recallActive||state.recallWatching,tabStatus=state.recallActive?(p===state.pos?'рисуем':'чарт'):formatPct(pct);
@@ -65,16 +66,16 @@ function renderRange(){
  updateRecallStart();renderRecallPresentation()
 }
 function renderField(){
- var cohort=S.cohorts[state.fieldCohort]||S.cohorts.l3top,positions=S.fieldPositions||['EP','MP','HJ','CO','BTN','SB'],chart=S.fieldChart(state.fieldCohort,state.stack,state.fieldPos),leagueTabs=$('#fieldLeagueTabs'),positionTabs=$('#fieldPositionTabs');
+ var cohort=S.cohorts[state.fieldCohort]||S.cohorts.l3top,positions=S.fieldPositions||['EP','MP','HJ','CO','BTN','SB'],chart=S.fieldChart(state.fieldCohort,state.fieldStack,state.fieldPos),leagueTabs=$('#fieldLeagueTabs'),positionTabs=$('#fieldPositionTabs');
  leagueTabs.innerHTML='';
  (S.cohortOrder||Object.keys(S.cohorts)).forEach(function(cohortKey){
   var item=S.cohorts[cohortKey],b=document.createElement('button'),active=cohortKey===state.fieldCohort;b.type='button';b.className=active?'active':'';b.setAttribute('role','tab');b.setAttribute('aria-selected',String(active));b.innerHTML='<strong>'+item.shortLabel+'</strong><small>'+item.ranks+'</small>';b.onclick=function(){state.fieldCohort=cohortKey;renderField()};leagueTabs.appendChild(b)
  });
- renderStackGroups('#fieldStackTabs',renderField,false);
+ renderStackGroups('#fieldStackTabs',state.fieldStack,function(stackKey){state.fieldStack=stackKey;renderField()},false);
  positionTabs.innerHTML='';
  positions.forEach(function(position){var b=document.createElement('button'),active=position===state.fieldPos;b.type='button';b.className=active?'active':'';b.setAttribute('aria-pressed',String(active));b.textContent=position;b.onclick=function(){state.fieldPos=position;renderField()};positionTabs.appendChild(b)});
  if(!chart){$('#fieldTitle').textContent='Данных пока нет';$('#fieldSubtitle').textContent='Выбери другой стек или позицию.';$('#fieldRangeMatrix').innerHTML='';return}
- var raise=Number(chart.raisePct||0),shove=Number(chart.shovePct||0),limp=Number(chart.limpPct||0),fold=Math.max(0,100-raise-shove-limp),entry=raise+shove+limp,band=S.band(state.stack);
+ var raise=Number(chart.raisePct||0),shove=Number(chart.shovePct||0),limp=Number(chart.limpPct||0),fold=Math.max(0,100-raise-shove-limp),entry=raise+shove+limp,band=S.band(state.fieldStack);
  $('#fieldCohortLabel').textContent=cohort.label+' · '+cohort.players+' игроков';
  $('#fieldTitle').textContent=band.label+' BB · '+state.fieldPos;
  $('#fieldSubtitle').textContent='Входят '+formatRate(entry)+' · '+formatInteger(chart.opportunities)+' ситуаций';

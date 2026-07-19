@@ -97,10 +97,14 @@ assert.equal(rfi.openSizeBb, 2, "RFI lesson and simulator use the same 2 BB size
 const rfiCss = readFileSync(resolve(root, "assets/poker-rfi-open-lesson/simulator-pack.css"), "utf8");
 assert(!rfiCss.includes('.client-controls.is-rfi-opening [data-action="call"] { display:none'), "RFI opening keeps the call button visible as a teaching trap");
 assert(rfiCss.includes(".rfi-range-review"), "RFI pack includes the post-hand range target review");
+assert(rfiCss.includes(".rfi-review-action-dock"), "RFI next-hand dock is styled independently from the review window");
 assert(rfiCss.includes(".rfi-limp-warning"), "RFI pack includes the dedicated limp warning dialog");
 assert(rfiCss.includes('.rfi-review-cell.is-hit:after { content:none; }'), "RFI target ring keeps the played hand label unobstructed");
 const rfiPackSource = readFileSync(resolve(root, "assets/poker-rfi-open-lesson/simulator-pack.js"), "utf8");
 assert(rfiPackSource.includes("manualNextHand: true"), "RFI waits for post-hand review before dealing the next hand");
+assert(rfiPackSource.includes('data-rfi-review-close aria-label="Закрыть разбор"'), "RFI review can be dismissed independently");
+assert.match(rfiPackSource, /function ensureReviewActionDock[\s\S]*?host\.appendChild\(dock\)/, "RFI mounts next-hand control directly in the workspace rather than inside the review");
+assert(!/<\/section>\s*<div class="rfi-review-action-dock"/.test(rfiPackSource), "RFI review markup does not contain the next-hand dock");
 assert(!rfiPackSource.includes("const limp = event.target?.closest?.('.client-controls.is-rfi-opening"), "RFI Call reaches the engine as a real limp decision");
 assert(rfiPackSource.includes('if (latest.action === "limp") playLimpTone();'), "RFI grades the limp after the decision instead of capture-blocking the button");
 assert(!rfiPackSource.includes("2,2"), "RFI live mode no longer exposes the old 2.2 BB size");
@@ -134,11 +138,13 @@ assert(trainerSnapshotSource.includes('potTotalLabel: "БАНК"'), "trainer pos
 const restealDataSource = readFileSync(resolve(root, "assets/poker-resteal-lesson/data.js"), "utf8");
 const restealLessonSource = readFileSync(resolve(root, "assets/poker-resteal-lesson/lesson.js"), "utf8");
 const restealLessonHtml = readFileSync(resolve(root, "resteal-lesson.html"), "utf8");
-assert(!restealLessonSource.includes("state.data.hero_outcomes.pooled.ALL"), "mixed SB/BB outcomes no longer drive the BB lesson panel");
-assert(restealLessonSource.includes('RankData?.charts?.[cohort]?.BTN?.["2.0"]?.["25-40"]'), "resteal panel reads the exact BB / BTN 2 BB / 25-40 BB cube");
-for (const action of ["folds", "calls", "small3bets", "jams"]) assert(restealLessonSource.includes(`key: "${action}"`), `resteal panel exposes observed ${action}`);
-assert(restealLessonHtml.includes("Наблюдаемая игра поля · точно BB"), "resteal panel names the exact hero position");
-assert(restealLessonHtml.includes("Не рекомендация"), "resteal panel separates observed play from strategic advice");
+assert(restealLessonSource.includes("state.data.hero_outcomes?.pooled?.ALL"), "validated outcomes drive the observed resteal chipEV comparison");
+assert(restealLessonSource.includes("function renderOutcomeBars"), "resteal math renders all-in versus call chipEV by hand group");
+assert(restealLessonHtml.includes("Наблюдаемый chipEV · реальные раздачи FF"), "resteal math labels the comparison as observed field evidence");
+assert(restealLessonHtml.includes("Это наблюдаемая выборка"), "resteal math states the self-selection limitation");
+assert(restealLessonHtml.includes('data-step-target="reaction"'), "opener response evidence has a dedicated lesson tab");
+assert(restealLessonSource.includes("resteal-reaction-summary.json"), "opener response tab loads the compact strict-response cube");
+assert(restealLessonHtml.includes("Это состав диапазона, не готовый чарт"), "response matrix is not presented as strategic advice");
 
 console.log(`✓ resteal field grids: reg ${goodRegGrid.toFixed(1)}% · nit ${nitGrid.toFixed(1)}% · active fish ${activeFishGrid.toFixed(1)}%`);
 console.log("✓ learning contracts passed");

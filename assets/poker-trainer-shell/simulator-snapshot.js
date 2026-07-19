@@ -338,7 +338,9 @@
     if (!row) return fallback;
     return {
       tx: Number.isFinite(Number(row.tx)) ? Number(row.tx) : Number(fallback?.tx || 0),
-      ty: Number.isFinite(Number(row.ty)) ? Number(row.ty) : Number(fallback?.ty || 0)
+      ty: Number.isFinite(Number(row.ty)) ? Number(row.ty) : Number(fallback?.ty || 0),
+      mode: row.mode === "preferred" ? "preferred" : "fallback",
+      reason: row.reason || null
     };
   }
 
@@ -352,6 +354,9 @@
     const dealerDelta = pointDelta(box, dealer || box);
     const heroMarkerDelta = pointDelta(cards, marker || cards);
     const revealCardPlacement = revealPlacement(table, seatId, { tx: cardsDelta.x, ty: cardsDelta.y });
+    const cardRect = slotRect(table, seatId, "cards");
+    const cardDockMode = revealCardPlacement.mode || cardRect?.cardDockMode || "fallback";
+    const cardDockReason = revealCardPlacement.reason || cardRect?.cardDockReason || null;
     const styleVars = [
       `--seat-anchor-x:${box.x}`,
       `--seat-anchor-y:${box.y}`,
@@ -380,6 +385,8 @@
       cardsDelta,
       dealerDelta,
       heroMarkerDelta,
+      cardDockMode,
+      cardDockReason,
       zone: seatZone(box),
       styleVars
     };

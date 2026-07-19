@@ -423,6 +423,25 @@
       z-index: 5;
     }
 
+    /* Live action copy is transient chrome, not a new row in the seat. Keeping
+       it out of grid flow prevents a fold/winner badge from moving only the
+       panel while the card pocket remains anchored to the seat slot. Put the
+       badge on the side opposite the exposed cards: above top seats, below all
+       other opponent seats. */
+    .table-grid .seat.seat-slot-model:not(.is-hero) .seat-action-badge:not(.is-lobby-state) {
+      position: absolute;
+      left: 50%;
+      top: calc(100% + 4px);
+      bottom: auto;
+      margin: 0;
+      transform: translateX(-50%);
+    }
+
+    .table-grid .seat.seat-slot-model.seat-zone-top:not(.is-hero) .seat-action-badge:not(.is-lobby-state) {
+      top: auto;
+      bottom: calc(100% + 4px);
+    }
+
     /* 4-table: the hero seat is only ~2 cards wide, so the base hand-strength cap
        (max-width: min(100%, hero-card * 2.18)) ellipsis-truncated longer readouts
        ("Старшая карта A", "Фулл-хаус A на 5"). The seat is a justify-items:center grid
@@ -7641,60 +7660,10 @@
       transform: translate(-50%, -50%) !important;
     }
 
-    /* Centre opponent hole cards horizontally ON their seat box. The slot
-       resolver nudges side-seat cards inward (to keep them inside the felt),
-       which reads as cards skewed off to one side of the box; zeroing the
-       horizontal card delta re-centres them over the box. At rim seats the
-       resulting rail overhang stays within the box's own overhang, so the
-       cards never poke out past the box. Hero keeps its computed offset, and
-       the vertical --seat-cards-ty is untouched (cards still peek above/below). */
-    .table-grid .seat.seat-slot-model:not(.is-hero) .seat-cards.is-hidden {
-      --seat-cards-tx: 0px !important;
-    }
-
-    /* Side-seat backs used to receive a second downward tuck on top of the
-       slot resolver's authoritative Y dock, leaving only a 1-2px red sliver in
-       dense four-table layouts. Let the slot model own the vertical position:
-       it keeps a readable pocket while preserving the intended panel overlap. */
-    .table-grid .seat.seat-slot-model:is(.seat-zone-left, .seat-zone-right):not(.is-hero) .seat-cards.is-hidden:not(.is-empty) {
-      --seat-cards-box-tuck-y: 0px;
-    }
-
-    .table-grid .seat.seat-slot-model.seat-zone-top:not(.is-hero) .seat-cards.is-hidden:not(.is-empty) {
-      --seat-cards-box-tuck-y: clamp(4px, 1.8cqh, 7px);
-    }
-
-    /* Top-seat hidden backs match the other seats: real cards are partly tucked
-       under the nameplate and partly peeking toward the felt. */
-    .table-grid .seat.seat-slot-model.seat-zone-top:not(.is-hero) .seat-cards.is-hidden {
-      --seat-cards-ty: 5cqh !important;
-    }
-
-    .table-grid[data-count="4"] .seat.seat-slot-model.seat-zone-top:not(.is-hero) .seat-cards.is-hidden {
-      --seat-cards-ty: 6cqh !important;
-    }
-
-    /* Bottom-seat hidden backs mirror the top-seat constant. Without a pinned
-       ty the peek above the nameplate is the RESIDUAL of the resolver's card
-       dock vs the per-tier box height, so it collapses to a "битый контейнер"
-       sliver on the QHD 2-table patches while looking fine on FHD. */
-    .table-grid .seat.seat-slot-model.seat-zone-bottom:not(.is-hero) .seat-cards.is-hidden {
-      --seat-cards-ty: -5cqh !important;
-    }
-
-    .table-grid[data-count="4"] .seat.seat-slot-model.seat-zone-bottom:not(.is-hero) .seat-cards.is-hidden {
-      --seat-cards-ty: -6cqh !important;
-    }
-
-    /* The panel's glass shine (top 42%) is translucent, so the tucked part of
-       an upward-peeking back bleeds through it as a red smudge — the top zone
-       never shows this because its backs tuck under the panel's near-opaque
-       lower half. Clip the tucked tail at the panel's top edge (2px seam stays
-       hidden under the border); mucking backs animate away from the box, so
-       they keep the full artwork. */
-    .table-grid .seat.seat-slot-model:is(.seat-zone-left, .seat-zone-right, .seat-zone-bottom):not(.is-hero) .seat-cards.is-hidden:not(.is-mucking-out) {
-      clip-path: inset(0 0 max(0px, calc(50% + (var(--seat-h) / 2) + var(--seat-cards-ty, 0px) + var(--seat-cards-box-tuck-y, 0px) - 2px)) 0);
-    }
+    /* Opponent card position is geometry-owned. Face-down and revealed hands
+       share the same centred 20% pocket, while the slot model can retain its
+       radial fallback for a cramped table. Do not pin tx/ty or clip the tucked
+       tail here: either would silently replace that layout decision. */
 
     .table-grid .seat.seat-slot-model.seat-zone-top:not(.is-hero) .seat-position {
       left: auto;
@@ -7835,14 +7804,35 @@
        the top-zone face-down card-back height cap there. */
 
     /* Showdown hands are one component with their owner. The slot model supplies
-       the final felt-facing offset (radial at corners, cardinal at side/centre
-       seats) and may add only a bounded tangential correction for P8/P9. The
-       panel paints above the tucked card edge, keeping name + stack readable. */
+       the preferred centred pocket or an explicit safe fallback, and may add a
+       bounded tangential correction for a crowded table. The panel paints above
+       the tucked card edge, keeping name + stack readable. */
     .table-grid .seat.seat-slot-model:not(.is-hero) .seat-cards.is-revealed {
       --seat-cards-tx: var(--reveal-card-tx, 0cqw) !important;
       --seat-cards-ty: var(--reveal-card-ty, 0cqh) !important;
       --seat-cards-box-tuck-y: 0px;
       z-index: 3;
+    }
+
+    /* Render-truth pocket. Percent translate is relative to the card cluster
+       itself, so the overlap remains exactly 20% when responsive CSS changes
+       either the panel height or the hidden/revealed card size. Geometry only
+       opts a seat into this rule after its centred candidate is safe; fallback
+       seats keep the exported tx/ty above. */
+    .table-grid .seat.seat-slot-model[data-opponent-card-dock="preferred"]:not(.is-hero):not(.seat-zone-top)
+      .seat-cards:not(.is-empty):not(.is-mucking-out) {
+      left: 50% !important;
+      margin: 0 !important;
+      top: 0 !important;
+      transform: translate(-50%, -80%) !important;
+    }
+
+    .table-grid .seat.seat-slot-model[data-opponent-card-dock="preferred"].seat-zone-top:not(.is-hero)
+      .seat-cards:not(.is-empty):not(.is-mucking-out) {
+      left: 50% !important;
+      margin: 0 !important;
+      top: 100% !important;
+      transform: translate(-50%, -20%) !important;
     }
 
     .table-grid .seat.seat-slot-model:not(.is-hero) .seat-cards.is-revealed::before {

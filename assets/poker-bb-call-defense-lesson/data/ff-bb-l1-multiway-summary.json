@@ -1,0 +1,68 @@
+{
+  "version": "ff-bb-l1-multiway-20260719-v1",
+  "preparedAt": "2026-07-19",
+  "window": {
+    "startInclusive": "2026-01-01T00:00:00Z",
+    "endExclusive": "2026-07-17T00:00:00Z"
+  },
+  "cohort": {
+    "label": "1-я лига",
+    "ranksAtHand": [1, 2, 3, 4, 5],
+    "uniquePlayers": 217,
+    "rankIntervals": 524
+  },
+  "spot": {
+    "hero": "BB",
+    "opener": "BTN",
+    "openSizeBb": 2,
+    "openSizeToleranceBb": 0.05,
+    "effectiveStackMinBb": 30,
+    "tablePlayersMin": 3,
+    "tablePlayersMax": 9,
+    "headsUpFacingCode": 4,
+    "multiwayFacingCode": 5,
+    "multiwayCaller": "SB"
+  },
+  "actionPolicy": {
+    "fold": "first action letter F",
+    "call": "first action letter C",
+    "threeBet": "first action letter R, including direct all-in",
+    "otherActions": 0
+  },
+  "spots": {
+    "headsUp": {
+      "label": "BTN 2 BB → BB",
+      "decisions": 206135,
+      "folds": 40285,
+      "calls": 128335,
+      "threeBets": 37515,
+      "directAllIns": 5483,
+      "foldPct": 19.54,
+      "callPct": 62.26,
+      "threeBetPct": 18.2
+    },
+    "multiway": {
+      "label": "BTN 2 BB → SB call → BB",
+      "decisions": 55770,
+      "folds": 18662,
+      "calls": 26049,
+      "threeBets": 11059,
+      "directAllIns": 2208,
+      "foldPct": 33.46,
+      "callPct": 46.71,
+      "threeBetPct": 19.83
+    }
+  },
+  "deltasPercentagePoints": {
+    "call": -15.55,
+    "threeBet": 1.63,
+    "fold": 13.92
+  },
+  "sources": {
+    "rankAtHand": "analytics_mcp_readonly.mcp__check_rank_history",
+    "realPlayers": "analytics_mcp_readonly.mcp__check_users",
+    "handActions": "analytics.int_tracker_hand_joined",
+    "query": "assets/poker-bb-call-defense-lesson/tools/q_ff_l1_multiway_compare.sql"
+  },
+  "interpretation": "Observed first-league field play, not a recommended range. After an SB call, the observed BB call frequency falls sharply while the 3-bet frequency stays close to the heads-up level."
+}

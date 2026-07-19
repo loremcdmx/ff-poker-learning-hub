@@ -214,9 +214,12 @@
           ? numericRoomSeatIndex
           : Number.isFinite(numericSeatId) ? numericSeatId : -1;
         const roomSeatAttr = roomSeatIndex >= 0 ? ` data-room-seat-index="${roomSeatIndex}"` : "";
+        const opponentCardDockAttr = !seat.isHero && ["preferred", "fallback"].includes(slotContext.cardDockMode)
+          ? ` data-opponent-card-dock="${slotContext.cardDockMode}"${slotContext.cardDockReason ? ` data-card-dock-reason="${escapeHtml(slotContext.cardDockReason)}"` : ""}`
+          : "";
         const vacantSeatAttr = isVacant ? ' data-mp-vacant-seat="true" role="button" tabindex="0" aria-label="Свободное место. Сесть за стол"' : "";
         return `
-          <div class="seat seat--${seat.id} seat-zone-${resolvedZone} ${slotContext.mode === "slot-model" ? "seat-slot-model" : ""} ${seat.isHero ? "is-hero" : ""} ${seat.dealer ? "is-dealer" : ""} ${visuallyFolded ? "is-folded" : ""} ${allIn ? "is-all-in" : ""} ${runoutAllIn ? "is-runout-all-in" : ""} ${equityState ? "has-equity" : ""} ${outsState ? "has-outs" : ""} ${acting ? "is-acting" : ""} ${thinking ? "is-thinking" : ""} ${winner ? "is-winner" : ""} ${isAggressor ? "is-aggressor" : ""} ${opponentNoteHasContent(opponentNote) ? "has-opponent-note" : ""} ${isSittingOut ? "is-sitting-out" : ""} ${isDisconnected ? "is-disconnected" : ""} ${isVacant ? "is-vacant" : ""}"${botTierAttr}${botProfileAttrs}${roomSeatAttr}${vacantSeatAttr} style="--seat-left:${point.x}%; --seat-top:${point.y}%;${slotStyleVars}${seatAvatarVars}">
+          <div class="seat seat--${seat.id} seat-zone-${resolvedZone} ${slotContext.mode === "slot-model" ? "seat-slot-model" : ""} ${seat.isHero ? "is-hero" : ""} ${seat.dealer ? "is-dealer" : ""} ${visuallyFolded ? "is-folded" : ""} ${allIn ? "is-all-in" : ""} ${runoutAllIn ? "is-runout-all-in" : ""} ${equityState ? "has-equity" : ""} ${outsState ? "has-outs" : ""} ${acting ? "is-acting" : ""} ${thinking ? "is-thinking" : ""} ${winner ? "is-winner" : ""} ${isAggressor ? "is-aggressor" : ""} ${opponentNoteHasContent(opponentNote) ? "has-opponent-note" : ""} ${isSittingOut ? "is-sitting-out" : ""} ${isDisconnected ? "is-disconnected" : ""} ${isVacant ? "is-vacant" : ""}"${botTierAttr}${botProfileAttrs}${roomSeatAttr}${opponentCardDockAttr}${vacantSeatAttr} style="--seat-left:${point.x}%; --seat-top:${point.y}%;${slotStyleVars}${seatAvatarVars}">
             <div class="seat-cards ${cardState.className}"${seatCardsStyle}>
               ${renderSeatCards(table, seat, cardState)}
               ${seat.isHero ? renderHeroFeltBet(table) : ""}

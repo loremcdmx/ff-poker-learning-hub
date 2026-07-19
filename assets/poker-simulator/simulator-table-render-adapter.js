@@ -449,22 +449,11 @@
       const entry = slotLayoutEntry(table);
       const cards = slotPointFromEntry(entry, seat?.id, "cards");
       if (!cards) return null;
-      // Opponent hole cards render CENTRED on the box (the CSS zeroes their
-      // horizontal card delta — see simulator-polish.css), so deal to the box
-      // centre instead of the resolver's inward-nudged card x. Otherwise the
-      // dealt card lands off-centre then pops sideways to its resting spot.
-      // Hero keeps the resolver's card x (its big cards are not re-centred).
-      const box = slotPointFromEntry(entry, seat?.id, "box");
-      const baseX = box && !seat?.isHero ? box.x : cards.x;
-      // Dead-top opponents dock their cards below the box (cards.y > box.y); the
-      // face-down backs render tucked ONTO the box (CSS), so deal to the box
-      // centre too — otherwise the dealt card lands low then pops up to tuck.
-      // Bottom-zone opponents mirror this: their hidden backs are CSS-pinned
-      // just above the box (--seat-cards-ty override), so the resolver's card
-      // dock is not where the back will rest either.
-      const tuckTop = box && !seat?.isHero && Number(cards.y) > Number(box.y) + 0.5;
-      const tuckBottom = box && !seat?.isHero && !tuckTop && seatZone(box) === "bottom";
-      const baseY = tuckTop || tuckBottom ? box.y : cards.y;
+      // The slot model now owns the actual resting point for every hidden hand.
+      // Deal to that exact point so a card cannot land on a legacy CSS-pinned
+      // centre and then pop into the preferred pocket (or its safe fallback).
+      const baseX = cards.x;
+      const baseY = cards.y;
       const cardSpread = Number(seat?.isHero) ? 1.4 : 0.95;
       const indexOffset = Number(cardIndex || 0) > 0 ? cardSpread : -cardSpread;
       return {
@@ -483,7 +472,9 @@
       if (!row) return fallback;
       return {
         tx: Number.isFinite(Number(row.tx)) ? Number(row.tx) : Number(fallback?.tx || 0),
-        ty: Number.isFinite(Number(row.ty)) ? Number(row.ty) : Number(fallback?.ty || 0)
+        ty: Number.isFinite(Number(row.ty)) ? Number(row.ty) : Number(fallback?.ty || 0),
+        mode: row.mode === "preferred" ? "preferred" : "fallback",
+        reason: row.reason || null
       };
     }
 
@@ -498,6 +489,9 @@
       const dealerDelta = pointDelta(box, dealer || box);
       const heroMarkerDelta = pointDelta(cards, marker || cards);
       const revealCardPlacement = revealPlacement(entry, seatId, { tx: cardsDelta.x, ty: cardsDelta.y });
+      const cardRect = entry?.rectById?.get(`seat-${Number(seatId)}-cards`);
+      const cardDockMode = revealCardPlacement.mode || cardRect?.cardDockMode || "fallback";
+      const cardDockReason = revealCardPlacement.reason || cardRect?.cardDockReason || null;
       const styleVars = [
         `--seat-anchor-x:${box.x}`,
         `--seat-anchor-y:${box.y}`,
@@ -525,6 +519,8 @@
         cardsDelta,
         dealerDelta,
         heroMarkerDelta,
+        cardDockMode,
+        cardDockReason,
         zone: seatZone(box),
         styleVars
       };

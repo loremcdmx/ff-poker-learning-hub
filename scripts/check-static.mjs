@@ -49,6 +49,8 @@ const immutableLessonAssets = new Map(
     "assets/poker-kit/decks/deck-library.js",
     "assets/poker-kit/chips/chips.css",
     "assets/poker-kit/chips/chip-library.js",
+    "assets/poker-kit/lesson-header.css",
+    "assets/poker-kit/lesson-header.js",
     "assets/poker-trainer-shell/shell.css",
     "assets/poker-field-lesson/lesson.css"
   ].map((asset) => [

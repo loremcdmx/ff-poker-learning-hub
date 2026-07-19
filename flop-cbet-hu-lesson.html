@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
   <link rel="stylesheet" href="assets/poker-flop-cbet-hu-lesson/lesson.css?v=7ede6a365c09">
+  <link rel="stylesheet" href="assets/poker-kit/lesson-header.css?v=9641ee805ef9">
   <script defer src="assets/poker-kit/decks/deck-library.js?v=b03058b680c1"></script>
   <script defer src="assets/poker-kit/chips/chip-library.js?v=eab58b025e92"></script>
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
@@ -27,18 +28,19 @@
   <script defer src="assets/poker-trainer-shell/simulator-practice.js?v=591b8e2f6784"></script>
   <script defer src="assets/poker-flop-cbet-hu-lesson/data.js?v=d038ff36f3ed"></script>
   <script defer src="assets/poker-flop-cbet-hu-lesson/lesson.js?v=7ab3d6e7fa90"></script>
+  <script defer src="assets/poker-kit/lesson-header.js?v=1b28bacb3505"></script>
 </head>
 <body>
   <main class="lesson-shell">
-    <header class="lesson-header">
-      <a class="brand-mark" href="/" aria-label="На главную FF">
-        <span aria-hidden="true">FF</span>
-      </a>
-      <div class="lesson-title">
-        <p class="eyebrow">Тренировка · постфлоп</p>
-        <h1>C-bet IP против BB</h1>
+    <header class="lesson-header lesson-chrome" data-lesson-header>
+      <div class="lesson-title lesson-chrome__identity">
+        <a class="brand-mark lesson-home lesson-chrome__back" href="/">← В обучающий хаб</a>
+        <div class="lesson-chrome__copy">
+          <p class="eyebrow lesson-chrome__eyebrow">Тренировка · постфлоп</p>
+          <h1 class="lesson-chrome__title">C-bet IP против BB</h1>
+        </div>
       </div>
-      <nav class="step-tabs" aria-label="Шаги урока" role="tablist">
+      <nav class="step-tabs lesson-chrome__steps" aria-label="Шаги урока" role="tablist">
         <button class="step-tab is-active" id="dealTab" type="button" role="tab" aria-selected="true" aria-controls="dealScreen" data-step-target="deal">1. Раздача</button>
         <button class="step-tab" id="mainTab" type="button" role="tab" aria-selected="false" aria-controls="mainScreen" data-step-target="main" tabindex="-1">2. Урок</button>
         <button class="step-tab" id="practiceTab" type="button" role="tab" aria-selected="false" aria-controls="practiceScreen" data-step-target="practice" tabindex="-1">3. Практика</button>

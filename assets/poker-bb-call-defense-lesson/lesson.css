@@ -19,12 +19,216 @@
 }
 
 .bb-call-lesson .lesson-intro h2 {
-  max-width: 9.5ch;
-  font-size: clamp(3rem, 5.4vw, 5.8rem);
+  max-width: 11.5ch;
+  margin-bottom: 20px;
+  font-size: clamp(2.8rem, 4.4vw, 4.8rem);
+  line-height: 0.98;
 }
 
 .bb-call-lesson .intro-copy {
   align-self: center;
+  width: 100%;
+  max-width: 650px;
+}
+
+.bb-call-lesson .intro-context {
+  margin: 0 0 12px;
+  color: rgba(248, 247, 242, 0.86);
+  font-size: clamp(0.95rem, 1.15vw, 1.08rem);
+  font-weight: 720;
+  line-height: 1.4;
+}
+
+.bb-call-lesson .intro-action-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.bb-call-lesson .intro-action-flow li {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  align-content: center;
+  min-height: 64px;
+  padding: 10px 12px;
+  overflow: visible;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 14px;
+  background: rgba(12, 11, 16, 0.72);
+}
+
+.bb-call-lesson .intro-action-flow li:not(:last-child)::after {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  right: -7px;
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+  content: "›";
+  color: rgba(255, 255, 255, 0.54);
+  background: #15131a;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 12px;
+  text-align: center;
+  transform: translateY(-50%);
+}
+
+.bb-call-lesson .intro-action-flow span,
+.bb-call-lesson .intro-price-facts span {
+  color: rgba(214, 211, 222, 0.68);
+  font-size: 0.67rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.bb-call-lesson .intro-action-flow strong {
+  margin-top: 5px;
+  color: rgba(244, 243, 239, 0.88);
+  font-size: clamp(0.78rem, 1vw, 0.93rem);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.bb-call-lesson .intro-action-flow .is-open {
+  border-color: rgba(255, 224, 95, 0.36);
+  background: rgba(255, 224, 95, 0.09);
+}
+
+.bb-call-lesson .intro-action-flow .is-open strong {
+  color: #ffe984;
+}
+
+.bb-call-lesson .intro-action-flow .is-hero {
+  border-color: rgba(78, 217, 167, 0.46);
+  background: rgba(78, 217, 167, 0.11);
+  box-shadow: inset 0 0 0 1px rgba(78, 217, 167, 0.05);
+}
+
+.bb-call-lesson .intro-action-flow .is-hero strong {
+  color: #80efc7;
+}
+
+.bb-call-lesson .intro-price-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.bb-call-lesson .intro-price-facts p {
+  display: grid;
+  align-content: center;
+  min-height: 68px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.bb-call-lesson .intro-price-facts strong {
+  margin-top: 4px;
+  color: #f8f6f0;
+  font-size: clamp(1rem, 1.35vw, 1.28rem);
+  line-height: 1.05;
+}
+
+.bb-call-lesson .intro-price-facts p:last-child {
+  border-color: rgba(255, 224, 95, 0.3);
+  background: rgba(255, 224, 95, 0.08);
+}
+
+.bb-call-lesson .intro-price-facts p:last-child strong {
+  color: #ffe05f;
+}
+
+.bb-call-lesson .intro-takeaway {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  margin: 0 0 16px;
+  padding: 13px 15px;
+  border-left: 3px solid var(--bb-call);
+  border-radius: 0 13px 13px 0;
+  color: rgba(244, 243, 239, 0.78);
+  background: linear-gradient(90deg, rgba(78, 217, 167, 0.11), rgba(78, 217, 167, 0.025));
+  font-size: clamp(0.83rem, 0.98vw, 0.95rem);
+  line-height: 1.45;
+}
+
+.bb-call-lesson .intro-takeaway strong {
+  color: #8cf0cc;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bb-call-lesson .intro-cta {
+  min-width: 176px;
+}
+
+.bb-call-lesson .intro-felt::after {
+  background: none;
+}
+
+.bb-call-lesson .intro-seat.is-folded {
+  z-index: 3;
+  min-width: 78px;
+  padding: 6px 10px 7px;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(222, 219, 228, 0.7);
+  background: linear-gradient(180deg, rgba(34, 30, 40, 0.78), rgba(15, 13, 19, 0.74));
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+  opacity: 0.78;
+}
+
+.bb-call-lesson .intro-seat.is-folded b {
+  font-size: 13px;
+}
+
+.bb-call-lesson .intro-seat.is-folded small {
+  color: rgba(214, 211, 222, 0.56);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bb-call-lesson .intro-co {
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.bb-call-lesson .intro-hj {
+  top: 10%;
+  left: 9%;
+}
+
+.bb-call-lesson .intro-mp {
+  top: 42%;
+  left: -3%;
+}
+
+.bb-call-lesson .intro-ep {
+  bottom: 13%;
+  left: 8%;
+}
+
+.bb-call-lesson .intro-sb {
+  right: 8%;
+  bottom: 13%;
 }
 
 .bb-call-lesson .intro-bb-call {
@@ -127,10 +331,14 @@
 }
 
 .price-equation {
+  container-type: inline-size;
   display: grid;
-  grid-template-columns: minmax(100px, auto) auto minmax(116px, auto) auto minmax(126px, auto);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1.15fr);
   align-items: center;
-  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   gap: clamp(6px, 0.8vw, 18px);
   min-height: 190px;
   padding: 28px 16px;
@@ -143,10 +351,13 @@
   display: grid;
   align-content: center;
   justify-items: center;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   gap: 10px;
-  min-width: clamp(80px, 8vw, 112px);
   min-height: 126px;
-  padding: 16px clamp(8px, 1vw, 18px);
+  padding: 16px clamp(6px, 0.8vw, 14px);
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 20px;
   background: rgba(9, 10, 15, 0.7);
@@ -164,13 +375,15 @@
 
 .price-term strong,
 .price-term b {
-  font-size: clamp(1.8rem, 3vw, 3.2rem);
+  max-width: 100%;
+  font-size: clamp(1.7rem, 2vw, 2.6rem);
+  font-size: clamp(1.7rem, 7.2cqi, 3rem);
   line-height: 1;
   color: #f7f7fb;
 }
 
 .price-term.is-result {
-  min-width: clamp(104px, 10.5vw, 144px);
+  min-width: 0;
   border-color: rgba(78, 217, 167, 0.45);
 }
 
@@ -452,6 +665,53 @@
   text-align: right;
 }
 
+.realization-bars sup {
+  margin-left: 2px;
+  color: var(--brand-yellow);
+  font-size: 0.72em;
+  font-weight: 900;
+  line-height: 0;
+}
+
+.realization-footnote {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  margin: 2px 0 0;
+  padding: 13px 15px;
+  border: 1px solid rgba(255, 224, 95, 0.22);
+  border-radius: 14px;
+  color: rgba(255, 255, 255, 0.68);
+  background: linear-gradient(135deg, rgba(255, 224, 95, 0.08), rgba(255, 255, 255, 0.025));
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.realization-footnote > sup {
+  margin: 0;
+  padding-top: 0.18em;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.realization-footnote span {
+  color: inherit;
+}
+
+.realization-footnote b {
+  color: #f5f2e8;
+}
+
+.realization-footnote .realization-formula-value {
+  display: inline-block;
+  margin: 0 3px;
+  padding: 1px 6px;
+  border-radius: 7px;
+  color: #ffeb91;
+  background: rgba(255, 224, 95, 0.1);
+  font-variant-numeric: tabular-nums;
+}
+
 .slide-takeaway {
   grid-column: 2;
   margin: -34px 0 0;
@@ -460,9 +720,12 @@
 }
 
 .action-split {
+  container-type: inline-size;
   display: grid;
-  grid-template-columns: 13.6fr 62fr 24.4fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+  min-width: 0;
+  max-width: 100%;
   min-height: 210px;
   align-items: stretch;
 }
@@ -472,7 +735,8 @@
   flex-direction: column;
   justify-content: center;
   gap: 7px;
-  padding: 18px;
+  min-width: 0;
+  padding: clamp(14px, 1.25vw, 18px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 18px;
   color: #101116;
@@ -483,7 +747,10 @@
 }
 
 .action-split strong {
-  font-size: clamp(2rem, 4vw, 4rem);
+  max-width: 100%;
+  font-size: clamp(1.85rem, 8cqi, 3.25rem);
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .action-split .is-raise {
@@ -847,6 +1114,243 @@
   color: #f7f7fb;
   font-size: clamp(1.35rem, 2.4vw, 2.45rem);
   line-height: 1.08;
+}
+
+.bb-scope-slide .scope-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
+.bb-scope-slide .scope-scenario {
+  display: grid;
+  align-content: center;
+  gap: 14px;
+  min-width: 0;
+  padding: clamp(16px, 1.8vw, 23px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.bb-scope-slide .scope-scenario.is-heads-up {
+  border-color: rgba(78, 217, 167, 0.34);
+  background: linear-gradient(145deg, rgba(78, 217, 167, 0.11), rgba(78, 217, 167, 0.035));
+}
+
+.bb-scope-slide .scope-scenario.is-multiway {
+  border-color: rgba(255, 120, 137, 0.3);
+  background: linear-gradient(145deg, rgba(255, 120, 137, 0.1), rgba(255, 120, 137, 0.025));
+}
+
+.bb-scope-slide .scope-scenario header {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.bb-scope-slide .scope-scenario header span {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.bb-scope-slide .scope-scenario header strong {
+  color: #f7f7fb;
+  font-size: clamp(0.92rem, 1.25vw, 1.15rem);
+  line-height: 1.25;
+}
+
+.bb-scope-slide .scope-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.bb-scope-slide .scope-metrics > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 13px;
+  background: rgba(5, 5, 10, 0.3);
+}
+
+.bb-scope-slide .scope-metrics dt {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.bb-scope-slide .scope-metrics dd {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  color: #f7f7fb;
+  font-size: clamp(1.32rem, 2.3vw, 2.05rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.bb-scope-slide .scope-metrics .is-call dd {
+  color: var(--bb-call);
+}
+
+.bb-scope-slide .scope-metrics .is-threebet dd {
+  color: var(--bb-raise);
+}
+
+.bb-scope-slide .scope-metrics dd small {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.bb-scope-slide .scope-takeaway,
+.bb-scope-slide .scope-source {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.bb-scope-slide .scope-takeaway {
+  padding: 10px 13px;
+  border-left: 3px solid #ffe05f;
+  border-radius: 0 10px 10px 0;
+  background: rgba(255, 224, 95, 0.07);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.79rem;
+  line-height: 1.35;
+}
+
+.bb-scope-slide .scope-takeaway strong {
+  color: #ffe05f;
+}
+
+.bb-scope-slide .scope-source {
+  color: rgba(255, 255, 255, 0.43);
+  font-size: 0.61rem;
+  line-height: 1.35;
+}
+
+.shape-evidence {
+  display: grid;
+  min-width: 0;
+  gap: 11px;
+}
+
+.bb-shape-slide .hand-shape-grid > div {
+  min-width: 0;
+  min-height: 236px;
+  padding: clamp(18px, 2vw, 25px);
+}
+
+.bb-shape-slide .hand-shape-grid > div > strong {
+  overflow: hidden;
+  font-size: clamp(1.15rem, 1.75vw, 1.85rem);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shape-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 3px 0 0;
+}
+
+.shape-metrics > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  padding: 10px 9px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(5, 7, 12, 0.38);
+}
+
+.shape-metrics dt,
+.shape-metrics dd {
+  margin: 0;
+}
+
+.shape-metrics dt {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: clamp(0.58rem, 0.7vw, 0.7rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.shape-metrics dd {
+  color: #f7f7fb;
+  font-size: clamp(1.35rem, 2.05vw, 2.2rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.hand-shape-grid .is-play .shape-metrics dd {
+  color: #75e3ba;
+}
+
+.hand-shape-grid .is-fold .shape-metrics dd {
+  color: #ff9aaa;
+}
+
+.wisdom-copy-block .shape-delta {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px 8px;
+  padding: 11px 14px;
+  border: 1px solid rgba(255, 224, 95, 0.28);
+  border-radius: 13px;
+  background: rgba(255, 224, 95, 0.08);
+  color: rgba(255, 255, 255, 0.76);
+  font-size: clamp(0.78rem, 1vw, 0.96rem);
+  line-height: 1.3;
+}
+
+.wisdom-copy-block .shape-delta strong {
+  color: #ffe05f;
+  font-size: 1.08em;
+}
+
+.wisdom-copy-block .shape-delta span {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.shape-source,
+.shape-method {
+  margin: 0;
+  text-align: center;
+}
+
+.shape-source {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: clamp(0.65rem, 0.82vw, 0.76rem);
+  line-height: 1.35;
+}
+
+.shape-source strong {
+  color: #f7f7fb;
+}
+
+.shape-method {
+  color: rgba(255, 255, 255, 0.42);
+  font-size: clamp(0.58rem, 0.72vw, 0.68rem);
+  line-height: 1.35;
 }
 
 .autopilot-sequence {
@@ -2844,6 +3348,19 @@
     min-height: 500px;
   }
 
+  .bb-call-lesson .bb-scope-slide {
+    align-content: start;
+    align-items: start;
+  }
+
+  .bb-call-lesson .bb-shape-slide {
+    gap: 20px;
+  }
+
+  .bb-call-lesson .bb-shape-slide .hand-shape-grid > div {
+    min-height: 190px;
+  }
+
   .bb-call-lesson .league-data-panel.bb-league-data-slide {
     gap: 10px;
   }
@@ -2900,7 +3417,59 @@
 
 @media (max-width: 760px) {
   .bb-call-lesson .lesson-intro h2 {
-    font-size: clamp(2.6rem, 13vw, 4.3rem);
+    margin-bottom: 16px;
+    font-size: clamp(2.35rem, 11vw, 3.7rem);
+  }
+
+  .bb-call-lesson .intro-action-flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bb-call-lesson .intro-action-flow li:nth-child(2)::after {
+    display: none;
+  }
+
+  .bb-call-lesson .intro-price-facts p {
+    min-height: 62px;
+    padding-inline: 9px;
+  }
+
+  .bb-call-lesson .intro-seat.is-folded {
+    min-width: 58px;
+    padding: 5px 7px 6px;
+    border-radius: 10px;
+  }
+
+  .bb-call-lesson .intro-seat.is-folded b {
+    font-size: 11px;
+  }
+
+  .bb-call-lesson .intro-seat.is-folded small {
+    font-size: 7px;
+  }
+
+  .bb-call-lesson .intro-co {
+    top: -12px;
+  }
+
+  .bb-call-lesson .intro-hj {
+    top: 8%;
+    left: 6%;
+  }
+
+  .bb-call-lesson .intro-mp {
+    top: 39%;
+    left: -5px;
+  }
+
+  .bb-call-lesson .intro-ep {
+    bottom: 12%;
+    left: 5%;
+  }
+
+  .bb-call-lesson .intro-sb {
+    right: 5%;
+    bottom: 12%;
   }
 
   .draft-wisdom-note {
@@ -3018,10 +3587,34 @@
     grid-template-columns: 1fr;
   }
 
+  .bb-scope-slide .scope-comparison {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .bb-scope-slide .scope-scenario {
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .bb-scope-slide .scope-source {
+    font-size: 0.58rem;
+  }
+
   .action-split div,
   .hand-shape-grid > div,
   .scope-contrast > div {
     min-height: 92px;
+  }
+
+  .bb-call-lesson .bb-shape-slide .hand-shape-grid > div {
+    min-height: 138px;
+  }
+
+  .bb-call-lesson .bb-shape-slide .hand-shape-grid > div > strong {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
   }
 
   .leak-hand-grid {
@@ -3075,6 +3668,19 @@
     grid-template-columns: 1fr;
   }
 
+}
+
+@media (min-width: 901px) and (max-height: 850px) {
+  .bb-call-lesson .lesson-intro {
+    min-height: 0;
+    padding-block: 28px;
+  }
+}
+
+@media (max-width: 380px) {
+  .bb-call-lesson .intro-co {
+    left: 42%;
+  }
 }
 
 @media (max-width: 620px) {
@@ -3375,6 +3981,42 @@
   .bb-call-lesson .wisdom-copy-block p {
     font-size: clamp(0.88rem, 1.05vw, 1rem);
     line-height: 1.42;
+  }
+
+  .bb-call-lesson .bb-shape-slide .hand-shape-grid > div {
+    min-height: 188px;
+    gap: 8px;
+    padding: 17px;
+  }
+
+  .bb-call-lesson .bb-shape-slide .shape-metrics > div {
+    padding: 8px;
+  }
+
+  .bb-call-lesson .bb-shape-slide .shape-metrics dd {
+    font-size: clamp(1.25rem, 1.8vw, 1.75rem);
+  }
+
+  .bb-call-lesson .bb-scope-slide .scope-comparison {
+    gap: 9px;
+  }
+
+  .bb-call-lesson .bb-scope-slide .scope-scenario {
+    gap: 9px;
+    padding: 14px;
+  }
+
+  .bb-call-lesson .bb-scope-slide .scope-metrics > div {
+    padding: 8px;
+  }
+
+  .bb-call-lesson .bb-scope-slide .scope-takeaway {
+    padding-block: 7px;
+  }
+
+  .bb-call-lesson .bb-scope-slide .scope-source {
+    font-size: 0.55rem;
+    line-height: 1.25;
   }
 
   .bb-call-lesson .wisdom-carousel-controls {

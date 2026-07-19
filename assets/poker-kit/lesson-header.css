@@ -1,0 +1,297 @@
+:root {
+  --lesson-header-surface: #17131f;
+  --lesson-header-surface-strong: #0e0b13;
+  --lesson-header-border: rgba(220, 207, 237, .16);
+  --lesson-header-border-strong: rgba(255, 223, 81, .42);
+  --lesson-header-muted: rgba(214, 207, 221, .72);
+  --lesson-header-text: #f4f1ec;
+  --lesson-header-accent: var(--brand-yellow, #ffdf51);
+  --lesson-header-ink: var(--brand-ink, #151017);
+  --lesson-header-radius: 20px;
+  --lesson-header-control-radius: 12px;
+  --lesson-header-shadow: 0 18px 48px rgba(0, 0, 0, .28);
+}
+
+[data-lesson-header].lesson-chrome {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 11px;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0 0 clamp(14px, 1.35vw, 20px);
+  padding: clamp(10px, 1vw, 14px);
+  overflow: hidden;
+  border: 1px solid var(--lesson-header-border);
+  border-radius: var(--lesson-header-radius);
+  background:
+    radial-gradient(circle at 88% -80%, rgba(154, 101, 214, .25), transparent 47%),
+    linear-gradient(145deg, rgba(255, 255, 255, .045), transparent 44%),
+    var(--lesson-header-surface);
+  box-shadow: var(--lesson-header-shadow), inset 0 1px rgba(255, 255, 255, .045);
+}
+
+[data-lesson-header].lesson-chrome::after {
+  position: absolute;
+  right: 14px;
+  bottom: 0;
+  left: 14px;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, transparent, rgba(255, 223, 81, .38), transparent);
+  pointer-events: none;
+}
+
+[data-lesson-header].lesson-chrome .lesson-chrome__identity {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(12px, 1.35vw, 18px);
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin: 0;
+}
+
+[data-lesson-header].lesson-chrome .lesson-chrome__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px 13px;
+  border: 1px solid var(--lesson-header-border);
+  border-radius: var(--lesson-header-control-radius);
+  color: var(--lesson-header-muted);
+  background: rgba(5, 4, 8, .36);
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 780;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color .16s ease, border-color .16s ease, background .16s ease, transform .16s ease;
+}
+
+[data-lesson-header].lesson-chrome .lesson-chrome__back:hover {
+  color: var(--lesson-header-text);
+  border-color: rgba(255, 223, 81, .36);
+  background: rgba(255, 223, 81, .075);
+  transform: translateY(-1px);
+}
+
+[data-lesson-header].lesson-chrome .lesson-chrome__copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  justify-items: start;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+}
+
+[data-lesson-header].lesson-chrome .lesson-chrome__copy > * {
+  grid-column: 1;
+  grid-row: auto;
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+[data-lesson-header].lesson-chrome .lesson-chrome__copy > .lesson-chrome__eyebrow,
+[data-lesson-header].lesson-chrome .lesson-chrome__copy > .lesson-chrome__title {
+  text-align: left;
+}
+
+[data-lesson-header].lesson-chrome .lesson-chrome__eyebrow {
+  display: block;
+  max-width: none;
+  margin: 0;
+  overflow: hidden;
+  color: var(--lesson-header-accent);
+  font-size: 10px;
+  font-weight: 880;
+  line-height: 1.35;
+  letter-spacing: .115em;
+  text-align: left;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+[data-lesson-header].lesson-chrome .lesson-chrome__title {
+  display: block;
+  max-width: none;
+  margin: 0;
+  overflow: hidden;
+  color: var(--lesson-header-text);
+  font-size: clamp(22px, 2vw, 31px);
+  font-weight: 860;
+  line-height: 1.05;
+  letter-spacing: -.035em;
+  text-overflow: ellipsis;
+  text-wrap: balance;
+  white-space: nowrap;
+}
+
+[data-lesson-header].lesson-chrome .lesson-chrome__steps {
+  --lesson-step-count: 1;
+  display: grid;
+  grid-template-columns: repeat(var(--lesson-step-count), minmax(0, 1fr));
+  align-items: stretch;
+  justify-content: stretch;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 6px;
+  overflow: visible;
+  border: 1px solid rgba(220, 207, 237, .12);
+  border-radius: 16px;
+  background: rgba(5, 4, 8, .46);
+  scrollbar-color: rgba(255, 223, 81, .55) transparent;
+  scrollbar-width: thin;
+}
+
+[data-lesson-header].lesson-chrome .lesson-chrome__steps .step-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  margin: 0;
+  padding: 8px 10px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: var(--lesson-header-control-radius);
+  color: rgba(244, 241, 236, .8);
+  background: rgba(255, 255, 255, .035);
+  box-shadow: none;
+  font-size: clamp(12px, .86vw, 14px);
+  font-weight: 760;
+  line-height: 1.15;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: normal;
+  cursor: pointer;
+  opacity: 1;
+  transform: none;
+  transition: color .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+[data-lesson-header].lesson-chrome .lesson-chrome__steps .step-tab:hover:not(:disabled):not([aria-selected="true"]) {
+  color: var(--lesson-header-text);
+  border-color: rgba(255, 255, 255, .13);
+  background: rgba(255, 255, 255, .075);
+  transform: translateY(-1px);
+}
+
+[data-lesson-header].lesson-chrome .lesson-chrome__steps .step-tab[aria-selected="true"],
+[data-lesson-header].lesson-chrome .lesson-chrome__steps .step-tab.is-active,
+[data-lesson-header].lesson-chrome .lesson-chrome__steps .step-tab.active {
+  color: var(--lesson-header-ink);
+  border-color: transparent;
+  background: linear-gradient(180deg, #fff09a, var(--lesson-header-accent));
+  box-shadow: 0 8px 22px rgba(255, 223, 81, .16), inset 0 1px rgba(255, 255, 255, .45);
+  font-weight: 880;
+}
+
+[data-lesson-header].lesson-chrome .lesson-chrome__steps .step-tab:disabled:not([aria-selected="true"]) {
+  color: rgba(214, 207, 221, .5);
+  background: rgba(255, 255, 255, .018);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+[data-lesson-header].lesson-chrome .lesson-chrome__back:focus-visible,
+[data-lesson-header].lesson-chrome .lesson-chrome__steps .step-tab:focus-visible {
+  outline: 2px solid var(--lesson-header-accent);
+  outline-offset: 2px;
+}
+
+body.practice-is-running [data-lesson-header].lesson-chrome {
+  display: none;
+}
+
+html[data-embed="true"] [data-lesson-header].lesson-chrome {
+  position: relative;
+  top: auto;
+  gap: 0;
+  margin-bottom: 8px;
+  padding: 6px;
+  border-radius: 14px;
+}
+
+html[data-embed="true"] [data-lesson-header].lesson-chrome .lesson-chrome__identity {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  [data-lesson-header].lesson-chrome {
+    gap: 9px;
+    padding: 9px;
+    border-radius: 17px;
+  }
+
+  [data-lesson-header].lesson-chrome .lesson-chrome__steps {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-inline: contain;
+    scroll-padding-inline: 6px;
+    scroll-snap-type: inline proximity;
+  }
+
+  [data-lesson-header].lesson-chrome .lesson-chrome__steps .step-tab {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 132px;
+    min-height: 44px;
+    padding-inline: 12px;
+    font-size: 12px;
+    white-space: nowrap;
+    scroll-snap-align: center;
+  }
+}
+
+@media (max-width: 520px) {
+  [data-lesson-header].lesson-chrome .lesson-chrome__identity {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  [data-lesson-header].lesson-chrome .lesson-chrome__back {
+    justify-self: start;
+    max-width: 132px;
+    padding-inline: 10px;
+    font-size: 11px;
+    white-space: normal;
+  }
+
+  [data-lesson-header].lesson-chrome .lesson-chrome__eyebrow {
+    font-size: 9px;
+  }
+
+  [data-lesson-header].lesson-chrome .lesson-chrome__title {
+    font-size: clamp(18px, 5.8vw, 24px);
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-lesson-header].lesson-chrome .lesson-chrome__back,
+  [data-lesson-header].lesson-chrome .lesson-chrome__steps .step-tab {
+    transition: none;
+  }
+}

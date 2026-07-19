@@ -49,12 +49,14 @@ assert.equal((lessonHtml.match(/id="openPctOut"/g) || []).length, 1, "open frequ
 assert.match(lessonHtml, /class="fold-summary" id="foldSummary"/);
 assert.match(lessonJs, /const field = usesFieldProfile \? fieldMetrics\(state\.opponent\) : null/, "field profile summary keeps observed fold data separate from the recommendation model");
 assert.match(lessonJs, /openPct: controls\.openPct,[\s\S]*callPct: controls\.callPct/, "field matrix uses a structural open and continuation range");
-assert.match(lessonJs, /const RankData = window\.PokerRestealRankData/, "observed panel reads the exact rank-at-hand cube");
-assert.match(lessonJs, /RankData\?\.charts\?\.\[cohort\]\?\.BTN\?\.\["2\.0"\]\?\.\["25-40"\]/, "observed panel fixes hero BB, BTN 2 BB, and 25–40 BB");
-assert.match(lessonJs, /\{ key: "folds"[\s\S]*\{ key: "calls"[\s\S]*\{ key: "small3bets"[\s\S]*\{ key: "jams"/, "observed panel separates all four preflop actions");
-assert.doesNotMatch(lessonJs, /state\.data\.hero_outcomes\.pooled\.ALL/, "mixed SB+BB outcomes no longer power the visible comparison");
-assert.match(lessonHtml, /Наблюдаемая игра поля · точно BB/, "comparison is labelled as observed exact-BB field play");
-assert.match(lessonHtml, /не сравнивают EV и не говорят, что нажимать/, "observed frequencies are explicitly not strategic advice");
+assert.match(lessonJs, /const RankData = window\.PokerRestealRankData/, "rank-at-hand cube still powers the league comparison tab");
+assert.match(lessonJs, /state\.data\.hero_outcomes\?\.pooled\?\.ALL/, "validated all-in-adjusted outcomes power the visible chipEV comparison");
+assert.match(lessonJs, /function renderOutcomeBars/, "math tab renders all-in versus call chipEV by hand group");
+assert.match(lessonHtml, /Наблюдаемый chipEV · реальные раздачи FF/, "chipEV comparison is labelled as observed field evidence");
+assert.match(lessonHtml, /Это наблюдаемая выборка/, "chipEV comparison states its self-selection limitation");
+assert.match(lessonJs, /reactionFilters: \{ openerPosition: "BTN", heroPosition: "BB", openSizeBb: 2, depthBand: "25-40" \}/, "reaction tab opens on the exact BB versus BTN 2 BB, 25–40 BB slice");
+assert.match(lessonJs, /resteal-reaction-summary\.json/, "reaction tab reads the compact strict-response cube");
+assert.match(lessonHtml, /Это состав диапазона, не готовый чарт/, "known continuing hands are not presented as strategic advice");
 
 const introPot = context.PokerChipKit.renderAmount(4.5, { maxVisual: 3, detail: true });
 assert.match(introPot, /poker-chip--one/);

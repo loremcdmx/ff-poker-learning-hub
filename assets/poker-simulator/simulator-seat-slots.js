@@ -67,6 +67,10 @@
       cardBoxOverlap: 12.8,
       heroCardDistanceOverlap: 9.0,
       seatBox: { w: 15.2, h: 13.0 },
+      // Live compact-practice panel footprint. The collision proxy above stays
+      // smaller, but the 20% card pocket must measure against what the player
+      // actually sees (108x46 on a 637.8x322.2 felt at the P7 calibration).
+      renderedRevealSeatBox: { w: 16.95, h: 14.28 },
       heroSeatBox: { w: 16.6, h: 13.4 },
       cardPair: { w: 7.8, h: 10.8 },
       heroCardPair: { w: 12.2, h: 18.2 },
@@ -98,7 +102,7 @@
       // (T1 8-max villain reveal ~11.0% felt wide, ~14.7% felt tall). Cards grow
       // at lower player counts, so an 8-max footprint
       // is a conservative floor for the crowded case the gate targets.
-      renderedRevealCard: { w: 11.0, h: 14.7 },
+      renderedRevealCard: { w: 11.2, h: 15.3 },
       // Face-up cards remain one visual component with their owner plate. The
       // card edge tucks under the plate by this fraction of its full inward
       // projection; the panel paints above the cards, so names/stacks stay clear.
@@ -683,6 +687,11 @@
       // collision-exempt for the hard resolver/validate path but is surfaced
       // separately (layout.softKeepouts) for report-not-fail overlap checks.
       soft: Boolean(meta.soft),
+      cardDockMode: meta.cardDockMode === "preferred" ? "preferred" : meta.cardDockMode === "fallback" ? "fallback" : null,
+      cardDockReason: meta.cardDockReason ? String(meta.cardDockReason) : null,
+      cardDockPreferredCenter: meta.cardDockPreferredCenter
+        ? { x: Number(meta.cardDockPreferredCenter.x || 0), y: Number(meta.cardDockPreferredCenter.y || 0) }
+        : null,
       ownBoxOverlapAllowance: Math.max(0, Number(meta.ownBoxOverlapAllowance || 0)),
       axes: Array.isArray(meta.axes) && meta.axes.length ? meta.axes : [{ x: 0, y: -1 }]
     };
@@ -732,6 +741,45 @@
       add(anchor.boxCenter, scale(anchor.inward, inwardDistance)),
       scale(downTangent, lateralStep)
     );
+  }
+
+  // Preferred opponent-card pocket used by both face-down and face-up hands.
+  // The cards stay horizontally centred on their owner: top-row panels expose
+  // them downward, every other panel exposes them upward. Exactly the requested
+  // fraction of the full card-pair depth remains under the panel. The previous
+  // radial dock is passed in as a fallback and remains authoritative whenever
+  // the centred pocket cannot fit inside the table shell.
+  function opponentCardPocketDock(options = {}) {
+    const boxCenter = options.boxCenter || CENTER;
+    const ownerSize = options.ownerSize || { w: 0, h: 0 };
+    const cardSize = options.cardSize || { w: 0, h: 0 };
+    const dimensions = options.dimensions || {};
+    const zone = options.zone || seatZoneOf(boxCenter);
+    const tuckFraction = clamp(Number(dimensions.revealCardTuckFraction ?? 0.2), 0, 0.3);
+    const directionY = zone === "top" ? 1 : -1;
+    const distance = Math.max(
+      0,
+      Number(ownerSize.h || 0) / 2
+        + Number(cardSize.h || 0) / 2
+        - Number(cardSize.h || 0) * tuckFraction
+    );
+    const preferredCenter = {
+      x: Number(boxCenter.x || 0),
+      y: Number(boxCenter.y || 0) + directionY * distance
+    };
+    const preferredRect = rectFromCenter(preferredCenter, cardSize);
+    const rail = Math.max(0, Number(dimensions.railOverhang || 0));
+    const shellBounds = expandBounds(BOUNDS, rail);
+    const safe = rectOutsideBounds(preferredRect, shellBounds, 0).amount <= 0.0001;
+    return {
+      center: safe ? preferredCenter : (options.fallbackCenter || preferredCenter),
+      preferredCenter,
+      preferredRect,
+      directionY,
+      mode: safe ? "preferred" : "fallback",
+      reason: safe ? "centred-20pct-pocket" : "shell-bounds",
+      boundsKind: safe ? "shell" : "felt"
+    };
   }
 
   function seatSlotRects(anchor, dimensions, phase, dealerSeatId) {
@@ -810,47 +858,39 @@
       cardsCenter = add(cardsCenter, scale(anchor.outward, Number(dimensions.heroCardDockOutset || 0)));
     }
     let cardsAxes = [anchor.inward, anchor.tangent];
+    let cardsBoundsKind = "felt";
+    let cardDockMode = null;
+    let cardDockReason = null;
+    let cardDockPreferredCenter = null;
     if (!anchor.isHero) {
-      // Opponents (hole cards): center the cards directly above the nameplate
-      // (screen-up) instead of along the radial inward axis. For side/corner
-      // seats "inward" points sideways toward the pot, which hangs the cards off
-      // the box's inner edge rather than centered over it. Cards render upright,
-      // so the collision rect is screen-axis aligned; the resolver clamps any
-      // seat without headroom (a dead-top seat) onto the felt.
-      //
-      // This applies in EVERY phase (face-down AND showdown reveal) so the cards
-      // flip + grow IN PLACE. Previously reveal abandoned the screen-up dock for
-      // the radial inward dock, sliding opponent cards up to ~9.85% felt width and
-      // ~22% felt height on showdown (the --seat-cards-dx/dy live jump,
-      // R2-GEOM/G1/G2). The dock geometry is anchored to the FACE-DOWN card size
-      // (cardPair) in both phases, so the card CENTRE is phase-stable and the
-      // larger reveal card simply grows from the same point; any felt-top overflow
-      // for a cramped seat is then handled by the bounds resolver, not a model swap.
-      const screenUp = { x: 0, y: -1 };
-      const dockRef = dimensions.cardPair || cardSize;
-      // Dock the cards INTO the box top (the layout contract requires opponent
-      // cards to overlap their nameplate >=52%, not float on the felt). They peek
-      // above the box, centered, rather than hanging off the inner edge.
-      const aboveDistance = Math.max(
-        0,
-        projectionHalf(seatSize, screenUp) - projectionHalf(dockRef, screenUp) * 0.3
-      );
-      const upCenter = add(anchor.boxCenter || dockedCardBase, scale(screenUp, aboveDistance));
-      // Only lift the cards above the nameplate when the felt has headroom. A
-      // dead-top seat has none, so it keeps the original inward dock — which is
-      // already centered for a top-of-table seat (inward points straight down).
-      // The headroom test uses the phase-invariant face-down size so face-down and
-      // reveal make the SAME dock decision (no model swap between phases).
-      if (upCenter.y - projectionHalf(dockRef, screenUp) > BOUNDS.top) {
-        cardsCenter = upCenter;
-        cardsAxes = [{ x: 1, y: 0 }, screenUp];
-      }
+      const zone = seatZoneOf(anchor.boxCenter);
+      const pocket = opponentCardPocketDock({
+        boxCenter: anchor.boxCenter || dockedCardBase,
+        ownerSize: dimensions.renderedRevealSeatBox || seatSize,
+        cardSize,
+        dimensions,
+        zone,
+        fallbackCenter: cardsCenter
+      });
+      cardsCenter = pocket.center;
+      cardsAxes = [{ x: 1, y: 0 }, { x: 0, y: pocket.directionY }];
+      cardsBoundsKind = pocket.boundsKind;
+      cardDockMode = pocket.mode;
+      cardDockReason = pocket.reason;
+      cardDockPreferredCenter = pocket.preferredCenter;
     }
     const cards = rectFromCenter(cardsCenter, cardSize, rectMeta({
       id: `seat-${anchor.seatId}-cards`,
       kind: "cards",
       seatId: anchor.seatId,
       immovability: IMMOVABILITY.cards,
+      boundsAllowance: !anchor.isHero && cardsBoundsKind === "shell"
+        ? Math.max(0, Number(dimensions.railOverhang || 0))
+        : 0,
+      boundsKind: cardsBoundsKind,
+      cardDockMode,
+      cardDockReason,
+      cardDockPreferredCenter,
       ownBoxOverlapAllowance: Math.max(0, cardBoxOverlap),
       axes: cardsAxes
     }));
@@ -1317,6 +1357,7 @@
 
   function finalizeCardSlots(rects, options = {}) {
     const bounds = options.bounds || BOUNDS;
+    const dimensions = options.dimensions || {};
     const tolerance = Number(options.tolerance ?? 0.3);
     const gap = Number(options.gap ?? 0.3);
     const cards = rects
@@ -1326,13 +1367,14 @@
     for (let pass = 0; pass < 5; pass += 1) {
       let changed = false;
       cards.forEach((cardRect) => {
+        const cardBounds = boundsForRect(cardRect, { bounds, dimensions });
         const ownBox = rects.find((rect) => rect.kind === "box" && Number(rect.seatId) === Number(cardRect.seatId));
         const obstacles = rects.filter((rect) =>
           rect !== cardRect
           && rect.kind !== "marker"
           && !(rect.kind === "dealer" && Number(rect.seatId) === Number(cardRect.seatId))
         );
-        if (rectIsClear(cardRect, obstacles, bounds, tolerance)) return;
+        if (rectIsClear(cardRect, obstacles, cardBounds, tolerance)) return;
         const candidates = cardCandidateCenters(cardRect, ownBox, gap)
           .map((center) => rectFromCenter(center, cardRect.size, cardRect))
           .sort((a, b) => {
@@ -1340,7 +1382,7 @@
             const db = Math.hypot(b.center.x - cardRect.center.x, b.center.y - cardRect.center.y);
             return da - db;
           });
-        const next = candidates.find((candidate) => rectIsClear(candidate, obstacles, bounds, tolerance));
+        const next = candidates.find((candidate) => rectIsClear(candidate, obstacles, cardBounds, tolerance));
         if (!next) return;
         cardRect.center = { ...next.center };
         refreshRect(cardRect);
@@ -1484,10 +1526,10 @@
     );
   }
 
-  // One owner-attached reveal cluster per non-hero seat. Every hand leaves the
-  // felt-facing edge of its own nameplate: top -> down, bottom -> up, side -> in,
-  // corner -> radially in. A small controlled tuck keeps cards + plate visually
-  // grouped while the plate's higher z-index preserves all text.
+  // One owner-attached reveal cluster per non-hero seat. The default is the same
+  // centred 20% pocket as the face-down cards: top seats open down, every other
+  // seat opens up. The former radial placement remains the explicit fallback for
+  // a crowded or too-small layout.
   function renderedRevealCardRects(boxes, dimensions) {
     const footprint = dimensions && dimensions.renderedRevealCard;
     if (!footprint || !(Number(footprint.w) > 0) || !(Number(footprint.h) > 0)) return [];
@@ -1522,15 +1564,43 @@
       const distance = Math.max(0, Math.min(contactX, contactY) - Math.max(tuck, topCenterTuckFloor));
       const rawCenter = add(box.center, scale(inward, distance));
       // The owner may straddle the rail; the visible cards never do.
-      const center = {
+      const fallbackCenter = {
         x: clamp(rawCenter.x, size.w / 2, 100 - size.w / 2),
         y: clamp(rawCenter.y, size.h / 2, 100 - size.h / 2)
       };
+      const pocket = opponentCardPocketDock({
+        boxCenter: box.center,
+        ownerSize: renderedOwnerSize,
+        cardSize: size,
+        dimensions,
+        zone,
+        fallbackCenter
+      });
+      let dockMode = pocket.mode;
+      let dockReason = pocket.reason;
+      let center = pocket.center;
+      if (dockMode === "preferred") {
+        const preferredRect = rectFromCenter(center, size);
+        const crossesForeignPanel = boxes.some((otherBox) => {
+          if (Number(otherBox.seatId) === Number(box.seatId)) return false;
+          const otherSize = dimensions?.renderedRevealSeatBox || otherBox.size;
+          const otherRect = rectFromCenter(otherBox.center, otherSize);
+          const hit = overlapMetrics(preferredRect, otherRect, 0);
+          return Boolean(hit && hit.area > 0.0001);
+        });
+        if (crossesForeignPanel) {
+          center = fallbackCenter;
+          dockMode = "fallback";
+          dockReason = "foreign-panel";
+        }
+      }
       out.push({
         seatId: Number(box.seatId),
         zone,
         inward,
         tangent,
+        dockMode,
+        dockReason,
         rect: rectFromCenter(
           center,
           size,
@@ -1565,6 +1635,8 @@
         zone: entry.zone,
         inward: entry.inward,
         tangent: entry.tangent,
+        dockMode: entry.dockMode,
+        dockReason: entry.dockReason,
         rect: rectFromCenter(
           {
             x: entry.rect.center.x + nudge.x + Number(extra.x || 0),
@@ -1581,7 +1653,8 @@
     }
 
     function candidateIsSafe(entry) {
-      if (rectOutsideBounds(entry.rect, BOUNDS, 0).amount > 0.0001) return false;
+      const shellBounds = expandBounds(BOUNDS, Math.max(0, Number(dimensions?.railOverhang || 0)));
+      if (rectOutsideBounds(entry.rect, shellBounds, 0).amount > 0.0001) return false;
       for (const box of boxes) {
         if (Number(box.seatId) === Number(entry.seatId)) continue;
         const renderedBox = dimensions?.renderedRevealSeatBox
@@ -1696,10 +1769,14 @@
       .map(([seatId, nudge]) => ({ seatId, tx: round(nudge.x), ty: round(nudge.y) }));
     const placements = resolvedCards.map((entry) => {
       const box = boxById.get(Number(entry.seatId));
+      const nudge = nudgeFor(entry.seatId);
+      const tangentiallyAdjusted = Math.abs(nudge.x) > 0.0001 || Math.abs(nudge.y) > 0.0001;
       return {
         seatId: entry.seatId,
         tx: round(entry.rect.center.x - Number(box?.center?.x || 0)),
-        ty: round(entry.rect.center.y - Number(box?.center?.y || 0))
+        ty: round(entry.rect.center.y - Number(box?.center?.y || 0)),
+        mode: entry.dockMode === "preferred" && !tangentiallyAdjusted ? "preferred" : "fallback",
+        reason: tangentiallyAdjusted ? "neighbour-separation" : entry.dockReason
       };
     });
     return { cards, resolvedCards, pairs, nudges, placements, residualPairs };
@@ -1999,9 +2076,19 @@
     });
     const cardFinalPass = finalizeCardSlots(resolved.rects, {
       bounds: options.bounds || BOUNDS,
+      dimensions,
       tolerance: Number(options.tolerance ?? 0.3),
       gap: dimensions.gaps.collision
     });
+    resolved.rects
+      .filter((rect) => rect.kind === "cards" && Number(rect.seatId) !== 0)
+      .forEach((rect) => {
+        if (rect.cardDockMode !== "preferred" || !rect.cardDockPreferredCenter) return;
+        const drift = distanceBetween(rect.center, rect.cardDockPreferredCenter);
+        if (drift <= 0.01) return;
+        rect.cardDockMode = "fallback";
+        rect.cardDockReason = "collision-resolution";
+      });
     // Compute final owner-attached reveal geometry before buttons and live bet
     // markers. Both must pack against the exact rendered hand, including any
     // bounded tangential correction used for a crowded corner.
@@ -2073,6 +2160,8 @@
         boundsKind: rect.boundsKind || "felt",
         collisionExempt: Boolean(rect.collisionExempt),
         soft: Boolean(rect.soft),
+        cardDockMode: rect.cardDockMode || null,
+        cardDockReason: rect.cardDockReason || null,
         ownBoxOverlapAllowance: round(Number(rect.ownBoxOverlapAllowance || 0)),
         center: { x: round(rect.center.x), y: round(rect.center.y) },
         size: { w: round(rect.size.w), h: round(rect.size.h) },
@@ -2103,12 +2192,15 @@
         top: round(entry.keepout.top),
         bottom: round(entry.keepout.bottom)
       })),
-      // Reveal-phase owner-attached card geometry. `cards` are the radial dock;
-      // `resolvedCards` include any bounded tangential correction for P8/P9.
+      // Reveal-phase owner-attached card geometry. `cards` are the preferred
+      // centred pocket or its explicit radial fallback; `resolvedCards` include
+      // any bounded tangential correction needed by a crowded layout.
       revealCardSeparation: {
         cards: revealCardSeparation.cards.map((entry) => ({
           seatId: entry.seatId,
           zone: entry.zone,
+          mode: entry.dockMode,
+          reason: entry.dockReason,
           center: { x: round(entry.rect.center.x), y: round(entry.rect.center.y) },
           size: { w: round(entry.rect.size.w), h: round(entry.rect.size.h) }
         })),
@@ -2116,6 +2208,8 @@
         resolvedCards: (revealCardSeparation.resolvedCards || []).map((entry) => ({
           seatId: entry.seatId,
           zone: entry.zone,
+          mode: entry.dockMode,
+          reason: entry.dockReason,
           center: { x: round(entry.rect.center.x), y: round(entry.rect.center.y) },
           size: { w: round(entry.rect.size.w), h: round(entry.rect.size.h) },
           left: round(entry.rect.left),

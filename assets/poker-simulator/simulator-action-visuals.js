@@ -331,7 +331,13 @@
     function actionSequenceBoardRevealState(table, options = {}) {
       if (!isActionSequenceActive(table)) return null;
       const stages = actionSequenceBoardRevealStages(table, options);
-      if (stages.length <= 1) return null;
+      // A single street transition still belongs to the shared action clock.
+      // Falling back to the legacy CSS-delay path here mounted the flop early
+      // and rewrote its *remaining* delay on every opponent-action render. CSS
+      // keeps the original animation origin, so those decreasing delays made
+      // the board become visible before the closing preflop action. Keep even
+      // one reveal stage behind the canonical action-sequence barrier.
+      if (!stages.length) return null;
       const finalLength = Array.isArray(table?.board) ? table.board.length : 0;
       const elapsedMs = Number.isFinite(Number(options.elapsedMs)) ? Number(options.elapsedMs) : actionSequenceElapsedMs(table);
       let visibleLength = Math.max(0, Math.round(visualNumber(table, "boardRevealFrom", finalLength)));

@@ -18,19 +18,23 @@
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
   <link rel="stylesheet" href="assets/poker-bb-call-defense-lesson/base.css?v=20260716-practice-scroll-v18">
-  <link rel="stylesheet" href="assets/poker-bb-call-defense-lesson/lesson.css?v=100a3a7312e5">
+  <link rel="stylesheet" href="assets/poker-bb-call-defense-lesson/lesson.css?v=7b787b22f3f9">
   <link rel="stylesheet" href="assets/ffstart-course/media-player.css?v=20260715-ffstart-v20">
+  <link rel="stylesheet" href="assets/poker-kit/lesson-header.css?v=9641ee805ef9">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
+  <script defer src="assets/poker-kit/lesson-header.js?v=1b28bacb3505"></script>
 </head>
 <body class="bb-call-lesson" data-lesson-id="bb-call-defense">
   <main class="app">
-    <header class="topline">
-      <div class="lesson-brand">
-        <a class="lesson-home" href="/">← В лабораторию</a>
-        <p class="eyebrow">Префлоп · большой блайнд</p>
-        <h1>Защита BB коллом</h1>
+    <header class="topline lesson-chrome" data-lesson-header>
+      <div class="lesson-brand lesson-chrome__identity">
+        <a class="lesson-home lesson-chrome__back" href="/">← В лабораторию</a>
+        <div class="lesson-chrome__copy">
+          <p class="eyebrow lesson-chrome__eyebrow">Префлоп · большой блайнд</p>
+          <h1 class="lesson-chrome__title">Защита BB коллом</h1>
+        </div>
       </div>
-      <nav class="step-tabs" role="tablist" aria-label="Шаги урока">
+      <nav class="step-tabs lesson-chrome__steps" role="tablist" aria-label="Шаги урока">
         <button class="step-tab" role="tab" type="button" aria-selected="true" aria-controls="ideaScreen" data-step-target="idea" tabindex="0">1. Раздача</button>
         <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="wisdomScreen" data-step-target="wisdom" tabindex="-1" disabled>2. Главное</button>
         <button class="step-tab" role="tab" type="button" aria-selected="false" aria-controls="videoScreen" data-step-target="video" tabindex="-1" disabled>3. Видео</button>
@@ -44,16 +48,31 @@
     <section class="screen is-active idea-screen" id="ideaScreen" role="tabpanel" data-step="idea" aria-label="Раздача">
       <article class="panel lesson-intro" id="lessonIntro">
         <div class="intro-copy">
-          <p class="eyebrow">Главная мысль урока</p>
-          <h2>Колл на BB дешевле, чем кажется</h2>
-          <p class="intro-subtitle">Сначала посчитай цену — потом решай</p>
-          <p class="intro-lead">Ты уже поставил большой блайнд. BTN открывается до 2 BB, SB пасует — для колла тебе нужно добавить всего 1 BB, после чего экшен закрыт и сразу откроется флоп.</p>
-          <p class="intro-support">Итоговая цена — 18,2%. Главный лик здесь не сложный постфлоп, а ранний пас на «некрасивую» руку. Начнём с K4o — именно такие защиты чаще всего пропускают на автопилоте.</p>
-          <button class="btn primary intro-cta" type="button" id="startLesson">Сыграть раздачу</button>
+          <p class="eyebrow">7-MAX · ПОЛНЫЙ СТОЛ</p>
+          <h2>На BB ты закрываешь экшен</h2>
+          <p class="intro-context">За столом 7 игроков. До тебя действие прошло так:</p>
+          <ol class="intro-action-flow" aria-label="Действия игроков до решения большого блайнда">
+            <li class="is-fold"><span>EP–CO</span><strong>Пас</strong></li>
+            <li class="is-open"><span>BTN</span><strong>Рейз 2 BB</strong></li>
+            <li class="is-fold"><span>SB</span><strong>Пас</strong></li>
+            <li class="is-hero"><span>BB · Ты</span><strong>Решение</strong></li>
+          </ol>
+          <div class="intro-price-facts" aria-label="Цена колла с большого блайнда">
+            <p><span>Добавить</span><strong>1 BB</strong></p>
+            <p><span>Банк после колла</span><strong>5,5 BB</strong></p>
+            <p><span>Цена колла</span><strong>18,2%</strong></p>
+          </div>
+          <p class="intro-takeaway"><strong>Защищай BB по цене.</strong><span>После колла никто больше не действует — сразу откроется флоп. «Некрасивая» рука ещё не означает автоматический пас.</span></p>
+          <button class="btn primary intro-cta" type="button" id="startLesson">Решить с K4o</button>
         </div>
         <div class="intro-table-visual" aria-hidden="true">
           <div class="intro-felt">
+            <span class="intro-seat is-folded intro-ep"><b>EP</b><small>Пас</small></span>
+            <span class="intro-seat is-folded intro-mp"><b>MP</b><small>Пас</small></span>
+            <span class="intro-seat is-folded intro-hj"><b>HJ</b><small>Пас</small></span>
+            <span class="intro-seat is-folded intro-co"><b>CO</b><small>Пас</small></span>
             <span class="intro-seat intro-btn"><b>BTN</b><small>Стек 60 BB</small><i class="intro-dealer-host" id="introDealerButton"></i></span>
+            <span class="intro-seat is-folded intro-sb"><b>SB</b><small>Пас</small></span>
             <span class="intro-chip-marker intro-btn-bet"><span id="introBtnChips"></span><strong>Рейз 2 BB</strong></span>
             <span class="intro-pot"><span id="introPotChips"></span><strong>Банк 4,5 BB</strong></span>
             <span class="intro-chip-marker intro-bb-jam intro-bb-call"><span id="introCallChips"></span><strong>Колл 1 BB</strong></span>
@@ -92,8 +111,8 @@
             <article class="panel wisdom-slide bb-price-slide" data-wisdom-slide>
               <div class="wisdom-copy-block">
                 <p class="eyebrow">Один рейзер · SB пас · ты закрываешь экшен</p>
-                <h3>BB — самая дешёвая точка входа в раздачу</h3>
-                <p>Один блайнд уже поставлен. После колла никто не сможет поднять цену: сразу увидишь флоп.</p>
+                <h3>Ты замыкаешь экшен в раздаче и дёшево можешь выйти на флоп</h3>
+                <p>Всего за один блайнд ты гарантированно увидишь флоп — роскошь, которой у тебя не будет на других позициях.</p>
               </div>
               <div class="price-equation" aria-label="Цена колла: доплата сейчас 1 большой блайнд, банк после колла 5,5 большого блайнда, цена колла по оддсам 18,2 процента">
                 <div class="price-term"><small>Доплата сейчас</small><strong>1 BB</strong></div>
@@ -139,12 +158,34 @@
 
             <article class="panel wisdom-slide bb-shape-slide" data-wisdom-slide>
               <div class="wisdom-copy-block">
-                <h3>Одномастные и связанные защищаются лучше</h3>
-                <p>Сьютовость даёт флеши, близкие ранги — стриты. Первыми уходят в пас две низкие, разномастные и разнесённые карты.</p>
+                <p class="eyebrow">База FF · 3-я лига · BB против BTN</p>
+                <h3>Одна масть даёт больше эквити — и лучше его реализует</h3>
+                <p>Сравнили 55 пар рук с одинаковыми рангами — например, 76s и 76o. Так виден именно эффект масти; связность дополнительно открывает стриты. Против реального диапазона опена BTN одномастные руки имеют на 2,9 п.п. больше эквити и реализуют на 16,6 п.п. больше.</p>
+                <p class="shape-delta"><strong>+2,9 п.п.</strong> эквити <span>·</span> <strong>+16,6 п.п.</strong> реализации</p>
               </div>
-              <div class="hand-shape-grid">
-                <div class="is-play"><span>Очевидная защита</span><strong>76s · T2s · JTs</strong><small>одна масть или хорошие связи</small></div>
-                <div class="is-fold"><span>Первые кандидаты в пас</span><strong>83o · 72o · 94o</strong><small>низкие, разномастные, большая дырка</small></div>
+              <div class="shape-evidence">
+                <div class="hand-shape-grid" aria-label="Сравнение эквити и реализации одномастных и разномастных рук">
+                  <div class="is-play">
+                    <span>Одномастные</span>
+                    <strong>76s · T2s · JTs</strong>
+                    <dl class="shape-metrics">
+                      <div><dt>Эквити</dt><dd>46,6%</dd></div>
+                      <div><dt>Реализация</dt><dd>90,3%</dd></div>
+                    </dl>
+                    <small>флеш-потенциал даже без связи</small>
+                  </div>
+                  <div class="is-fold">
+                    <span>Разномастные</span>
+                    <strong>76o · T2o · JTo</strong>
+                    <dl class="shape-metrics">
+                      <div><dt>Эквити</dt><dd>43,7%</dd></div>
+                      <div><dt>Реализация</dt><dd>73,7%</dd></div>
+                    </dl>
+                    <small>те же ранги, но без флеш-потенциала</small>
+                  </div>
+                </div>
+                <p class="shape-source"><strong>32 410</strong> сопоставленных коллов на сторону · 40–70 BB · 01.01–16.07.2026</p>
+                <small class="shape-method">Эквити — модель против 120 638 наблюдаемых опенов BTN. Реализация — EV с поправкой на выставления после фактических коллов; это описание поля, не рекомендация.</small>
               </div>
             </article>
 
@@ -156,28 +197,32 @@
               </div>
               <div class="realization-bars">
                 <div><span>Эквити на флопе</span><i><b style="width: 38.5%"></b></i><strong>38,5%</strong></div>
-                <div><span>Реализуем</span><i><b style="width: 27.8%"></b></i><strong>27,8%</strong></div>
+                <div><span>Реализуем<sup>*</sup></span><i><b style="width: 27.8%"></b></i><strong>27,8%</strong></div>
+                <p class="realization-footnote" role="note">
+                  <sup>*</sup>
+                  <span><b>Коэффициент реализации эквити:</b> <b class="realization-formula-value">27,8% ÷ 38,5% = 72,2%</b>. То есть в этом примере диапазон в среднем реализует около 72% исходного эквити. У разных типов рук коэффициент различается.</span>
+                </p>
               </div>
             </article>
 
             <article class="panel wisdom-slide bb-autopilot-slide" data-wisdom-slide>
               <div class="wisdom-copy-block">
                 <p class="eyebrow">Ошибка, которую трудно увидеть в статистике</p>
-                <h3>Не нажимай пас до того, как увидел рейзера</h3>
-                <p>Рука может быть пасом против EP и коллом против BTN. Решение «заранее» экономит секунду, но стирает прибыльные защиты.</p>
+                <h3>Никогда не ставь автофолд на BB</h3>
+                <p>Дождись, когда до тебя дойдёт слово, и только тогда принимай решение. Сначала определи рейзера и сайз, затем сверь руку с диапазоном защиты.</p>
               </div>
               <div class="autopilot-sequence">
                 <div><span>1</span><strong>Кто открыл?</strong><small>EP, MP, HJ, CO или BTN</small></div>
                 <div><span>2</span><strong>Какой сайз?</strong><small>2, 2,5 или 3 BB</small></div>
-                <div><span>3</span><strong>Рука входит в диапазон защиты?</strong><small>только теперь жми действие</small></div>
+                <div><span>3</span><strong>Рука входит в диапазон защиты?</strong><small>только теперь принимай решение</small></div>
               </div>
             </article>
 
             <article class="panel wisdom-slide bb-actions-slide" data-wisdom-slide>
               <div class="wisdom-copy-block">
                 <p class="eyebrow">Защита — не синоним колла</p>
-                <h3>Доведи три цвета до автоматизма</h3>
-                <p>Цель тренажёра — довести принятие решений по защите BB до автоматизма. В данных FF за 1 января — 16 июля 2026: 3-я лига против опена BTN 2 BB при стеке 40–70 BB играет 13,6% рук через 3-бет, 62,0% — через колл и 24,4% — через пас.</p>
+                <h3>Основная защита BB — колл. Но достаточно много рук мы хотим 3&#8209;бетить</h3>
+                <p>Если наш оппонент защищается только коллом, нам в целом без разницы, сколько рук он защищает: играть постфлоп в позиции не страшно. Там мы тоже очень часто получим оверфолды на c-bet.</p>
               </div>
               <div class="action-split" aria-label="Как играет 3-я лига против опена BTN 2 BB при стеке 40–70 BB, 1 января — 16 июля 2026">
                 <div class="is-raise"><span>3-бет</span><strong>13,6%</strong></div>
@@ -188,13 +233,27 @@
 
             <article class="panel wisdom-slide bb-scope-slide" data-wisdom-slide>
               <div class="wisdom-copy-block">
-                <p class="eyebrow">Граница этого урока</p>
-                <h3>Работает для банков 1 на 1</h3>
-                <p>Один игрок открыл, остальные выбросили, ты на BB закрываешь экшен. Если SB или кто-то ещё вошёл в банк, это уже мультивей: лучше шансы банка, но больше доминации и обратных имплайдов.</p>
+                <p class="eyebrow">Мультивей — отдельный спот</p>
+                <h3>В мультивей заходить широко не стоит</h3>
+                <p>Да, шансы банка лучше. Но наше эквити и его реализация страдают: на BB мы оказываемся в «бутерброде» между соперниками, а у коллера уже относительно сильный диапазон.</p>
               </div>
-              <div class="scope-contrast">
-                <div class="is-in"><span>Этот урок</span><strong>Рейз → все пас → BB</strong><small>один на один, экшен закрывается</small></div>
-                <div class="is-out"><span>Другой спот</span><strong>Рейз → колл → BB</strong><small>не переноси эту матрицу автоматически</small></div>
+              <div class="scope-comparison" aria-label="Как играет первая лига на BB против опена BTN 2 BB при эффективном стеке от 30 BB: один на один колл 62,3 процента и 3-бет 18,2 процента; после колла SB колл 46,7 процента и 3-бет 19,8 процента">
+                <article class="scope-scenario is-heads-up">
+                  <header><span>Один на один</span><strong>BTN 2 BB → BB</strong></header>
+                  <dl class="scope-metrics">
+                    <div class="is-call"><dt>Колл</dt><dd>62,3%</dd></div>
+                    <div class="is-threebet"><dt>3-бет</dt><dd>18,2%</dd></div>
+                  </dl>
+                </article>
+                <article class="scope-scenario is-multiway">
+                  <header><span>SB вошёл в банк</span><strong>BTN 2 BB → SB колл → BB</strong></header>
+                  <dl class="scope-metrics">
+                    <div class="is-call"><dt>Колл</dt><dd>46,7% <small>−15,5 п.п.</small></dd></div>
+                    <div class="is-threebet"><dt>3-бет</dt><dd>19,8% <small>+1,6 п.п.</small></dd></div>
+                  </dl>
+                </article>
+                <p class="scope-takeaway"><strong>Колл сжимается.</strong> 3-бет почти не меняется.</p>
+                <p class="scope-source">FF · 1-я лига · 30 BB+ · 01.01–16.07.2026 · N 206 135 / 55 770. Наблюдаемая игра поля, не рекомендация; прямой пуш входит в 3-бет.</p>
               </div>
             </article>
           </div>

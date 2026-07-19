@@ -17,18 +17,23 @@
   <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=a19790bf2596">
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
-  <link rel="stylesheet" href="assets/poker-field-lesson/lesson.css?v=05323337d3f2">
+  <link rel="stylesheet" href="assets/poker-field-lesson/lesson.css?v=aef737d0074a">
   <link rel="stylesheet" href="assets/poker-vs-3bet-defense-lesson/range-explorer.css?v=cadeb069ef93">
+  <link rel="stylesheet" href="assets/poker-kit/lesson-header.css?v=9641ee805ef9">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
+  <script defer src="assets/poker-kit/lesson-header.js?v=1b28bacb3505"></script>
 </head>
 <body class="poker-field-lesson vs-3bet-defense-lesson" data-lesson-key="vs-3bet-defense">
   <main class="field-lesson-app">
-    <header class="lesson-topline">
-      <div class="lesson-brand">
-        <a class="lesson-home" href="/">← В обучающий хаб</a>
-        <p class="eyebrow" data-lesson-kicker>Префлоп · против 3-бета</p>
+    <header class="lesson-topline lesson-chrome" data-lesson-header>
+      <div class="lesson-brand lesson-chrome__identity">
+        <a class="lesson-home lesson-chrome__back" href="/">← В обучающий хаб</a>
+        <div class="lesson-chrome__copy">
+          <p class="eyebrow lesson-chrome__eyebrow" data-lesson-kicker>Префлоп · против 3-бета</p>
+          <h1 class="lesson-chrome__title" data-lesson-title>Защита против 3-бета</h1>
+        </div>
       </div>
-      <nav class="step-tabs" role="tablist" aria-label="Шаги урока">
+      <nav class="step-tabs lesson-chrome__steps" role="tablist" aria-label="Шаги урока">
         <button class="step-tab is-active" id="dealTab" type="button" role="tab" aria-selected="true" aria-controls="dealPanel" data-step-target="deal">1. Раздача</button>
         <button class="step-tab" id="wisdomTab" type="button" role="tab" aria-selected="false" aria-controls="wisdomPanel" data-step-target="wisdom" disabled>2. Главное</button>
         <button class="step-tab" id="chartsTab" type="button" role="tab" aria-selected="false" aria-controls="chartsPanel" data-step-target="field" disabled>3. Чарты</button>
@@ -46,7 +51,7 @@
       <article class="deal-shell panel">
         <div class="deal-copy">
           <p class="eyebrow">Первое решение — до теории</p>
-          <h1 id="dealTitle" data-lesson-title>Защита против 3-бета</h1>
+          <h2 id="dealTitle" data-lesson-title>Защита против 3-бета</h2>
           <p class="intro-lead" data-intro-lead>Выбери линию на функциональном столе. После ответа урок покажет идею, поле и очередь похожих решений.</p>
           <details class="scope-disclosure">
             <summary>О выборке и границах урока</summary>
@@ -240,6 +245,6 @@
   <script src="assets/poker-vs-3bet-defense-lesson/data/vs3bet-field-data.js?v=79b189ed6a4b"></script>
   <script src="assets/poker-vs-3bet-defense-lesson/range-explorer.js?v=f5de27b4fe73"></script>
   <script src="assets/poker-vs-3bet-defense-lesson/field-explorer.js?v=9791a93d958e"></script>
-  <script src="assets/poker-field-lesson/lesson.js?v=2118e4ba6ad8"></script>
+  <script src="assets/poker-field-lesson/lesson.js?v=cefd74763623"></script>
 </body>
 </html>

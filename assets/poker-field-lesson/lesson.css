@@ -160,7 +160,7 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   pointer-events: none;
 }
 .deal-copy { align-self: stretch; display: flex; flex-direction: column; justify-content: center; max-width: 650px; }
-.deal-copy h1 {
+.deal-copy [data-lesson-title] {
   max-width: 15ch;
   margin: 0 0 18px;
   font-size: clamp(42px, 5vw, 76px);
@@ -929,7 +929,7 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   .lesson-topline { align-items: flex-start; flex-direction: column; }
   .step-tabs { width: 100%; justify-content: flex-start; }
   .deal-shell { grid-template-columns: 1fr; min-height: 0; }
-  .deal-copy h1 { max-width: 18ch; }
+  .deal-copy [data-lesson-title] { max-width: 18ch; }
   .scope-list { margin-top: 10px; }
   .cohort-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .example-groups { grid-template-columns: 1fr; }
@@ -953,7 +953,7 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   .flop-checkraise-lesson .step-tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .step-tab { min-width: 0; padding-inline: 6px; font-size: 11px; }
   .deal-shell { padding: 24px 14px 14px; }
-  .deal-copy h1 { font-size: clamp(38px, 11vw, 60px); }
+  .deal-copy [data-lesson-title] { font-size: clamp(38px, 11vw, 60px); }
   .lesson-table-host { min-height: 390px; padding-inline: 0; }
   .wisdom-heading, .field-heading, .examples-heading, .practice-heading { align-items: flex-start; flex-direction: column; gap: 10px; }
   .wisdom-heading > p, .field-heading > p, .examples-heading > p, .practice-heading > p { text-align: left; }

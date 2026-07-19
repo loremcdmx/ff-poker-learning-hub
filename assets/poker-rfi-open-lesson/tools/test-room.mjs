@@ -23,11 +23,17 @@ const renderer = context.FFTrainerSimulatorSnapshot;
 assert.ok(renderer?.renderTable, "snapshot renderer is available");
 
 const lessonCss = readFileSync(new URL("poker-rfi-open-lesson/lesson.css", assets), "utf8");
+const simulatorPolishCss = readFileSync(new URL("poker-simulator/simulator-polish.css", assets), "utf8");
 for (const token of [
-  "#practiceTable .seat.seat-slot-model:not(.is-hero)",
-  "--reveal-card-tx:0cqw!important",
-  "#practiceTable .seat.seat-slot-model.seat-zone-top:not(.is-hero)",
-  "#practiceTable .seat.seat-slot-model:not(.seat-zone-top):not(.is-hero)",
+  'data-opponent-card-dock="preferred"',
+  "--seat-cards-tx: var(--reveal-card-tx, 0cqw) !important",
+  "transform: translate(-50%, -80%) !important",
+  "transform: translate(-50%, -20%) !important"
+]) {
+  assert.ok(simulatorPolishCss.includes(token), `shared opponent-card dock contract: ${token}`);
+}
+
+for (const token of [
   "--hero-card-pocket-y:calc((var(--seat-h)*-.5)",
   ".curated-practice .practice-hud",
   "grid-template-columns:repeat(3,minmax(116px,max-content))",

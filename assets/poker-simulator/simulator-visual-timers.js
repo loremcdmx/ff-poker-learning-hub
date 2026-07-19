@@ -313,7 +313,10 @@
         elapsedMs: 0,
         leadMs: visualNumber(table, "actionSequenceLeadMs")
       });
-      if (!Array.isArray(stages) || stages.length <= 1) return;
+      // The common preflop -> flop case has exactly one stage. It needs the
+      // same scheduled start/reveal/settle paints as multi-street runouts;
+      // otherwise renderer updates can make its CSS delay race the actions.
+      if (!Array.isArray(stages) || !stages.length) return;
       stages.forEach((stage, index) => {
         scheduleActionBoardRevealRender(table, `start-${index}`, stage.startMs);
         scheduleActionBoardRevealRender(table, `reveal-end-${index}`, stage.revealEndMs);
