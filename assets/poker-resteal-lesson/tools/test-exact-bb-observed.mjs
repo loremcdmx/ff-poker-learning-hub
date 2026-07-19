@@ -29,11 +29,11 @@ for (const cohort of data.meta.cohortOrder) {
 }
 
 assert.deepEqual(totals, {
-  opportunities: 537347,
-  folds: 129797,
-  calls: 316940,
-  small3bets: 51337,
-  jams: 39273,
+  opportunities: 538722,
+  folds: 130147,
+  calls: 317716,
+  small3bets: 51493,
+  jams: 39366,
 }, "pooled exact-BB action counts reconcile to the frozen rank cube");
 assert.equal(totals.folds + totals.calls + totals.small3bets + totals.jams, totals.opportunities);
 
@@ -48,13 +48,13 @@ function categoryCounts(hands) {
 
 assert.deepEqual(
   categoryCounts(["TT", "JJ", "QQ", "KK", "AA"]),
-  [11442, 63, 285, 8892, 2202],
+  [11491, 63, 287, 8929, 2212],
   "TT+ visibly includes fold, call, non-all-in 3-bet, and direct jam instead of implying slowplay",
 );
 assert.deepEqual(
   categoryCounts(["KQo", "KJo", "KTo", "QJo", "QTo", "JTo"]),
-  [26770, 260, 22287, 1616, 2607],
+  [26864, 262, 22363, 1623, 2616],
   "offsuit broadways reconcile at the same exact-BB grain",
 );
 
-console.log("PASS exact BB observed field: N 537347, four exhaustive actions, fixed BTN 2 BB / 25-40 BB slice");
+console.log("PASS exact BB observed field: N 538722, four exhaustive actions, fixed BTN 2 BB / 25-40 BB slice");

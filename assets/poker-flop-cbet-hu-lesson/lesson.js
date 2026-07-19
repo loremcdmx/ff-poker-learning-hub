@@ -1225,10 +1225,13 @@
     }));
   }
 
-  function snapshotOptions(correctKey) {
+  function snapshotOptions(correctKey, spot) {
+    const largeSizingAlternative = correctKey === "small"
+      && trainerHasStrongMadeHand(spot && spot.board, spot && spot.hand);
     return SNAPSHOT_ACTIONS.map((option) => ({
       ...option,
-      correct: option.key === correctKey
+      correct: option.key === correctKey,
+      acceptableExploit: option.key === "large" && largeSizingAlternative
     }));
   }
 
@@ -1258,7 +1261,7 @@
         currentBet: 0,
         dealerPosition: "BTN"
       },
-      options: snapshotOptions(correctKey)
+      options: snapshotOptions(correctKey, spot)
     };
   }
 
@@ -1269,13 +1272,20 @@
       return null;
     }
     try {
-      return window.FFTrainerSimulator.renderDecision(host, spot, {
+      const rendered = window.FFTrainerSimulator.renderDecision(host, spot, {
         answered: Boolean(selectedKey),
         selectedKey: selectedKey || "",
         finished: false
       }, {
         decimalComma: true
       });
+      const alternative = host.querySelector('[data-answer-state="alternative"]');
+      if (alternative) {
+        alternative.setAttribute("aria-label", "С-бет 50–67% — допустимый сайзинг с сильной рукой");
+        const mark = alternative.querySelector(".table-action-result-mark");
+        if (mark) mark.textContent = "Допустимо";
+      }
+      return rendered;
     } catch (error) {
       host.innerHTML = '<p class="table-load-error">Не удалось собрать ситуацию. Обнови страницу.</p>';
       return null;
@@ -2109,6 +2119,7 @@
   function replaceTrainerFeedback(kicker, title, copy, lesson) {
     const host = query("[data-trainer-feedback]");
     host.classList.toggle("is-correct", kicker === "Верно");
+    host.classList.toggle("is-alternative", kicker === "Допустимо");
     host.classList.toggle("is-wrong", kicker === "Не совсем");
     host.replaceChildren();
     host.append(
@@ -2128,6 +2139,49 @@
     if (["25", "33", "small"].includes(action)) return "small";
     if (["50", "67", "large"].includes(action)) return "large";
     return "";
+  }
+
+  function trainerHasStrongMadeHand(board, hand) {
+    const boardCards = (Array.isArray(board) ? board : []).map(normalizeCardCode).filter(Boolean);
+    const handCards = (Array.isArray(hand) ? hand : []).map(normalizeCardCode).filter(Boolean);
+    if (boardCards.length !== 3 || handCards.length !== 2) return false;
+
+    const rankOrder = "23456789TJQKA";
+    const boardRanks = boardCards.map((card) => card[0]);
+    const handRanks = handCards.map((card) => card[0]);
+    const allCards = [...boardCards, ...handCards];
+    const allRanks = allCards.map((card) => card[0]);
+    const topBoardRank = boardRanks.reduce((best, rank) => (
+      rankOrder.indexOf(rank) > rankOrder.indexOf(best) ? rank : best
+    ), boardRanks[0]);
+    const combinedCount = (rank) => allRanks.filter((item) => item === rank).length;
+    const boardMatches = new Set(handRanks.filter((rank) => boardRanks.includes(rank)));
+
+    if (boardMatches.size >= 2) return true;
+    if (handRanks.some((rank) => combinedCount(rank) >= 3)) return true;
+    if (
+      handRanks[0] === handRanks[1]
+      && rankOrder.indexOf(handRanks[0]) > rankOrder.indexOf(topBoardRank)
+    ) return true;
+    if (boardMatches.has(topBoardRank)) {
+      const kicker = handRanks.find((rank) => rank !== topBoardRank);
+      if (rankOrder.indexOf(kicker) >= rankOrder.indexOf("T")) return true;
+    }
+
+    const flush = allCards.every((card) => card[1] === allCards[0][1]);
+    const uniqueValues = Array.from(new Set(allRanks.map((rank) => rankOrder.indexOf(rank) + 2)))
+      .sort((a, b) => a - b);
+    const straight = uniqueValues.length === 5 && (
+      uniqueValues[4] - uniqueValues[0] === 4
+      || uniqueValues.join(",") === "2,3,4,5,14"
+    );
+    return flush || straight;
+  }
+
+  function trainerSizingAlternative(spot, action) {
+    return action === "large"
+      && spot.accepted.includes("small")
+      && trainerHasStrongMadeHand(spot.board, spot.hand);
   }
 
   function normalizedTrainerSpot(spot) {
@@ -2292,9 +2346,11 @@
     const spot = state.trainerSpot;
     if (!SNAPSHOT_ACTIONS.some((option) => option.key === action)) return;
     const correct = spot.accepted.includes(action);
+    const alternative = !correct && trainerSizingAlternative(spot, action);
+    const credited = correct || alternative;
     state.trainerAnswered = true;
     state.trainerChoice = action;
-    if (correct) state.trainerScore += 1;
+    if (credited) state.trainerScore += 1;
 
     renderTrainer();
     query("[data-trainer-next]").disabled = false;
@@ -2303,10 +2359,14 @@
       ? spot.checkFeedback
       : "Здесь лучше изменить план. ";
     replaceTrainerFeedback(
-      correct ? "Верно" : "Не совсем",
-      spot.title,
-      `${correct ? "Хороший учебный выбор. " : incorrectLead}${spot.explanation}`,
-      "Сначала структура → потом размер."
+      correct ? "Верно" : alternative ? "Допустимо" : "Не совсем",
+      alternative ? "Крупнее с сильной рукой — разумно" : spot.title,
+      alternative
+        ? "В целом поставить больше с хорошей рукой — мудрый выбор. Но не забывай: достаточно компетентные оппоненты могут вчитываться в твой сайзинг и сужать твой диапазон по размеру ставки."
+        : `${correct ? "Хороший учебный выбор. " : incorrectLead}${spot.explanation}`,
+      alternative
+        ? "Мелкий c-bet остаётся базовым планом диапазона; крупный сайз не должен автоматически означать силу."
+        : "Сначала структура → потом размер."
     );
     query("[data-trainer-next]").focus({ preventScroll: true });
     if (window.matchMedia("(max-width: 860px)").matches) {

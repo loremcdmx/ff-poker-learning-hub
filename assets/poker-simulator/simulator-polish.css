@@ -7242,6 +7242,7 @@
       }
 
       .table-grid[data-count="1"] .client-controls:has(.bet-widget),
+      .table-grid[data-count="1"] .client-controls.is-practice-simple,
       .table-grid[data-count="1"] .client-controls.is-shove,
       .table-grid[data-count="1"] .client-controls.is-final-all-in {
         gap: 6px;
@@ -7254,6 +7255,7 @@
       }
 
       .table-grid[data-count="1"] .client-controls:has(.bet-widget) > .client-row .table-action,
+      .table-grid[data-count="1"] .client-controls.is-practice-simple > .client-row .table-action,
       .table-grid[data-count="1"] .client-controls.is-shove > .client-row .table-action,
       .table-grid[data-count="1"] .client-controls.is-final-all-in > .client-row .table-action {
         min-height: calc(var(--sim-1t-action-control-min, 40px) + 36px);

@@ -135,7 +135,7 @@
     hand: "QJo"
   };
   var cohortLabels = {
-    novice: "Совсем новички",
+    novice: "Ранги 15–17",
     league3: "3 лига",
     league2: "2 лига",
     league1: "1 лига"
@@ -151,11 +151,11 @@
   ];
   var gradientStops = [
     [0, [17, 21, 26]],
-    [1, [26, 42, 50]],
-    [5, [24, 61, 70]],
-    [15, [18, 83, 82]],
-    [30, [13, 103, 86]],
-    [50, [9, 116, 86]]
+    [1, [27, 48, 55]],
+    [5, [36, 68, 77]],
+    [15, [23, 94, 97]],
+    [30, [15, 115, 95]],
+    [50, [8, 127, 96]]
   ];
 
   function byId(id) { return document.getElementById(id); }
@@ -398,7 +398,7 @@
     var delta = noviceDisplay.available && leagueDisplay.available ? leagueRate - noviceRate : null;
     byId("rankHandReadout").innerHTML =
       '<div><span>Выбранная рука</span><strong>' + state.hand + '</strong><small>' + state.position + ' · ' + sizeLabels[state.size] + ' · ' + depthLabels[state.depth] + ' BB</small></div>' +
-      '<div><span>Совсем новички</span><strong>' + (noviceDisplay.available ? (noviceDisplay.estimated ? "≈" : "") + percent(noviceRate, 1) : "—") + '</strong><small>' + (noviceDisplay.estimated ? "оценка · " : "") + 'N ' + integer.format(novice[0]) + '</small></div>' +
+      '<div><span>Ранги 15–17</span><strong>' + (noviceDisplay.available ? (noviceDisplay.estimated ? "≈" : "") + percent(noviceRate, 1) : "—") + '</strong><small>' + (noviceDisplay.estimated ? "оценка · " : "") + 'N ' + integer.format(novice[0]) + '</small></div>' +
       '<div><span>' + cohortLabels[state.league] + '</span><strong>' + (leagueDisplay.available ? (leagueDisplay.estimated ? "≈" : "") + percent(leagueRate, 1) : "—") + '</strong><small>' + (leagueDisplay.estimated ? "оценка · " : "") + 'N ' + integer.format(league[0]) + '</small></div>' +
       '<div class="' + (delta > 0 ? 'is-up' : delta < 0 ? 'is-down' : 'is-flat') + '"><span>Разница</span><strong>' + (delta == null ? "—" : signed(delta)) + '</strong><small>' + (delta == null ? "нет сравнения" : "процентных пункта") + '</small></div>';
   }

@@ -4604,6 +4604,7 @@
        huge empty box (align-content:end on a 156px min-height). Idle / waiting
        keep their own compact button-only docks below. */
     .table-grid[data-count="1"] .client-controls:has(.bet-widget),
+    .table-grid[data-count="1"] .client-controls.is-practice-simple,
     .table-grid[data-count="1"] .client-controls.is-shove,
     .table-grid[data-count="1"] .client-controls.is-final-all-in {
       min-height: 0;
@@ -4617,6 +4618,7 @@
        raise; Пас/Колл(/Олл-ин) in the no-widget shove & call-only docks) — big,
        side-by-side targets rather than small right-aligned chips. */
     .table-grid[data-count="1"] .client-controls:has(.bet-widget) > .client-row,
+    .table-grid[data-count="1"] .client-controls.is-practice-simple > .client-row,
     .table-grid[data-count="1"] .client-controls.is-shove > .client-row,
     .table-grid[data-count="1"] .client-controls.is-final-all-in > .client-row {
       display: grid;
@@ -4635,6 +4637,7 @@
        standard->auto->large->xl for the ui-scale gate. The room comes from the
        compact timebank below. */
     .table-grid[data-count="1"] .client-controls:has(.bet-widget) > .client-row .table-action,
+    .table-grid[data-count="1"] .client-controls.is-practice-simple > .client-row .table-action,
     .table-grid[data-count="1"] .client-controls.is-shove > .client-row .table-action,
     .table-grid[data-count="1"] .client-controls.is-final-all-in > .client-row .table-action {
       width: 100%;

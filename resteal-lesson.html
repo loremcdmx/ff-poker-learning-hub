@@ -12,13 +12,13 @@
   <link rel="stylesheet" href="assets/poker-kit/decks/decks.css?v=0639396cc47c">
   <link rel="stylesheet" href="assets/poker-kit/suit-text.css?v=7689ca588fe6">
   <link rel="stylesheet" href="assets/poker-kit/chips/chips.css?v=ed4e97084f43">
-  <link rel="stylesheet" href="assets/poker-simulator/simulator-table.css?v=db213746612e">
-  <link rel="stylesheet" href="assets/poker-simulator/simulator-polish.css?v=bc2cfdc45ad0">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-table.css?v=52e0c7d7b807">
+  <link rel="stylesheet" href="assets/poker-simulator/simulator-polish.css?v=aeada3f22e44">
   <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=a19790bf2596">
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
-  <link rel="stylesheet" href="assets/poker-resteal-lesson/lesson.css?v=2106de3e0d8a">
-  <link rel="stylesheet" href="assets/poker-resteal-lesson/rank-comparison.css?v=d1a958ad1207">
+  <link rel="stylesheet" href="assets/poker-resteal-lesson/lesson.css?v=73a95ae68bb5">
+  <link rel="stylesheet" href="assets/poker-resteal-lesson/rank-comparison.css?v=ab72ead3a368">
   <link rel="stylesheet" href="assets/poker-kit/lesson-header.css?v=9641ee805ef9">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
   <script defer src="assets/poker-kit/lesson-header.js?v=1b28bacb3505"></script>
@@ -225,7 +225,7 @@
           <div class="rank-evidence-copy">
             <p class="eyebrow">Данные FF · ранг на момент раздачи</p>
             <h3>Игроки более высоких лиг пушат чаще</h3>
-            <p>Слева всегда совсем новички. Справа выбери лигу и сравни тот же спот на одинаковой позиции, сайзе и глубине.</p>
+            <p>Слева — фиксированная база рангов 15–17. Справа выбери лигу и сравни тот же спот на одинаковой позиции, сайзе и глубине.</p>
           </div>
           <div class="rank-growth-strip" id="rankGrowthStrip" aria-label="ABI и частота рестил-пушей по уровню FF"></div>
         </div>
@@ -250,11 +250,11 @@
         <div class="rank-evidence-compare">
           <section class="rank-chart is-novice" aria-labelledby="rankNoviceTitle">
             <div class="rank-chart-head">
-              <div><span>Слева · фиксировано</span><h4 id="rankNoviceTitle">Совсем новички</h4></div>
+              <div><span>База сравнения</span><h4 id="rankNoviceTitle">Ранги 15–17</h4></div>
               <div class="rank-chart-stats" id="rankNoviceStats"></div>
             </div>
-            <div class="rank-action-bar" id="rankNoviceActionBar" aria-label="Распределение действий совсем новичков"></div>
-            <div class="rank-matrix" id="rankNoviceMatrix" role="grid" aria-label="Рестил-пуши совсем новичков"></div>
+            <div class="rank-action-bar" id="rankNoviceActionBar" aria-label="Распределение действий игроков рангов 15–17"></div>
+            <div class="rank-matrix" id="rankNoviceMatrix" role="grid" aria-label="Рестил-пуши игроков рангов 15–17"></div>
           </section>
 
           <section class="rank-chart is-league" aria-labelledby="rankLeagueTitle">
@@ -362,17 +362,17 @@
         <div class="reaction-range-layout">
           <section class="reaction-range-card" aria-labelledby="reaction-range-title">
             <div class="reaction-range-head">
-              <div><p class="eyebrow">Известные карты продолжения</p><h3 id="reaction-range-title">Из чего состоял рейз-колл</h3></div>
-              <div class="reaction-range-legend" aria-label="Цвета действий"><span><i class="is-call"></i>Колл</span><span><i class="is-reraise"></i>Ререйз поверх</span></div>
+              <div><p class="eyebrow">Нормированный диапазон продолжения</p><h3 id="reaction-range-title">Как часто продолжают с каждой рукой</h3></div>
+              <div class="reaction-range-legend" aria-label="Шкала матрицы"><span><i></i><b id="reactionRangeScale">AA = 100</b></span></div>
             </div>
             <div class="reaction-matrix-scroll" tabindex="0"><div class="reaction-matrix" id="reactionMatrix" role="grid" aria-label="Матрица известных рук продолжения"></div></div>
           </section>
           <aside class="reaction-reading" aria-labelledby="reaction-reading-title">
             <p class="eyebrow">Как читать</p>
-            <h3 id="reaction-reading-title">Это состав диапазона, не готовый чарт</h3>
-            <p>Карты пасов почти всегда скрыты. Поэтому матрица показывает, какие известные руки дошли до колла или ререйза, а не вероятность продолжения каждой клетки.</p>
+            <h3 id="reaction-reading-title">Сравнивай с премиумами</h3>
+            <p>В клетке — продолжения на одну физическую комбинацию относительно AA; в узком срезе с малой выборкой — относительно общей премиум-базы. Например, ≈50% означает: с этой рукой продолжали примерно вдвое реже ориентира.</p>
             <div class="reaction-top-hands" id="reactionTopHands" aria-label="Самые частые известные руки продолжения"></div>
-            <p class="reaction-sample-note">Яркость нормирована на число комбинаций: пары, suited и offsuit руки можно сравнивать честнее. Наведи на клетку, чтобы увидеть N и распределение действий.</p>
+            <p class="reaction-sample-note">Пары, suited и offsuit нормированы на 6 / 4 / 12 комбинаций, шкала линейная. Карты пасов почти всегда скрыты, поэтому это относительный индекс, а не точный call%. Для рук, которые открывают не всегда, внутри остаётся влияние частоты самого опена. Наведи на клетку, чтобы увидеть исходный N.</p>
           </aside>
         </div>
         <p class="reaction-source" id="reactionSource"></p>
@@ -427,18 +427,18 @@
   <script defer src="assets/poker-kit/decks/deck-library.js?v=b03058b680c1"></script>
   <script defer src="assets/poker-kit/chips/chip-library.js?v=eab58b025e92"></script>
   <script defer src="assets/poker-simulator/simulator-board-render.js?v=cb215df9f7dd"></script>
-  <script defer src="assets/poker-simulator/simulator-seat-slots.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-simulator/simulator-seat-renderer.js?v=fe2184958bf0"></script>
+  <script defer src="assets/poker-simulator/simulator-seat-slots.js?v=d7ddfd732333"></script>
+  <script defer src="assets/poker-simulator/simulator-seat-renderer.js?v=c5dd4f6c2a15"></script>
   <script defer src="assets/poker-simulator/simulator-table-renderer.js?v=37282f928111"></script>
   <script defer src="assets/poker-trainer-shell/simulator-snapshot.js?v=20260715-ffstart-handoff-v16"></script>
   <script defer src="assets/poker-simulator/embed.js?v=d3bdd7d52145"></script>
   <script defer src="assets/poker-trainer-shell/simulator-practice.js?v=591b8e2f6784"></script>
   <script defer src="assets/poker-resteal-lesson/data/browser-bundle.js?v=d83e065bf574"></script>
   <script defer src="assets/poker-resteal-lesson/data.js?v=20260713-2"></script>
-  <script defer src="assets/poker-resteal-lesson/data/resteal-rank-data.js?v=c522607916cc"></script>
+  <script defer src="assets/poker-resteal-lesson/data/resteal-rank-data.js?v=8c6917362286"></script>
   <script defer src="assets/poker-resteal-lesson/engine.js?v=b2b87c4f94e4"></script>
-  <script defer src="assets/poker-resteal-lesson/rank-comparison.js?v=b9933c2936c0"></script>
+  <script defer src="assets/poker-resteal-lesson/rank-comparison.js?v=6b9fea074d49"></script>
   <script defer src="assets/poker-progress/progress.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-resteal-lesson/lesson.js?v=7f1eb3ba9524"></script>
+  <script defer src="assets/poker-resteal-lesson/lesson.js?v=d0b8c9b87871"></script>
 </body>
 </html>

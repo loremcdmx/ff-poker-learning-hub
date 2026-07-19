@@ -124,7 +124,7 @@ assert(epReviewChart.includes("is-hit is-correct"), "post-hand review marks the 
 assert(!epReviewChart.includes("is-mixed") && !epReviewChart.includes("<small>"), "post-hand review stays binary and does not render source weights");
 for (const chartClass of ["is-pair", "is-suited", "is-offsuit", "is-target-open"]) assert(epReviewChart.includes(chartClass), `post-hand review renders ${chartClass}`);
 for (const paletteSelector of [".rfi-review-cell.is-pair", ".rfi-review-cell.is-suited", ".rfi-review-cell.is-offsuit", ".rfi-review-cell.is-target-open"]) assert(rfiCss.includes(paletteSelector), `simulator review styles ${paletteSelector}`);
-for (const legendClass of ["is-open", "is-pair", "is-suited", "is-offsuit"]) assert(rfiPackSource.includes(`class="${legendClass}"`), `simulator review legend includes ${legendClass}`);
+for (const legendClass of ["is-open", "is-fold", "is-hit"]) assert(rfiPackSource.includes(`class="${legendClass}"`), `simulator review legend includes ${legendClass}`);
 const actionControls = readFileSync(resolve(root, "assets/poker-simulator/simulator-action-controls.js"), "utf8");
 assert(rfiPackSource.includes('action: "rfi-play-again"'), "RFI pack registers an in-frame restart action");
 assert(actionControls.includes("PokerSimulatorPracticePacks?.sessionCompleteAction"), "terminal controls request restart behavior from the active practice pack");
@@ -144,7 +144,7 @@ assert(restealLessonHtml.includes("Наблюдаемый chipEV · реальн
 assert(restealLessonHtml.includes("Это наблюдаемая выборка"), "resteal math states the self-selection limitation");
 assert(restealLessonHtml.includes('data-step-target="reaction"'), "opener response evidence has a dedicated lesson tab");
 assert(restealLessonSource.includes("resteal-reaction-summary.json"), "opener response tab loads the compact strict-response cube");
-assert(restealLessonHtml.includes("Это состав диапазона, не готовый чарт"), "response matrix is not presented as strategic advice");
+assert(restealLessonHtml.includes("относительный индекс, а не точный call%"), "response matrix is not presented as an absolute call chart");
 
 console.log(`✓ resteal field grids: reg ${goodRegGrid.toFixed(1)}% · nit ${nitGrid.toFixed(1)}% · active fish ${activeFishGrid.toFixed(1)}%`);
 console.log("✓ learning contracts passed");

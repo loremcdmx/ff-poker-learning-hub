@@ -775,6 +775,11 @@
     return hand.endsWith("s") ? 4 : 12;
   }
 
+  function reactionNormalizedIndex(density, anchorDensity) {
+    if (!(density > 0) || !(anchorDensity > 0)) return 0;
+    return clamp(density / anchorDensity, 0, 1);
+  }
+
   function selectedReactionSlice() {
     const data = state.reactionData;
     if (!data?.spots?.length) return null;
@@ -816,8 +821,9 @@
     const overview = $("#reactionOverview");
     const matrix = $("#reactionMatrix");
     const topHands = $("#reactionTopHands");
+    const scale = $("#reactionRangeScale");
     const source = $("#reactionSource");
-    if (!status || !overview || !matrix || !topHands || !source) return;
+    if (!status || !overview || !matrix || !topHands || !scale || !source) return;
     if (!slice?.totals?.N) {
       status.classList.add("is-error");
       status.textContent = "Для такого сочетания фильтров нет достаточной выборки.";
@@ -833,9 +839,7 @@
     const total = slice.totals.N;
     const actions = [
       ["F", "Пас", "is-fold", "опенер выбросил"],
-      ["C", "Колл", "is-call", "принял олл-ин"],
-      ["R", "Ререйз поверх", "is-reraise", "покрыл и изолировал"],
-      ["continue", "Продолжил всего", "is-continue", "колл + ререйз"]
+      ["continue", "Продолжил", "is-continue", "принял олл-ин"]
     ];
     overview.innerHTML = actions.map(([key, label, className, note]) => {
       const count = key === "continue" ? slice.totals.C + slice.totals.R : slice.totals[key];
@@ -844,28 +848,44 @@
 
     const known = Object.entries(slice.hands).map(([hand, values]) => ({
       hand,
-      C: Number(values.C) || 0,
-      R: Number(values.R) || 0,
       N: Number(values.N) || (Number(values.C) || 0) + (Number(values.R) || 0),
       density: (Number(values.N) || (Number(values.C) || 0) + (Number(values.R) || 0)) / reactionComboCount(hand)
     }));
     const byHand = new Map(known.map((item) => [item.hand, item]));
-    const maxDensity = Math.max(...known.map((item) => item.density), 1);
+    const aa = byHand.get("AA") || { N: 0, density: 0 };
+    const premiumHands = ["AA", "KK", "QQ", "AKs", "AKo"];
+    const premium = premiumHands.reduce((summary, hand) => {
+      const item = byHand.get(hand);
+      if (!item?.N) return summary;
+      summary.N += item.N;
+      summary.combos += reactionComboCount(hand);
+      return summary;
+    }, { N: 0, combos: 0 });
+    const useAaAnchor = aa.N >= 30;
+    const premiumDensity = premium.combos ? premium.N / premium.combos : 0;
+    const anchorDensity = useAaAnchor ? aa.density : premiumDensity || Math.max(...known.map((item) => item.density), 1);
+    const anchorLabel = useAaAnchor ? "AA = 100" : "Премиум-база = 100";
+    scale.textContent = anchorLabel;
     matrix.innerHTML = Array.from({ length: 169 }, (_, index) => {
       const hand = reactionHand(Math.floor(index / 13), index % 13);
-      const values = byHand.get(hand) || { C: 0, R: 0, N: 0, density: 0 };
-      const callShare = values.N ? values.C / values.N * 100 : 50;
-      const strength = values.N ? 0.18 + 0.72 * Math.sqrt(values.density / maxDensity) : 0;
+      const values = byHand.get(hand) || { N: 0, density: 0 };
+      const normalized = reactionNormalizedIndex(values.density, anchorDensity);
+      const normalizedPct = Math.round(normalized * 100);
+      const strength = values.N ? 0.08 + 0.84 * normalized : 0;
       const title = values.N
-        ? `${hand}: N ${sampleSize(values.N)} · колл ${pct(values.C / values.N, 1)} · ререйз ${pct(values.R / values.N, 1)}`
+        ? `${hand}: примерно ${normalizedPct}% от ${anchorLabel.toLowerCase()} · N ${sampleSize(values.N)} продолжений · ${reactionComboCount(hand)} комбинаций`
         : `${hand}: известных продолжений нет`;
-      return `<span class="reaction-cell ${values.N ? "" : "is-empty"}" role="gridcell" style="--call-share:${callShare.toFixed(2)}%;--reaction-strength:${strength.toFixed(3)}" title="${title}"><b>${hand}</b>${values.N ? `<small>${sampleSize(values.N)}</small>` : ""}</span>`;
+      const sampleClass = values.N > 0 && values.N < 10 ? "is-thin" : "";
+      return `<span class="reaction-cell ${values.N ? "" : "is-empty"} ${sampleClass}" role="gridcell" style="--reaction-strength:${strength.toFixed(3)}" title="${title}" aria-label="${title}"><b>${hand}</b>${values.N ? `<small>≈${normalizedPct}%</small>` : ""}</span>`;
     }).join("");
 
     const leaders = known.sort((left, right) => right.density - left.density || right.N - left.N).slice(0, 8);
-    topHands.innerHTML = leaders.map((item, index) => `<span><i>${index + 1}</i><b>${item.hand}</b><small>N ${sampleSize(item.N)} · колл ${pct(item.C / item.N, 0)}</small></span>`).join("");
+    topHands.innerHTML = leaders.map((item, index) => {
+      const normalizedPct = Math.round(reactionNormalizedIndex(item.density, anchorDensity) * 100);
+      return `<span><i>${index + 1}</i><b>${item.hand}</b><small>≈${normalizedPct}% · N ${sampleSize(item.N)}</small></span>`;
+    }).join("");
     const meta = state.reactionData.meta || {};
-    source.textContent = `FF · ${formatObservedDate(meta.windowStartInclusive)}–${formatObservedDate(meta.windowEndExclusive)} (правая граница не включена) · N ${sampleSize(total)} в выбранном срезе. В строгой выгрузке однозначно сопоставлено ${number((Number(meta.matchRatePct) || 0), 1)}% исходных опенеров; пропуски не считаются пасами. Только прямые all-in рестилы из SB/BB против CO/BTN, без лимперов. Наблюдение поля, не рекомендация.`;
+    source.textContent = `FF · ${formatObservedDate(meta.windowStartInclusive)}–${formatObservedDate(meta.windowEndExclusive)} (правая граница не включена) · N ${sampleSize(total)} в выбранном срезе. В строгой выгрузке однозначно сопоставлено ${number((Number(meta.matchRatePct) || 0), 1)}% исходных опенеров; пропуски не считаются пасами. Только прямые all-in рестилы из SB/BB против CO/BTN, без лимперов. Технические C/R-коды трекера объединены в «продолжил»: после прямого all-in это одно стратегическое решение. Индекс линеен и нормирован на физические комбинации; это не абсолютный call%. Наблюдение поля, не рекомендация.`;
   }
 
   function renderEvidence() {

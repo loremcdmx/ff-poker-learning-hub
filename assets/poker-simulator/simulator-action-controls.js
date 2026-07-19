@@ -137,8 +137,10 @@
         const facingRaiseDecision = Number(table.toCall || 0) > 0;
         const practiceDecisionClass = root.PokerSimulatorPracticePacks?.decisionClass?.({ table, settings: getState().settings }) || "";
         const practiceDecisionClassName = practiceDecisionClass ? ` ${practiceDecisionClass}` : "";
-        const fixedRfiOpeningDecision = practiceDecisionClass.split(/\s+/).includes("is-rfi-opening");
-        const fixedRestealDecision = practiceDecisionClass.split(/\s+/).includes("is-resteal-decision");
+        const practiceDecisionClasses = practiceDecisionClass.split(/\s+/).filter(Boolean);
+        const simplePracticeDecision = practiceDecisionClasses.includes("is-practice-simple");
+        const fixedRfiOpeningDecision = practiceDecisionClasses.includes("is-rfi-opening");
+        const fixedRestealDecision = practiceDecisionClasses.includes("is-resteal-decision");
         const aggressiveVerb = fixedRfiOpeningDecision ? "Опен" : (table.toCall > 0 ? "Рейз" : (table.street === "preflop" ? "Рейз" : "Бет"));
         // Action buttons show the verb only — the live size is already on the
         // slider/stepper, and a bare label avoids the "Рейз ..." truncation seen
@@ -219,7 +221,7 @@
           return `
             <div class="client-controls is-facing-raise${practiceDecisionClassName}" data-commit-action="raise-custom">
               ${timebankHtml}
-              ${fixedRfiOpeningDecision ? "" : renderBetWidget(table, "raise-custom")}
+              ${simplePracticeDecision ? "" : renderBetWidget(table, "raise-custom")}
               <div class="client-row">
                 ${actionButton("fold", foldLabel, "is-fold")}
                 ${actionButton("call", callContext)}
@@ -232,7 +234,7 @@
         if (table.street === "preflop") {
           if (isAllInOnly) {
             return `
-              <div class="client-controls is-shove" data-commit-action="raise-custom">
+              <div class="client-controls is-shove${practiceDecisionClassName}" data-commit-action="raise-custom">
                 ${timebankHtml}
                 <div class="client-row">
                   ${table.canCheck ? actionButton("check", checkLabel) : actionButton("fold", foldLabel, "is-fold")}
@@ -242,9 +244,9 @@
             `;
           }
         return `
-          <div class="client-controls" data-commit-action="raise-custom">
+          <div class="client-controls${practiceDecisionClassName}" data-commit-action="raise-custom">
             ${timebankHtml}
-            ${renderBetWidget(table, "raise-custom")}
+            ${simplePracticeDecision ? "" : renderBetWidget(table, "raise-custom")}
             <div class="client-row">
               ${table.canCheck ? actionButton("check", checkLabel) : actionButton("fold", foldLabel, "is-fold")}
               ${aggressiveButton("raise-custom", table.canCheck ? "" : "C")}
@@ -255,7 +257,7 @@
 
         if (isAllInOnly) {
           return `
-            <div class="client-controls is-shove" data-commit-action="bet-custom">
+            <div class="client-controls is-shove${practiceDecisionClassName}" data-commit-action="bet-custom">
               ${timebankHtml}
               <div class="client-row">
                 ${actionButton("check", checkLabel)}
@@ -266,9 +268,9 @@
         }
 
         return `
-          <div class="client-controls" data-commit-action="bet-custom">
+          <div class="client-controls${practiceDecisionClassName}" data-commit-action="bet-custom">
             ${timebankHtml}
-            ${renderBetWidget(table, "bet-custom")}
+            ${simplePracticeDecision ? "" : renderBetWidget(table, "bet-custom")}
             <div class="client-row">
               ${actionButton("check", checkLabel)}
               ${aggressiveButton("bet-custom")}

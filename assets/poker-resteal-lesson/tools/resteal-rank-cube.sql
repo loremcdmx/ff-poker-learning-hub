@@ -4,7 +4,8 @@
 -- (user_id,rang,'rank_start_at','rank_end_at') tuples before running query 2.
 
 -- 1. BigQuery rank bridge. Result used for the frozen export: 6,426 rows,
--- 2,463 users, no overlapping intervals, all ranks 1-18.
+-- 2,463 users, no overlapping intervals, all ranks 1-18. Rank 18 is kept in
+-- the bridge for auditability, then explicitly excluded from the four cohorts.
 SELECT
   h.user_id,
   h.rang,
@@ -77,10 +78,11 @@ classified AS
 (
   SELECT
     multiIf(
-      x.2 BETWEEN 16 AND 18, 'novice',
-      x.2 BETWEEN 11 AND 15, 'league3',
+      x.2 BETWEEN 15 AND 17, 'novice',
+      x.2 BETWEEN 11 AND 14, 'league3',
       x.2 BETWEEN 6 AND 10, 'league2',
-      'league1'
+      x.2 BETWEEN 1 AND 5, 'league1',
+      'excluded'
     ) AS cohort,
     if(x.6 = 0, 'BTN', 'CO') AS opener_position,
     multiIf(abs(x.7 - 2.0) <= 0.05, '2.0', abs(x.7 - 2.5) <= 0.05, '2.5', '3.0') AS open_size_bb,
@@ -113,6 +115,7 @@ SELECT
   min(played_at) AS first_hand_at,
   max(played_at) AS last_hand_at
 FROM classified
+WHERE cohort != 'excluded'
 GROUP BY cohort, opener_position, open_size_bb, depth_band, holecards_str
 ORDER BY cohort, opener_position, open_size_bb, depth_band, holecards_str;
 
@@ -121,8 +124,8 @@ WITH abi_base AS
 (
   SELECT
     CASE
-      WHEN f.rang BETWEEN 16 AND 18 THEN 'novice'
-      WHEN f.rang BETWEEN 11 AND 15 THEN 'league3'
+      WHEN f.rang BETWEEN 15 AND 17 THEN 'novice'
+      WHEN f.rang BETWEEN 11 AND 14 THEN 'league3'
       WHEN f.rang BETWEEN 6 AND 10 THEN 'league2'
       WHEN f.rang BETWEEN 1 AND 5 THEN 'league1'
     END AS cohort,
@@ -133,7 +136,7 @@ WITH abi_base AS
   JOIN `analytics_mcp_readonly.mcp__check_users` AS u USING (user_id)
   WHERE f.date_start >= TIMESTAMP '2026-01-01 00:00:00+00'
     AND f.date_start < TIMESTAMP '2026-07-14 00:00:00+00'
-    AND f.rang BETWEEN 1 AND 18
+    AND f.rang BETWEEN 1 AND 17
     AND f.pack_id IS NOT NULL
     AND f.is_selfplay = FALSE
     AND u.is_real_player = TRUE

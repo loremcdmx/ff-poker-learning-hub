@@ -349,7 +349,7 @@ const detailed = {
     version: "2026-07-17.1",
     description: "Original CO/BTN opener response to a direct SB/BB resteal jam; observed field behavior, not a strategy target.",
     spot: "No limpers; Hero SB/BB direct all-in versus original CO/BTN open 2/2.5/3 BB; effective stack 25–40 BB; 3–9 max.",
-    actions: { F: "fold", C: "call", R: "cover-and-reraise" },
+    actions: { F: "fold", C: "call", R: "technical-continuation-code" },
     samplePolicy: "The runtime falls back from a category to its reg/fish super-group below 500 known continuing hole cards.",
     source: commonSource
   },

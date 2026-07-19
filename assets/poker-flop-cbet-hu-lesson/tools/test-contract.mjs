@@ -70,6 +70,12 @@ assert.match(lessonSource, /window\.FFTrainerSimulator\.renderDecision/, "intro 
 assert.match(lessonSource, /closest\("\[data-option-key\]"\)/, "action clicks are delegated from the functional table");
 assert.match(lessonSource, /function introSnapshotSpot\([\s\S]*return snapshotSpot/, "intro and practice share one native snapshot spot builder");
 assert.match(lessonSource, /accepted\.length !== 1/, "every generated c-bet spot has one unambiguous correct action class");
+assert.match(lessonSource, /function trainerHasStrongMadeHand\([\s\S]*?boardMatches\.has\(topBoardRank\)[\s\S]*?flush \|\| straight/, "top pair and stronger made hands are detected for sizing tolerance");
+assert.match(lessonSource, /rankOrder\.indexOf\(kicker\) >= rankOrder\.indexOf\("T"\)/, "top-pair sizing tolerance requires a strong kicker rather than any weak top pair");
+assert.match(lessonSource, /acceptableExploit: option\.key === "large" && largeSizingAlternative/, "large sizing with strong value is rendered as an acceptable alternative, not an error");
+assert.match(lessonSource, /const credited = correct \|\| alternative[\s\S]*?if \(credited\) state\.trainerScore \+= 1/, "accepted strong-value sizing does not count as a miss");
+assert.match(lessonSource, /достаточно компетентные оппоненты могут вчитываться в твой сайзинг/, "yellow feedback warns that competent opponents can read sizing tells");
+assert.match(lessonCss, /\.trainer-feedback\.is-alternative[\s\S]*?\.table-action\.is-alternative/, "acceptable sizing has a distinct yellow feedback and action treatment");
 assert.doesNotMatch(lessonSource, /queryAll\("\[data-(?:deal|trainer)-action\]"/, "lesson code has no external poker-action controls");
 assert.match(lessonSource, /function updateTrainerHud\([\s\S]*data-trainer-hands[\s\S]*data-trainer-correct[\s\S]*data-trainer-misses/, "practice HUD tracks hands, correct answers and misses");
 assert.match(

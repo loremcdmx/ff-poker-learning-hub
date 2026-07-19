@@ -5,10 +5,10 @@
 
 .rank-evidence-slide {
   --rank-frequency-0: #11151a;
-  --rank-frequency-5: #183d46;
-  --rank-frequency-15: #125352;
-  --rank-frequency-30: #0d6756;
-  --rank-frequency-50: #097456;
+  --rank-frequency-5: #24444d;
+  --rank-frequency-15: #175e61;
+  --rank-frequency-30: #0f735f;
+  --rank-frequency-50: #087f60;
   display: grid;
   gap: clamp(14px, 1.6vw, 22px);
   min-height: 0;
@@ -161,16 +161,16 @@
 }
 .rank-chart.is-novice { border-color: rgba(255, 223, 81, .38); box-shadow: inset 0 3px 0 rgba(255, 223, 81, .62); }
 .rank-chart.is-league { border-color: rgba(87, 214, 154, .36); box-shadow: inset 0 3px 0 rgba(87, 214, 154, .58); }
-.rank-chart-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; min-width: 0; padding: 10px 11px; border: 1px solid rgba(255, 255, 255, .09); border-radius: 11px; background: #11151a; }
-.rank-chart.is-novice .rank-chart-head { border-color: rgba(255, 223, 81, .20); }
-.rank-chart.is-league .rank-chart-head { border-color: rgba(87, 214, 154, .20); }
+.rank-chart-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; min-width: 0; padding: 12px 13px; border: 1px solid rgba(255, 255, 255, .09); border-radius: 11px; background: #121820; }
+.rank-chart.is-novice .rank-chart-head { border-color: rgba(255, 223, 81, .22); background: linear-gradient(115deg, rgba(255, 223, 81, .10), transparent 58%), #121820; }
+.rank-chart.is-league .rank-chart-head { border-color: rgba(87, 214, 154, .22); background: linear-gradient(115deg, rgba(87, 214, 154, .10), transparent 58%), #121820; }
 .rank-chart-head > div:first-child { min-width: 0; }
 .rank-chart-head > div:first-child > span { display: block; margin-bottom: 3px; color: rgba(244, 241, 236, .74); font-size: 10px; font-weight: 850; letter-spacing: .055em; text-transform: uppercase; }
-.rank-chart-head h4 { margin: 0; font-size: 20px; line-height: 1.1; }
+.rank-chart-head h4 { margin: 0; font-size: 22px; line-height: 1.1; }
 .rank-chart-stats { display: grid; grid-template-columns: auto auto; align-items: baseline; gap: 2px 7px; min-width: 150px; text-align: right; }
 .rank-chart-stats small { color: rgba(244, 241, 236, .74); font-size: 10px; font-weight: 800; }
 .rank-chart-stats strong { color: #9aefc3; font-size: 25px; line-height: 1; }
-.rank-chart-stats span { grid-column: 1 / -1; color: rgba(244, 241, 236, .68); font-size: 10px; }
+.rank-chart-stats span { grid-column: 1 / -1; color: rgba(244, 241, 236, .80); font-size: 10.5px; }
 .rank-chart-stats em { grid-column: 1 / -1; margin-top: 1px; font-size: 9px; font-style: normal; font-weight: 850; }
 .rank-chart-stats .is-up { color: var(--good); }
 .rank-chart-stats .is-down { color: var(--bad); }
@@ -185,7 +185,7 @@
 .rank-action-bar .is-small-raise { background: #b786f3; }
 .rank-action-bar .is-jam { background: #4bd497; }
 
-.rank-matrix { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); justify-self: center; gap: 2px; width: min(100%, 440px); min-width: 0; }
+.rank-matrix { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); justify-self: center; gap: 2px; width: min(100%, 494px); min-width: 0; }
 .rank-cell {
   position: relative;
   display: grid;
@@ -203,19 +203,19 @@
   line-height: 1;
 }
 .rank-cell:hover { z-index: 2; border-color: var(--brand-yellow); transform: scale(1.08); }
-.rank-cell::after { position: absolute; top: 0; right: 0; width: 0; height: 0; border-top: 7px solid var(--sample-marker, transparent); border-left: 7px solid transparent; content: ""; pointer-events: none; }
-.rank-cell b { overflow: hidden; font-size: clamp(9px, .78vw, 11px); line-height: 1; text-overflow: clip; text-shadow: 0 1px 2px rgba(0, 0, 0, .88); white-space: nowrap; }
-.rank-cell small { color: #e8ece9; font-size: clamp(7px, .62vw, 9px); font-weight: 780; line-height: 1; text-shadow: 0 1px 2px rgba(0, 0, 0, .88); }
-.rank-cell.is-empty { border-color: rgba(255, 255, 255, .08); color: #737980; background: #15171b; }
-.rank-cell.is-empty small { color: #737980; }
+.rank-cell::after { position: absolute; top: 0; right: 0; width: 0; height: 0; border-top: 6px solid var(--sample-marker, transparent); border-left: 6px solid transparent; content: ""; pointer-events: none; }
+.rank-cell b { overflow: hidden; font-size: clamp(10px, .78vw, 12px); line-height: 1; text-overflow: clip; text-shadow: 0 1px 2px rgba(0, 0, 0, .88); white-space: nowrap; }
+.rank-cell small { color: #eef2ef; font-size: clamp(8px, .62vw, 9.5px); font-weight: 780; line-height: 1; text-shadow: 0 1px 2px rgba(0, 0, 0, .88); }
+.rank-cell.is-empty { border-color: rgba(255, 255, 255, .07); color: #626970; background: #0d1014; }
+.rank-cell.is-empty small { color: #626970; }
 .rank-cell.is-thin:not(.is-empty) {
   --sample-marker: #ffc659;
-  border-color: rgba(255, 198, 89, .62);
 }
 .rank-cell.is-estimated {
   --sample-marker: #c49af8;
-  border-color: rgba(196, 154, 248, .78);
 }
+.rank-cell.is-thin:not(.is-empty):not(.is-selected),
+.rank-cell.is-estimated:not(.is-selected) { border-color: rgba(196, 235, 222, .24); }
 .rank-cell.is-estimated small { color: #eadcff; }
 .rank-cell.is-selected { z-index: 3; border-color: var(--brand-yellow); box-shadow: 0 0 0 2px var(--brand-yellow), 0 0 16px rgba(255, 223, 81, .30); }
 .rank-chart-empty { grid-column: 1 / -1; margin: 24px 0; color: var(--muted); font-size: 13px; text-align: center; }
@@ -262,7 +262,7 @@
   .rank-evidence-compare { grid-template-columns: 1fr; }
   .rank-chart { min-height: 0; }
   .rank-chart.is-novice .rank-action-bar { margin-top: 14px; }
-  .rank-matrix { width: min(100%, 440px); }
+  .rank-matrix { width: min(100%, 494px); }
 }
 
 @media (max-width: 700px) {
@@ -288,7 +288,8 @@
   .rank-league-tabs::-webkit-scrollbar { display: none; }
   .rank-chart { padding: 13px 9px; }
   .rank-chart-head h4 { font-size: 18px; }
-  .rank-chart-stats { min-width: 124px; }
+  .rank-chart-stats { grid-template-columns: auto; min-width: 100px; }
+  .rank-chart-stats small { display: none; }
   .rank-chart-stats strong { font-size: 21px; }
   .rank-matrix { gap: 1px; width: 100%; }
   .rank-cell b { font-size: clamp(8px, 2.5vw, 10px); }

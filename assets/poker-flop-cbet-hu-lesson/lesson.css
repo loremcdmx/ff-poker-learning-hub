@@ -1627,22 +1627,22 @@ a:focus-visible,
   min-height: 72px !important;
 }
 
-.cbet-deal-table .table-action[data-option-key="check"]:not(.is-correct):not(.is-wrong),
-.cbet-practice-table .table-action[data-option-key="check"]:not(.is-correct):not(.is-wrong) {
+.cbet-deal-table .table-action[data-option-key="check"]:not(.is-correct):not(.is-wrong):not(.is-alternative),
+.cbet-practice-table .table-action[data-option-key="check"]:not(.is-correct):not(.is-wrong):not(.is-alternative) {
   color: #ffe8e8;
   border-color: rgba(231, 106, 102, 0.28);
   background: linear-gradient(180deg, rgba(128, 49, 62, 0.76), rgba(59, 24, 32, 0.96));
 }
 
-.cbet-deal-table .table-action[data-option-key="small"]:not(.is-correct):not(.is-wrong),
-.cbet-practice-table .table-action[data-option-key="small"]:not(.is-correct):not(.is-wrong) {
+.cbet-deal-table .table-action[data-option-key="small"]:not(.is-correct):not(.is-wrong):not(.is-alternative),
+.cbet-practice-table .table-action[data-option-key="small"]:not(.is-correct):not(.is-wrong):not(.is-alternative) {
   color: var(--text);
   border-color: rgba(176, 131, 240, 0.46);
   background: linear-gradient(180deg, rgba(91, 61, 139, 0.86), rgba(49, 35, 77, 0.98));
 }
 
-.cbet-deal-table .table-action[data-option-key="large"]:not(.is-correct):not(.is-wrong),
-.cbet-practice-table .table-action[data-option-key="large"]:not(.is-correct):not(.is-wrong) {
+.cbet-deal-table .table-action[data-option-key="large"]:not(.is-correct):not(.is-wrong):not(.is-alternative),
+.cbet-practice-table .table-action[data-option-key="large"]:not(.is-correct):not(.is-wrong):not(.is-alternative) {
   color: var(--brand-ink);
   border-color: #e3c84a;
   background: linear-gradient(180deg, #ffe780, #d8bd4f);
@@ -1676,12 +1676,35 @@ a:focus-visible,
   background: linear-gradient(145deg, rgba(54, 24, 30, 0.96), rgba(25, 16, 20, 0.96));
 }
 
+.trainer-feedback.is-alternative {
+  border-color: rgba(255, 223, 81, 0.58);
+  background: linear-gradient(145deg, rgba(55, 44, 18, 0.96), rgba(27, 22, 14, 0.96));
+}
+
 .trainer-feedback.is-correct .eyebrow {
   color: var(--lesson-green);
 }
 
 .trainer-feedback.is-wrong .eyebrow {
   color: var(--lesson-red);
+}
+
+.trainer-feedback.is-alternative .eyebrow {
+  color: var(--brand-yellow);
+}
+
+.cbet-deal-table .table-action.is-alternative,
+.cbet-practice-table .table-action.is-alternative {
+  color: #211807;
+  border-color: rgba(255, 223, 81, 0.92);
+  background: linear-gradient(180deg, #ffe88a, #d8b83f);
+  box-shadow: 0 0 0 1px rgba(255, 223, 81, 0.22), 0 8px 22px rgba(145, 109, 20, 0.2);
+  opacity: 1;
+}
+
+.cbet-deal-table .table-action.is-alternative:disabled,
+.cbet-practice-table .table-action.is-alternative:disabled {
+  opacity: 1;
 }
 
 .trainer-lesson {

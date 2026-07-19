@@ -56,7 +56,7 @@ assert.match(lessonHtml, /Наблюдаемый chipEV · реальные ра
 assert.match(lessonHtml, /Это наблюдаемая выборка/, "chipEV comparison states its self-selection limitation");
 assert.match(lessonJs, /reactionFilters: \{ openerPosition: "BTN", heroPosition: "BB", openSizeBb: 2, depthBand: "25-40" \}/, "reaction tab opens on the exact BB versus BTN 2 BB, 25–40 BB slice");
 assert.match(lessonJs, /resteal-reaction-summary\.json/, "reaction tab reads the compact strict-response cube");
-assert.match(lessonHtml, /Это состав диапазона, не готовый чарт/, "known continuing hands are not presented as strategic advice");
+assert.match(lessonHtml, /относительный индекс, а не точный call%/, "known continuing hands are labelled as a relative proxy, not strategic advice");
 
 const introPot = context.PokerChipKit.renderAmount(4.5, { maxVisual: 3, detail: true });
 assert.match(introPot, /poker-chip--one/);

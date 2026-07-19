@@ -15,7 +15,7 @@ This frozen dataset powers the novice-versus-league comparison in the Resteal le
 
 - Window: `[2026-01-01 00:00:00, 2026-07-14 00:00:00)` UTC.
 - Rank is joined at the exact hand timestamp from `mcp__check_rank_history` using half-open, non-overlapping intervals.
-- Cohorts: novice 16–18, league 3 ranks 11–15, league 2 ranks 6–10, league 1 ranks 1–5.
+- Cohorts: comparison baseline ranks 15–17, league 3 ranks 11–14, league 2 ranks 6–10, league 1 ranks 1–5. Rank 18 is retained only in the audit bridge and excluded from every product cohort.
 - Hero is BB only, can 3-bet, faces exactly one CO/BTN raiser and no limpers at a 3–9 handed table.
 - Effective stack is 25–40 BB; frontend bands are 25–30, 30–35, 35–40 and a count-pooled 25–40 view.
 - Open sizes are 2.0, 2.5 and 3.0 BB with ±0.05 BB tolerance.
@@ -32,13 +32,13 @@ The predeclared association slice is BTN versus a 2.0 BB open. Direct-jam rates 
 
 ## Frozen QA and default slice
 
-- 11,406 lossless CSV rows, no duplicate keys and no unknown action bucket.
-- 1,155,121 opportunities reconcile exactly to 368,413 folds, 630,226 calls, 85,209 non-all-in 3-bets and 71,273 direct jams.
-- 1,022,356 opportunities have canonical hole cards; 132,765 missing-card decisions remain only in chart totals (88.506% known-card coverage).
-- BTN versus 2.0 BB, depth-standardized direct-jam rates: novice 1.769% (N=4,129), league 3 4.951% (N=251,737), league 2 9.201% (N=204,093), league 1 10.273% (N=77,388).
-- Same-slice ABI-versus-jam Pearson `r=0.8565`, four aggregate cohorts.
+- 12,222 lossless CSV rows, no duplicate keys and no unknown action bucket. SHA-256: `e5d367369c6126b8fbc6326c96ae7dd22fb54c75ce62e3fbd222b858303aa2ad`.
+- 1,158,099 opportunities reconcile exactly to 369,387 folds, 631,798 calls, 85,471 non-all-in 3-bets and 71,443 direct jams.
+- 1,025,230 opportunities have canonical hole cards; 132,869 missing-card decisions remain only in chart totals (88.527% known-card coverage).
+- BTN versus 2.0 BB, depth-standardized direct-jam rates: ranks 15–17 2.952% (N=70,858; 2,080 jams), league 3 5.643% (N=185,734; 10,486 jams), league 2 9.198% (N=204,428; 18,852 jams), league 1 10.264% (N=77,702; 7,948 jams).
+- Same-slice ABI-versus-jam Pearson `r=0.8547`, four aggregate cohorts.
 
-The novice default pooled chart is usable as a whole but remains thin at cell level: 88 of 169 cells have N<20 and one has N<5. Its individual depth charts have 162, 166 and 169 cells with N<20 respectively. Other novice open sizes are substantially sparser, so the UI must expose N and visually suppress cells below the thresholds in `meta.sampleThresholds`.
+The ranks 15–17 default pooled chart is fully sampled: all 169 cells have N≥50. Its 25–30, 30–35 and 35–40 depth charts have 169, 162 and 131 cells with N≥50 respectively, and none has N<20. At 2.5/3.0 BB pooled, no cell has N<5, but some cells remain below N=20, so the UI still exposes N and its compact sample-quality markers.
 
 ## Rebuild and validation
 

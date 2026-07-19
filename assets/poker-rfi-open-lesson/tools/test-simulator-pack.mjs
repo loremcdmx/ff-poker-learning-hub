@@ -87,25 +87,36 @@ for (const action of ["fold", "call", "raise-custom"]) assert(rfiActions.include
 assert(rfiActions.includes('table-action-verb">Опен'), "fixed RFI raise is labelled as an open");
 assert(rfiActions.includes('table-action-amount" data-bet-display>2 BB'), "fixed RFI open keeps the 2 BB amount visible");
 const rfiPackCss = readFileSync(resolve(repo, "assets/poker-rfi-open-lesson/simulator-pack.css"), "utf8");
-assert.match(rfiPackCss, /\.client-controls\.is-rfi-opening\s*\{[^}]*min-height:0;/s, "fixed RFI actions collapse the reserved betbox height");
-assert(rfiPackCss.includes('.client-controls.is-rfi-opening > .client-row .table-action'), "fixed RFI actions retain full-size button targets");
-assert.match(rfiPackCss, /\.workspace:has\(> \.rfi-range-review\.is-visible\)\s*\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(320px,380px\)/s, "desktop review is a real side column beside the table");
-assert.match(rfiPackCss, /@media\(max-width:900px\)[\s\S]*?\.workspace:has\(> \.rfi-range-review\.is-visible\)\s*\{[^}]*grid-template-columns:minmax\(0,1fr\)[^}]*grid-template-rows:auto auto/s, "narrow review moves below the table");
+assert.match(rfiPackCss, /\.client-controls\.is-practice-simple\s*\{[^}]*min-height:0;/s, "simple practice actions collapse the reserved betbox height on every street");
+assert(rfiPackCss.includes('.client-controls.is-practice-simple > .client-row .table-action'), "simple practice actions retain full-size button targets");
+assert.match(rfiPackCss, /\.workspace:has\(> \.rfi-range-review\.is-visible\)\s*\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(400px,440px\)/s, "desktop review keeps a matrix-safe side rail beside the table");
+assert.match(rfiPackCss, /@media\(max-width:1160px\)[\s\S]*?\.workspace:has\(> \.rfi-range-review\.is-visible\)\s*\{[^}]*grid-template-columns:minmax\(0,1fr\)[^}]*grid-template-rows:auto max-content/s, "review stays stacked at its real content height until table and side rail both have usable width");
 assert.match(rfiPackCss, /\.rfi-stage-viewport\s*\{[^}]*align-self:stretch[^}]*width:100%[^}]*height:100%[^}]*min-width:0/s, "docked review gives the simulator a measurable, non-recursively shrinking stage viewport");
 assert(rfiPackCss.includes('.rfi-range-review[data-collapsed="true"] .rfi-review-details'), "narrow review chart can collapse without hiding the verdict");
 assert.match(rfiPackCss, /\.rfi-range-review\s*\{[^}]*display:block[^}]*height:calc\(100dvh - 138px\)/s, "desktop review keeps its own bounded scroll surface");
 assert.match(rfiPackCss, /\.rfi-review-board\s*\{[^}]*height:100%[^}]*min-height:0[^}]*overflow: auto/s, "only the review board scrolls on desktop");
 assert.match(rfiPackCss, /\.rfi-review-action-dock\s*\{[^}]*position:fixed[^}]*bottom:max\(8px,env\(safe-area-inset-bottom\)\)/s, "next-hand control is independently pinned to the simulator viewport");
-assert.match(rfiPackCss, /@media\(max-width:900px\)[\s\S]*?\.workspace:has\(> \.rfi-review-action-dock\.is-visible\)\s*\{[^}]*padding-bottom:72px/s, "narrow practice reserves room for the independent next-hand dock");
+assert.match(rfiPackCss, /@media\(max-width:1160px\)[\s\S]*?\.workspace:has\(> \.rfi-review-action-dock\.is-visible\)\s*\{[^}]*padding-bottom:72px/s, "stacked practice reserves room for the independent next-hand dock");
 assert.match(rfiPackCss, /\.rfi-review-chart\s*\{[^}]*width:100%/s, "desktop review chart uses the available side-panel width");
-assert.match(rfiPackCss, /@media\(max-width:900px\)[\s\S]*?\.rfi-review-chart\s*\{[^}]*width:min\(520px,100%\)/s, "stacked review chart grows to a readable width without overflowing its board");
-assert.match(rfiPackCss, /\.rfi-review-cell b\s*\{[^}]*font-size:clamp\(8px,2\.1vw,11px\)/s, "review chart labels retain a readable floor");
+assert.match(rfiPackCss, /@media\(max-width:1160px\)[\s\S]*?\.rfi-range-review\s*\{[^}]*width:min\(740px,100%\)/s, "stacked review uses the available laptop width without becoming an edge-to-edge sheet");
+assert.match(rfiPackCss, /@media\(max-width:1160px\)[\s\S]*?\.rfi-review-chart\s*\{[^}]*width:min\(640px,100%\)/s, "stacked review chart grows to a readable width without overflowing its board");
+assert.match(rfiPackCss, /\.rfi-review-chart\s*\{[^}]*container-type:inline-size/s, "review chart owns its responsive type scale");
+assert.match(rfiPackCss, /\.rfi-review-cell b\s*\{[^}]*font-size:clamp\(7px,2\.25cqi,10px\)[^}]*text-shadow:none/s, "review chart labels scale from the matrix instead of the viewport and stay visually clean");
 assert(!/\.rfi-review-chart\s*\{[^}]*width:min\(2(?:10|20)px,100%\)/s.test(rfiPackCss), "review chart is not squeezed by the obsolete 210/220 px caps");
 const rfiPackSource = readFileSync(resolve(repo, "assets/poker-rfi-open-lesson/simulator-pack.js"), "utf8");
 assert(rfiPackSource.includes('querySelector(".workspace") || root.document.body'), "review is mounted beside the simulator stage inside the workspace layout");
 assert(rfiPackSource.includes('feedback.setAttribute("role", "region")'), "review is non-modal and does not claim dialog focus ownership");
 assert(!rfiPackSource.includes('feedback.querySelector("[data-rfi-review-next]")?.focus'), "review no longer steals focus from the completed table");
 assert.match(rfiPackSource, /data-rfi-review-close aria-label="Закрыть разбор"/, "review has an explicit accessible close control");
+assert(rfiPackSource.includes('matchMedia?.("(max-width: 1160px)")'), "review collapse state follows the shared stacked-layout breakpoint");
+assert.match(rfiPackSource, /setFeedbackCollapsed[\s\S]*?dock\.setAttribute\("aria-hidden", compact && !value \? "true" : "false"\)/, "expanding a compact chart temporarily clears the fixed next-hand dock");
+assert.match(rfiPackSource, /if \(focusNext\)[\s\S]*?dock\.setAttribute\("aria-hidden", "false"\)/, "closing an expanded review restores the next-hand dock before focusing it");
+assert(rfiPackSource.includes("workspace.scrollTop = workspace.scrollHeight"), "compact embeds reveal the verdict above the independent next-hand dock");
+assert.match(rfiPackSource, /<footer class="rfi-review-footer" aria-live="polite">[\s\S]*?<div class="rfi-review-details"/s, "review announces and shows the verdict before the optional chart");
+assert(!rfiPackSource.includes('feedback.setAttribute("aria-live", "polite")'), "the 169-cell chart is not part of the live announcement");
+assert(!rfiPackSource.includes('title="${hand}:'), "native cell tooltips no longer cover the matrix");
+assert.match(rfiPackSource, /aria-label="\$\{hand\}:[\s\S]*?исходная частота \$\{frequency\}%"/, "every chart cell keeps an accessible action and frequency label");
+assert.match(rfiPackSource, /data-rfi-review-selection/, "played-hand details stay visible without hover");
 assert.match(rfiPackSource, /function ensureReviewActionDock[\s\S]*?host\.appendChild\(dock\)/, "next-hand dock is mounted directly in the workspace, outside the review region");
 assert(!/<\/section>\s*<div class="rfi-review-action-dock"/.test(rfiPackSource), "review markup does not own the next-hand dock");
 assert.match(rfiPackSource, /closeReview[\s\S]*?hideGrade\(\{ focusNext: true \}\)/, "closing the review preserves and focuses the independent next-hand action");
@@ -179,5 +190,33 @@ full.engine.resolveBotAction(fullHand, fullOpenStart.heroAction, fullOpenStart.h
 assert.equal(fullHand.street, "flop", "full-hand mode always reaches the flop after Hero opens");
 assert.equal(fullHand.status, "playing");
 assert.equal(fullHand.seats.find((seat) => seat.position === "BB")?.folded, false, "BB is the guaranteed caller");
+
+const fullActionControls = full.window.PokerSimulatorActionControls.model({
+  getState: () => ({ settings: { tableCount: 1 } }),
+  getTable: () => fullHand,
+  windowRef: full.window,
+  canHeroAct: () => true,
+  betBounds: () => ({ min: 1, max: 38, step: 0.1, value: 2 }),
+  betSliderModel: (_table, bounds) => ({ kind: "postflop-percent", ...bounds }),
+  betPresets: () => [],
+  formatAmount: (value) => `${value} BB`,
+  formatCompactAmount: (value) => `${value} BB`,
+  formatBetSliderValue: (_table, _bounds, value) => `${value} BB`,
+  betSliderFillPercent: () => 0
+});
+const fullFlopTable = { ...fullHand, busy: false, heroTurn: true, status: "playing", toCall: 0, canCheck: true };
+const fullFlopActions = fullActionControls.renderActions(fullFlopTable);
+assert(fullFlopActions.includes("is-practice-simple"), "full-hand RFI keeps the simple practice contract after the flop opens");
+assert(!fullFlopActions.includes("data-bet-widget"), "full-hand RFI postflop omits presets, stepper and slider");
+assert.equal((fullFlopActions.match(/class="table-action /g) || []).length, 2, "checked-to RFI postflop exposes only Check and Bet");
+for (const action of ["check", "bet-custom"]) assert(fullFlopActions.includes(`data-action="${action}"`), `${action} action stays available postflop`);
+
+const fullFacingBetActions = fullActionControls.renderActions({ ...fullFlopTable, toCall: 1, canCheck: false });
+assert(!fullFacingBetActions.includes("data-bet-widget"), "full-hand RFI facing a bet still omits the full betbox");
+assert.equal((fullFacingBetActions.match(/class="table-action /g) || []).length, 3, "RFI postflop facing a bet exposes only Fold, Call and Raise");
+for (const action of ["fold", "call", "raise-custom"]) assert(fullFacingBetActions.includes(`data-action="${action}"`), `${action} action stays available when facing a bet`);
+
+const ordinaryFlopActions = fullActionControls.renderActions({ ...fullFlopTable, rfiOpenDrill: null });
+assert(ordinaryFlopActions.includes("data-bet-widget"), "ordinary simulator postflop keeps the full sizing controls");
 
 console.log("RFI simulator practice pack: ok");

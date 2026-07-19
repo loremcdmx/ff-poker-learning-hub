@@ -303,8 +303,14 @@
         hit ? "is-hit" : "",
         hit ? (grade.correct ? "is-correct" : "is-wrong") : ""
       ].filter(Boolean).join(" ");
-      return `<span class="${classes}" title="${hand}: ${expected === "open" ? "рейз" : "пас"}"><b>${hand}</b></span>`;
+      return `<span class="${classes}" aria-label="${hand}: ${expected === "open" ? `рейз ${OPEN_SIZE_LABEL} BB` : "пас"}; исходная частота ${frequency}%"><b>${hand}</b></span>`;
     }).join("")).join("");
+  }
+
+  function reviewSelection(grade) {
+    const frequency = Number(root.PokerRfiData?.frequencies?.[grade.position]?.[grade.combo] || 0);
+    const expected = decisionForFrequency(frequency);
+    return `<div class="rfi-review-selection" data-rfi-review-selection><strong>${grade.combo}</strong><span>${expected === "open" ? `Рейз ${OPEN_SIZE_LABEL} BB` : "Пас"}</span><small>${frequency}% в исходном чарте</small></div>`;
   }
 
   function syncStageToViewport(viewport) {
@@ -349,7 +355,6 @@
       feedback.className = "rfi-range-review";
       feedback.dataset.rfiFeedback = "";
       feedback.setAttribute("role", "region");
-      feedback.setAttribute("aria-live", "polite");
       feedback.setAttribute("aria-labelledby", "rfi-review-title");
       feedback.setAttribute("aria-hidden", "true");
     }
@@ -395,6 +400,9 @@
     if (!feedback) return;
     const value = Boolean(collapsed);
     feedback.dataset.collapsed = value ? "true" : "false";
+    const compact = Boolean(root.matchMedia?.("(max-width: 1160px)")?.matches);
+    const dock = root.document?.querySelector?.("[data-rfi-review-action-dock]");
+    if (dock?.classList?.contains?.("is-visible")) dock.setAttribute("aria-hidden", compact && !value ? "true" : "false");
     const toggle = feedback.querySelector("[data-rfi-review-toggle]");
     if (!toggle) return;
     toggle.setAttribute("aria-expanded", value ? "false" : "true");
@@ -407,24 +415,25 @@
     if (!feedback || !grade.combo || !grade.action) return;
     const verdict = reviewVerdict(grade);
     const lastHand = sessionLimitReached(grade.handNo);
-    const compact = Boolean(root.matchMedia?.("(max-width: 900px)")?.matches);
+    const compact = Boolean(root.matchMedia?.("(max-width: 1160px)")?.matches);
     feedback.innerHTML = `
       <section class="rfi-review-board ${verdict.tone === "correct" ? "is-correct" : "is-wrong"}">
         <header class="rfi-review-header">
-          <div class="rfi-review-heading"><span>Разбор завершённой раздачи ${grade.handNo}</span><strong>${grade.position} · ${grade.combo}</strong></div>
+          <div class="rfi-review-heading"><span>Разбор раздачи ${grade.handNo}</span><strong>${grade.position} · ${grade.combo}</strong></div>
           <div class="rfi-review-header-actions">
             <button class="rfi-review-toggle" type="button" data-rfi-review-toggle aria-controls="rfi-review-details"><span data-rfi-review-toggle-label>Скрыть чарт</span></button>
             <button class="rfi-review-close" type="button" data-rfi-review-close aria-label="Закрыть разбор" title="Закрыть разбор">×</button>
           </div>
-          <p>Твоя мишень — чарт позиции. Кольцо показывает сыгранную руку.</p>
+          <p>Кольцо отмечает сыгранную руку.</p>
         </header>
-        <div class="rfi-review-details" id="rfi-review-details">
-          <div class="rfi-review-legend"><span class="is-open">Диапазон</span><span class="is-pair">Пары</span><span class="is-suited">Suited</span><span class="is-offsuit">Offsuit</span><small>Учебный чарт: жёлтая клетка — рейз, если частота в исходнике выше 75%</small></div>
-          <div class="rfi-review-chart" aria-label="Чарт ${grade.position}; сыгранная рука ${grade.combo}">${reviewChart(grade)}</div>
-        </div>
-        <footer class="rfi-review-footer">
+        <footer class="rfi-review-footer" aria-live="polite">
           <div><strong id="rfi-review-title">${verdict.title}</strong><p>${verdict.text}</p><small>Ты выбрал: ${actionLabel(grade.action)} · База: ${actionLabel(grade.expected)}</small></div>
         </footer>
+        <div class="rfi-review-details" id="rfi-review-details">
+          <div class="rfi-review-legend"><span class="is-open">Рейз ${OPEN_SIZE_LABEL} BB</span><span class="is-fold">Пас</span><span class="is-hit">Твоя рука</span><small>Учебная граница: открываем руки с исходной частотой выше 75%.</small></div>
+          <div class="rfi-review-chart" aria-label="Чарт ${grade.position}; сыгранная рука ${grade.combo}">${reviewChart(grade)}</div>
+          ${reviewSelection(grade)}
+        </div>
       </section>`;
     showReviewActionDock(lastHand);
     setFeedbackCollapsed(feedback, compact);
@@ -432,7 +441,9 @@
     feedback.setAttribute("aria-hidden", "false");
     root.requestAnimationFrame?.(() => {
       feedback.classList.add("is-visible");
-      syncStageToViewport(feedback.parentElement?.querySelector?.("[data-rfi-stage-viewport]"));
+      const workspace = feedback.parentElement;
+      syncStageToViewport(workspace?.querySelector?.("[data-rfi-stage-viewport]"));
+      if (compact && workspace) workspace.scrollTop = workspace.scrollHeight;
     });
   }
 
@@ -449,6 +460,8 @@
     syncStageToViewport(feedback.parentElement?.querySelector?.("[data-rfi-stage-viewport]"));
     if (focusNext) root.requestAnimationFrame?.(() => {
       const control = root.document?.querySelector?.("[data-rfi-review-next]");
+      const dock = control?.closest?.("[data-rfi-review-action-dock]");
+      if (dock?.classList?.contains?.("is-visible")) dock.setAttribute("aria-hidden", "false");
       control?.focus?.({ preventScroll: true });
     });
   }
@@ -711,12 +724,13 @@
       return Math.min(bounds.max, Math.max(bounds.min, OPEN_SIZE_BB));
     },
     decisionClass({ table }) {
-      return table?.rfiOpenDrill
-        && table.street === "preflop"
+      if (!table?.rfiOpenDrill) return "";
+      const isOpeningDecision = table.street === "preflop"
         && table.preflopOpenerSeatId == null
-        && Number(table.currentBet || 0) <= 1
-        ? "is-rfi-opening"
-        : "";
+        && Number(table.currentBet || 0) <= 1;
+      return isOpeningDecision
+        ? "is-practice-simple is-rfi-opening"
+        : "is-practice-simple";
     },
     sessionCompleteAction: { action: "rfi-play-again", label: "Сыграть ещё" }
   };

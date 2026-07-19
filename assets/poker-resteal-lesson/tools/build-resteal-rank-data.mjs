@@ -45,14 +45,14 @@ const missingHand = '__MISSING__';
 const windowStart = '2026-01-01T00:00:00Z';
 const windowEnd = '2026-07-14T00:00:00Z';
 const abi = {
-  novice: { abiUsd: 1.25, abiPlayers: 231, abiEntries: 51166, loadUsd: 64042.87 },
-  league3: { abiUsd: 5.5, abiPlayers: 1616, abiEntries: 1768355, loadUsd: 9720787.96 },
-  league2: { abiUsd: 16.44, abiPlayers: 667, abiEntries: 1082199, loadUsd: 17794990.19 },
-  league1: { abiUsd: 42.62, abiPlayers: 216, abiEntries: 366251, loadUsd: 15609661.05 },
+  novice: { abiUsd: 2.69, abiPlayers: 1116, abiEntries: 628787, loadUsd: 1688908.48 },
+  league3: { abiUsd: 6.8, abiPlayers: 996, abiEntries: 1192027, loadUsd: 8100772.62 },
+  league2: { abiUsd: 16.44, abiPlayers: 667, abiEntries: 1082595, loadUsd: 17802650.86 },
+  league1: { abiUsd: 42.57, abiPlayers: 216, abiEntries: 366677, loadUsd: 15610022.86 },
 };
 const cohortMeta = {
-  novice: { label: 'Совсем новички', ranks: [16, 17, 18] },
-  league3: { label: '3 лига', ranks: [11, 12, 13, 14, 15] },
+  novice: { label: 'Ранги 15–17', ranks: [15, 16, 17] },
+  league3: { label: '3 лига', ranks: [11, 12, 13, 14] },
   league2: { label: '2 лига', ranks: [6, 7, 8, 9, 10] },
   league1: { label: '1 лига', ranks: [1, 2, 3, 4, 5] },
 };
@@ -187,9 +187,9 @@ const correlation = {
 };
 
 const payload = {
-  version: 'resteal-rank-cube-20260715-v1',
+  version: 'resteal-rank-cube-20260719-r15-r17-v2',
   meta: {
-    generatedOn: '2026-07-15',
+    generatedOn: '2026-07-19',
     source: 'analytics.int_tracker_hand_joined',
     rankSource: 'analytics_mcp_readonly.mcp__check_rank_history',
     abiSource: 'analytics_mcp_readonly.mcp__fulltplayers',
@@ -225,9 +225,20 @@ const payload = {
     aggregation: 'All percentages must be calculated from integer counts. Pooling sums counts, never percentages.',
     uniquePlayers: 'CSV unique_players is cell-level and non-additive; it is intentionally omitted from pooled frontend totals.',
     provenance: {
-      rankIntervals: { rows: 6426, users: 2463, queryJobId: 'mcp_bq_683fbe8611e54520a69576dbcbae4b92', sha256: '488da5b060b13e953214596fdadf12c4554a0426b72a709c62a4ee3d7a965989' },
-      handCube: { rows: rows.length, queryJobId: 'mcp_ch_job_d5206525489f4a89aeece3161579b4ea', sha256: sha256(csvBuffer) },
-      abi: { queryJobId: 'mcp_bq_e10bac6af6714a819a4df59cafa2bc3d' },
+      rankIntervals: { rows: 6426, users: 2463, queryJobId: 'mcp_bq_job_622f9d4c42de4a148d69d45c96326c7f', sha256: '488da5b060b13e953214596fdadf12c4554a0426b72a709c62a4ee3d7a965989' },
+      handCube: {
+        rows: rows.length,
+        queryJobIds: [
+          'mcp_ch_job_b73456e9ce2a46ba927d810de6b02ef9',
+          'mcp_ch_job_b44f5cada3124108b2c366cf329d3b8a',
+        ],
+        sha256: sha256(csvBuffer),
+        cohortExports: {
+          noviceLeague3Sha256: '090ccd473966907215f0db0eed65ac0393a6b735620c48078f6c776aef83ce90',
+          league2League1Sha256: '48a8c7f464835578b2ab5590b96b6bdcf0239cc5115d3e2a64b67d2a7db0aad5',
+        },
+      },
+      abi: { queryJobId: 'mcp_bq_f55a264b18c7433786fb236095c26ab3' },
     },
   },
   summaries,

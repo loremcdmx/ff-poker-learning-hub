@@ -29,34 +29,43 @@ assert(lowN, "low-N estimator is exposed for focused verification");
 assert.equal(lowN.estimateBelow, 5);
 assert.equal(lowN.priorStrength, 16);
 
-const handIndex = data.meta.handOrder.indexOf("AKs");
-const noviceCell = data.charts.novice.CO["2.5"]["25-40"].cells[handIndex];
-assert.deepEqual(Array.from(noviceCell), [1, 0, 0, 1, 0], "frozen low-N anchor changed");
+const hand = "AQs";
+const depth = "25-30";
+const handIndex = data.meta.handOrder.indexOf(hand);
+const noviceCell = data.charts.novice.CO["2.5"][depth].cells[handIndex];
+assert.deepEqual(Array.from(noviceCell), [4, 0, 0, 1, 3], "frozen low-N anchor changed");
 
 let priorN = 0;
 let priorJams = 0;
+const otherCohortCells = [];
 for (const cohort of data.meta.cohortOrder) {
   if (cohort === "novice") continue;
-  const cell = data.charts[cohort].CO["2.5"]["25-40"].cells[handIndex];
+  const cell = data.charts[cohort].CO["2.5"][depth].cells[handIndex];
+  otherCohortCells.push(Array.from(cell));
   priorN += cell[0];
   priorJams += cell[4];
 }
-assert.deepEqual([priorN, priorJams], [113, 60], "leave-one-cohort-out prior anchor changed");
+assert.deepEqual(otherCohortCells, [
+  [13, 1, 0, 4, 8],
+  [12, 0, 0, 1, 11],
+  [3, 0, 0, 0, 3],
+], "other-cohort low-N anchors changed");
+assert.deepEqual([priorN, priorJams], [28, 22], "leave-one-cohort-out prior anchor changed");
 
-const estimate = lowN.displayCell(data, "novice", "CO", "2.5", "25-40", handIndex, noviceCell);
+const estimate = lowN.displayCell(data, "novice", "CO", "2.5", depth, handIndex, noviceCell);
 const expected = (noviceCell[4] + 16 * priorJams / priorN) / (noviceCell[0] + 16) * 100;
 assert.equal(estimate.available, true);
 assert.equal(estimate.estimated, true);
 assert.equal(estimate.prior.source, "same-spot-hand");
-assert.equal(estimate.prior.opportunities, 113);
+assert.equal(estimate.prior.opportunities, 28);
 assert(Math.abs(estimate.rate - expected) < 1e-10, "Dirichlet-smoothed jam marginal is wrong");
-assert(estimate.rate > 40 && estimate.rate < 60, "AKs estimate must not render as the raw 0% artifact");
+assert(estimate.rate > 75 && estimate.rate < 80, "AQs estimate must blend the N=4 observation with the leave-one-cohort-out prior");
 
 const observed = lowN.displayCell(data, "league3", "BTN", "2.0", "25-40", handIndex, data.charts.league3.BTN["2.0"]["25-40"].cells[handIndex]);
 assert.equal(observed.estimated, false, "N>=5 must remain an observed rate");
 assert.equal(observed.rate, data.charts.league3.BTN["2.0"]["25-40"].cells[handIndex][4] / data.charts.league3.BTN["2.0"]["25-40"].cells[handIndex][0] * 100);
 
-const empty = lowN.displayCell(data, "novice", "CO", "2.5", "25-40", handIndex, [0, 0, 0, 0, 0]);
+const empty = lowN.displayCell(data, "novice", "CO", "2.5", depth, handIndex, [0, 0, 0, 0, 0]);
 assert.equal(empty.available, false, "N=0 must remain no data");
 assert.equal(empty.estimated, false, "N=0 must not be invented by smoothing");
 
@@ -83,4 +92,4 @@ assert.match(cssSource, /\.rank-cell\.is-estimated[^}]*--sample-marker:\s*#c49af
 assert.match(htmlSource, /≈ оценка · N 1–4/, "legend labels the smoothed estimate");
 assert.match(htmlSource, /нет данных · N 0/, "legend keeps true no-data cells separate");
 
-console.log(`resteal rank low-N contract passed: AKs N=${noviceCell[0]}, prior N=${priorN}, estimate=${estimate.rate.toFixed(2)}%`);
+console.log(`resteal rank low-N contract passed: ${hand} N=${noviceCell[0]}, prior N=${priorN}, estimate=${estimate.rate.toFixed(2)}%`);

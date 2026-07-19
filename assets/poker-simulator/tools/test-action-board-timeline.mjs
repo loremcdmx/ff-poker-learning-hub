@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { Script, createContext } from "node:vm";
+import { runSimulatorEngineScripts } from "../../../scripts/simulator-engine-script-list.mjs";
 
 const simulatorRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const repoRoot = resolve(simulatorRoot, "../..");
 
 globalThis.window = globalThis;
 await import("../simulator-action-visuals.js");
@@ -99,4 +102,79 @@ assert(boardAtReveal.includes("is-board-dealt"), "flop still receives its normal
 const timerSource = readFileSync(resolve(simulatorRoot, "simulator-visual-timers.js"), "utf8");
 assert(!timerSource.includes("stages.length <= 1"), "single-stage board timelines receive scheduled start/reveal/settle paints");
 
-console.log("✓ shared action-to-board barrier covers a single preflop to flop transition");
+function loadRfiFullHandEngine() {
+  const deterministicMath = Object.create(Math);
+  deterministicMath.random = () => 0.2;
+  const browserRoot = { location: { search: "?practice=rfi-open&handMode=full" } };
+  const context = createContext({
+    console,
+    Math: deterministicMath,
+    URL,
+    URLSearchParams,
+    window: browserRoot,
+    globalThis: browserRoot
+  });
+  const run = (path) => {
+    const filename = resolve(repoRoot, path);
+    new Script(readFileSync(filename, "utf8"), { filename }).runInContext(context);
+  };
+  run("assets/poker-kit/simulator/bot-strategy-profile.js");
+  runSimulatorEngineScripts({ root: repoRoot, context, Script });
+  run("assets/poker-simulator/simulator-practice-packs.js");
+  run("assets/poker-rfi-open-lesson/simulator-pack.js");
+  return {
+    engine: browserRoot.PokerSimulatorEngine,
+    pack: browserRoot.PokerRfiOpenSimulatorPack
+  };
+}
+
+function assertRfiFullHandBarrier(engine, pack, handNo, expectedPosition) {
+  const settings = {};
+  pack.applyBootSettings(settings);
+  const liveTable = engine.createTable({ id: handNo, settings, handNo });
+  assert.equal(liveTable.heroPosition, expectedPosition, `${expectedPosition} fixture reaches its real RFI opening spot`);
+  assert.equal(liveTable.street, "preflop");
+  assert.equal(liveTable.heroTurn, true);
+
+  const heroResult = engine.startHeroAction(liveTable, "raise-custom", settings, { amount: 2 });
+  assert.equal(heroResult.accepted, true, `${expectedPosition} open is accepted by the engine`);
+  assert.equal(heroResult.needsBot, true);
+  const botResult = engine.resolveBotAction(liveTable, heroResult.heroAction, heroResult.heroAmount, settings);
+  assert.equal(botResult.accepted, true);
+  assert.equal(liveTable.street, "flop", `${expectedPosition} full-hand scenario advances through the real engine`);
+  assert.equal(liveTable.board.length, 3);
+
+  const actions = liveTable.actionAnimations || [];
+  const closingPreflopIndex = actions.findLastIndex((item) => String(item?.street || "") === "preflop");
+  const firstPostflopIndex = actions.findIndex((item) => String(item?.street || "") === "flop");
+  assert(closingPreflopIndex >= 0, `${expectedPosition} trace contains a closing preflop action`);
+  assert(firstPostflopIndex > closingPreflopIndex, `${expectedPosition} trace contains a postflop action after preflop closes`);
+
+  liveTable.boardRevealFrom = 0;
+  liveTable.actionSequenceLeadMs = 0;
+  const liveStages = actionVisuals.actionSequenceBoardRevealStages(liveTable, { elapsedMs: 0, leadMs: 0 });
+  const flopStage = liveStages.find((stage) => stage.from === 0 && stage.to === 3);
+  assert(flopStage, `${expectedPosition} trace owns its flop on the shared action clock`);
+  const closingPreflopTiming = actionVisuals.actionTimingAtIndex(liveTable, closingPreflopIndex, {
+    elapsedMs: 0,
+    leadMs: 0
+  });
+  const firstPostflopTiming = actionVisuals.actionTimingAtIndex(liveTable, firstPostflopIndex, {
+    elapsedMs: 0,
+    leadMs: 0
+  });
+  assert(
+    flopStage.startMs >= closingPreflopTiming.endMs,
+    `${expectedPosition} flop starts only after the closing preflop animation`
+  );
+  assert(
+    firstPostflopTiming.actionStartMs >= flopStage.endMs,
+    `${expectedPosition} postflop action starts only after the flop settles`
+  );
+}
+
+const rfiFullHand = loadRfiFullHandEngine();
+assertRfiFullHandBarrier(rfiFullHand.engine, rfiFullHand.pack, 1, "UTG");
+assertRfiFullHandBarrier(rfiFullHand.engine, rfiFullHand.pack, 5, "BTN");
+
+console.log("✓ shared action-to-board barrier covers synthetic and real RFI full-hand transitions");

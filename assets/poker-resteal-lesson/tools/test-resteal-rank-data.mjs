@@ -22,8 +22,15 @@ const diagnostics = JSON.parse(fs.readFileSync(diagnosticsPath, 'utf8'));
 const sql = fs.readFileSync(sqlPath, 'utf8');
 
 assert(data, 'window.PokerRestealRankData is missing');
-assert.equal(data.version, 'resteal-rank-cube-20260715-v1');
+assert.equal(data.version, 'resteal-rank-cube-20260719-r15-r17-v2');
 assert.deepEqual(Array.from(data.meta.cohortOrder), ['novice', 'league3', 'league2', 'league1']);
+assert.deepEqual(Array.from(data.meta.cohorts.novice.ranks), [15, 16, 17]);
+assert.deepEqual(Array.from(data.meta.cohorts.league3.ranks), [11, 12, 13, 14]);
+assert.equal(
+  Array.from(data.meta.cohortOrder).some((cohort) => Array.from(data.meta.cohorts[cohort].ranks).includes(18)),
+  false,
+  'rank 18 must remain excluded from every product cohort',
+);
 assert.deepEqual(Array.from(data.meta.positionOrder), ['CO', 'BTN']);
 assert.deepEqual(Array.from(data.meta.sizeOrder), ['2.0', '2.5', '3.0']);
 assert.deepEqual(Array.from(data.meta.depthOrder), ['25-40', '25-30', '30-35', '35-40']);
@@ -32,6 +39,10 @@ assert.equal(new Set(data.meta.handOrder).size, 169);
 assert.match(data.meta.actionContract.jam, /preflop_action='R'.*is_preflop_allin=1/);
 assert.match(sql, /x\.4 = 'R' AND x\.5 = 1, 'jam'/);
 assert.match(sql, /startsWith\(x\.4, 'R'\), 'small3bet'/);
+assert.match(sql, /x\.2 BETWEEN 15 AND 17, 'novice'/, 'query fixes the comparison cohort to ranks 15–17');
+assert.match(sql, /x\.2 BETWEEN 11 AND 14, 'league3'/, 'query keeps league 3 disjoint from the comparison cohort');
+assert.match(sql, /WHERE cohort != 'excluded'/, 'query drops rank 18 instead of leaking it into another cohort');
+assert.match(sql, /f\.rang BETWEEN 1 AND 17/, 'ABI query excludes rank 18 under the same cohort contract');
 
 let frontendCharts = 0;
 for (const cohort of data.meta.cohortOrder) {
@@ -63,11 +74,11 @@ assert.equal(diagnostics.global.knownOpportunities + diagnostics.global.missingO
 
 // Frozen snapshot anchors: these prevent a query/action/rank contract change from
 // silently shipping as a routine rebuild.
-assert.equal(diagnostics.csvRows, 11406);
-assert.equal(data.meta.provenance.handCube.sha256, '8d33ef87b759d04ee3d15257809db8922820c99c038c9ef3933f47f70427eb5f');
+assert.equal(diagnostics.csvRows, 12222);
+assert.equal(data.meta.provenance.handCube.sha256, 'e5d367369c6126b8fbc6326c96ae7dd22fb54c75ce62e3fbd222b858303aa2ad');
 assert.deepEqual(
   [diagnostics.global.opportunities, diagnostics.global.folds, diagnostics.global.calls, diagnostics.global.small3bets, diagnostics.global.jams],
-  [1155121, 368413, 630226, 85209, 71273],
+  [1158099, 369387, 631798, 85471, 71443],
 );
 assert.deepEqual(
   Array.from(data.meta.cohortOrder, (cohort) => [
@@ -76,17 +87,17 @@ assert.deepEqual(
     data.summaries[cohort].standardizedJamPct,
   ]),
   [
-    [4129, 73, 1.769],
-    [251737, 12450, 4.951],
-    [204093, 18827, 9.201],
-    [77388, 7923, 10.273],
+    [70858, 2080, 2.952],
+    [185734, 10486, 5.643],
+    [204428, 18852, 9.198],
+    [77702, 7948, 10.264],
   ],
 );
 
 const xs = data.meta.cohortOrder.map((cohort) => data.summaries[cohort].abiUsd);
 const ys = data.meta.cohortOrder.map((cohort) => data.summaries[cohort].standardizedJamPct);
 assert.equal(round(pearson(xs, ys), 4), data.correlation.abiVsStandardizedJamPearson);
-assert.equal(data.correlation.abiVsStandardizedJamPearson, 0.8565);
+assert.equal(data.correlation.abiVsStandardizedJamPearson, 0.8547);
 assert.equal(data.correlation.observations.length, 4);
 assert.match(data.correlation.method, /not a causal/i);
 

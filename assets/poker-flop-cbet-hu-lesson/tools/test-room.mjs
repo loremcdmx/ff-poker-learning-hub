@@ -101,4 +101,23 @@ const correct = renderer.renderTable(spot, { answered: true, selectedKey: "small
 assert.match(correct, /data-option-key="small"[^>]*data-answer-state="correct"/);
 assert.doesNotMatch(correct, /data-answer-state="wrong"/);
 
+const strongValueSpot = {
+  ...spot,
+  title: "Бродвейная · топ-пара",
+  hand: "As Kd",
+  table: {
+    ...spot.table,
+    heroCards: ["As", "Kd"],
+    boardCards: ["Kc", "Jh", "5d"]
+  },
+  options: spot.options.map((option) => ({
+    ...option,
+    acceptableExploit: option.key === "large"
+  }))
+};
+const acceptable = renderer.renderTable(strongValueSpot, { answered: true, selectedKey: "large" });
+assert.match(acceptable, /data-option-key="small"[^>]*data-answer-state="correct"/);
+assert.match(acceptable, /data-option-key="large"[^>]*data-answer-state="alternative"/);
+assert.doesNotMatch(acceptable, /data-option-key="large"[^>]*data-answer-state="wrong"/);
+
 console.log("flop c-bet shared room contract: ok");
