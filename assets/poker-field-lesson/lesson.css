@@ -311,6 +311,45 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   letter-spacing: -.045em;
 }
 .wisdom-text { max-width: 58ch; color: rgba(244, 241, 236, .81); font-size: clamp(16px, 1.35vw, 20px); }
+.wisdom-slide.has-value-range-slide {
+  grid-template-columns: minmax(300px, .82fr) minmax(390px, 1.18fr);
+  gap: clamp(24px, 3vw, 38px);
+  padding: clamp(30px, 3.4vw, 54px);
+}
+.wisdom-slide.has-value-range-slide .wisdom-copy h3 {
+  max-width: 12ch;
+  font-size: clamp(42px, 4.4vw, 56px);
+}
+.wisdom-value-copy { display: grid; gap: 16px; max-width: 520px; }
+.wisdom-value-copy .wisdom-text { margin: 0; }
+.wisdom-value-copy-list { display: grid; gap: 8px; }
+.wisdom-value-copy-row {
+  display: grid;
+  grid-template-columns: minmax(124px, .72fr) minmax(0, 1.28fr);
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-left: 3px solid rgba(255, 255, 255, .14);
+  border-radius: 0 11px 11px 0;
+  background: rgba(255, 255, 255, .035);
+}
+.wisdom-value-copy-row.is-strong { border-left-color: var(--lesson-good); background: rgba(87, 214, 154, .055); }
+.wisdom-value-copy-row.is-thin { border-left-color: var(--brand-yellow); background: rgba(255, 223, 81, .05); }
+.wisdom-value-copy-row > span { color: rgba(244, 241, 236, .7); font-size: 11px; font-weight: 840; line-height: 1.25; }
+.wisdom-value-copy-hands { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; min-width: 0; }
+.wisdom-value-copy-hands b {
+  min-width: 34px;
+  padding: 5px 7px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 7px;
+  color: rgba(244, 241, 236, .9);
+  background: rgba(5, 6, 10, .32);
+  font-size: 12px;
+  line-height: 1;
+  text-align: center;
+}
+.wisdom-value-copy-row.is-strong .wisdom-value-copy-hands b { border-color: rgba(87, 214, 154, .25); color: #b8f5d5; }
+.wisdom-value-copy-row.is-thin .wisdom-value-copy-hands b { border-color: rgba(255, 223, 81, .24); color: #fff0a7; }
 .wisdom-rule {
   display: block;
   max-width: 56ch;
@@ -339,6 +378,75 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
 }
 .wisdom-stat strong { color: var(--brand-yellow); font-size: clamp(42px, 5vw, 76px); line-height: 1; letter-spacing: -.05em; }
 .wisdom-stat span { color: rgba(244, 241, 236, .74); font-size: 13px; line-height: 1.4; }
+.wisdom-visual.has-value-range { min-height: 410px; }
+.wisdom-value-range {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 12px;
+  width: min(100%, 470px);
+  padding: clamp(16px, 1.8vw, 20px);
+  overflow: hidden;
+  border: 1px solid rgba(87, 214, 154, .34);
+  border-radius: 24px;
+  background: rgba(15, 16, 22, .98);
+  box-shadow: 0 28px 60px rgba(0, 0, 0, .34), inset 0 1px 0 rgba(255, 255, 255, .075);
+}
+.wisdom-value-range-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.wisdom-value-board { display: grid; gap: 8px; }
+.wisdom-value-range .example-cards.is-board { gap: 5px; }
+.wisdom-value-range .example-cards.is-board .example-color-card { --poker-card-width: 50px; }
+.wisdom-value-range-title { display: grid; justify-items: end; gap: 3px; padding-top: 2px; text-align: right; }
+.wisdom-value-range-title span { color: var(--soft); font-size: 9px; font-weight: 830; letter-spacing: .07em; text-transform: uppercase; }
+.wisdom-value-range-title strong { color: var(--lesson-good); font-size: 17px; line-height: 1.05; letter-spacing: -.02em; }
+.wisdom-value-groups { display: grid; gap: 9px; }
+.wisdom-value-group {
+  display: grid;
+  gap: 9px;
+  padding: 11px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 15px;
+  background: rgba(5, 6, 10, .46);
+}
+.wisdom-value-group.is-thin { border-color: rgba(255, 223, 81, .22); background: rgba(255, 223, 81, .035); }
+.wisdom-value-group.is-strong { border-color: rgba(87, 214, 154, .24); background: rgba(87, 214, 154, .035); }
+.wisdom-value-group-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.wisdom-value-group-head strong { color: rgba(244, 241, 236, .94); font-size: 12px; line-height: 1.2; }
+.wisdom-value-group-head span { color: var(--soft); font-size: 9px; line-height: 1.2; text-align: right; }
+.wisdom-value-combos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.wisdom-value-combo {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 7px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 10px;
+  background: rgba(7, 7, 12, .58);
+}
+.wisdom-value-combo-label { color: rgba(244, 241, 236, .91); font-size: 12px; line-height: 1; }
+.wisdom-value-combo .example-cards.is-mini { justify-content: flex-end; gap: 2px; overflow: visible; }
+.wisdom-value-combo .example-cards.is-mini .example-color-card { --poker-card-width: 24px; }
+.wisdom-value-combo .poker-deck-card__cb-index { display: none; }
+.wisdom-value-group.is-thin .wisdom-value-combo { border-color: rgba(255, 223, 81, .2); }
+.wisdom-value-group.is-thin .wisdom-value-combo-label { color: #fff0a7; }
+.wisdom-value-group.is-strong .wisdom-value-combo { border-color: rgba(87, 214, 154, .2); }
+.wisdom-value-group.is-strong .wisdom-value-combo-label { color: #b8f5d5; }
+.wisdom-value-note {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 11px 12px;
+  border-left: 3px solid var(--brand-yellow);
+  border-radius: 0 12px 12px 0;
+  color: rgba(244, 241, 236, .78);
+  background: rgba(255, 223, 81, .06);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.wisdom-value-note strong { color: #fff0a7; font-size: 10px; letter-spacing: .045em; text-transform: uppercase; }
 .wisdom-visual.has-board-folds { min-height: 390px; }
 .wisdom-board-folds {
   position: relative;
@@ -521,6 +629,98 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   text-transform: uppercase;
 }
 .examples-scope span { color: rgba(244, 241, 236, .86); font-size: 13px; font-weight: 760; }
+.example-observed {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 20px;
+  overflow: hidden;
+  border-color: rgba(87, 214, 154, .24);
+  background:
+    radial-gradient(circle at 86% -12%, rgba(87, 214, 154, .12), transparent 34%),
+    linear-gradient(145deg, rgba(20, 28, 28, .96), rgba(11, 11, 17, .98));
+  box-shadow: inset 0 3px 0 rgba(87, 214, 154, .74), 0 20px 54px rgba(0, 0, 0, .27);
+}
+.example-observed-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+.example-observed-head > div { min-width: 0; }
+.example-observed-head .eyebrow { margin: 0 0 6px; color: var(--lesson-good); }
+.example-observed-head h3 { margin: 0; font-size: clamp(23px, 2.2vw, 32px); line-height: 1.08; letter-spacing: -.025em; }
+.example-observed-head p:not(.eyebrow) { max-width: 66ch; margin: 7px 0 0; color: rgba(244, 241, 236, .7); font-size: 13px; line-height: 1.45; }
+.example-observed-scope {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border: 1px solid rgba(87, 214, 154, .22);
+  border-radius: 999px;
+  color: #b8f5d5;
+  background: rgba(87, 214, 154, .06);
+  font-size: 10px;
+  font-weight: 820;
+  letter-spacing: .035em;
+  white-space: nowrap;
+}
+.observed-example-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.observed-example-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 14px;
+  background: linear-gradient(155deg, rgba(255, 255, 255, .045), rgba(4, 6, 9, .38));
+}
+.observed-example-card:hover { border-color: rgba(87, 214, 154, .25); background: linear-gradient(155deg, rgba(87, 214, 154, .07), rgba(4, 6, 9, .42)); }
+.observed-example-card-head { display: flex; align-items: center; justify-content: space-between; gap: 9px; min-width: 0; }
+.observed-example-title { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.observed-example-title strong { overflow: hidden; color: rgba(244, 241, 236, .94); font-size: 12px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.observed-example-index { color: var(--lesson-good); font-size: 9px; font-weight: 900; letter-spacing: .08em; }
+.observed-example-rank {
+  flex: 0 0 auto;
+  padding: 3px 6px;
+  border: 1px solid rgba(87, 214, 154, .18);
+  border-radius: 999px;
+  color: #b8f5d5;
+  background: rgba(87, 214, 154, .05);
+  font-size: 9px;
+  font-weight: 850;
+}
+.observed-example-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(62px, .65fr);
+  align-items: end;
+  gap: 10px;
+  min-width: 0;
+  padding: 9px;
+  border-radius: 11px;
+  background: rgba(3, 5, 8, .36);
+}
+.observed-example-cards { display: grid; gap: 5px; min-width: 0; }
+.observed-example-cards > span { color: var(--soft); font-size: 8px; font-weight: 880; letter-spacing: .08em; text-transform: uppercase; }
+.observed-example-cards .example-cards { gap: 2px; }
+.observed-example-cards .example-cards.is-mini .example-color-card { --poker-card-width: 25px; }
+.observed-example-line { display: grid; gap: 3px; margin: 0; padding-top: 1px; line-height: 1.25; }
+.observed-example-line strong { color: var(--brand-yellow); font-size: 11px; }
+.observed-example-line span { color: rgba(244, 241, 236, .7); font-size: 10px; font-variant-numeric: tabular-nums; }
+.observed-example-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, .06); }
+.observed-example-stack { color: var(--soft); font-size: 9px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.observed-example-response { font-size: 9px; line-height: 1.2; text-align: right; }
+.observed-example-response.is-fold { color: var(--lesson-good); }
+.observed-example-response.is-call { color: #8ebcf5; }
+.observed-example-response.is-reraise { color: #ff9a9f; }
+.observed-example-note {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, .07);
+  color: var(--soft);
+  font-size: 10px;
+  line-height: 1.45;
+  text-align: center;
+}
 .example-groups { display: grid; grid-template-columns: 1fr; align-items: start; gap: 18px; }
 .example-group { min-width: 0; padding: 20px; overflow: hidden; }
 .example-group.is-value { box-shadow: inset 0 3px 0 rgba(87, 214, 154, .72), 0 20px 54px rgba(0, 0, 0, .27); }
@@ -933,6 +1133,7 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   .scope-list { margin-top: 10px; }
   .cohort-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .example-groups { grid-template-columns: 1fr; }
+  .observed-example-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 1000px) {
@@ -957,9 +1158,12 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   .lesson-table-host { min-height: 390px; padding-inline: 0; }
   .wisdom-heading, .field-heading, .examples-heading, .practice-heading { align-items: flex-start; flex-direction: column; gap: 10px; }
   .wisdom-heading > p, .field-heading > p, .examples-heading > p, .practice-heading > p { text-align: left; }
-  .wisdom-slide { grid-template-columns: 1fr; min-height: 0; padding: 26px 20px; }
+  .wisdom-slide, .wisdom-slide.has-value-range-slide { grid-template-columns: 1fr; min-height: 0; padding: 26px 20px; }
   .wisdom-copy h3 { font-size: clamp(34px, 10vw, 54px); }
+  .wisdom-slide.has-value-range-slide .wisdom-copy h3 { font-size: clamp(36px, 8vw, 50px); }
   .wisdom-visual { min-height: 250px; }
+  .wisdom-visual.has-value-range { min-height: 0; }
+  .wisdom-value-range { width: min(100%, 460px); }
   .wisdom-visual.has-board-folds { min-height: 0; }
   .wisdom-board-folds { width: min(100%, 460px); }
   .wisdom-orbit { width: min(72vw, 330px); }
@@ -983,6 +1187,7 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   }
   .flop-checkraise-lesson .practice-footer-controls { justify-content: flex-start; flex-wrap: wrap; }
   .examples-scope { grid-template-columns: 1fr; gap: 8px; }
+  .example-observed-head { align-items: flex-start; flex-direction: column; }
 }
 
 @media (max-width: 590px) {
@@ -996,6 +1201,18 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   .lesson-table-host { min-height: 350px; }
   .wisdom-heading h2, .field-heading h2, .examples-heading h2, .practice-heading h2 { font-size: 36px; }
   .wisdom-slide { border-radius: 17px; }
+  .wisdom-slide.has-value-range-slide { gap: 18px; padding: 22px 16px; }
+  .wisdom-slide.has-value-range-slide .wisdom-copy h3 { font-size: clamp(34px, 10vw, 42px); }
+  .wisdom-value-copy { gap: 12px; }
+  .wisdom-value-copy-row { grid-template-columns: 1fr; gap: 7px; padding: 9px 10px; }
+  .wisdom-value-copy-hands { justify-content: flex-start; }
+  .wisdom-value-range { padding: 14px; border-radius: 17px; }
+  .wisdom-value-range .example-cards.is-board .example-color-card { --poker-card-width: 42px; }
+  .wisdom-value-range-title strong { font-size: 15px; }
+  .wisdom-value-combos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .wisdom-value-combo { min-height: 46px; padding: 6px 8px; }
+  .wisdom-value-combo .example-cards.is-mini .example-color-card { --poker-card-width: 26px; }
+  .wisdom-value-note { font-size: 11px; }
   .wisdom-board-folds { padding: 15px; border-radius: 17px; }
   .wisdom-board-folds-head { align-items: center; }
   .wisdom-board-folds .example-cards.is-board .example-color-card { --poker-card-width: 42px; }
@@ -1012,6 +1229,9 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   .field-insight { max-width: none; }
   .flop-checkraise-lesson .step-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .example-group { padding: 14px; border-radius: 17px; }
+  .example-observed { padding: 14px; border-radius: 17px; }
+  .observed-example-grid { grid-template-columns: 1fr; }
+  .example-observed-scope { white-space: normal; }
   .field-example-card { padding: 13px; }
   .field-example-head { align-items: stretch; flex-direction: column; }
   .example-gap { align-self: flex-start; }

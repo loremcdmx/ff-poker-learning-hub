@@ -1560,15 +1560,21 @@ a:focus-visible,
 
 .cbet-deal-table,
 .cbet-practice-table {
-  --shell-action-gutter: 112px;
+  --shell-action-gutter: 154px;
   --shell-table-plane-height-cap: 430px;
   position: relative;
-  min-height: 548px;
-  padding: 0 3px 116px;
+  min-height: 584px;
+  padding: 0 3px 154px;
   container-type: inline-size;
   background:
     radial-gradient(circle at 50% 44%, rgba(154, 101, 214, 0.09), transparent 42%),
     rgba(8, 7, 13, 0.45);
+}
+
+.cbet-practice-table:has(.practice-next-row) {
+  --shell-action-gutter: 210px;
+  min-height: 640px;
+  padding-bottom: 210px;
 }
 
 .cbet-deal-table .ff-shell-simulator-snapshot.table-grid,
@@ -1625,6 +1631,47 @@ a:focus-visible,
 .cbet-deal-table .table-action,
 .cbet-practice-table .table-action {
   min-height: 72px !important;
+}
+
+.cbet-deal-table .client-controls,
+.cbet-practice-table .client-controls,
+.cbet-practice-table .practice-next-button {
+  scroll-margin-block-end: max(20px, env(safe-area-inset-bottom));
+}
+
+.cbet-practice-table .practice-next-row {
+  display: flex;
+  width: 100%;
+  justify-self: stretch;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cbet-practice-table .practice-next-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 15px;
+  border: 1px solid rgba(255, 223, 81, 0.78);
+  border-radius: 9px;
+  color: var(--brand-ink);
+  background: linear-gradient(180deg, #fff09a, var(--brand-yellow));
+  box-shadow: 0 8px 20px rgba(255, 223, 81, 0.14);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.cbet-practice-table .practice-next-button:hover {
+  filter: brightness(1.04);
+}
+
+.cbet-practice-table .practice-next-button:focus-visible {
+  outline: 2px solid #fff6c9;
+  outline-offset: 2px;
 }
 
 .cbet-deal-table .table-action[data-option-key="check"]:not(.is-correct):not(.is-wrong):not(.is-alternative),
@@ -3374,8 +3421,14 @@ html[data-embed="true"] .field-controls {
 
   .cbet-deal-table,
   .cbet-practice-table {
-    min-height: 470px;
-    padding: 0 0 116px;
+    min-height: 500px;
+    padding: 0 0 160px;
+  }
+
+  .cbet-practice-table:has(.practice-next-row) {
+    --shell-action-gutter: 210px;
+    min-height: 550px;
+    padding-bottom: 210px;
   }
 
   .cbet-deal-table .ff-shell-simulator-snapshot,
@@ -3449,6 +3502,25 @@ html[data-embed="true"] .field-controls {
 }
 
 @media (max-width: 620px) {
+  .cbet-deal-table,
+  .cbet-practice-table {
+    padding-bottom: 168px;
+  }
+
+  .cbet-deal-table .client-controls > .client-row,
+  .cbet-practice-table .client-controls > .client-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .cbet-deal-table .client-controls[data-option-count="3"] > .client-row .table-action:last-child,
+  .cbet-practice-table .client-controls[data-option-count="3"] > .client-row .table-action:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .cbet-practice-table:has(.practice-next-row) {
+    padding-bottom: 210px;
+  }
+
   .wisdom-high-card {
     grid-template-columns: minmax(0, 1fr);
   }

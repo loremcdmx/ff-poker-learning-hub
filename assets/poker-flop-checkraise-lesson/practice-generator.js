@@ -16,10 +16,10 @@
     { id: "fold-weak-backdoor", family: "fold", builder: buildWeakBackdoor, label: "Один слабый бэкдор", reason: "Одного далёкого усиления мало: сначала рейзь руки с готовым дро или несколькими путями усиления." },
     { id: "xr-two-pair", family: "checkraise", builder: buildTwoPair, label: "Две пары", reason: "Две пары добирают с топ-пар и дро и естественно входят в вэлью-часть чек-рейза." },
     { id: "call-underpair", family: "call", builder: buildUnderpair, label: "Карманная пара", reason: "Пара ловит широкую маленькую ставку, но не нуждается в превращении в блеф." },
-    { id: "thin-gutshot", family: "fold", thin: true, builder: buildThinGutshot, label: "Тонкий гатшот", reason: "Эквити есть, но без сильного рида чек-рейз слишком оптимистичен: базово это пас." },
+    { id: "thin-gutshot", family: "call", xrMix: true, builder: buildThinGutshot, label: "Гатшот", reason: "Гатшот уже не выбрасываем: колл — нижняя граница продолжения, а чек-рейз можно подмешивать как полублеф." },
     { id: "xr-nut-flush-draw", family: "checkraise", builder: buildNutFlushDraw, label: "Сильное флеш-дро", reason: "Сильное дро сохраняет много эквити после колла и получает немедленную прибыль от фолдов." },
     { id: "call-bottom-pair", family: "call", builder: buildBottomPair, label: "Нижняя пара", reason: "Готовая рука может спокойно реализовать эквити через колл и не обязана поляризовать банк." },
-    { id: "fold-overcards", family: "fold", builder: buildOvercards, label: "Оверкарты без дро", reason: "Против крупной ставки одних оверкарт без дро недостаточно для продолжения." },
+    { id: "call-strong-overcards", family: "call", builder: buildOvercards, label: "Две сильные оверкарты", reason: "Две сильные оверкарты сохраняют достаточно эквити против ставки до полбанка. Колл реализует его без лишнего раздувания банка." },
     { id: "xr-strong-top-pair", family: "checkraise", builder: buildStrongTopPair, label: "Сильная топ-пара", reason: "Верх топ-пар начинает добор и не оставляет диапазон чек-рейза только из сетов и дро." },
     { id: "call-ace-high", family: "call", builder: buildAceHigh, label: "A-high с бэкдорами", reason: "A-high ещё ловит часть воздуха и лучше реализует редкое усиление без раздувания банка." },
     { id: "fold-disconnected", family: "fold", builder: buildDisconnected, label: "Несвязанный воздух", reason: "Нет пары, готового дро или полезной связности — дисциплинированный пас сохраняет качество рейзов." },
@@ -116,6 +116,27 @@
 
   function rankValue(rank) {
     return RANKS.indexOf(rank) + 2;
+  }
+
+  function isStrongTwoOvercards(value) {
+    const heroCards = Array.isArray(value?.heroCards) ? value.heroCards : [];
+    const boardCards = Array.isArray(value?.boardCards) ? value.boardCards : [];
+    if (heroCards.length !== 2 || boardCards.length < 3) return false;
+    const heroRanks = heroCards.map((cardValue) => cardValue?.[0]);
+    const boardRanks = boardCards.map((cardValue) => cardValue?.[0]);
+    if ([...heroRanks, ...boardRanks].some((rank) => !RANKS.includes(rank))) return false;
+    const combo = heroRanks.slice().sort((left, right) => rankValue(right) - rankValue(left)).join("");
+    const boardHigh = Math.max(...boardRanks.map(rankValue));
+    const cards = [...heroCards, ...boardCards];
+    const suitCounts = cards.reduce((counts, cardValue) => {
+      counts[cardValue[1]] = (counts[cardValue[1]] || 0) + 1;
+      return counts;
+    }, {});
+    return ["AK", "AQ", "KQ"].includes(combo)
+      && heroRanks.every((rank) => rankValue(rank) > boardHigh)
+      && evaluateBest(cards).category === 0
+      && !hasFourToStraight(cards)
+      && Math.max(...Object.values(suitCounts)) < 4;
   }
 
   function rankFromValue(value) {
@@ -276,7 +297,7 @@
         heroCards: [card(heroRanks[0], suits.d), card(heroRanks[1], suits.c)],
         boardCards: [card(top, suits.c), card(middle, suits.h), card(low, suits.s)]
       };
-      if (isCleanAir(built)) return built;
+      if (isCleanAir(built) && !isStrongTwoOvercards(built)) return built;
     }
     return { heroCards: ["Qd", "4c"], boardCards: ["Kc", "8h", "2s"] };
   }
@@ -514,6 +535,34 @@
     };
   }
 
+  function facingBetNode(id, context, street, boardCards, pot, stack, bet, title, question, options, historyLine) {
+    const table = tableSnapshot(
+      context,
+      street,
+      boardCards,
+      pot,
+      stack,
+      ["BB check", `${context.villain} bet ${formatBb(bet)} BB`],
+      historyLine
+    );
+    table.toCall = bet;
+    table.currentBet = bet;
+    return { id, title, question, table, options };
+  }
+
+  function isTopPairOrBetter(cards, boardCards) {
+    const evaluation = evaluateBest([...cards, ...boardCards]);
+    const boardEvaluation = evaluateBest(boardCards);
+    if (evaluation.category <= boardEvaluation.category) return false;
+    if (evaluation.category >= 2) return true;
+    if (evaluation.category !== 1) return false;
+    const pairRank = evaluation.tiebreak[0];
+    const holeRanks = cards.map((value) => rankValue(value[0]));
+    const boardHigh = Math.max(...boardCards.map((value) => rankValue(value[0])));
+    const pairUsesHoleCard = holeRanks.includes(pairRank) || holeRanks[0] === holeRanks[1];
+    return pairUsesHoleCard && pairRank >= boardHigh;
+  }
+
   function buildContinuation(context, rng) {
     const deck = shuffle(rng, fullDeck().filter((value) => ![...context.heroCards, ...context.boardCards].includes(value)));
     context.villainCards = deck.slice(0, 2);
@@ -536,6 +585,19 @@
     const callLead = Math.min(stackAfterCall, rounded(potAfterCall * 0.5));
     const potAfterCallLead = rounded(potAfterCall + callLead * 2);
     const stackAfterCallLead = Math.max(0, rounded(stackAfterCall - callLead));
+    const villainTurnBet = Math.min(stackAfterCall, rounded(potAfterCall * 0.6));
+    const potAfterVillainTurnBet = rounded(potAfterCall + villainTurnBet);
+    const potAfterVillainTurnBetCall = rounded(potAfterCall + villainTurnBet * 2);
+    const stackAfterVillainTurnBetCall = Math.max(0, rounded(stackAfterCall - villainTurnBet));
+    const villainRiverBet = Math.min(stackAfterCall, rounded(potAfterCall * 0.65));
+    const villainRiverBetAfterTurnCall = Math.min(
+      stackAfterVillainTurnBetCall,
+      rounded(potAfterVillainTurnBetCall * 0.65)
+    );
+    const callTurnBetRiverLead = Math.min(
+      stackAfterVillainTurnBetCall,
+      rounded(potAfterVillainTurnBetCall * 0.6)
+    );
     const xrBarrel = Math.min(stackAfterRaise, rounded(potAfterRaise * 0.6));
     const potAfterXrBarrel = rounded(potAfterRaise + xrBarrel * 2);
     const stackAfterXrBarrel = Math.max(0, rounded(stackAfterRaise - xrBarrel));
@@ -545,6 +607,11 @@
     const xrBarrelRiverBet = Math.min(stackAfterXrBarrel, rounded(potAfterXrBarrel * 0.65));
     const villainFoldsToRaise = rng() < (context.foldRead.pct / 100);
     const valueRiver = ["xr-set", "xr-two-pair", "xr-strong-top-pair"].includes(context.archetype.id);
+    const turnBoard = [...context.boardCards, context.turnCard];
+    const villainValueBetsTurn = isTopPairOrBetter(context.villainCards, turnBoard);
+    const villainValueBetsRiver = isTopPairOrBetter(context.villainCards, fullBoard);
+    const heroContinuesTurn = evaluateBest([...context.heroCards, ...turnBoard]).category >= 1;
+    const heroContinuesRiver = isTopPairOrBetter(context.heroCards, fullBoard);
 
     const makeShowdown = (id, title, pot, stack, actionLine) => terminalNode(
       id,
@@ -588,10 +655,44 @@
         "Тёрн после колла",
         "Сохранять контролируемый банк или перехватить инициативу?",
         [
-          { key: "check", label: "Чек", correct: true, feedback: "Колл на флопе обычно продолжает линию контроля.", next: "river-call-check" },
+          {
+            key: "check",
+            label: "Чек",
+            correct: true,
+            feedback: "Колл на флопе обычно продолжает линию контроля.",
+            next: villainValueBetsTurn ? "turn-call-facing-bet" : "river-call-check"
+          },
           { key: "lead", label: `Поставить ${formatBb(callLead)} BB`, correct: false, feedback: "Донк без явной причины ломает исходный план колла.", next: "river-call-lead" }
         ],
         `Flop: BB call ${formatBb(context.bet)} BB`
+      ),
+      "turn-call-facing-bet": facingBetNode(
+        "turn-call-facing-bet",
+        context,
+        "turn",
+        turnBoard,
+        potAfterCall,
+        stackAfterCall,
+        villainTurnBet,
+        `${context.villain} ставит тёрн`,
+        "Что делать против второго барреля?",
+        [
+          {
+            key: "fold",
+            label: "Пас",
+            correct: !heroContinuesTurn,
+            feedback: "Без пары или сильного дро второй баррель чаще отпускаем.",
+            next: "end-after-turn-bet-fold"
+          },
+          {
+            key: "call",
+            label: `Колл ${formatBb(villainTurnBet)} BB`,
+            correct: heroContinuesTurn,
+            feedback: "Готовая рука ещё может продолжить против ставки около 60% банка.",
+            next: "river-call-after-turn-bet"
+          }
+        ],
+        `Flop call · Turn BB check · ${context.villain} bet ${formatBb(villainTurnBet)} BB`
       ),
       "river-call-check": decisionNode(
         "river-call-check",
@@ -603,10 +704,75 @@
         "Ривер после чек-чека",
         "Как завершить линию без лишней поляризации?",
         [
-          { key: "check", label: "Чек", correct: true, feedback: "Средняя часть диапазона чаще доходит до шоудауна через чек.", next: "showdown-call-check-check" },
+          {
+            key: "check",
+            label: "Чек",
+            correct: true,
+            feedback: "Средняя часть диапазона чаще доходит до шоудауна через чек.",
+            next: villainValueBetsRiver ? "river-call-facing-bet" : "showdown-call-check-check"
+          },
           { key: "bet", label: `Поставить ${formatBb(callCheckRiverBet)} BB`, correct: false, feedback: "Крупная ставка требует более полярной руки.", next: "showdown-call-check-bet" }
         ],
         "Flop call · Turn check-check"
+      ),
+      "river-call-facing-bet": facingBetNode(
+        "river-call-facing-bet",
+        context,
+        "river",
+        fullBoard,
+        potAfterCall,
+        stackAfterCall,
+        villainRiverBet,
+        `${context.villain} добирает ривер`,
+        "Как ответить на ривер-бет?",
+        [
+          { key: "fold", label: "Пас", correct: !heroContinuesRiver, feedback: "Слабая пара не обязана оплачивать велью-бет.", next: "end-after-river-bet-fold" },
+          { key: "call", label: `Колл ${formatBb(villainRiverBet)} BB`, correct: heroContinuesRiver, feedback: "Сильная готовая рука может вскрывать ривер-бет.", next: "showdown-call-check-villain-bet-call" }
+        ],
+        `Flop call · Turn check-check · River BB check · ${context.villain} bet ${formatBb(villainRiverBet)} BB`
+      ),
+      "river-call-after-turn-bet": decisionNode(
+        "river-call-after-turn-bet",
+        context,
+        "river",
+        fullBoard,
+        potAfterVillainTurnBetCall,
+        stackAfterVillainTurnBetCall,
+        "Ривер после колла тёрна",
+        "Донкать или снова передать слово?",
+        [
+          {
+            key: "check",
+            label: "Чек",
+            correct: true,
+            feedback: "После колла тёрна средняя рука снова чекает в агрессора.",
+            next: villainValueBetsRiver ? "river-call-facing-bet-after-turn-bet" : "showdown-call-turn-bet-check-check"
+          },
+          {
+            key: "bet",
+            label: `Поставить ${formatBb(callTurnBetRiverLead)} BB`,
+            correct: false,
+            feedback: "Донк на ривере требует ясной велью-цели или сильных блокеров.",
+            next: "showdown-call-turn-bet-river-lead"
+          }
+        ],
+        `Flop call · Turn BB check · ${context.villain} bet ${formatBb(villainTurnBet)} BB · BB call`
+      ),
+      "river-call-facing-bet-after-turn-bet": facingBetNode(
+        "river-call-facing-bet-after-turn-bet",
+        context,
+        "river",
+        fullBoard,
+        potAfterVillainTurnBetCall,
+        stackAfterVillainTurnBetCall,
+        villainRiverBetAfterTurnCall,
+        `${context.villain} ставит снова`,
+        "Как ответить на третий баррель?",
+        [
+          { key: "fold", label: "Пас", correct: !heroContinuesRiver, feedback: "Слабая пара не обязана оплачивать три барреля.", next: "end-after-river-bet-after-turn-bet-fold" },
+          { key: "call", label: `Колл ${formatBb(villainRiverBetAfterTurnCall)} BB`, correct: heroContinuesRiver, feedback: "Сильная готовая рука может вскрывать третий баррель.", next: "showdown-call-turn-bet-river-bet-call" }
+        ],
+        `Flop call · Turn bet-call · River BB check · ${context.villain} bet ${formatBb(villainRiverBetAfterTurnCall)} BB`
       ),
       "river-call-lead": decisionNode(
         "river-call-lead",
@@ -699,6 +865,40 @@
     };
 
     Object.assign(nodes, {
+      "end-after-turn-bet-fold": terminalNode(
+        "end-after-turn-bet-fold",
+        context,
+        "Пас на тёрне",
+        `${context.villain} забрал банк вторым баррелем. Оценка флопа от результата не меняется.`,
+        context.villain,
+        potAfterVillainTurnBet,
+        stackAfterCall,
+        ["Turn BB check", `${context.villain} bet ${formatBb(villainTurnBet)} BB`, "BB fold"]
+      ),
+      "end-after-river-bet-fold": terminalNode(
+        "end-after-river-bet-fold",
+        context,
+        "Пас на ривере",
+        `${context.villain} забрал банк ривер-бетом. Оценка флопа от результата не меняется.`,
+        context.villain,
+        rounded(potAfterCall + villainRiverBet),
+        stackAfterCall,
+        ["Turn check-check", "River BB check", `${context.villain} bet ${formatBb(villainRiverBet)} BB`, "BB fold"]
+      ),
+      "end-after-river-bet-after-turn-bet-fold": terminalNode(
+        "end-after-river-bet-after-turn-bet-fold",
+        context,
+        "Пас на третий баррель",
+        `${context.villain} забрал банк ставками на тёрне и ривере. Оценка флопа от результата не меняется.`,
+        context.villain,
+        rounded(potAfterVillainTurnBetCall + villainRiverBetAfterTurnCall),
+        stackAfterVillainTurnBetCall,
+        [
+          `Turn ${context.villain} bet ${formatBb(villainTurnBet)} BB · BB call`,
+          `River BB check · ${context.villain} bet ${formatBb(villainRiverBetAfterTurnCall)} BB`,
+          "BB fold"
+        ]
+      ),
       "showdown-call-check-check": makeShowdown(
         "showdown-call-check-check",
         "Шоудаун после колла",
@@ -712,6 +912,42 @@
         rounded(potAfterCall + callCheckRiverBet * 2),
         Math.max(0, rounded(stackAfterCall - callCheckRiverBet)),
         [`River BB bet ${formatBb(callCheckRiverBet)} BB`, `${context.villain} call`, "Showdown"]
+      ),
+      "showdown-call-check-villain-bet-call": makeShowdown(
+        "showdown-call-check-villain-bet-call",
+        "Шоудаун после ривер-бета",
+        rounded(potAfterCall + villainRiverBet * 2),
+        Math.max(0, rounded(stackAfterCall - villainRiverBet)),
+        ["Turn check-check", `River ${context.villain} bet ${formatBb(villainRiverBet)} BB · BB call`, "Showdown"]
+      ),
+      "showdown-call-turn-bet-check-check": makeShowdown(
+        "showdown-call-turn-bet-check-check",
+        "Шоудаун после второго барреля",
+        potAfterVillainTurnBetCall,
+        stackAfterVillainTurnBetCall,
+        [`Turn ${context.villain} bet ${formatBb(villainTurnBet)} BB · BB call`, "River check-check", "Showdown"]
+      ),
+      "showdown-call-turn-bet-river-lead": makeShowdown(
+        "showdown-call-turn-bet-river-lead",
+        "Шоудаун после ривер-донка",
+        rounded(potAfterVillainTurnBetCall + callTurnBetRiverLead * 2),
+        Math.max(0, rounded(stackAfterVillainTurnBetCall - callTurnBetRiverLead)),
+        [
+          `Turn ${context.villain} bet ${formatBb(villainTurnBet)} BB · BB call`,
+          `River BB bet ${formatBb(callTurnBetRiverLead)} BB · ${context.villain} call`,
+          "Showdown"
+        ]
+      ),
+      "showdown-call-turn-bet-river-bet-call": makeShowdown(
+        "showdown-call-turn-bet-river-bet-call",
+        "Шоудаун после трех баррелей",
+        rounded(potAfterVillainTurnBetCall + villainRiverBetAfterTurnCall * 2),
+        Math.max(0, rounded(stackAfterVillainTurnBetCall - villainRiverBetAfterTurnCall)),
+        [
+          `Turn ${context.villain} bet ${formatBb(villainTurnBet)} BB · BB call`,
+          `River ${context.villain} bet ${formatBb(villainRiverBetAfterTurnCall)} BB · BB call`,
+          "Showdown"
+        ]
       ),
       "showdown-call-lead-check": makeShowdown(
         "showdown-call-lead-check",
@@ -769,7 +1005,21 @@
     };
   }
 
-  function rootFeedback(archetype, action, raiseTo, foldRead) {
+  function isBlockerOvercardMix(archetype, heroCards, boardCards) {
+    if (archetype.id !== "call-strong-overcards") return false;
+    const heroRanks = heroCards.map((cardValue) => cardValue[0]).sort((left, right) => rankValue(right) - rankValue(left)).join("");
+    const boardRanks = boardCards.map((cardValue) => cardValue[0]).sort((left, right) => rankValue(right) - rankValue(left)).join("");
+    return heroRanks === "KQ" && boardRanks === "J72";
+  }
+
+  function mixFeedback(archetype, heroCards, boardCards) {
+    if (isBlockerOvercardMix(archetype, heroCards, boardCards)) {
+      return "KQ блокирует KK, QQ, KJ и QJ, сохраняет эквити двух оверкарт и бэкдорные усиления.";
+    }
+    return "У гатшота есть усиления и фолд-эквити.";
+  }
+
+  function rootFeedback(archetype, action, raiseTo, foldRead, xrMix, heroCards, boardCards) {
     if (archetype.family === "checkraise") {
       if (action === "checkraise") {
         return `Есть вэлью или живое дро, а у c-bet есть фолды. Чек-рейз до ${formatBb(raiseTo)} BB использует обе причины.`;
@@ -778,6 +1028,9 @@
     }
     if (action === archetype.family) return archetype.reason;
     if (action === "checkraise") {
+      if (xrMix) {
+        return `Колл — базовая линия, но чек-рейз до ${formatBb(raiseTo)} BB тоже ок: ${mixFeedback(archetype, heroCards, boardCards)}`;
+      }
       return foldRead.pct >= 55
         ? `Против частых фолдов рейз может сработать, но это лузовый эксплойт. ${archetype.reason}`
         : `Фолд-эквити есть, но рука плохо переживает колл. ${archetype.reason}`;
@@ -785,9 +1038,10 @@
     return `Базовая линия здесь — ${archetype.family === "call" ? "колл" : "пас"}. ${archetype.reason}`;
   }
 
-  function rootOutcome(archetype, action) {
+  function rootOutcome(archetype, action, xrMix) {
     if (archetype.family === "checkraise") return action === "checkraise" ? "xr-ok" : "missed-xr";
     if (action === archetype.family) return "correct";
+    if (action === "checkraise" && xrMix) return "mix-xr";
     if (action === "checkraise") return "loose-xr";
     return "wrong";
   }
@@ -814,6 +1068,7 @@
     const raiseTo = Math.min(stack, rounded(Math.max(bet * 3, bet + 3)));
     const foldRead = { ...pick(rng, READS) };
     const baselineAction = archetype.family;
+    const xrMix = archetype.xrMix === true || isBlockerOvercardMix(archetype, heroCards, boardCards);
     const visibleSignature = visibleFingerprint(heroCards, boardCards);
     const signature = [
       visibleSignature,
@@ -846,10 +1101,14 @@
       key: action,
       label: actionLabels[action],
       correct: action === baselineAction,
-      feedback: rootFeedback(archetype, action, raiseTo, foldRead),
-      outcome: rootOutcome(archetype, action),
+      feedback: rootFeedback(archetype, action, raiseTo, foldRead, xrMix, heroCards, boardCards),
+      outcome: rootOutcome(archetype, action, xrMix),
       next: fullHand.rootNext[action],
-      ...(action === "checkraise" && baselineAction !== "checkraise" ? { acceptableExploit: true } : {}),
+      ...(action === "checkraise" && baselineAction !== "checkraise"
+        ? xrMix
+          ? { acceptableMix: true }
+          : { acceptableExploit: true }
+        : {}),
       ...(action === "fold"
         ? { continuationTitle: "Ты выбросил — раздача закончилась", continuationCopy: "Фолд тоже часть правильной защиты. Посмотри итог и переходи к новой ситуации." }
         : action === "call"
@@ -877,7 +1136,7 @@
         baselineAction,
         reason: archetype.reason,
         foldRead,
-        xrGrade: archetype.family === "checkraise" ? "clear" : archetype.thin ? "thin" : "control",
+        xrGrade: archetype.family === "checkraise" ? "clear" : xrMix ? "mix" : "control",
         runoutCards: [...context.villainCards, context.turnCard, context.riverCard]
       },
       table: {
@@ -1006,6 +1265,8 @@
     buildContinuation,
     fingerprint,
     validateSpot,
+    isStrongTwoOvercards,
+    isTopPairOrBetter,
     evaluateBest,
     compareEvaluations
   });

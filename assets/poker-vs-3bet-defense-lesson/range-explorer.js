@@ -306,8 +306,9 @@
 
     allHands().forEach((hand) => {
       const mix = normalizeMix(cellFrom(scenario, hand));
-      const button = element("button", `vs3-range-cell ${dominantAction(mix).tone}`);
+      const button = element("button", `vs3-range-cell ${mix.missing ? "is-missing" : dominantAction(mix).tone}`);
       button.type = "button";
+      button.disabled = mix.missing;
       button.dataset.vs3Hand = hand;
       button.setAttribute("aria-pressed", String(hand === state.hand));
       button.setAttribute("aria-label", `${hand}: ${mixLabel(mix)}. Показать сравнение слоёв.`);

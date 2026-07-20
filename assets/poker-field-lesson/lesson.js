@@ -38,6 +38,7 @@
    *   ],
    *   examples?: {
    *     tree?, title, lead, note, method,
+   *     observedLeague1?: { title, lead, scope, note, sampleId, queryVersion, hands: [OBSERVED_HAND, ...] },
    *     value: [EXAMPLE, ...],
    *     bluff: [EXAMPLE, ...]
    *   },
@@ -234,7 +235,8 @@
     const label = `wisdom[${index}]`;
     const errors = [];
     if (!Object.keys(visual).length) return errors;
-    if (cleanText(visual.type) !== "board-folds") {
+    const visualType = cleanText(visual.type);
+    if (!["board-folds", "value-range"].includes(visualType)) {
       errors.push(`${label}.visual: неизвестный type`);
       return errors;
     }
@@ -242,6 +244,40 @@
     const cards = asArray(visual.boardCards).map(cleanText).filter(Boolean);
     if (cards.length !== 3 || new Set(cards).size !== 3 || cards.some((card) => !/^[2-9TJQKA][cdhs]$/.test(card))) {
       errors.push(`${label}.visual: нужны три уникальные валидные карты флопа`);
+    }
+    if (visualType === "value-range") {
+      const groups = asArray(visual.groups);
+      const groupKeys = groups.map((group) => cleanText(group?.key));
+      if (JSON.stringify(groupKeys) !== JSON.stringify(["strong", "thin"])) {
+        errors.push(`${label}.visual.groups: нужны strong и thin в этом порядке`);
+      }
+      const seenHands = new Set();
+      groups.forEach((group, groupIndex) => {
+        if (!cleanText(group?.label)) errors.push(`${label}.visual.groups[${groupIndex}]: нет label`);
+        if (!cleanText(group?.caption)) errors.push(`${label}.visual.groups[${groupIndex}]: нет caption`);
+        const hands = asArray(group?.hands);
+        if (!hands.length) errors.push(`${label}.visual.groups[${groupIndex}]: hands пуст`);
+        hands.forEach((handData, handIndex) => {
+          const hand = cleanText(handData?.label);
+          const pair = /^([2-9TJQKA])\1$/.test(hand);
+          const unpaired = /^([2-9TJQKA])([2-9TJQKA])([so])?$/.exec(hand);
+          if (!pair && (!unpaired || unpaired[1] === unpaired[2])) {
+            errors.push(`${label}.visual.groups[${groupIndex}]: неверная рука ${hand || "—"}`);
+          }
+          if (seenHands.has(hand)) errors.push(`${label}.visual.groups: рука ${hand} повторяется`);
+          seenHands.add(hand);
+          const comboCards = asArray(handData?.cards).map(cleanText).filter(Boolean);
+          if (
+            comboCards.length !== 2 ||
+            new Set(comboCards).size !== 2 ||
+            comboCards.some((card) => !/^[2-9TJQKA][cdhs]$/.test(card) || cards.includes(card))
+          ) {
+            errors.push(`${label}.visual.groups[${groupIndex}].hands[${handIndex}]: нужны две валидные карты без конфликта с флопом`);
+          }
+        });
+      });
+      if (!cleanText(visual.note)) errors.push(`${label}.visual: нет note`);
+      return errors;
     }
     if (!cleanText(visual.boardScope)) errors.push(`${label}.visual: нет boardScope`);
     if (cleanText(visual.cohortRole) !== "aggressor") errors.push(`${label}.visual: cohortRole должен быть aggressor`);
@@ -668,6 +704,81 @@
     return card;
   }
 
+  function wisdomValueRange(item) {
+    const config = asObject(item?.visual);
+    if (cleanText(config.type) !== "value-range") return null;
+    const card = makeElement("section", "wisdom-value-range");
+    card.setAttribute("role", "group");
+    card.setAttribute("aria-label", "Велью чек-рейз на флопе K92 rainbow");
+
+    const head = makeElement("header", "wisdom-value-range-head");
+    const board = makeElement("div", "wisdom-value-board");
+    board.append(
+      makeElement("span", "wisdom-board-kicker", config.boardLabel || "K-high dry · K92r"),
+      createExampleCards(config.boardCards, "Флоп K92 rainbow", "board")
+    );
+    const rangeTitle = makeElement("div", "wisdom-value-range-title");
+    rangeTitle.append(
+      makeElement("span", "", "Состав чек-рейза"),
+      makeElement("strong", "", "Велью + микс")
+    );
+    head.append(board, rangeTitle);
+
+    const groups = makeElement("div", "wisdom-value-groups");
+    groups.setAttribute("role", "list");
+    asArray(config.groups).forEach((groupData) => {
+      const group = asObject(groupData);
+      const groupCard = makeElement("article", `wisdom-value-group is-${cleanText(group.key)}`);
+      groupCard.setAttribute("role", "listitem");
+      const groupHead = makeElement("header", "wisdom-value-group-head");
+      groupHead.append(
+        makeElement("strong", "", group.label),
+        makeElement("span", "", group.caption)
+      );
+      const hands = makeElement("div", "wisdom-value-combos");
+      asArray(group.hands).forEach((handData) => {
+        const hand = asObject(handData);
+        const combo = makeElement("div", "wisdom-value-combo");
+        combo.append(
+          makeElement("strong", "wisdom-value-combo-label", hand.label),
+          createExampleCards(hand.cards, `${hand.label} — пример сочетания мастей`, "mini")
+        );
+        hands.append(combo);
+      });
+      groupCard.append(groupHead, hands);
+      groups.append(groupCard);
+    });
+
+    const note = makeElement("p", "wisdom-value-note");
+    note.append(
+      makeElement("strong", "", "Зачем подмешивать KQ / KJ / KT"),
+      makeElement("span", "", config.note)
+    );
+    card.append(head, groups, note);
+    return card;
+  }
+
+  function wisdomValueCopy(item) {
+    const config = asObject(item?.visual);
+    if (cleanText(config.type) !== "value-range") return null;
+    const block = makeElement("div", "wisdom-value-copy");
+    block.append(makeElement("p", "wisdom-text", item.copy || ""));
+    const list = makeElement("div", "wisdom-value-copy-list");
+    asArray(config.groups).forEach((groupData) => {
+      const group = asObject(groupData);
+      const row = makeElement("div", `wisdom-value-copy-row is-${cleanText(group.key)}`);
+      row.append(makeElement("span", "", group.label));
+      const hands = makeElement("div", "wisdom-value-copy-hands");
+      asArray(group.hands).forEach((handData) => {
+        hands.append(makeElement("b", "", cleanText(handData?.label)));
+      });
+      row.append(hands);
+      list.append(row);
+    });
+    block.append(list);
+    return block;
+  }
+
   function renderWisdom() {
     const track = $("[data-wisdom-track]");
     const dots = $("[data-wisdom-dots]");
@@ -682,18 +793,24 @@
       slide.setAttribute("aria-label", `${index + 1} из 3: ${cleanText(item.title) || "мысль"}`);
 
       const copy = makeElement("div", "wisdom-copy");
+      const valueCopy = wisdomValueCopy(item);
       copy.append(
         makeElement("p", "eyebrow", item.eyebrow || `Мысль ${index + 1}`),
         makeElement("h3", "", item.title || "Материал готовится"),
-        makeElement("p", "wisdom-text", item.copy || "Текст появится вместе с проверенным data-файлом.")
+        valueCopy || makeElement("p", "wisdom-text", item.copy || "Текст появится вместе с проверенным data-файлом.")
       );
       if (cleanText(item.rule)) copy.append(makeElement("strong", "wisdom-rule", item.rule));
 
       const visual = makeElement("div", `wisdom-visual wisdom-visual-${index + 1}`);
       const boardFolds = wisdomBoardFolds(item);
+      const valueRange = wisdomValueRange(item);
       if (boardFolds) {
         visual.classList.add("has-board-folds");
         visual.append(boardFolds);
+      } else if (valueRange) {
+        slide.classList.add("has-value-range-slide");
+        visual.classList.add("has-value-range");
+        visual.append(valueRange);
       } else {
         const stat = wisdomStat(item);
         if (stat) visual.append(stat);
@@ -1065,15 +1182,95 @@
     rows.forEach((example) => host.append(createFieldExample(example, groupKey)));
   }
 
+  function formatBbValue(value) {
+    const number = numberOrNull(value);
+    if (number === null) return "—";
+    const digits = Math.abs(number - Math.round(number)) < 0.05 ? 0 : 1;
+    return number.toLocaleString("ru-RU", { minimumFractionDigits: digits, maximumFractionDigits: 1 });
+  }
+
+  function observedResponse(responseKey) {
+    const responses = {
+      fold: { label: "Соперник сфолдил", tone: "fold" },
+      call: { label: "Соперник заколлировал", tone: "call" },
+      reraise_allin: { label: "Соперник переставил олл-ин", tone: "reraise" }
+    };
+    return responses[cleanText(responseKey)] || { label: "Линия продолжилась", tone: "neutral" };
+  }
+
+  function createObservedLeagueOneExample(handData, index) {
+    const hand = asObject(handData);
+    const response = observedResponse(hand.villainResponse);
+    const card = makeElement("article", `observed-example-card is-${response.tone}`);
+    card.dataset.structureKey = cleanText(hand.structureKey);
+    card.setAttribute(
+      "aria-label",
+      `${hand.structureLabel || "Тип флопа"}: BB сделал чек-рейз против ${hand.openerPosition || "поздней позиции"}`
+    );
+
+    const head = makeElement("header", "observed-example-card-head");
+    const title = makeElement("div", "observed-example-title");
+    title.append(
+      makeElement("span", "observed-example-index", String(index + 1).padStart(2, "0")),
+      makeElement("strong", "", hand.structureLabel || "Тип флопа")
+    );
+    head.append(title, makeElement("span", "observed-example-rank", `R${Math.round(Number(hand.rank) || 0)}`));
+
+    const stage = makeElement("div", "observed-example-stage");
+    const board = makeElement("div", "observed-example-cards");
+    board.append(
+      makeElement("span", "", "Флоп"),
+      createExampleCards(hand.boardCards, `${hand.structureLabel || "Флоп"}: ${asArray(hand.boardCards).join(" ")}`, "mini")
+    );
+    const hero = makeElement("div", "observed-example-cards");
+    hero.append(
+      makeElement("span", "", "BB"),
+      createExampleCards(hand.heroCards, `Рука BB: ${asArray(hand.heroCards).join(" ")}`, "mini")
+    );
+    stage.append(board, hero);
+
+    const line = makeElement("p", "observed-example-line");
+    line.append(
+      makeElement("strong", "", `${hand.openerPosition || "BTN"} ${formatBbValue(hand.openSizeBb)} BB`),
+      makeElement("span", "", `c-bet ${formatBbValue(hand.cbetAmountBb)} → X/R до ${formatBbValue(hand.xrToBb)} BB`)
+    );
+
+    const foot = makeElement("footer", "observed-example-foot");
+    foot.append(
+      makeElement("span", "observed-example-stack", `${formatBbValue(hand.effectiveStackBb)} BB effective`),
+      makeElement("strong", `observed-example-response is-${response.tone}`, response.label)
+    );
+    card.append(head, stage, line, foot);
+    return card;
+  }
+
+  function renderObservedLeagueOneExamples(host, observedData) {
+    if (!host) return;
+    const source = asObject(observedData);
+    const hands = asArray(source.hands);
+    host.replaceChildren();
+    replaceText("[data-examples-league-one-title]", source.title);
+    replaceText("[data-examples-league-one-lead]", source.lead);
+    replaceText("[data-examples-league-one-scope]", source.scope);
+    replaceText("[data-examples-league-one-note]", source.note);
+    if (!hands.length) {
+      host.append(makeElement("p", "examples-empty", "Наблюдавшиеся раздачи пока не загрузились."));
+      return;
+    }
+    hands.forEach((hand, index) => host.append(createObservedLeagueOneExample(hand, index)));
+  }
+
   function renderExamples() {
     const source = asObject(data.examples);
+    const observedHost = $("[data-examples-league-one]");
     const valueHost = $("[data-examples-value]");
     const bluffHost = $("[data-examples-bluff]");
-    if (!valueHost && !bluffHost) return;
+    if (!observedHost && !valueHost && !bluffHost) return;
     replaceText("[data-examples-title]", source.title);
     replaceText("[data-examples-lead]", source.lead);
     replaceText("[data-examples-note]", source.note);
     replaceText("[data-examples-method]", source.method);
+    renderObservedLeagueOneExamples(observedHost, source.observedLeague1);
     renderExampleGroup(valueHost, source.value, "value");
     renderExampleGroup(bluffHost, source.bluff, "bluff");
   }
@@ -1261,6 +1458,11 @@
           tone: "is-alternative",
           kicker: "Эксплойт, но не база",
           title: "Лузовый чек-рейз"
+        },
+        "mix-xr": {
+          tone: "is-alternative",
+          kicker: "Допустимый микс",
+          title: "Чек-рейз — тоже ок"
         },
         "missed-xr": {
           tone: "is-wrong",
@@ -1507,12 +1709,12 @@
     state.stats.hands += 1;
     const expected = correctOption(spot);
     const outcome = decisionOutcomeFor(chosen, expected);
-    if (outcome === "correct") state.stats.correct += 1;
+    if (outcome === "correct" || chosen?.acceptableMix === true) state.stats.correct += 1;
     if (outcome === "wrong") state.stats.mistakes += 1;
     if (key === "checkraise") state.stats.checkraises += 1;
     if (expected?.key === "checkraise") state.stats.expectedXr += 1;
     if (expected?.key === "checkraise" && key !== "checkraise") state.stats.missedXr += 1;
-    if (expected?.key !== "checkraise" && key === "checkraise") state.stats.extraXr += 1;
+    if (expected?.key !== "checkraise" && key === "checkraise" && chosen?.acceptableMix !== true) state.stats.extraXr += 1;
     renderPracticeSpot();
     root.requestAnimationFrame(() => {
       const continuation = $("[data-practice-continuation-external]");

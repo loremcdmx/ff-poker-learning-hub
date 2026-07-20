@@ -7,7 +7,7 @@ import vm from "node:vm";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../../..");
-const [html, source, shared, sharedCss, continuationDataSource, practiceGeneratorSource, continuationControllerSource, sizeMatchedCsv, fieldMatrixSource, fieldMatrixCss, fieldMatrixCsv] = await Promise.all([
+const [html, source, shared, sharedCss, continuationDataSource, practiceGeneratorSource, continuationControllerSource, sizeMatchedCsv, fieldMatrixSource, fieldMatrixCss, fieldMatrixCsv, observedLeagueOneJson] = await Promise.all([
   readFile(path.join(root, "flop-checkraise-lesson.html"), "utf8"),
   readFile(path.join(root, "assets/poker-flop-checkraise-lesson/data.js"), "utf8"),
   readFile(path.join(root, "assets/poker-field-lesson/lesson.js"), "utf8"),
@@ -18,7 +18,8 @@ const [html, source, shared, sharedCss, continuationDataSource, practiceGenerato
   readFile(path.join(root, "assets/poker-flop-checkraise-lesson/research/size-matched-k-high-dry-folds.csv"), "utf8"),
   readFile(path.join(root, "assets/poker-flop-checkraise-lesson/field-matrix.js"), "utf8"),
   readFile(path.join(root, "assets/poker-flop-checkraise-lesson/field-matrix.css"), "utf8"),
-  readFile(path.join(root, "assets/poker-flop-checkraise-lesson/research/structure-league-field-matrix.csv"), "utf8")
+  readFile(path.join(root, "assets/poker-flop-checkraise-lesson/research/structure-league-field-matrix.csv"), "utf8"),
+  readFile(path.join(root, "assets/poker-flop-checkraise-lesson/research/league1-bb-xr-examples-q2-2026.json"), "utf8")
 ]);
 
 const context = { window: {} };
@@ -26,12 +27,38 @@ vm.runInNewContext(continuationDataSource, context, { filename: "poker-flop-chec
 vm.runInNewContext(practiceGeneratorSource, context, { filename: "poker-flop-checkraise-lesson/practice-generator.js" });
 vm.runInNewContext(source, context, { filename: "poker-flop-checkraise-lesson/data.js" });
 const data = context.window.FF_POKER_FIELD_LESSON_DATA;
+const observedLeagueOneArtifact = JSON.parse(observedLeagueOneJson);
 
 assert.equal(data.schemaVersion, 1);
 assert.equal(data.key, "flop-checkraise");
 assert.equal(data.wisdom.length, 3);
 assert.equal(data.wisdom[1].rule, undefined, "the second wisdom slide has no extra rule callout");
 assert.equal(data.wisdom[2].rule, undefined, "the third wisdom slide has no extra rule callout");
+assert.equal(data.wisdom[2].title, "На низких лимитах фолдят больше");
+assert.match(data.wisdom[2].copy, /все телефонят/);
+assert.match(data.wisdom[2].copy, /League 3 фолдит 60,2%/);
+const valueVisual = data.wisdom[1].visual;
+assert.equal(data.wisdom[1].title, "Рейзим не только блефы");
+assert.match(data.wisdom[1].copy, /велью-часть/);
+assert.equal(valueVisual.type, "value-range");
+assert.deepEqual(Array.from(valueVisual.boardCards), ["Kc", "9d", "2h"]);
+assert.deepEqual(Array.from(valueVisual.groups, (group) => group.key), ["strong", "thin"]);
+assert.deepEqual(
+  Array.from(valueVisual.groups, (group) => Array.from(group.hands, (hand) => hand.label)).flat(),
+  ["K9", "K2", "92s", "22", "99", "KQ", "KJ", "KT"],
+  "the K92 lesson names the complete requested value range"
+);
+assert.equal(
+  Array.from(valueVisual.groups, (group) => Array.from(group.hands, (hand) => Array.from(hand.cards))).flat(2).length,
+  16,
+  "all eight hand classes render as real two-card PokerDeckKit examples"
+);
+assert.match(valueVisual.note, /Кикеры Q, J и T.*бродвейных баррелей/i);
+assert.match(shared, /function wisdomValueRange\(item\)/, "the shared renderer supports the K92 value panel");
+assert.match(shared, /function wisdomValueCopy\(item\)/, "the shared renderer supports formatted K92 copy");
+assert.match(shared, /visual\.classList\.add\("has-value-range"\)/);
+assert.match(sharedCss, /\.wisdom-value-range\s*\{/);
+assert.match(sharedCss, /\.wisdom-value-combo\s*\{/);
 assert.doesNotMatch(
   shared,
   /makeElement\("footer", "wisdom-board-folds-foot"\)/,
@@ -71,7 +98,7 @@ assert.deepEqual(
   [field.sample.compactRows, field.sample.parsedRows, field.sample.rankedRows, field.sample.coBtnRows, field.sample.positionParseErrors],
   [2300854, 2297953, 2256311, 1267631, 21]
 );
-assert.match(field.definitions.cbet, /ставки CO\/BTN.*возможности/i);
+assert.match(field.definitions.cbet, /как часто CO\/BTN ставит c-bet в BB.*возможности/i);
 assert.match(field.definitions.foldVsXr, /фолды.*встреченные check-raise/i);
 assert.deepEqual(Array.from(field.foldViews, (view) => view.key), ["overall", "matched"]);
 assert.equal(field.defaultFoldView, "overall");
@@ -188,11 +215,11 @@ for (const artifact of fieldMatrixArtifactRows) {
   );
 }
 
-assert.match(data.wisdom[2].copy, /43%/);
 const foldVisual = data.wisdom[2].visual;
 assert.equal(foldVisual.type, "board-folds");
 assert.equal(foldVisual.sampleId, "strict-k-high-size-window-q2-2026");
 assert.equal(foldVisual.cohortRole, "aggressor");
+assert.equal(foldVisual.breakeven, 42.97, "the bluff threshold stays in the visual card after simplifying the lesson copy");
 assert.deepEqual(Array.from(foldVisual.boardCards), ["Kc", "8h", "2s"]);
 assert.equal(new Set(foldVisual.boardCards).size, 3);
 assert.match(foldVisual.boardScope, /представитель класса/i, "K82r stays representative rather than exact-board evidence");
@@ -288,6 +315,80 @@ for (const requestedId of ["xr-jt-gutshot", "xr-qt-gutshot", "xr-qj-gutshot", "x
 }
 
 assert.equal(data.examples.tree, "bb_vs_late_rfi");
+const observedLeagueOne = data.examples.observedLeague1;
+const observedSampleId = "league1-bb-xr-examples-q2-2026-v1";
+const expectedObservedStructures = [
+  "a_high_dry", "k_high_dry", "broadway", "low_connected",
+  "paired", "two_tone", "monotone", "other"
+];
+const expectedObservedHashes = [
+  "e8bcede1664fe9d8f09d7033289a6e52090c457dd87d7704e52cb52cd89d2944",
+  "9d2e1c43a6e9692d12d8d38fa391b84b82622f62a932ecbe7473e3289dfc497e",
+  "f52645b754938450eef19fbeedc1dc57078b5489c7d5aa0e4aef94192e49472d",
+  "68beccd53c68e06aa6355213c025ee8e80fb5ededa719607f919d1997a97117f",
+  "a8d903bf96b01e38a6120cdc06c499ef7f093da519418b8db280ac23996c8101",
+  "8a4cca3a1c1d849ee7bcda27631cf81ce88dd32ab289c38a77a5069bd57220b2",
+  "ed05a4e075b751905539ef8cca1b124e5a9aed30918c34bea314169247b8a83c",
+  "ccbc1f4787326447c7632bcddd327505a6ec09f2968730fa6f01db948f5b6c1d"
+];
+assert(observedLeagueOne, "the Examples tab exposes the League 1 observed-HH block");
+assert.equal(observedLeagueOne.sampleId, observedSampleId);
+assert.equal(observedLeagueOne.queryVersion, observedSampleId);
+assert(observedLeagueOne.title && observedLeagueOne.lead && observedLeagueOne.scope && observedLeagueOne.note);
+assert.match(observedLeagueOne.scope, /rank 1–5|R1–5/i);
+assert.match(observedLeagueOne.note, /не рекомендац|не частот/i, "a single observed HH is not presented as advice or a rate");
+assert.deepEqual(
+  Array.from(observedLeagueOne.hands, (hand) => hand.structureKey),
+  expectedObservedStructures,
+  "one exact League 1 HH covers every canonical flop structure in canonical order"
+);
+assert.deepEqual(
+  Array.from(observedLeagueOne.hands, (hand) => hand.source.handKeyHash),
+  expectedObservedHashes,
+  "the eight selected physical hands stay pinned by non-PII hashes"
+);
+assert.equal(new Set(expectedObservedHashes).size, expectedObservedHashes.length);
+for (const hand of observedLeagueOne.hands) {
+  assert(hand.structureLabel, `${hand.structureKey} has a user-facing structure label`);
+  assert.equal(hand.league, "league1", `${hand.structureKey} stays in League 1`);
+  assert(Number.isInteger(hand.rank) && hand.rank >= 1 && hand.rank <= 5, `${hand.structureKey} has a League 1 rank`);
+  assert.equal(hand.heroRole, "BB", `${hand.structureKey} keeps the observed check-raiser on BB`);
+  assert.equal(hand.actionKey, "checkraise", `${hand.structureKey} is an observed check-raise`);
+  assert(["CO", "BTN"].includes(hand.openerPosition), `${hand.structureKey} comes from a late-position opener`);
+  assert.equal(hand.heroCards.length, 2, `${hand.structureKey} has two exact Hero cards`);
+  assert.equal(hand.boardCards.length, 3, `${hand.structureKey} has three exact flop cards`);
+  const exactCards = [...hand.heroCards, ...hand.boardCards];
+  assert(exactCards.every((card) => /^[2-9TJQKA][cdhs]$/.test(card)), `${hand.structureKey} uses canonical exact cards`);
+  assert.equal(new Set(exactCards).size, 5, `${hand.structureKey} has no duplicate physical cards`);
+  assert(Number.isFinite(hand.openSizeBb) && hand.openSizeBb > 0 && hand.openSizeBb <= 3);
+  assert(Number.isFinite(hand.effectiveStackBb) && hand.effectiveStackBb >= 20);
+  assert(Number.isFinite(hand.cbetAmountBb) && hand.cbetAmountBb > 0);
+  assert(Number.isFinite(hand.xrToBb) && hand.xrToBb > hand.cbetAmountBb);
+  assert(["fold", "call", "reraise_allin"].includes(hand.villainResponse));
+  assert.equal(hand.source.sampleId, observedSampleId);
+  assert.equal(hand.source.queryVersion, observedSampleId);
+  assert.equal(hand.source.rankTiming, "exact_as_of_hand");
+  assert.equal(hand.source.period, "2026-Q2");
+  assert.match(hand.source.handKeyHash, /^[a-f0-9]{64}$/);
+}
+assert.equal(observedLeagueOneArtifact.schemaVersion, 1);
+assert.equal(observedLeagueOneArtifact.sampleId, observedSampleId);
+assert.equal(observedLeagueOneArtifact.queryVersion, observedSampleId);
+assert.equal(observedLeagueOneArtifact.purpose, "observed_hh_examples_only");
+assert.deepEqual(observedLeagueOneArtifact.rank, {
+  league: "league1",
+  range: [1, 5],
+  timing: "exact_as_of_hand"
+});
+assert.equal(observedLeagueOneArtifact.publication.ratesAllowed, false);
+assert.equal(observedLeagueOneArtifact.publication.isRecommendation, false);
+assert.equal(observedLeagueOneArtifact.publication.reverseHeroAggregateGateRelaxed, false);
+assert.equal(observedLeagueOneArtifact.publication.physicalHandIds, "sha256_only");
+assert.deepEqual(
+  JSON.parse(JSON.stringify(observedLeagueOne.hands)),
+  observedLeagueOneArtifact.hands,
+  "browser data stays byte-for-field aligned with the independently saved exact-HH artifact"
+);
 assert.equal(data.examples.value.length, 3, "value examples are grouped by category, not duplicated per combo");
 assert.equal(data.examples.bluff.length, 2, "bluff examples are grouped by category, not duplicated per combo");
 const setExample = data.examples.value.find((example) => example.id === "example-set");
@@ -353,13 +454,16 @@ assert.deepEqual(
     .sort(),
   "every authored X/R candidate appears once inside the five category cards"
 );
-assert.match(data.examples.lead, /пять категорий.*когда рейзить.*тёрне/i);
-assert.match(data.examples.method, /примеры учебные.*точных частот/i);
+assert.match(data.examples.lead, /восемь реальных раздач Лиги 1.*пять учебных категорий/i);
+assert.match(data.examples.method, /восемь реально сыгранных X\/R.*не задаёт частоту или рекомендацию/i);
 assert.match(data.examples.bluff[0].contrast.copy, /один слабый backdoor.*эксплойт.*два пути усиления/i);
 assert.match(data.examples.bluff[1].contrast.copy, /один runner-runner.*эксплойт.*gutshot/i);
 
 assert.match(html, /data-intro-table/);
 assert.match(html, /data-step-target="examples"/);
+assert.match(html, /data-examples-league-one/, "the Examples tab has a dedicated observed League 1 host");
+assert.match(shared, /observedLeague1/, "the shared lesson renderer reads the observed League 1 data contract");
+assert.match(shared, /data-examples-league-one/, "the shared lesson renderer mounts the observed League 1 cards separately");
 assert.doesNotMatch(
   html,
   /3 короткие мысли|стрелки, точки или свайп/,
@@ -384,7 +488,11 @@ const sharedCssHash = createHash("sha256")
   .digest("hex")
   .slice(0, 12);
 assert.match(html, new RegExp(`assets/poker-field-lesson/lesson\\.css\\?v=${sharedCssHash}`));
-assert.match(html, /ca84428f46bf/);
+const practiceGeneratorHash = createHash("sha256")
+  .update(practiceGeneratorSource.replace(/\r\n/g, "\n").replace(/\r/g, "\n"))
+  .digest("hex")
+  .slice(0, 12);
+assert.match(html, new RegExp(`assets/poker-flop-checkraise-lesson/practice-generator\\.js\\?v=${practiceGeneratorHash}`));
 const sourceHash = createHash("sha256")
   .update(source.replace(/\r\n/g, "\n").replace(/\r/g, "\n"))
   .digest("hex")
@@ -416,9 +524,58 @@ assert.ok(html.indexOf("poker-flop-checkraise-lesson/continuations.js") < html.i
 assert.ok(html.indexOf("poker-flop-checkraise-lesson/practice-generator.js") < html.indexOf("poker-flop-checkraise-lesson/data.js"));
 assert.ok(html.indexOf("poker-flop-checkraise-lesson/data.js") < html.indexOf("poker-flop-checkraise-lesson/field-matrix.js"));
 assert.ok(html.indexOf("poker-flop-checkraise-lesson/field-matrix.js") < html.indexOf("poker-field-lesson/lesson.js"));
-assert.match(fieldMatrixSource, /C-bet после чека/);
+assert.match(fieldMatrixSource, /Нам ставят c-bet/);
+assert.match(fieldMatrixSource, /CO\/BTN ставит c-bet в BB/);
+assert.match(fieldMatrixSource, /appendKpi\(metrics, "Нам ставят"/);
+assert.doesNotMatch(fieldMatrixSource, /appendKpi\(metrics, "C-bet"/);
 assert.match(fieldMatrixSource, /Фолд на X\/R/);
 assert.match(fieldMatrixSource, /dataset\.foldView/);
+assert.equal((fieldMatrixSource.match(/showSample: false/g) || []).length, 2, "the structure table hides both raw sample counters");
+assert.doesNotMatch(fieldMatrixSource, /Как читать N:/, "the table no longer keeps an obsolete sample-size footer");
+assert.match(fieldMatrixCss, /structure-league-table\s*\{[\s\S]*?min-width:\s*0;/, "the desktop matrix has no artificial horizontal floor");
+assert.match(fieldMatrixCss, /structure-league-table th,[\s\S]*?padding:\s*8px;/, "desktop matrix rows stay compact");
+assert.match(fieldMatrixCss, /thead th:first-child\s*\{\s*width:\s*20%;/, "the structure column yields space to all three leagues");
+assert.match(fieldMatrixCss, /thead th:not\(:first-child\)\s*\{\s*width:\s*26\.6667%;/, "the three league columns share the remaining width exactly");
+assert.match(fieldMatrixCss, /structure-league-table \.structure-league-cell-metrics\s*\{\s*gap:\s*6px;/, "desktop league KPIs use the compact table gap");
+assert.match(fieldMatrixCss, /--structure-league-accent:/, "each league pair receives its own restrained visual accent");
+assert.match(
+  fieldMatrixCss,
+  /structure-league-table thead th:not\(:first-child\)[\s\S]*?box-shadow:\s*inset 0 -2px 0 rgba\(var\(--structure-league-accent\), \.42\);/,
+  "league headers visibly cap their paired metric columns"
+);
+assert.match(
+  fieldMatrixCss,
+  /structure-league-table \.structure-league-cell-metrics[\s\S]*?border:\s*1px solid rgba\(var\(--structure-league-accent\), \.20\);[\s\S]*?box-shadow:/,
+  "both metrics sit inside one shared league frame"
+);
+assert.match(
+  fieldMatrixCss,
+  /wisdom-slide\.has-value-range-slide \.wisdom-value-copy-list\s*\{\s*display:\s*none;/,
+  "the illustrated value card is the single source of the hand list"
+);
+for (const annotationClass of [
+  "wisdom-board-kicker",
+  "wisdom-value-range-title",
+  "wisdom-value-group-head",
+  "wisdom-value-combo-label",
+  "wisdom-value-note"
+]) {
+  assert.match(
+    fieldMatrixCss,
+    new RegExp(`wisdom-slide\\.has-value-range-slide[\\s\\S]*?\\.${annotationClass}[\\s\\S]*?display:\\s*none;`),
+    `${annotationClass} stays hidden in the picture-only K92 range`
+  );
+}
+assert.match(
+  fieldMatrixCss,
+  /wisdom-value-group\.is-strong \.wisdom-value-combos\s*\{\s*grid-template-columns:\s*repeat\(5,/,
+  "all five strong-value hands stay on one compact picture row"
+);
+assert.match(
+  fieldMatrixCss,
+  /wisdom-value-group\.is-thin \.wisdom-value-combos\s*\{\s*grid-template-columns:\s*repeat\(3,/,
+  "the three mixed Kx hands stay on one compact picture row"
+);
 assert.match(fieldMatrixCss, /structure-league-mobile-label/);
 assert.match(fieldMatrixCss, /@media \(max-width: 820px\)/);
 assert.match(
@@ -470,6 +627,8 @@ assert.match(shared, /data-practice-continuation-external/);
 assert.match(shared, /data-practice-depth/);
 assert.match(shared, /state\.practiceChoice !== "fold"/, "full-hand mode ends immediately when Hero folds the flop");
 assert.match(shared, /Чек-рейз — ок/);
+assert.match(shared, /Чек-рейз — тоже ок/);
+assert.match(shared, /Допустимый микс/);
 assert.match(shared, /Лузовый чек-рейз/);
 assert.match(shared, /Очевидно пропущенный чек-рейз/);
 assert.match(shared, /compact \? "Что делаешь\?" : spot\.question/);
@@ -524,6 +683,25 @@ assert(invalidFieldErrors.some((error) => /matched N больше overall N/.tes
 
 const rateFeedback = runtimeContext.window.FFPokerFieldLesson.practiceRateFeedbackFor;
 const decisionOutcome = runtimeContext.window.FFPokerFieldLesson.decisionOutcomeFor;
+const gutshotSession = context.window.FFFlopCheckraisePracticeGenerator.createSession({ seed: "diagnose-86s-k95" });
+let gutshotSpot = null;
+while (!gutshotSpot || gutshotSpot.practiceMeta.serial < 18) gutshotSpot = gutshotSession.next();
+assert.equal(gutshotSpot.practiceMeta.archetype, "thin-gutshot");
+assert.equal(
+  decisionOutcome(gutshotSpot.options.find((option) => option.key === "checkraise"), gutshotSpot.options.find((option) => option.correct)),
+  "alternative",
+  "the 86s gutshot check-raise is accepted as a mix rather than graded as an error"
+);
+const kqJ72Session = context.window.FFFlopCheckraisePracticeGenerator.createSession({ seed: "kq-j72-btnshot-1653" });
+let kqJ72Spot = null;
+while (!kqJ72Spot || kqJ72Spot.practiceMeta.serial < 58) kqJ72Spot = kqJ72Session.next();
+assert.deepEqual(Array.from(kqJ72Spot.table.heroCards), ["Kc", "Qs"]);
+assert.deepEqual(Array.from(kqJ72Spot.table.boardCards), ["Js", "7d", "2h"]);
+assert.equal(
+  decisionOutcome(kqJ72Spot.options.find((option) => option.key === "checkraise"), kqJ72Spot.options.find((option) => option.correct)),
+  "alternative",
+  "the KQ blocker check-raise on J72r is accepted as a mix rather than a loose exploit"
+);
 const allMode = { compareExpectedXr: true, reference: "Учебная линия" };
 const j5Spot = byId.get("fold-j5-weak-backdoor");
 assert.equal(
@@ -557,6 +735,10 @@ incomplete.cohorts[0].actions[0].pct = null;
 incomplete.examples.value[0].tree = "rvcc";
 incomplete.examples.value[0].playbook.bestTurns = "";
 incomplete.practiceGenerator.global = "";
+incomplete.wisdom[1].visual.boardCards[1] = "Kc";
+incomplete.wisdom[1].visual.groups[1].hands.push({ label: "K9", cards: ["Kh", "9s"] });
+incomplete.wisdom[1].visual.groups[0].hands[0].cards = ["Kc", "9c"];
+incomplete.wisdom[1].visual.note = "";
 incomplete.wisdom[2].visual.boardCards[1] = "Kc";
 incomplete.wisdom[2].visual.sizing.checkraise = "";
 incomplete.wisdom[2].visual.rows = incomplete.wisdom[2].visual.rows.filter((row) => row.key !== "league2");
@@ -567,6 +749,9 @@ assert(incompleteErrors.some((error) => /tree должен быть bb_vs_late_r
 assert(incompleteErrors.some((error) => /playbook: нет bestTurns/.test(error)), "empty example turn plan is rejected");
 assert(incompleteErrors.some((error) => /practiceGenerator\.global/.test(error)), "missing procedural provider global is rejected");
 assert(incompleteErrors.some((error) => /три уникальные валидные карты/.test(error)), "duplicate board card is rejected");
+assert(incompleteErrors.some((error) => /рука K9 повторяется/.test(error)), "duplicate value hand is rejected");
+assert(incompleteErrors.some((error) => /две валидные карты без конфликта/.test(error)), "value example cannot reuse a board card");
+assert(incompleteErrors.some((error) => /нет note/.test(error)), "missing value-range explanation is rejected");
 assert(incompleteErrors.some((error) => /нет checkraise/.test(error)), "missing shared size scope is rejected");
 assert(incompleteErrors.some((error) => /нужны league1, league2, league3/.test(error)), "missing league row is rejected");
 assert(incompleteErrors.some((error) => /неверные folds\/faced/.test(error)), "folds above faced are rejected");

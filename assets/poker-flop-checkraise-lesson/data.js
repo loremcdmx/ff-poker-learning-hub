@@ -432,14 +432,43 @@
       },
       {
         eyebrow: "Диапазон",
-        title: "Блефам нужна сильная пара",
-        copy: "Если BB только коллирует все Kx, две пары и сеты, его check-raise становится перекошен в блефы. Часть KQ/KJ/KT и сильнейшего вэлью поддерживает полублефы.",
-        stat: { value: "value + bluff", label: "одна линия, две взаимные опоры" }
+        title: "Рейзим не только блефы",
+        copy: "На сухом K92 чек-рейзу нужна велью-часть: две пары, сеты и иногда сильные Kx.",
+        visual: {
+          type: "value-range",
+          boardCards: ["Kc", "9d", "2h"],
+          boardLabel: "K-high dry · K92r",
+          groups: [
+            {
+              key: "strong",
+              label: "Сильное велью",
+              caption: "Две пары и сеты",
+              hands: [
+                { label: "K9", cards: ["Kh", "9c"] },
+                { label: "K2", cards: ["Ks", "2d"] },
+                { label: "92s", cards: ["9s", "2s"] },
+                { label: "22", cards: ["2c", "2s"] },
+                { label: "99", cards: ["9c", "9s"] }
+              ]
+            },
+            {
+              key: "thin",
+              label: "Сильные Kx · микс",
+              caption: "Выборочно, не всегда",
+              hands: [
+                { label: "KQ", cards: ["Kh", "Qc"] },
+                { label: "KJ", cards: ["Ks", "Jh"] },
+                { label: "KT", cards: ["Kd", "Tc"] }
+              ]
+            }
+          ],
+          note: "Кикеры Q, J и T блокируют часть возможных бродвейных баррелей соперника — это дополнительный аргумент иногда подмешивать эти Kx в рейз."
+        }
       },
       {
-        eyebrow: "Экономика · реальные HH",
-        title: "Один сайз — три реакции",
-        copy: "Берём сопоставимый срез: CO/BTN против BB, сухой K-high флоп, c-bet 30–36% банка и check-raise примерно до стартового банка. В Q2 2026 игроки League 1 фолдили 49,5%, League 2 — 45,5%, League 3 — 60,2%. Учебный размер 1,8 → 5,5 BB попадает в этот бакет; чистому блефу нужно около 43% фолдов.",
+        eyebrow: "Что делает поле",
+        title: "На низких лимитах фолдят больше",
+        copy: "Фолдов после чек-рейза мы получаем очень много. Может казаться, что на низких лимитах их меньше, потому что «все телефонят», но данные показывают обратное: в этом сопоставимом споте League 3 фолдит 60,2% — чаще, чем League 1 и 2.",
         visual: {
           type: "board-folds",
           sampleId: "strict-k-high-size-window-q2-2026",
@@ -487,7 +516,7 @@
         positionParseErrors: 21
       },
       definitions: {
-        cbet: "Ставки CO/BTN после чека BB / все возможности поставить",
+        cbet: "Как часто CO/BTN ставит c-bet в BB после его чека / все возможности поставить",
         foldVsXr: "Фолды того же CO/BTN / встреченные check-raise с известным ответом"
       },
       foldViews: [
@@ -628,9 +657,123 @@
     examples: {
       tree: "bb_vs_late_rfi",
       title: "Кандидаты на чек-рейз",
-      lead: "Пять категорий: когда рейзить и что делать на тёрне.",
+      lead: "Восемь реальных раздач Лиги 1 и пять учебных категорий: что рейзят и как продолжать.",
       note: "BB против CO/BTN: колл префлоп → чек → c-bet.",
-      method: "Примеры учебные; точных частот по отдельным рукам пока нет.",
+      method: "Сначала — восемь реально сыгранных X/R из базы FF. Учебные карточки ниже объясняют логику кандидатов; отдельная HH не задаёт частоту или рекомендацию.",
+      observedLeague1: {
+        title: "Реальные чек-рейзы по всем типам флопа",
+        lead: "По одной наблюдавшейся раздаче BB против CO/BTN на каждую из восьми категорий.",
+        scope: "Q2 2026 · rank 1–5 на момент раздачи",
+        note: "Это примеры действий поля, а не рекомендация и не частота.",
+        sampleId: "league1-bb-xr-examples-q2-2026-v1",
+        queryVersion: "league1-bb-xr-examples-q2-2026-v1",
+        hands: [
+          {
+            structureKey: "a_high_dry", structureLabel: "A-high · сухая",
+            league: "league1", rank: 2, heroRole: "BB", actionKey: "checkraise", openerPosition: "BTN",
+            boardCards: ["7h", "Ad", "2s"], heroCards: ["9h", "6h"],
+            openSizeBb: 2, effectiveStackBb: 52.2711, cbetAmountBb: 1.5, xrToBb: 5,
+            villainResponse: "call",
+            source: {
+              sampleId: "league1-bb-xr-examples-q2-2026-v1",
+              queryVersion: "league1-bb-xr-examples-q2-2026-v1",
+              handKeyHash: "e8bcede1664fe9d8f09d7033289a6e52090c457dd87d7704e52cb52cd89d2944",
+              rankTiming: "exact_as_of_hand", period: "2026-Q2"
+            }
+          },
+          {
+            structureKey: "k_high_dry", structureLabel: "K-high · сухая",
+            league: "league1", rank: 2, heroRole: "BB", actionKey: "checkraise", openerPosition: "BTN",
+            boardCards: ["Kd", "5c", "8s"], heroCards: ["7s", "Qh"],
+            openSizeBb: 2, effectiveStackBb: 98.12, cbetAmountBb: 1.77, xrToBb: 9,
+            villainResponse: "fold",
+            source: {
+              sampleId: "league1-bb-xr-examples-q2-2026-v1",
+              queryVersion: "league1-bb-xr-examples-q2-2026-v1",
+              handKeyHash: "9d2e1c43a6e9692d12d8d38fa391b84b82622f62a932ecbe7473e3289dfc497e",
+              rankTiming: "exact_as_of_hand", period: "2026-Q2"
+            }
+          },
+          {
+            structureKey: "broadway", structureLabel: "Бродвейная",
+            league: "league1", rank: 4, heroRole: "BB", actionKey: "checkraise", openerPosition: "BTN",
+            boardCards: ["Ks", "Ts", "Jd"], heroCards: ["Tc", "Js"],
+            openSizeBb: 2, effectiveStackBb: 23.474, cbetAmountBb: 1.7935, xrToBb: 6,
+            villainResponse: "reraise_allin",
+            source: {
+              sampleId: "league1-bb-xr-examples-q2-2026-v1",
+              queryVersion: "league1-bb-xr-examples-q2-2026-v1",
+              handKeyHash: "f52645b754938450eef19fbeedc1dc57078b5489c7d5aa0e4aef94192e49472d",
+              rankTiming: "exact_as_of_hand", period: "2026-Q2"
+            }
+          },
+          {
+            structureKey: "low_connected", structureLabel: "Низкая связанная",
+            league: "league1", rank: 5, heroRole: "BB", actionKey: "checkraise", openerPosition: "BTN",
+            boardCards: ["6h", "4s", "5c"], heroCards: ["8h", "Qd"],
+            openSizeBb: 2, effectiveStackBb: 60.4018667, cbetAmountBb: 1.8315, xrToBb: 7,
+            villainResponse: "call",
+            source: {
+              sampleId: "league1-bb-xr-examples-q2-2026-v1",
+              queryVersion: "league1-bb-xr-examples-q2-2026-v1",
+              handKeyHash: "68beccd53c68e06aa6355213c025ee8e80fb5ededa719607f919d1997a97117f",
+              rankTiming: "exact_as_of_hand", period: "2026-Q2"
+            }
+          },
+          {
+            structureKey: "paired", structureLabel: "Спаренная / trips",
+            league: "league1", rank: 2, heroRole: "BB", actionKey: "checkraise", openerPosition: "CO",
+            boardCards: ["8s", "4d", "4s"], heroCards: ["7h", "6h"],
+            openSizeBb: 2, effectiveStackBb: 27.75, cbetAmountBb: 1.375, xrToBb: 3.5,
+            villainResponse: "call",
+            source: {
+              sampleId: "league1-bb-xr-examples-q2-2026-v1",
+              queryVersion: "league1-bb-xr-examples-q2-2026-v1",
+              handKeyHash: "a8d903bf96b01e38a6120cdc06c499ef7f093da519418b8db280ac23996c8101",
+              rankTiming: "exact_as_of_hand", period: "2026-Q2"
+            }
+          },
+          {
+            structureKey: "two_tone", structureLabel: "Two-tone",
+            league: "league1", rank: 3, heroRole: "BB", actionKey: "checkraise", openerPosition: "BTN",
+            boardCards: ["6h", "7c", "5h"], heroCards: ["Ah", "9h"],
+            openSizeBb: 2, effectiveStackBb: 52.22, cbetAmountBb: 2.6533333, xrToBb: 11,
+            villainResponse: "reraise_allin",
+            source: {
+              sampleId: "league1-bb-xr-examples-q2-2026-v1",
+              queryVersion: "league1-bb-xr-examples-q2-2026-v1",
+              handKeyHash: "8a4cca3a1c1d849ee7bcda27631cf81ce88dd32ab289c38a77a5069bd57220b2",
+              rankTiming: "exact_as_of_hand", period: "2026-Q2"
+            }
+          },
+          {
+            structureKey: "monotone", structureLabel: "Монотонная",
+            league: "league1", rank: 3, heroRole: "BB", actionKey: "checkraise", openerPosition: "BTN",
+            boardCards: ["3s", "Ts", "4s"], heroCards: ["As", "Jc"],
+            openSizeBb: 2, effectiveStackBb: 59.1857143, cbetAmountBb: 1.8621429, xrToBb: 5.2242857,
+            villainResponse: "call",
+            source: {
+              sampleId: "league1-bb-xr-examples-q2-2026-v1",
+              queryVersion: "league1-bb-xr-examples-q2-2026-v1",
+              handKeyHash: "ed05a4e075b751905539ef8cca1b124e5a9aed30918c34bea314169247b8a83c",
+              rankTiming: "exact_as_of_hand", period: "2026-Q2"
+            }
+          },
+          {
+            structureKey: "other", structureLabel: "Другие rainbow",
+            league: "league1", rank: 5, heroRole: "BB", actionKey: "checkraise", openerPosition: "CO",
+            boardCards: ["7s", "Th", "2c"], heroCards: ["Qs", "9s"],
+            openSizeBb: 2, effectiveStackBb: 96.75, cbetAmountBb: 1.735, xrToBb: 6.47,
+            villainResponse: "fold",
+            source: {
+              sampleId: "league1-bb-xr-examples-q2-2026-v1",
+              queryVersion: "league1-bb-xr-examples-q2-2026-v1",
+              handKeyHash: "ccbc1f4787326447c7632bcddd327505a6ec09f2968730fa6f01db948f5b6c1d",
+              rankTiming: "exact_as_of_hand", period: "2026-Q2"
+            }
+          }
+        ]
+      },
       value: [
         example({
           sourceIds: ["xr-kq-value"], title: "Сильная топ-пара", handClass: "Вэлью · верх Kx",

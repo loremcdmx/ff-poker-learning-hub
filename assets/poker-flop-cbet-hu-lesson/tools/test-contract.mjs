@@ -62,13 +62,19 @@ for (const token of [
 assert.match(html, /poker-flop-cbet-hu-lesson\/lesson\.css\?v=[a-f0-9]{12}/);
 assert.match(lessonCss, /@media \(max-width: 860px\)[\s\S]*?\.lesson-header \{\s*position: static;\s*top: auto;/, "mobile lesson header does not cover trainer actions");
 assert.doesNotMatch(html, /simulatorTab|simulatorScreen|data-cbet-simulator|assets\/poker-simulator\/embed\.js/, "lesson has one practice surface and no generic simulator tab");
+assert.doesNotMatch(html, /data-trainer-next/, "practice does not keep a detached next-hand button below the table grid");
 assert.doesNotMatch(html, /felt-table|data-deal-action|data-trainer-action/, "interactive c-bet decisions never pair a static table with external action buttons");
 assert.match(lessonSource, /requestedStepRaw === "simulator" \? "practice"/, "old simulator deep links route to practice");
 assert.match(lessonSource, /function trainerActionGroup\([\s\S]*\["25", "33", "small"\][\s\S]*\["50", "67", "large"\]/, "exact sizes collapse into three decision classes");
 assert.match(lessonSource, /const SNAPSHOT_ACTIONS = \[[\s\S]*key: "check"[\s\S]*key: "small"[\s\S]*key: "large"/, "shared snapshot receives the same three decision classes");
 assert.match(lessonSource, /window\.FFTrainerSimulator\.renderDecision/, "intro and practice render through the shared simulator adapter");
 assert.match(lessonSource, /closest\("\[data-option-key\]"\)/, "action clicks are delegated from the functional table");
+assert.match(lessonSource, /nextLabel:\s*state\.trainerAnswered\s*\?\s*"Следующая раздача"/, "answered c-bet hands use the shared inline continuation control");
+assert.match(lessonSource, /closest\("\[data-practice-next\]"\)[\s\S]*advanceTrainer\(\)[\s\S]*closest\("\[data-option-key\]"\)/, "inline continuation is delegated before poker actions");
+assert.match(lessonSource, /function advanceTrainer\(\)/, "practice advances through one shared continuation path");
 assert.match(lessonSource, /function introSnapshotSpot\([\s\S]*return snapshotSpot/, "intro and practice share one native snapshot spot builder");
+assert.match(lessonSource, /function snapshotSeats\(spot = \{\}\)[\s\S]*spot\.opponentClass === "is-loose"[\s\S]*difficulty: "easy"[\s\S]*style: "fish"/, "fish semantics reach the shared BB seat profile without parsing visible copy");
+assert.match(lessonSource, /seats:\s*snapshotSeats\(spot\)/, "each rendered c-bet spot supplies its opponent profile to the shared snapshot");
 assert.match(lessonSource, /accepted\.length !== 1/, "every generated c-bet spot has one unambiguous correct action class");
 assert.match(lessonSource, /function trainerHasStrongMadeHand\([\s\S]*?boardMatches\.has\(topBoardRank\)[\s\S]*?flush \|\| straight/, "top pair and stronger made hands are detected for sizing tolerance");
 assert.match(lessonSource, /rankOrder\.indexOf\(kicker\) >= rankOrder\.indexOf\("T"\)/, "top-pair sizing tolerance requires a strong kicker rather than any weak top pair");
@@ -87,6 +93,12 @@ assert.match(lessonSource, /observedRateDisplay\(entry\.observedFe, entry\.valid
 assert.match(lessonSource, /observedRateDisplay\(entry\.xrRate, entry\.xrValidResponses, "eligible N"\)/);
 assert.match(lessonCss, /\.cbet-practice-table \.client-controls > \.client-row \{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/, "practice renders three equal shared action columns");
 assert.match(lessonCss, /\.cbet-practice-table \.table-action \{[^}]*min-height:\s*72px/, "shared practice actions keep the large hit target");
+assert.match(lessonCss, /@media \(max-width: 620px\)[\s\S]*?\.cbet-practice-table \.client-controls > \.client-row\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)\s*!important;/, "mobile c-bet actions use two readable columns instead of three squeezed ones");
+assert.match(lessonCss, /@media \(max-width: 620px\)[\s\S]*?\.cbet-practice-table \.client-controls\[data-option-count="3"\][^{]*\.table-action:last-child\s*\{[^}]*grid-column:\s*1 \/ -1;/, "the third mobile c-bet action spans the full row");
+assert.match(lessonCss, /\.cbet-practice-table:has\(\.practice-next-row\)\s*\{[^}]*--shell-action-gutter:\s*210px;[^}]*padding-bottom:\s*210px;/, "inline continuation reserves enough room inside the table stage");
+assert.match(lessonCss, /\.cbet-practice-table \.practice-next-row\s*\{[^}]*width:\s*100%;[^}]*justify-self:\s*stretch;/, "inline continuation row spans the action dock despite simulator justify-items");
+assert.match(lessonCss, /\.cbet-practice-table \.practice-next-button\s*\{[^}]*width:\s*100%;[^}]*min-height:\s*44px;/, "inline continuation is a full-width nearby target");
+assert.match(lessonCss, /@media \(max-width: 620px\)[\s\S]*?\.cbet-deal-table,[\s\S]*?\.cbet-practice-table\s*\{[^}]*padding-bottom:\s*168px;/, "wrapped mobile action rows keep a focus-safe bottom gutter");
 for (const action of ["check", "small", "large"]) {
   assert.match(lessonCss, new RegExp(`\\.cbet-practice-table \\.table-action\\[data-option-key="${action}"\\]`), `practice colors the shared ${action} action`);
 }

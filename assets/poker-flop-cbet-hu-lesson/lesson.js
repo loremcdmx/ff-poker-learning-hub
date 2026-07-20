@@ -1217,11 +1217,17 @@
     host.append(eyebrow, heading, paragraph, button);
   }
 
-  function snapshotSeats() {
+  function snapshotSeats(spot = {}) {
+    const fishOpponent = spot.opponentClass === "is-loose";
     return SNAPSHOT_SEAT_ORDER.map((label) => ({
       label,
       state: label === "BTN" ? "hero" : label === "BB" ? "waiting" : "folded",
-      stackBb: label === "BTN" || label === "BB" ? 38 : label === "SB" ? 39.5 : 40
+      stackBb: label === "BTN" || label === "BB" ? 38 : label === "SB" ? 39.5 : 40,
+      ...(label === "BB" ? {
+        botProfile: fishOpponent
+          ? { difficulty: "easy", style: "fish", label: "Фиш" }
+          : { difficulty: "standard", style: "reg", label: "Рег" }
+      } : {})
     }));
   }
 
@@ -1246,7 +1252,7 @@
       answer: spot.explanation || "",
       context: "BTN открыл 2 BB, BB заколлировал и прочекал флоп.",
       table: {
-        seats: snapshotSeats(),
+        seats: snapshotSeats(spot),
         heroPosition: "BTN",
         heroStack: "38 BB",
         effectiveStack: "38 BB",
@@ -1265,7 +1271,7 @@
     };
   }
 
-  function renderSnapshotDecision(host, spot, selectedKey) {
+  function renderSnapshotDecision(host, spot, selectedKey, options = {}) {
     if (!host) return null;
     if (!window.FFTrainerSimulator || typeof window.FFTrainerSimulator.renderDecision !== "function") {
       host.innerHTML = '<p class="table-load-error">Функциональный стол не загрузился. Обнови страницу.</p>';
@@ -1277,7 +1283,8 @@
         selectedKey: selectedKey || "",
         finished: false
       }, {
-        decimalComma: true
+        decimalComma: true,
+        nextLabel: options.nextLabel || ""
       });
       const alternative = host.querySelector('[data-answer-state="alternative"]');
       if (alternative) {
@@ -2325,13 +2332,10 @@
     renderSnapshotDecision(
       query("[data-trainer-table]"),
       snapshotSpot(spot),
-      state.trainerAnswered ? state.trainerChoice : ""
+      state.trainerAnswered ? state.trainerChoice : "",
+      { nextLabel: state.trainerAnswered ? "Следующая раздача" : "" }
     );
     updateTrainerHud();
-
-    const next = query("[data-trainer-next]");
-    next.disabled = !state.trainerAnswered;
-    next.textContent = "Следующая раздача";
     if (!state.trainerAnswered) {
       replaceTrainerFeedback(
         spot.structure,
@@ -2353,8 +2357,6 @@
     if (credited) state.trainerScore += 1;
 
     renderTrainer();
-    query("[data-trainer-next]").disabled = false;
-    query("[data-trainer-next]").textContent = "Следующая раздача";
     const incorrectLead = action === "check" && spot.checkFeedback
       ? spot.checkFeedback
       : "Здесь лучше изменить план. ";
@@ -2368,12 +2370,11 @@
         ? "Мелкий c-bet остаётся базовым планом диапазона; крупный сайз не должен автоматически означать силу."
         : "Сначала структура → потом размер."
     );
-    query("[data-trainer-next]").focus({ preventScroll: true });
-    if (window.matchMedia("(max-width: 860px)").matches) {
-      window.requestAnimationFrame(() => {
-        query("[data-trainer-feedback]").scrollIntoView({ block: "nearest", behavior: "auto" });
-      });
-    }
+    window.requestAnimationFrame(() => {
+      const next = query("[data-trainer-table] [data-practice-next]");
+      next?.focus({ preventScroll: true });
+      next?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
   }
 
   function resetTrainer() {
@@ -2399,8 +2400,18 @@
     window.requestAnimationFrame(() => {
       const action = query("[data-trainer-table] .table-action");
       action?.focus({ preventScroll: true });
-      action?.closest(".client-controls")?.scrollIntoView({ block: "end", behavior: "auto" });
+      action?.closest(".client-controls")?.scrollIntoView({ block: "nearest", behavior: "auto" });
     });
+  }
+
+  function advanceTrainer() {
+    if (!state.trainerAnswered) return;
+    state.trainerIndex += 1;
+    state.trainerAnswered = false;
+    state.trainerChoice = "";
+    takeTrainerSpot();
+    renderTrainer();
+    focusTrainerActions();
   }
 
   function startTrainer() {
@@ -2416,17 +2427,12 @@
 
   function initTrainer() {
     query("[data-trainer-table]").addEventListener("click", (event) => {
+      if (event.target.closest("[data-practice-next]")) {
+        advanceTrainer();
+        return;
+      }
       const action = event.target.closest("[data-option-key]");
       if (action) answerTrainer(action.dataset.optionKey);
-    });
-    query("[data-trainer-next]").addEventListener("click", () => {
-      if (!state.trainerAnswered) return;
-      state.trainerIndex += 1;
-      state.trainerAnswered = false;
-      state.trainerChoice = "";
-      takeTrainerSpot();
-      renderTrainer();
-      focusTrainerActions();
     });
     query("[data-trainer-start]").addEventListener("click", startTrainer);
     query("[data-trainer-exit]").addEventListener("click", exitTrainer);

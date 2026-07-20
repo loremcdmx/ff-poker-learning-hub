@@ -29,6 +29,21 @@ assert.doesNotMatch(
   /\.ff-shell-simulator-snapshot\.table-grid\[data-count="1"\][^{]*\.seat:not\(\.is-hero\)[^{]*\.seat-cards\s*\{[^}]*display:\s*none/,
   "shared snapshot CSS never hides every opponent card state"
 );
+assert.match(
+  shell,
+  /\.lesson-table-host \.ff-shell-simulator-snapshot\.table-grid\[data-count="1"\][^{]*\.table-action-label\s*\{[^}]*overflow:\s*visible;[^}]*text-overflow:\s*clip;[^}]*white-space:\s*normal;/s,
+  "lesson action labels never inherit the full simulator's ellipsis contract"
+);
+assert.match(
+  shell,
+  /\.table-action\.has-amount \.table-action-label\s*\{[^}]*flex-wrap:\s*wrap;[^}]*justify-content:\s*center;/s,
+  "lesson action verb and amount wrap as complete tokens when a stage is narrow"
+);
+assert.match(
+  shell,
+  /@container \(max-width:\s*680px\)[\s\S]*?\.table-action\[data-answer-state\][^{]*\.table-action-result-mark\s*\{[^}]*width:\s*18px;[^}]*font-size:\s*0;/,
+  "narrow lesson stages compact verdict text so it cannot squeeze the poker action"
+);
 
 for (const token of [
   "--hero-card-width: clamp(51px, 6.3cqw, 61.5px)",

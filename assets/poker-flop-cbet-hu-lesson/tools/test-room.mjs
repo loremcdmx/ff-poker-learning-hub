@@ -83,6 +83,8 @@ const hero = table.seats.find((seat) => seat.isHero);
 assert.deepEqual(Array.from(hero.cards), ["Qs", "Js"]);
 assert.equal(hero.committedStreet, 0, "the preflop open is history, not a fresh flop bet");
 assert.equal(table.seats.find((seat) => seat.position === "BB").folded, false);
+assert.equal(table.seats.find((seat) => seat.position === "BB").botProfile.difficulty, "standard", "regular BB keeps the default blue tier");
+assert.equal(hero.botProfile, null, "Hero never receives an opponent tier");
 
 const before = renderer.renderTable(spot, {});
 assert.match(before, /ff-shell-simulator-snapshot/);
@@ -100,6 +102,20 @@ assert.equal((wrong.match(/<button[^>]*data-option-key=[^>]* disabled/g) || []).
 const correct = renderer.renderTable(spot, { answered: true, selectedKey: "small" });
 assert.match(correct, /data-option-key="small"[^>]*data-answer-state="correct"/);
 assert.doesNotMatch(correct, /data-answer-state="wrong"/);
+
+const fishSpot = {
+  ...spot,
+  id: "cbet-room-fish-profile",
+  table: {
+    ...spot.table,
+    seats: spot.table.seats.map((seat) => seat.label === "BB"
+      ? { ...seat, botProfile: { difficulty: "easy", style: "fish", label: "Фиш" } }
+      : seat)
+  }
+};
+const fishTable = renderer.buildTable(fishSpot, {});
+assert.equal(fishTable.seats.find((seat) => seat.position === "BB").botProfile.difficulty, "easy", "explicit fish profile survives shared snapshot normalization");
+assert.match(renderer.renderTable(fishSpot, {}), /data-bot-tier="easy"[^>]*data-bot-style="fish"/, "fish BB renders through the shared green seat-box tier");
 
 const strongValueSpot = {
   ...spot,
@@ -119,5 +135,19 @@ const acceptable = renderer.renderTable(strongValueSpot, { answered: true, selec
 assert.match(acceptable, /data-option-key="small"[^>]*data-answer-state="correct"/);
 assert.match(acceptable, /data-option-key="large"[^>]*data-answer-state="alternative"/);
 assert.doesNotMatch(acceptable, /data-option-key="large"[^>]*data-answer-state="wrong"/);
+
+const mixedSpot = {
+  ...strongValueSpot,
+  options: strongValueSpot.options.map((option) => ({
+    ...option,
+    acceptableExploit: false,
+    acceptableMix: option.key === "large"
+  }))
+};
+const mixed = renderer.renderTable(mixedSpot, { answered: true, selectedKey: "large" });
+assert.match(mixed, /data-option-key="large"[^>]*data-answer-state="alternative"/);
+assert.match(mixed, /data-option-key="large"[^>]*aria-label="[^"]*допустимый смешанный вариант"/);
+assert.match(mixed, /data-option-key="large"[\s\S]*?<span class="table-action-result-mark"[^>]*>Микс<\/span>/);
+assert.doesNotMatch(mixed, /data-option-key="large"[^>]*data-answer-state="wrong"/);
 
 console.log("flop c-bet shared room contract: ok");

@@ -13,7 +13,9 @@ const files = {
   model: "assets/poker-vs-3bet-defense-lesson/range-model.js",
   data: "assets/poker-vs-3bet-defense-lesson/data.js",
   fieldData: "assets/poker-vs-3bet-defense-lesson/data/vs3bet-field-data.js",
+  wisdomReference: "assets/poker-vs-3bet-defense-lesson/wisdom-reference.js",
   explorer: "assets/poker-vs-3bet-defense-lesson/range-explorer.js",
+  explorerCss: "assets/poker-vs-3bet-defense-lesson/range-explorer.css",
   fieldExplorer: "assets/poker-vs-3bet-defense-lesson/field-explorer.js",
   sharedLesson: "assets/poker-field-lesson/lesson.js",
   research: "assets/poker-vs-3bet-defense-lesson/research/README.md",
@@ -216,6 +218,8 @@ const stepOrder = Array.from(
   (match) => match[1]
 );
 assert.deepEqual(stepOrder, ["deal", "wisdom", "field", "leaks", "practice"]);
+assert.match(source.html, /data-vs3-wisdom-reference/);
+assert.doesNotMatch(source.html, /data-wisdom-carousel/);
 assert.match(source.html, /data-vs3-range-explorer/);
 assert.match(source.html, /data-vs3-field-explorer/);
 assert.match(source.html, /data-vs3-leaks/);
@@ -228,6 +232,7 @@ const expectedScriptOrder = [
   "poker-vs-3bet-defense-lesson/range-model.js",
   "poker-vs-3bet-defense-lesson/data.js",
   "poker-vs-3bet-defense-lesson/data/vs3bet-field-data.js",
+  "poker-vs-3bet-defense-lesson/wisdom-reference.js",
   "poker-vs-3bet-defense-lesson/range-explorer.js",
   "poker-vs-3bet-defense-lesson/field-explorer.js",
   "poker-field-lesson/lesson.js"
@@ -252,6 +257,19 @@ assert.doesNotMatch(
 assert.match(source.explorer, /4-бет пуш/);
 assert.match(source.explorer, /В позиции/);
 assert.match(source.explorer, /Без позиции/);
+assert.match(source.explorer, /mix\.missing \? "is-missing" : dominantAction\(mix\)\.tone/);
+assert.match(source.explorer, /button\.disabled = mix\.missing/);
+assert.match(source.explorerCss, /--vs3-fold: #91a9d0/);
+assert.match(source.explorerCss, /\.is-fold[\s\S]*--vs3-cell-surface/);
+assert.match(source.explorerCss, /\.vs3-range-cell\.is-missing/);
+assert.match(source.explorerCss, /\.vs3-field-range-cell\.is-unavailable[\s\S]*background: #121016/);
+assert.match(source.wisdomReference, /FF_VS3BET_FIELD_DATA/);
+assert.match(source.wisdomReference, /data\?\.charts/);
+assert.match(source.wisdomReference, /call \+ mix\.fourbet \+ mix\.jam/);
+assert.match(source.wisdomReference, /data\.meta\.hands\.forEach/);
+assert.match(source.wisdomReference, /Это наблюдаемая игра поля, а не рекомендация/);
+assert.match(source.wisdomReference, /5 051 115 решений/);
+assert.doesNotMatch(source.wisdomReference, /FF_VS3BET_RANGE_MODEL|scenario\.summary/);
 assert.match(source.fieldExplorer, /Это наблюдаемое поведение поля, не рекомендация/);
 assert.match(source.fieldExplorer, /unavailableBelow/);
 assert.match(source.sharedLesson, /continuationUi/);

@@ -117,19 +117,22 @@
     });
   }
 
-  function appendKpi(parent, label, numerator, denominator, className) {
+  function appendKpi(parent, label, numerator, denominator, className, { showSample = true } = {}) {
     const kpi = element("div", `structure-league-kpi ${className}`);
     const reliability = reliabilityFor(denominator);
     const value = reliability === "thin" ? "Мало данных" : percent(rate(numerator, denominator));
     const base = `${count(numerator)} / ${count(denominator)}`;
     kpi.dataset.reliability = reliability;
-    kpi.append(
+    const content = [
       element("span", "structure-league-kpi-label", label),
-      element("strong", "", value),
-      element("small", "", reliability === "thin"
+      element("strong", "", value)
+    ];
+    if (showSample) {
+      content.push(element("small", "", reliability === "thin"
         ? `${base} · процент скрыт`
-        : (reliability === "directional" ? `${base} · направление` : base))
-    );
+        : (reliability === "directional" ? `${base} · направление` : base)));
+    }
+    kpi.append(...content);
     parent.append(kpi);
   }
 
@@ -137,9 +140,9 @@
     const scope = element("aside", "structure-league-scope panel");
     const copy = element("div", "structure-league-scope-copy");
     copy.append(
-      element("p", "eyebrow", "Одна роль · два разных решения"),
+      element("p", "eyebrow", "От лица BB · два решения оппонента"),
       element("strong", "", "League всегда относится к CO/BTN — префлоп-агрессору"),
-      element("span", "", "Сначала считаем, поставил ли он после чека BB. Затем — сфолдил ли он, когда реально встретил check-raise.")
+      element("span", "", "Жёлтый процент — как часто CO/BTN ставит в нас после чека BB. Зелёный — как часто он фолдит, когда встречает наш check-raise.")
     );
     const facts = element("div", "structure-league-scope-facts");
     [
@@ -157,7 +160,7 @@
     const selectedView = source.foldViews.find((item) => item.key === foldView);
     copy.append(
       element("p", "eyebrow", "Что меняется переключателем"),
-      element("h3", "", "C-bet — вообще; фолд — в выбранном sizing-срезе"),
+      element("h3", "", "Нам ставят — все сайзы; фолд — выбранный сайз"),
       element("p", "", selectedView.note)
     );
 
@@ -197,7 +200,7 @@
         element("h3", "", league.label)
       );
       const metrics = element("div", "structure-league-summary-metrics");
-      appendKpi(metrics, "C-bet после чека", totals.cbets, totals.opportunities, "is-cbet");
+      appendKpi(metrics, "Нам ставят c-bet", totals.cbets, totals.opportunities, "is-cbet");
       appendKpi(metrics, `Фолд · ${source.foldViews.find((item) => item.key === foldView).shortLabel}`, fold.folds, fold.faced, "is-fold");
       const players = foldView === "matched" ? league.matchedPlayers : league.facedPlayers;
       card.append(
@@ -220,14 +223,14 @@
     );
     const legend = element("div", "structure-league-legend");
     legend.append(
-      element("span", "is-cbet", "C-bet после чека BB"),
+      element("span", "is-cbet", "CO/BTN ставит c-bet в BB"),
       element("span", "is-fold", "Фолд CO/BTN на X/R")
     );
     header.append(title, legend);
 
     const scroll = element("div", "structure-league-table-scroll");
     const table = element("table", "structure-league-table");
-    const caption = element("caption", "visually-hidden", "Частота c-bet и фолда на check-raise по структурам флопа и лигам");
+    const caption = element("caption", "visually-hidden", "Как часто CO/BTN ставит c-bet после чека BB и фолдит на check-raise, по структурам флопа и лигам");
     const thead = element("thead", "");
     const headRow = element("tr", "");
     ["Структура", ...source.leagues.map((league) => `${league.label} · ${league.ranks}`)].forEach((label) => {
@@ -255,8 +258,8 @@
         cell.dataset.label = `${league.label} · ${league.ranks}`;
         const metrics = element("div", "structure-league-cell-metrics");
         metrics.append(element("span", "structure-league-mobile-label", `${league.label} · ${league.ranks}`));
-        appendKpi(metrics, "C-bet", value.cbet.made, value.cbet.opportunities, "is-cbet");
-        appendKpi(metrics, "Фолд на X/R", fold.folds, fold.faced, "is-fold");
+        appendKpi(metrics, "Нам ставят", value.cbet.made, value.cbet.opportunities, "is-cbet", { showSample: false });
+        appendKpi(metrics, "Фолд на X/R", fold.folds, fold.faced, "is-fold", { showSample: false });
         cell.append(metrics);
         tr.append(cell);
       });
@@ -265,13 +268,7 @@
     table.append(caption, thead, tbody);
     scroll.append(table);
 
-    const note = element("footer", "structure-league-method");
-    note.append(
-      element("strong", "", "Как читать N:"),
-      document.createTextNode(" под C-bet — ставки / возможности поставить; под фолдом — фолды / встреченные X/R. "),
-      element("span", "", source.note)
-    );
-    card.append(header, scroll, note);
+    card.append(header, scroll);
     return card;
   }
 

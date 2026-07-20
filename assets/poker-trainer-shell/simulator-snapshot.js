@@ -446,6 +446,14 @@
     return cleanLine(seat?.label || seat?.position || seat?.name || seat?.seat || fallback);
   }
 
+  function seatBotProfile(sourceSeat) {
+    const explicit = sourceSeat?.botProfile;
+    if (explicit && typeof explicit === "object" && !Array.isArray(explicit)) {
+      return { ...explicit };
+    }
+    return { difficulty: "standard", label: "trainer" };
+  }
+
   const TABLE_POSITION_RING = Object.freeze(["SB", "BB", "UTG", "UTG+1", "MP", "LJ", "HJ", "CO", "BTN"]);
 
   function positionDistanceFromHero(label, heroPosition) {
@@ -534,7 +542,10 @@
         cards: row.isHero ? asArray(sourceTable.heroCards).map(normalizeCardCode).filter(Boolean) : opponentCards,
         revealCardsAfterAnswer,
         committedStreet: committed,
-        botProfile: row.isHero ? null : { difficulty: "standard", label: "trainer" }
+        // Preserve an explicitly classified training opponent (fish / regular /
+        // pro) so the shared seat renderer can apply the same box palette as the
+        // full simulator. Older lesson spots stay blue via the standard fallback.
+        botProfile: row.isHero ? null : seatBotProfile(row.sourceSeat)
       };
     });
     return { seats, seatIdByKey, pointsBySeatId, sourceSeats, heroPosition };
@@ -696,7 +707,7 @@
   function optionClass(option, state, expected, concept = false) {
     const picked = state?.selectedKey === option?.key;
     const correct = expected?.key === option?.key;
-    const alternative = picked && !correct && option?.acceptableExploit === true;
+    const alternative = picked && !correct && (option?.acceptableExploit === true || option?.acceptableMix === true);
     return [
       "table-action",
       !concept && splitActionLabel(option?.label || "").amount ? "has-amount" : "",
@@ -712,11 +723,14 @@
     const amount = label.amount;
     const picked = state?.selectedKey === option?.key;
     const correct = expected?.key === option?.key;
-    const alternative = picked && !correct && option?.acceptableExploit === true;
+    const mix = picked && !correct && option?.acceptableMix === true;
+    const alternative = mix || (picked && !correct && option?.acceptableExploit === true);
     const answerState = state?.answered && correct
       ? { key: "correct", mark: "Верно", label: "верный ответ" }
       : state?.answered && alternative
-        ? { key: "alternative", mark: "Эксплойт", label: "допустимый эксплойт вне базовой линии" }
+        ? mix
+          ? { key: "alternative", mark: "Микс", label: "допустимый смешанный вариант" }
+          : { key: "alternative", mark: "Эксплойт", label: "допустимый эксплойт вне базовой линии" }
       : state?.answered && picked
         ? { key: "wrong", mark: "Ошибка", label: "твой неверный ответ" }
         : null;

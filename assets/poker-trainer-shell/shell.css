@@ -3171,6 +3171,78 @@ button {
   padding-left: 50px !important;
 }
 
+/* Lesson action labels are instructional content, not disposable chrome.
+   Keep the complete verb and amount visible: wide buttons stay on one line,
+   while tighter lesson stages wrap the amount onto a second line instead of
+   inheriting the simulator's ellipsis contract. */
+.lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action-label {
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action.has-amount .table-action-label {
+  display: inline-flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px 5px;
+}
+
+.lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action.has-amount :is(.table-action-verb, .table-action-amount) {
+  flex: 0 0 auto;
+  max-width: 100%;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+/* The lesson stage is frequently narrower than the viewport because feedback
+   sits beside it. Use the stage width, not a page breakpoint, so the same
+   component remains readable in c-bet, RFI, BB defence, resteal and future
+   lesson shells. The button aria-label keeps the full verdict accessible. */
+@container (max-width: 680px) {
+  .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action.has-amount .table-action-label {
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    line-height: 1;
+  }
+
+  .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action.has-amount .table-action-amount::before {
+    content: none;
+    margin: 0;
+  }
+
+  .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-action[data-answer-state] .table-action-result-mark {
+    box-sizing: border-box;
+    justify-content: center;
+    width: 18px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-action[data-answer-state="correct"] .table-action-result-mark::after {
+    content: "✓";
+    font-size: 11px;
+  }
+
+  .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-action[data-answer-state="wrong"] .table-action-result-mark::after {
+    content: "×";
+    font-size: 12px;
+  }
+
+  .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-action[data-answer-state="alternative"] .table-action-result-mark::after {
+    content: "≈";
+    font-size: 11px;
+  }
+}
+
 @media (min-width: 621px) {
   .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .seat.is-hero {
     --hero-card-pocket-y: -18px;
@@ -3205,7 +3277,7 @@ button {
     max-width: 100%;
     overflow: visible;
     text-overflow: clip;
-    white-space: normal;
+    white-space: nowrap;
   }
 
   .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action.has-amount .table-action-amount::before {
