@@ -8,6 +8,9 @@ const pages = [
   "index.html",
   "rfi-open-position-lesson.html",
   "bb-call-defense-lesson.html",
+  "vs-one-raiser-positions-lesson.html",
+  "vs-one-raiser-sb-lesson.html",
+  "sb-unopened-lesson.html",
   "resteal-lesson.html",
   "flop-cbet-hu-lesson.html",
   "flop-checkraise-lesson.html",
@@ -17,6 +20,9 @@ const pages = [
 const expectedRoutes = new Map([
   ["/rfi-open-position-lesson", "rfi-open-position-lesson.html"],
   ["/bb-call-defense-lesson", "bb-call-defense-lesson.html"],
+  ["/vs-one-raiser-positions-lesson", "vs-one-raiser-positions-lesson.html"],
+  ["/vs-one-raiser-sb-lesson", "vs-one-raiser-sb-lesson.html"],
+  ["/sb-unopened-lesson", "sb-unopened-lesson.html"],
   ["/resteal-lesson", "resteal-lesson.html"],
   ["/flop-cbet-hu-lesson", "flop-cbet-hu-lesson.html"],
   ["/flop-checkraise-lesson", "flop-checkraise-lesson.html"],
@@ -34,7 +40,8 @@ const requiredDirectories = [
   "assets/poker-resteal-lesson",
   "assets/poker-flop-cbet-hu-lesson",
   "assets/poker-flop-checkraise-lesson",
-  "assets/poker-vs-3bet-defense-lesson"
+  "assets/poker-vs-3bet-defense-lesson",
+  "assets/poker-preflop-benchmark"
 ];
 const lessonPages = new Set([...expectedRoutes.values()].filter((page) => page !== "poker-simulator.html"));
 const suitTextPages = new Set(["index.html", ...lessonPages]);
@@ -144,7 +151,7 @@ for (const sourceFile of sourceFiles) {
 }
 
 const hub = readFileSync(join(root, "index.html"), "utf8");
-check((hub.match(/class="trainer-card /g) || []).length === 7, "hub exposes six lessons and the poker simulator");
+check((hub.match(/class="trainer-card /g) || []).length === 10, "hub exposes nine lessons and the poker simulator");
 for (const route of expectedRoutes.keys()) check(hub.includes(`href="${route}"`), `hub links to ${route}`);
 check(hub.includes("https://github.com/loremcdmx/ff-poker-learning-hub"), "hub includes the public GitHub link");
 for (const page of lessonPages) {

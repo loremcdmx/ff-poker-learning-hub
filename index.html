@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#07110d">
-  <meta name="description" content="Шесть интерактивных уроков FF и полноценный покерный симулятор: решения за настоящим столом, данные поля и свободная практика.">
+  <meta name="description" content="Девять интерактивных уроков FF и полноценный покерный симулятор: решения за настоящим столом, данные поля и свободная практика.">
   <meta property="og:title" content="FF · Обучающий хаб">
-  <meta property="og:description" content="Шесть интерактивных уроков и свободная игра в покерном симуляторе: от опен-рейза до решений в 3-бет поте.">
+  <meta property="og:description" content="Девять интерактивных уроков и свободная игра в покерном симуляторе: от опен-рейза до решений в 3-бет поте.">
   <title>FF · Обучающий хаб</title>
   <link rel="icon" href="assets/favicon.svg">
   <link rel="stylesheet" href="hub.css">
@@ -33,12 +33,12 @@
 
   <main>
     <section class="hero" aria-labelledby="page-title">
-      <p class="eyebrow"><span></span> Шесть навыков · свободная игра</p>
+      <p class="eyebrow"><span></span> Девять навыков · свободная игра</p>
       <h1 id="page-title">Покер становится<br><em>понятным в действии</em></h1>
       <p class="hero-copy">От первого опен-рейза до решений в 3-бет поте: пройди уроки по порядку, а затем собери свой стол и закрепи навыки в свободной игре.</p>
       <div class="path-note" aria-label="Рекомендуемый порядок">
         <span>Рекомендуемый порядок</span>
-        <strong>Опен → Защита BB → Рестил → C-bet → X/R → vs 3-bet → Симулятор</strong>
+        <strong>Опен → SB без опена → Защита BB → vs рейз → Рестил → Постфлоп → Симулятор</strong>
       </div>
     </section>
 
@@ -67,9 +67,32 @@
         </div>
       </article>
 
-      <article class="trainer-card trainer-card-defense">
+      <article class="trainer-card trainer-card-sb-open">
         <div class="card-topline">
           <span class="step-number">02</span>
+          <span class="level">Ширина</span>
+        </div>
+        <div class="card-symbol benchmark-symbol" aria-hidden="true">
+          <span>FOLD</span><i>·</i><span>COMPLETE</span><i>·</i><strong>RAISE / JAM</strong>
+          <small>SB · один соперник</small>
+        </div>
+        <h2>SB без опена<br>до тебя</h2>
+        <p>Почему на малом блайнде надо входить широко, как делить диапазон на комплит и рейз и где появляются опен-пуши.</p>
+        <ul aria-label="Содержание урока">
+          <li>10 ступеней стека</li>
+          <li>комплит / рейз / пуш</li>
+          <li>ранги 15–18 против первой лиги</li>
+          <li>реальные данные MSP</li>
+        </ul>
+        <div class="card-actions">
+          <a class="primary-action" href="/sb-unopened-lesson">Начать урок <span aria-hidden="true">→</span></a>
+          <a class="source-action" href="https://github.com/loremcdmx/ff-poker-learning-hub/tree/main/assets/poker-preflop-benchmark" target="_blank" rel="noreferrer" aria-label="Исходный код тренажёра SB без опена">Код</a>
+        </div>
+      </article>
+
+      <article class="trainer-card trainer-card-defense">
+        <div class="card-topline">
+          <span class="step-number">03</span>
           <span class="level">Защита</span>
         </div>
         <div class="card-symbol shield-symbol" aria-hidden="true">
@@ -90,9 +113,55 @@
         </div>
       </article>
 
+      <article class="trainer-card trainer-card-vs-raiser">
+        <div class="card-topline">
+          <span class="step-number">04</span>
+          <span class="level">Ответ</span>
+        </div>
+        <div class="card-symbol benchmark-symbol" aria-hidden="true">
+          <span>OPEN</span><i>→</i><strong>CALL / 3-BET</strong>
+          <small>MP · HJ · CO · BTN</small>
+        </div>
+        <h2>Против рейзера<br>в свободных позициях</h2>
+        <p>Как позиция опенера, твоя позиция, сайзинг и стек меняют колл, 3-бет и пуш после одного рейза.</p>
+        <ul aria-label="Содержание урока">
+          <li>MP–BTN против одного опена</li>
+          <li>2x / 2.5x / 3x</li>
+          <li>ранги 15–18 против первой лиги</li>
+          <li>бесконечная практика</li>
+        </ul>
+        <div class="card-actions">
+          <a class="primary-action" href="/vs-one-raiser-positions-lesson">Начать урок <span aria-hidden="true">→</span></a>
+          <a class="source-action" href="https://github.com/loremcdmx/ff-poker-learning-hub/tree/main/assets/poker-preflop-benchmark" target="_blank" rel="noreferrer" aria-label="Исходный код тренажёра против одного рейзера">Код</a>
+        </div>
+      </article>
+
+      <article class="trainer-card trainer-card-vs-raiser-sb">
+        <div class="card-topline">
+          <span class="step-number">05</span>
+          <span class="level">Малый блайнд</span>
+        </div>
+        <div class="card-symbol benchmark-symbol is-sb" aria-hidden="true">
+          <span>BTN 2x</span><i>→</i><strong>SB?</strong>
+          <small>BB ещё за спиной</small>
+        </div>
+        <h2>SB против<br>одного рейзера</h2>
+        <p>Отдельная логика малого блайнда: холодный колл не закрывает торги, а 3-бет и пуш зависят от стека.</p>
+        <ul aria-label="Содержание урока">
+          <li>все позиции опенера</li>
+          <li>колл / 3-бет / пуш</li>
+          <li>точные срезы MSP</li>
+          <li>практика за 7-max столом</li>
+        </ul>
+        <div class="card-actions">
+          <a class="primary-action" href="/vs-one-raiser-sb-lesson">Начать урок <span aria-hidden="true">→</span></a>
+          <a class="source-action" href="https://github.com/loremcdmx/ff-poker-learning-hub/tree/main/assets/poker-preflop-benchmark" target="_blank" rel="noreferrer" aria-label="Исходный код тренажёра SB против одного рейзера">Код</a>
+        </div>
+      </article>
+
       <article class="trainer-card trainer-card-resteal">
         <div class="card-topline">
-          <span class="step-number">03</span>
+          <span class="step-number">06</span>
           <span class="level">Давление</span>
         </div>
         <div class="card-symbol resteal-symbol" aria-hidden="true">
@@ -116,7 +185,7 @@
 
       <article class="trainer-card trainer-card-cbet">
         <div class="card-topline">
-          <span class="step-number">04</span>
+          <span class="step-number">07</span>
           <span class="level">Постфлоп</span>
         </div>
         <div class="card-symbol cbet-symbol" aria-hidden="true">
@@ -139,7 +208,7 @@
 
       <article class="trainer-card trainer-card-checkraise">
         <div class="card-topline">
-          <span class="step-number">05</span>
+          <span class="step-number">08</span>
           <span class="level">Контратака</span>
         </div>
         <div class="card-symbol checkraise-symbol" aria-hidden="true">
@@ -161,7 +230,7 @@
 
       <article class="trainer-card trainer-card-vs3bet">
         <div class="card-topline">
-          <span class="step-number">06</span>
+          <span class="step-number">09</span>
           <span class="level">Ответ</span>
         </div>
         <div class="card-symbol vs3bet-symbol" aria-hidden="true">
@@ -184,7 +253,7 @@
 
       <article class="trainer-card trainer-card-simulator">
         <div class="card-topline">
-          <span class="step-number">07</span>
+          <span class="step-number">10</span>
           <span class="level">Свободная игра</span>
         </div>
         <div class="simulator-card-layout">

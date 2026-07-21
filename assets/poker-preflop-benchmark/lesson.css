@@ -1,0 +1,323 @@
+.preflop-benchmark-lesson {
+  --benchmark-fold: var(--ff-chart-fold);
+  --benchmark-call: var(--ff-chart-call);
+  --benchmark-raise: var(--ff-chart-raise);
+  --benchmark-jam: var(--ff-chart-shove);
+  --benchmark-soft-yellow: rgba(255, 223, 81, .08);
+  --benchmark-soft-purple: rgba(176, 131, 240, .08);
+  --benchmark-card-radius: 16px;
+}
+
+.preflop-benchmark-lesson .app { width: min(1500px, 100%); }
+.preflop-benchmark-lesson .screen { min-width: 0; }
+.preflop-benchmark-lesson .benchmark-intro { grid-template-columns: minmax(0, .78fr) minmax(520px, 1.22fr); }
+.preflop-benchmark-lesson .table-card { width: min(100%, 790px); min-width: 0; }
+.preflop-benchmark-lesson .table-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 9px;
+  padding-inline: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.preflop-benchmark-lesson .table-head i { width: 7px; height: 7px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 4px rgba(87, 214, 154, .12); }
+.preflop-benchmark-lesson .table-head strong { color: var(--text); }
+.preflop-benchmark-lesson .table-head span { margin-left: auto; }
+.preflop-benchmark-lesson .lesson-table-host { min-width: 0; }
+.preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-shell {
+  min-height: 0 !important;
+  height: var(--trainer-table-plane-height) !important;
+  overflow: visible !important;
+  contain: layout !important;
+}
+.preflop-benchmark-lesson .intro-answer { margin-top: 12px; }
+.preflop-benchmark-lesson .answer-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel-2);
+}
+.preflop-benchmark-lesson .answer-card.is-correct { border-color: rgba(87, 214, 154, .48); }
+.preflop-benchmark-lesson .answer-card.is-wrong { border-color: rgba(240, 113, 121, .48); }
+.preflop-benchmark-lesson .answer-lamp { width: 12px; height: 12px; border-radius: 50%; background: var(--bad); box-shadow: 0 0 0 5px rgba(240, 113, 121, .12); }
+.preflop-benchmark-lesson .is-correct .answer-lamp { background: var(--good); box-shadow: 0 0 0 5px rgba(87, 214, 154, .12); }
+.preflop-benchmark-lesson .answer-card strong,
+.preflop-benchmark-lesson .answer-card small { display: block; }
+.preflop-benchmark-lesson .answer-card small { margin-top: 3px; color: var(--muted); }
+
+.preflop-benchmark-lesson .wisdom-heading,
+.preflop-benchmark-lesson .deep-heading,
+.preflop-benchmark-lesson .practice-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 22px;
+  margin: clamp(24px, 4vw, 52px) 0 18px;
+}
+.preflop-benchmark-lesson :is(.wisdom-heading, .deep-heading, .practice-heading) h2 { margin: 0; }
+.preflop-benchmark-lesson :is(.wisdom-heading, .deep-heading, .practice-heading) > p { max-width: 520px; margin: 0; text-align: right; }
+.preflop-benchmark-lesson .wisdom { position: relative; min-height: min(550px, calc(100svh - 245px)); padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: radial-gradient(circle at 86% 12%, rgba(176,131,240,.12), transparent 34%), radial-gradient(circle at 14% 88%, rgba(255,223,81,.06), transparent 30%), var(--panel); box-shadow: 0 18px 48px rgba(0,0,0,.24); }
+.preflop-benchmark-lesson .slide {
+  display: none;
+  grid-template-columns: minmax(0, 1.05fr) minmax(330px, .95fr);
+  align-items: center;
+  gap: clamp(28px, 4vw, 70px);
+  min-height: min(490px, calc(100svh - 300px));
+  padding: clamp(28px, 5vw, 72px);
+}
+.preflop-benchmark-lesson .slide.active { display: grid; }
+.preflop-benchmark-lesson .slide-number { position: absolute; top: 18px; right: 26px; color: rgba(255,255,255,.08); font-size: clamp(64px, 9vw, 140px); font-weight: 900; line-height: 1; }
+.preflop-benchmark-lesson .slide-copy { position: relative; z-index: 1; }
+.preflop-benchmark-lesson .slide-copy h2 { max-width: 720px; font-size: clamp(38px, 5vw, 70px); }
+.preflop-benchmark-lesson .slide-copy > p:not(.eyebrow) { max-width: 680px; color: rgba(244,241,236,.86); font-size: clamp(17px, 1.5vw, 22px); }
+.preflop-benchmark-lesson .slide-rule { display: block; margin-top: 22px; padding: 14px 16px; border-left: 3px solid var(--brand-yellow); border-radius: 0 12px 12px 0; color: var(--brand-yellow); background: var(--benchmark-soft-yellow); font-size: clamp(16px, 1.35vw, 20px); line-height: 1.35; }
+.preflop-benchmark-lesson .slide-proof { position: relative; z-index: 1; display: grid; gap: 12px; }
+.preflop-benchmark-lesson .proof-card { padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.035); }
+.preflop-benchmark-lesson .proof-card span,
+.preflop-benchmark-lesson .proof-card small { display: block; color: var(--muted); }
+.preflop-benchmark-lesson .proof-card strong { display: block; margin: 4px 0; color: var(--brand-yellow); font-size: clamp(28px, 3vw, 46px); font-variant-numeric: tabular-nums; }
+.preflop-benchmark-lesson .wisdom-evidence { background: rgba(10,9,16,.42); }
+.preflop-benchmark-lesson .wisdom-proof-rows { display: grid; gap: 13px; margin-top: 15px; }
+.preflop-benchmark-lesson .wisdom-proof-row > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.preflop-benchmark-lesson .wisdom-proof-row > div span { color: var(--text); font-weight: 750; }
+.preflop-benchmark-lesson .wisdom-proof-row > div strong { margin: 0; color: var(--text); font-size: 18px; }
+.preflop-benchmark-lesson .wisdom-proof-row > i { display: block; height: 9px; margin-top: 6px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.07); }
+.preflop-benchmark-lesson .wisdom-proof-row > i b { display: block; height: 100%; border-radius: inherit; }
+.preflop-benchmark-lesson .wisdom-metric-rows { display: grid; gap: 9px; margin-top: 15px; }
+.preflop-benchmark-lesson .wisdom-metric-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 13px 14px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.03); }
+.preflop-benchmark-lesson .wisdom-metric-row span { color: var(--text); font-weight: 750; }
+.preflop-benchmark-lesson .wisdom-metric-row strong { margin: 0; font-size: clamp(22px,2.4vw,34px); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.preflop-benchmark-lesson .wisdom-metric-row.is-positive strong { color: var(--good); }
+.preflop-benchmark-lesson .wisdom-metric-row.is-negative strong { color: var(--bad); }
+.preflop-benchmark-lesson :is(.wisdom-proof-row,.stack-action-bar) .is-fold { background: var(--benchmark-fold); }
+.preflop-benchmark-lesson :is(.wisdom-proof-row,.stack-action-bar) .is-call { background: var(--benchmark-call); }
+.preflop-benchmark-lesson :is(.wisdom-proof-row,.stack-action-bar) .is-raise { background: var(--benchmark-raise); }
+.preflop-benchmark-lesson :is(.wisdom-proof-row,.stack-action-bar) .is-shove { background: var(--benchmark-jam); }
+.preflop-benchmark-lesson .wisdom-rule-card { border-color: rgba(255,223,81,.24); background: var(--benchmark-soft-yellow); }
+.preflop-benchmark-lesson .wisdom-rule-card small { margin-top: 8px; color: rgba(244,241,236,.82); font-size: 14px; line-height: 1.45; }
+.preflop-benchmark-lesson .wisdom-carousel-controls { position: absolute; z-index: 3; right: clamp(20px, 4vw, 58px); bottom: 18px; left: clamp(20px, 4vw, 58px); display: flex; align-items: center; justify-content: space-between; }
+.preflop-benchmark-lesson .wisdom-arrow { width: 46px; height: 46px; border: 1px solid var(--line); border-radius: 50%; background: var(--panel-2); cursor: pointer; }
+.preflop-benchmark-lesson .wisdom-arrow:disabled { opacity: .3; cursor: default; }
+.preflop-benchmark-lesson .wisdom-carousel-status { display: grid; justify-items: center; gap: 4px; color: var(--muted); font-size: 11px; }
+.preflop-benchmark-lesson .wisdom-story-dots { display: flex; gap: 7px; }
+.preflop-benchmark-lesson .wisdom-story-dots button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.22); cursor: pointer; }
+.preflop-benchmark-lesson .wisdom-story-dots button.is-active { width: 24px; border-radius: 8px; background: var(--brand-yellow); }
+.preflop-benchmark-lesson .wisdom-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
+
+.preflop-benchmark-lesson .benchmark-chart-panel,
+.preflop-benchmark-lesson .comparison-panel { margin-bottom: 24px; }
+.preflop-benchmark-lesson .benchmark-filters { display: grid; gap: 10px; margin-bottom: 20px; }
+.preflop-benchmark-lesson .filter-row { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: center; gap: 12px; }
+.preflop-benchmark-lesson .filter-row > strong { color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.preflop-benchmark-lesson .filter-row .ff-chart-filter-group { flex-wrap: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: thin; }
+.preflop-benchmark-lesson .filter-row .ff-chart-filter { flex: 0 0 auto; }
+.preflop-benchmark-lesson .benchmark-chart-head { margin-top: 4px; }
+.preflop-benchmark-lesson .benchmark-chart-head h2 { font-size: clamp(24px, 3vw, 42px); }
+.preflop-benchmark-lesson .benchmark-range-grid { width: min(100%, 820px); margin: 0 auto; }
+.preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell { cursor: pointer; }
+.preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(90deg,
+    var(--benchmark-fold) 0 var(--fold-end),
+    var(--benchmark-call) var(--fold-end) var(--call-end),
+    var(--benchmark-raise) var(--call-end) var(--raise-end),
+    var(--benchmark-jam) var(--raise-end) 100%);
+  opacity: .82;
+}
+.preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell b { position: relative; z-index: 1; color: #100d12; text-shadow: 0 1px rgba(255,255,255,.28); }
+.preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell.is-unavailable { cursor: default; background: rgba(159,178,204,.08); }
+.preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell.is-unavailable::before { display: none; }
+.preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell.is-selected { outline: 3px solid var(--ff-chart-focus); outline-offset: 2px; }
+.preflop-benchmark-lesson .benchmark-hand-detail { min-height: 86px; margin-top: 18px; padding: clamp(16px,2vw,22px); border: 1px solid var(--line); border-radius: var(--benchmark-card-radius); background: var(--panel-2); }
+.preflop-benchmark-lesson .hand-detail-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.preflop-benchmark-lesson .hand-detail-head .eyebrow { margin: 0 0 5px; }
+.preflop-benchmark-lesson .hand-detail-head h3 { margin: 0; }
+.preflop-benchmark-lesson .action-rate-row { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin-top: 12px; }
+.preflop-benchmark-lesson .action-rate { padding: 10px; border-radius: 11px; color: #161217; background: var(--ff-chart-action); }
+.preflop-benchmark-lesson .action-rate span,
+.preflop-benchmark-lesson .action-rate strong { display: block; }
+.preflop-benchmark-lesson .action-rate span { font-size: 11px; font-weight: 800; }
+.preflop-benchmark-lesson .action-rate strong { margin-top: 2px; font-size: 20px; }
+.preflop-benchmark-lesson .hand-rule { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 10px; margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--benchmark-soft-yellow); }
+.preflop-benchmark-lesson .hand-rule strong { color: var(--brand-yellow); }
+.preflop-benchmark-lesson .hand-rule span { color: rgba(244,241,236,.84); }
+.preflop-benchmark-lesson .hand-compare-note { display: flex; align-items: baseline; justify-content: space-between; gap: 18px; margin-top: 12px; color: var(--muted); font-size: 12px; }
+.preflop-benchmark-lesson .hand-compare-note strong { color: var(--text); text-align: right; }
+.preflop-benchmark-lesson .benchmark-source { display: inline-flex; align-items: center; min-height: 26px; margin: 14px 0 0; padding: 4px 9px; border: 1px solid rgba(87,214,154,.2); border-radius: 999px; color: var(--good); background: rgba(87,214,154,.06); font-size: 10px; font-weight: 800; letter-spacing: .03em; }
+
+.preflop-benchmark-lesson .comparison-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+.preflop-benchmark-lesson .cohort-card { padding: clamp(17px, 2vw, 24px); border: 1px solid var(--line); border-radius: var(--benchmark-card-radius); background: var(--panel-2); }
+.preflop-benchmark-lesson .cohort-card.is-benchmark { border-color: rgba(255,223,81,.28); background: linear-gradient(180deg, rgba(255,223,81,.055), transparent 45%), var(--panel-2); }
+.preflop-benchmark-lesson .cohort-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.preflop-benchmark-lesson .cohort-card-head > span { padding: 5px 8px; border-radius: 999px; color: var(--muted); background: rgba(255,255,255,.05); font-size: 9px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
+.preflop-benchmark-lesson .cohort-card.is-benchmark .cohort-card-head > span { color: var(--brand-yellow); background: var(--benchmark-soft-yellow); }
+.preflop-benchmark-lesson .cohort-card h3 { margin-bottom: 4px; }
+.preflop-benchmark-lesson .cohort-card > p { margin-bottom: 15px; }
+.preflop-benchmark-lesson .cohort-action-bar { display: flex; height: 16px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.05); }
+.preflop-benchmark-lesson .cohort-action-bar i { min-width: 0; height: 100%; }
+.preflop-benchmark-lesson .cohort-stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 7px; margin-top: 12px; }
+.preflop-benchmark-lesson .cohort-stats div { padding: 10px 8px; border-radius: 10px; background: rgba(255,255,255,.035); }
+.preflop-benchmark-lesson .cohort-stats span,
+.preflop-benchmark-lesson .cohort-stats strong { display: block; }
+.preflop-benchmark-lesson .cohort-stats span { color: var(--muted); font-size: 10px; }
+.preflop-benchmark-lesson .cohort-stats strong { margin-top: 3px; font-size: 19px; font-variant-numeric: tabular-nums; }
+.preflop-benchmark-lesson .comparison-gap { display: grid; grid-template-columns: minmax(220px,.42fr) minmax(0,1fr); align-items: center; gap: 22px; margin-top: 16px; padding: 17px 19px; border-left: 4px solid var(--brand-yellow); border-radius: 12px; background: var(--benchmark-soft-yellow); }
+.preflop-benchmark-lesson .comparison-gap span { display: block; color: var(--muted); font-size: 10px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+.preflop-benchmark-lesson .comparison-gap strong { display: block; margin-top: 4px; color: var(--brand-yellow); font-size: 18px; }
+.preflop-benchmark-lesson .comparison-gap p { margin: 0; color: rgba(244,241,236,.84); }
+
+.preflop-benchmark-lesson .insight-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
+.preflop-benchmark-lesson .insight-card { position: relative; min-height: 250px; padding: 24px; overflow: hidden; }
+.preflop-benchmark-lesson .insight-card > span { color: var(--brand-yellow); font-size: 11px; font-weight: 900; letter-spacing: .09em; text-transform: uppercase; }
+.preflop-benchmark-lesson .insight-card h3 { margin-top: 13px; font-size: clamp(23px,2.3vw,34px); }
+.preflop-benchmark-lesson .insight-number { display: block; margin: 18px 0 6px; color: var(--brand-yellow); font-size: clamp(36px,4vw,58px); line-height: 1; }
+.preflop-benchmark-lesson .insight-rule { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 9px; margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.45; }
+.preflop-benchmark-lesson .insight-rule strong { color: var(--brand-yellow); }
+.preflop-benchmark-lesson .insight-rule span { color: rgba(244,241,236,.78); }
+.preflop-benchmark-lesson .stack-story { margin-top: 15px; padding: clamp(20px,3vw,34px); }
+.preflop-benchmark-lesson .stack-story-head { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+.preflop-benchmark-lesson .stack-story-head h2 { margin-bottom: 0; }
+.preflop-benchmark-lesson .stack-story-head > p { max-width: 610px; margin: 0; text-align: right; }
+.preflop-benchmark-lesson .stack-ladder { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 9px; margin-top: 20px; }
+.preflop-benchmark-lesson .stack-step { min-width: 0; padding: 13px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); }
+.preflop-benchmark-lesson .stack-step.is-selected { border-color: var(--brand-yellow); box-shadow: 0 0 0 2px rgba(255,223,81,.08); }
+.preflop-benchmark-lesson .stack-step header { display: flex; align-items: baseline; justify-content: space-between; gap: 7px; }
+.preflop-benchmark-lesson .stack-step header span { color: var(--muted); font-size: 11px; }
+.preflop-benchmark-lesson .stack-step header strong { color: var(--text); font-size: 14px; }
+.preflop-benchmark-lesson .stack-action-bar { display: flex; height: 9px; margin-top: 11px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.06); }
+.preflop-benchmark-lesson .stack-action-bar i { min-width: 0; height: 100%; }
+.preflop-benchmark-lesson .stack-step-meta { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; color: var(--muted); font-size: 10px; }
+.preflop-benchmark-lesson .stack-step-meta span:first-child { color: var(--benchmark-jam); font-weight: 800; }
+
+.preflop-benchmark-lesson .practice-launch { display: grid; place-items: center; min-height: 420px; }
+.preflop-benchmark-lesson .practice-mode-card { display: flex; align-items: center; justify-content: space-between; gap: 30px; width: min(820px,100%); padding: clamp(24px,4vw,44px); }
+.preflop-benchmark-lesson .practice-mode-card p { max-width: 580px; margin-bottom: 0; }
+.preflop-benchmark-lesson .benchmark-practice { padding: 14px; }
+.preflop-benchmark-lesson .practice-hud { display: flex; align-items: center; gap: 18px; min-height: 48px; padding: 0 8px 12px; color: var(--muted); }
+.preflop-benchmark-lesson .practice-hud b { color: var(--text); }
+.preflop-benchmark-lesson .practice-hud button { margin-left: auto; }
+.preflop-benchmark-lesson .practice-stage { display: grid; grid-template-columns: minmax(0,1.55fr) minmax(280px,.45fr); gap: 14px; align-items: start; }
+.preflop-benchmark-lesson .room-stage { min-width: 0; }
+.preflop-benchmark-lesson .coach { min-height: 200px; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel-2); }
+.preflop-benchmark-lesson #practiceCoach { min-width: 0; }
+.preflop-benchmark-lesson .coach h2 { font-size: clamp(25px,2.5vw,38px); }
+.preflop-benchmark-lesson .feedback-compare { display: grid; gap: 8px; margin-top: 16px; }
+.preflop-benchmark-lesson .feedback-cohort { padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px; background: rgba(255,255,255,.025); }
+.preflop-benchmark-lesson .feedback-cohort.is-benchmark { border-color: rgba(255,223,81,.25); background: var(--benchmark-soft-yellow); }
+.preflop-benchmark-lesson .feedback-cohort > div { display: flex; justify-content: space-between; gap: 10px; }
+.preflop-benchmark-lesson .feedback-cohort span { color: var(--muted); font-size: 10px; }
+.preflop-benchmark-lesson .feedback-cohort strong { font-size: 11px; }
+.preflop-benchmark-lesson .feedback-cohort .stack-action-bar { margin-top: 7px; }
+.preflop-benchmark-lesson .practice-feedback { margin-top: 10px; }
+.preflop-benchmark-lesson .practice-feedback .answer-card { grid-template-columns: auto 1fr; }
+.preflop-benchmark-lesson .practice-feedback .btn { grid-column: 1 / -1; justify-self: end; }
+.preflop-benchmark-lesson .lesson-footer { display: flex; justify-content: space-between; gap: 18px; width: min(1450px,calc(100% - 32px)); margin: 16px auto 30px; color: var(--muted); font-size: 12px; }
+
+.preflop-benchmark-lesson.practice-is-running .practice-heading { display: none; }
+.preflop-benchmark-lesson.practice-is-running .app { padding-block: 7px; }
+.preflop-benchmark-lesson.practice-is-running .benchmark-practice { padding: 8px; }
+.preflop-benchmark-lesson.practice-is-running .practice-hud { min-height: 42px; padding-bottom: 7px; }
+.preflop-benchmark-lesson.practice-is-running #practiceTable {
+  --shell-table-plane-height-cap: 380px;
+  min-height: min(520px, calc(100svh - 72px));
+}
+.preflop-benchmark-lesson.practice-is-running #practiceTable .ff-shell-simulator-snapshot {
+  --trainer-table-plane-height: min(380px, calc(100cqw * 9 / 16), calc(100svh - 310px));
+}
+
+@media (max-width: 980px) {
+  .preflop-benchmark-lesson .benchmark-intro { grid-template-columns: 1fr; }
+  .preflop-benchmark-lesson .lesson-intro { min-height: auto; }
+  .preflop-benchmark-lesson .slide { grid-template-columns: 1fr; padding-bottom: 86px; }
+  .preflop-benchmark-lesson .insight-grid { grid-template-columns: 1fr; }
+  .preflop-benchmark-lesson .insight-card { min-height: auto; }
+  .preflop-benchmark-lesson .practice-stage { grid-template-columns: 1fr; }
+  .preflop-benchmark-lesson .stack-story-head { display: block; }
+  .preflop-benchmark-lesson .stack-story-head > p { margin-top: 8px; text-align: left; }
+  .preflop-benchmark-lesson .stack-ladder { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+
+@media (max-width: 700px) {
+  .preflop-benchmark-lesson .app { padding: 10px; }
+  .preflop-benchmark-lesson .lesson-intro { padding: 22px 14px; }
+  .preflop-benchmark-lesson .intro-copy h2 { font-size: clamp(34px,11vw,48px); }
+  .preflop-benchmark-lesson .intro-table-visual { padding: 10px 0 0; }
+  .preflop-benchmark-lesson :is(.wisdom-heading,.deep-heading,.practice-heading) { display: block; margin-top: 22px; }
+  .preflop-benchmark-lesson :is(.wisdom-heading,.deep-heading,.practice-heading) > p { margin-top: 8px; text-align: left; }
+  .preflop-benchmark-lesson .slide { min-height: 760px; padding: 24px 18px 84px; }
+  .preflop-benchmark-lesson .slide-copy h2 { font-size: 36px; }
+  .preflop-benchmark-lesson .slide-copy > p:not(.eyebrow) { font-size: 16px; }
+  .preflop-benchmark-lesson .slide-rule { font-size: 15px; }
+  .preflop-benchmark-lesson .wisdom-metric-row { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .preflop-benchmark-lesson .filter-row { grid-template-columns: 1fr; gap: 5px; }
+  .preflop-benchmark-lesson .benchmark-chart-panel,
+  .preflop-benchmark-lesson .comparison-panel { padding: 14px; }
+  .preflop-benchmark-lesson .benchmark-chart-head { display: block; }
+  .preflop-benchmark-lesson .benchmark-chart-head .ff-chart-legend { margin-top: 10px; }
+  .preflop-benchmark-lesson .benchmark-range-grid { gap: 2px; }
+  .preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell { border-radius: 3px; font-size: 7px; }
+  .preflop-benchmark-lesson .action-rate-row { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .preflop-benchmark-lesson .hand-detail-head,
+  .preflop-benchmark-lesson .hand-compare-note { align-items: flex-start; flex-direction: column; gap: 7px; }
+  .preflop-benchmark-lesson .hand-compare-note strong { text-align: left; }
+  .preflop-benchmark-lesson .hand-rule { grid-template-columns: 1fr; }
+  .preflop-benchmark-lesson .comparison-grid { grid-template-columns: 1fr; }
+  .preflop-benchmark-lesson .cohort-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .preflop-benchmark-lesson .comparison-gap { grid-template-columns: 1fr; gap: 10px; }
+  .preflop-benchmark-lesson .stack-ladder { grid-template-columns: 1fr; }
+  .preflop-benchmark-lesson .practice-mode-card { display: block; }
+  .preflop-benchmark-lesson .practice-mode-card .btn { width: 100%; margin-top: 18px; }
+  .preflop-benchmark-lesson .practice-hud {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    padding-inline: 0;
+    text-align: center;
+  }
+  .preflop-benchmark-lesson .practice-hud span {
+    min-width: 0;
+    padding: 7px 5px;
+    border-radius: 9px;
+    background: rgba(255,255,255,.035);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .preflop-benchmark-lesson .practice-hud button {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin-left: 0;
+  }
+  .preflop-benchmark-lesson.practice-is-running #practiceTable {
+    min-height: 478px;
+  }
+  .preflop-benchmark-lesson.practice-is-running #practiceTable .ff-shell-simulator-snapshot {
+    --trainer-table-plane-height: clamp(274px, 76cqw, 310px);
+  }
+  .preflop-benchmark-lesson #practiceTable .ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-bar,
+  .preflop-benchmark-lesson #practiceTable .ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-bar:has(.client-controls[data-trainer-simulator-actions]) {
+    left: 5px !important;
+    right: 5px !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .preflop-benchmark-lesson #practiceTable .ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-buttons,
+  .preflop-benchmark-lesson #practiceTable .ff-shell-simulator-snapshot.table-grid[data-count="1"] .action-buttons:has(.client-controls.is-facing-raise),
+  .preflop-benchmark-lesson #practiceTable .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    grid-column: 1 / -1 !important;
+    justify-self: stretch !important;
+  }
+  .preflop-benchmark-lesson #practiceTable .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .preflop-benchmark-lesson .lesson-footer { flex-direction: column; }
+}

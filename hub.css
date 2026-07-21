@@ -206,6 +206,9 @@ h1 em { color: var(--acid); font-weight: inherit; }
 }
 
 .trainer-card-defense { background: linear-gradient(150deg, rgba(16, 38, 35, .94), rgba(8, 20, 19, .94)); }
+.trainer-card-sb-open { background: linear-gradient(150deg, rgba(40, 27, 48, .94), rgba(18, 12, 24, .94)); }
+.trainer-card-vs-raiser { background: linear-gradient(150deg, rgba(22, 35, 48, .94), rgba(9, 16, 24, .94)); }
+.trainer-card-vs-raiser-sb { background: linear-gradient(150deg, rgba(44, 27, 38, .94), rgba(20, 11, 17, .94)); }
 .trainer-card-resteal { background: linear-gradient(150deg, rgba(36, 35, 20, .94), rgba(18, 19, 10, .94)); }
 .trainer-card-cbet { background: linear-gradient(150deg, rgba(39, 25, 53, .95), rgba(17, 10, 24, .95)); }
 .trainer-card-checkraise { background: linear-gradient(150deg, rgba(49, 25, 34, .95), rgba(21, 10, 15, .95)); }
@@ -294,6 +297,28 @@ h1 em { color: var(--acid); font-weight: inherit; }
 
 .shield-symbol strong { z-index: 1; margin-top: -10px; font: 700 28px/1 Georgia, serif; }
 .shield-symbol small { z-index: 1; margin-top: -48px; color: rgba(220,250,247,.58); font: 800 8px/1 ui-monospace, monospace; letter-spacing: .16em; }
+
+.benchmark-symbol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: radial-gradient(ellipse at center, rgba(226, 74, 160, .16), transparent 66%), rgba(11, 7, 15, .44);
+}
+.benchmark-symbol span,
+.benchmark-symbol strong {
+  padding: 10px 11px;
+  border: 1px solid rgba(226, 74, 160, .32);
+  border-radius: 9px;
+  color: #f2cce2;
+  background: rgba(226, 74, 160, .07);
+  font: 850 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .06em;
+}
+.benchmark-symbol strong { color: #ffe2f2; border-color: rgba(247, 180, 92, .48); }
+.benchmark-symbol i { color: rgba(255,255,255,.38); font-style: normal; }
+.benchmark-symbol small { position: absolute; right: 18px; bottom: 15px; color: rgba(255,255,255,.48); font: 800 8px/1 ui-monospace, monospace; letter-spacing: .12em; text-transform: uppercase; }
+.benchmark-symbol.is-sb { background: radial-gradient(ellipse at center, rgba(247, 180, 92, .15), transparent 66%), rgba(14, 8, 10, .44); }
 
 .resteal-symbol {
   display: grid;

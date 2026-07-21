@@ -25,3 +25,42 @@ Every root `*-lesson.html` page must use the shared lesson header contract in
 - Run `node scripts/check-lesson-header-contract.mjs`; new standalone lessons
   are intentionally discovered by filename and fail the repository check until
   they adopt the shared shell.
+
+## Shared chart language
+
+Every standalone trainer chart must load `assets/poker-kit/chart-system.css`
+and use its semantic action palette.
+
+- Fold/neutral is slate, call/continue is green, raise/aggression is pink,
+  shove/all-in is amber, and the selected filter uses the shared yellow focus.
+- Keep route-specific geometry only when the data needs it; do not introduce a
+  route-specific action palette, focus treatment, or sample-confidence style.
+- Before publishing a sparse source-backed chart, refresh its exact FunFarm
+  MCP slice. Show only observed integer-counter rates; if a refreshed slice is
+  structurally empty, omit or disable that selector or cell. Do not use
+  learner-facing sample-state labels or model a hand-level percentage.
+- Keep raw counts, query IDs, extraction windows, smoothing formulas, and
+  methodology notes out of repeated learner-facing cells. One short source
+  label per evidence block is enough; detailed provenance belongs in source
+  files and tests.
+- Run `node scripts/check-chart-system-contract.mjs` after adding or renaming a
+  trainer route.
+
+## Complete data-backed trainer matrices
+
+A source-backed 169-hand chart is not reviewable or releasable while any
+enabled selector produces missing hand cells.
+
+- Exhaust the authoritative historical window while preserving the exact spot
+  filters before lowering a sample threshold or widening a definition.
+- For every enabled chart state, require 169/169 benchmark cells and 169 shared
+  cells for every cohort comparison. Keep a contract test that enumerates all
+  enabled selectors.
+- Never fill missing cells with smoothing, interpolation, solver or model
+  output, or a hidden lower sample threshold.
+- If the full authoritative history still cannot satisfy coverage, omit or
+  disable that selector and report the route as blocked. Never present a patchy
+  matrix as a finished trainer.
+- Before requesting review, run the coverage contract and exact-route desktop
+  and mobile browser smoke, and inspect every enabled selector rather than only
+  the default state.
