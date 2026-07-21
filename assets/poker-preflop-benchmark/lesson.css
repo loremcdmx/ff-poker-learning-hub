@@ -6,6 +6,8 @@
   --benchmark-soft-yellow: rgba(255, 223, 81, .08);
   --benchmark-soft-purple: rgba(176, 131, 240, .08);
   --benchmark-card-radius: 16px;
+  --benchmark-section-gap: clamp(16px, 2vw, 28px);
+  --benchmark-surface-shadow: 0 18px 48px rgba(0,0,0,.24);
 }
 
 .preflop-benchmark-lesson .app { width: min(1500px, 100%); }
@@ -128,6 +130,9 @@
 .preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot .seat-action-badge.is-fold {
   display: none;
 }
+.preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot .seat-action-badge:empty {
+  display: none;
+}
 .preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action:not(.is-correct):not(.is-wrong):not(.is-alternative) {
   color: #0b1117;
   border-color: color-mix(in srgb, var(--trainer-action-color) 72%, white 28%);
@@ -189,11 +194,11 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 22px;
-  margin: clamp(24px, 4vw, 52px) 0 18px;
+  margin: var(--benchmark-section-gap) 0 14px;
 }
 .preflop-benchmark-lesson :is(.wisdom-heading, .deep-heading, .practice-heading) h2 { margin: 0; }
 .preflop-benchmark-lesson :is(.wisdom-heading, .deep-heading, .practice-heading) > p { max-width: 520px; margin: 0; text-align: right; }
-.preflop-benchmark-lesson .wisdom { position: relative; min-height: min(550px, calc(100svh - 245px)); padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: radial-gradient(circle at 86% 12%, rgba(176,131,240,.12), transparent 34%), radial-gradient(circle at 14% 88%, rgba(255,223,81,.06), transparent 30%), var(--panel); box-shadow: 0 18px 48px rgba(0,0,0,.24); }
+.preflop-benchmark-lesson .wisdom { position: relative; min-height: min(550px, calc(100svh - 245px)); padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: radial-gradient(circle at 86% 12%, rgba(176,131,240,.12), transparent 34%), radial-gradient(circle at 14% 88%, rgba(255,223,81,.06), transparent 30%), var(--panel); box-shadow: var(--benchmark-surface-shadow); }
 .preflop-benchmark-lesson .slide {
   display: none;
   grid-template-columns: minmax(0, 1.05fr) minmax(330px, .95fr);
@@ -328,16 +333,60 @@
 .preflop-benchmark-lesson .stack-step-meta { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; color: var(--muted); font-size: 10px; }
 .preflop-benchmark-lesson .stack-step-meta span:first-child { color: var(--benchmark-jam); font-weight: 800; }
 
-.preflop-benchmark-lesson .practice-launch { display: grid; place-items: center; min-height: 420px; }
-.preflop-benchmark-lesson .practice-mode-card { display: flex; align-items: center; justify-content: space-between; gap: 30px; width: min(820px,100%); padding: clamp(24px,4vw,44px); }
-.preflop-benchmark-lesson .practice-mode-card p { max-width: 580px; margin-bottom: 0; }
-.preflop-benchmark-lesson .benchmark-practice { padding: 14px; }
-.preflop-benchmark-lesson .practice-hud { display: flex; align-items: center; gap: 18px; min-height: 48px; padding: 0 8px 12px; color: var(--muted); }
-.preflop-benchmark-lesson .practice-hud b { color: var(--text); }
+.preflop-benchmark-lesson .practice-launch { display: grid; place-items: start center; min-height: clamp(330px, 46svh, 390px); padding-top: clamp(28px, 4vw, 44px); }
+.preflop-benchmark-lesson .practice-mode-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  width: min(820px,100%);
+  padding: clamp(24px,4vw,44px);
+  overflow: hidden;
+  border-color: rgba(255,223,81,.2);
+  background:
+    radial-gradient(circle at 94% 8%, rgba(255,223,81,.09), transparent 36%),
+    linear-gradient(145deg, rgba(255,255,255,.035), transparent 52%),
+    var(--panel);
+  box-shadow: var(--benchmark-surface-shadow);
+}
+.preflop-benchmark-lesson .practice-mode-card > div { min-width: 0; }
+.preflop-benchmark-lesson .practice-mode-card h2 { max-width: 18ch; line-height: 1.08; text-wrap: balance; }
+.preflop-benchmark-lesson .practice-mode-card p { max-width: 580px; margin-bottom: 0; text-wrap: pretty; }
+.preflop-benchmark-lesson .practice-mode-card .btn { flex: 0 0 auto; min-width: 150px; }
+.preflop-benchmark-lesson .benchmark-practice {
+  padding: 14px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(255,255,255,.025), transparent 48%), var(--panel);
+  box-shadow: var(--benchmark-surface-shadow);
+}
+.preflop-benchmark-lesson .practice-hud { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 8px 12px; color: var(--muted); }
+.preflop-benchmark-lesson .practice-hud span {
+  min-width: 92px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: rgba(255,255,255,.035);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+}
+.preflop-benchmark-lesson .practice-hud b { margin-left: 4px; color: var(--text); }
 .preflop-benchmark-lesson .practice-hud button { margin-left: auto; }
-.preflop-benchmark-lesson .practice-stage { display: grid; grid-template-columns: minmax(0,1.55fr) minmax(280px,.45fr); gap: 14px; align-items: start; }
+.preflop-benchmark-lesson .practice-stage { display: grid; grid-template-columns: minmax(0,1.55fr) minmax(280px,.45fr); gap: 14px; align-items: stretch; }
 .preflop-benchmark-lesson .room-stage { min-width: 0; }
-.preflop-benchmark-lesson .coach { min-height: 200px; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel-2); }
+.preflop-benchmark-lesson .coach {
+  min-height: 200px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 100% 0, rgba(176,131,240,.09), transparent 38%),
+    linear-gradient(160deg, rgba(255,255,255,.035), transparent 46%),
+    var(--panel-2);
+  box-shadow: 0 12px 34px rgba(0,0,0,.2);
+}
 .preflop-benchmark-lesson #practiceCoach { min-width: 0; }
 .preflop-benchmark-lesson .coach h2 { font-size: clamp(25px,2.5vw,38px); }
 .preflop-benchmark-lesson .feedback-compare { display: grid; gap: 8px; margin-top: 16px; }
@@ -357,8 +406,8 @@
 .preflop-benchmark-lesson.practice-is-running .benchmark-practice { padding: 8px; }
 .preflop-benchmark-lesson.practice-is-running .practice-hud { min-height: 42px; padding-bottom: 7px; }
 .preflop-benchmark-lesson.practice-is-running #practiceTable {
-  --trainer-table-plane-height: min(360px, calc(100cqw * 9 / 16), calc(100svh - 310px));
-  --shell-table-plane-height-cap: 360px;
+  --trainer-table-plane-height: min(440px, calc(100cqw * 9 / 16), calc(100svh - 210px));
+  --shell-table-plane-height-cap: 440px;
   min-height: calc(var(--trainer-table-plane-height) + var(--shell-action-gutter));
 }
 .preflop-benchmark-lesson.practice-is-running #practiceTable .ff-shell-simulator-snapshot {
@@ -372,6 +421,10 @@
   .preflop-benchmark-lesson .insight-grid { grid-template-columns: 1fr; }
   .preflop-benchmark-lesson .insight-card { min-height: auto; }
   .preflop-benchmark-lesson .practice-stage { grid-template-columns: 1fr; }
+  .preflop-benchmark-lesson.practice-is-running #practiceTable {
+    --trainer-table-plane-height: min(400px, calc(100cqw * 9 / 16), calc(100svh - 245px));
+    --shell-table-plane-height-cap: 400px;
+  }
   .preflop-benchmark-lesson .stack-story-head { display: block; }
   .preflop-benchmark-lesson .stack-story-head > p { margin-top: 8px; text-align: left; }
   .preflop-benchmark-lesson .stack-ladder { grid-template-columns: repeat(2,minmax(0,1fr)); }
@@ -394,7 +447,7 @@
   .preflop-benchmark-lesson .lesson-intro { padding: 22px 14px; }
   .preflop-benchmark-lesson .intro-copy h2 { font-size: clamp(34px,11vw,48px); }
   .preflop-benchmark-lesson .intro-table-visual { padding: 10px 0 0; }
-  .preflop-benchmark-lesson :is(.wisdom-heading,.deep-heading,.practice-heading) { display: block; margin-top: 22px; }
+  .preflop-benchmark-lesson :is(.wisdom-heading,.deep-heading,.practice-heading) { display: block; margin-top: 18px; }
   .preflop-benchmark-lesson :is(.wisdom-heading,.deep-heading,.practice-heading) > p { margin-top: 8px; text-align: left; }
   .preflop-benchmark-lesson .slide { min-height: 760px; padding: 24px 18px 84px; }
   .preflop-benchmark-lesson .slide-copy h2 { font-size: 36px; }
@@ -429,6 +482,7 @@
   .preflop-benchmark-lesson .practice-hud span {
     min-width: 0;
     padding: 7px 5px;
+    border-color: var(--line);
     border-radius: 9px;
     background: rgba(255,255,255,.035);
     font-size: 12px;

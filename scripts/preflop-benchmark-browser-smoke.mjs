@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { mkdirSync } from "node:fs";
+import { join } from "node:path";
 import { chromium } from "playwright";
 
 const base = process.env.BASE_URL || "http://127.0.0.1:4173";
@@ -14,6 +16,7 @@ const minimumStackSteps = {
 };
 const viewports = [
   { name: "desktop", width: 1440, height: 900 },
+  { name: "polish", width: 1280, height: 800 },
   { name: "comment", width: 1155, height: 870 },
   { name: "laptop", width: 1280, height: 720 },
   { name: "reported", width: 969, height: 907 },
@@ -22,6 +25,18 @@ const viewports = [
 const browser = await chromium.launch({ headless: true });
 const results = [];
 const reducedMotion = process.env.REDUCED_MOTION === "1" ? "reduce" : "no-preference";
+const visualCaptureDir = process.env.VISUAL_CAPTURE_DIR;
+if (visualCaptureDir) mkdirSync(visualCaptureDir, { recursive: true });
+
+async function captureState(page, route, viewport, state) {
+  if (!visualCaptureDir) return;
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(120);
+  await page.screenshot({
+    path: join(visualCaptureDir, `${route.slice(1)}-${viewport.name}-${state}.png`),
+    fullPage: false,
+  });
+}
 
 try {
   for (const viewport of viewports) {
@@ -32,6 +47,7 @@ try {
       page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
       await page.goto(`${base}${route}`, { waitUntil: "load" });
       await page.waitForSelector("#introTableHost [data-trainer-simulator-actions]");
+      await captureState(page, route, viewport, "deal");
       const introGeometry = await page.evaluate(() => {
         const rect = (selector) => {
           const node = document.querySelector(selector);
@@ -48,6 +64,8 @@ try {
         const status = rect("#introTableHost .action-status");
         const card = rect("#introTableHost .seat.is-hero .poker-deck-card");
         const visibleFoldBadges = [...document.querySelectorAll("#introTableHost .seat-action-badge.is-fold")]
+          .filter((node) => getComputedStyle(node).display !== "none" && node.getBoundingClientRect().width > 0).length;
+        const visibleEmptyBadges = [...document.querySelectorAll("#introTableHost .seat-action-badge:empty")]
           .filter((node) => getComputedStyle(node).display !== "none" && node.getBoundingClientRect().width > 0).length;
         const actionColors = [...document.querySelectorAll("#introTableHost [data-option-key]")]
           .map((node) => getComputedStyle(node).backgroundImage + " " + getComputedStyle(node).backgroundColor);
@@ -66,6 +84,7 @@ try {
           distinctActionColors: new Set(actionColors).size,
           maxSeatHeight: Math.max(...seatPanels.map((seat) => seat.height)),
           maxSeatWidth: Math.max(...seatPanels.map((seat) => seat.width)),
+          visibleEmptyBadges,
           visibleFoldBadges,
         };
       });
@@ -79,6 +98,7 @@ try {
       assert.equal(introGeometry.heroBetOverlapsPot, false, `${route} keeps the live bet clear of the pot at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
       assert.equal(introGeometry.controlsInsideHost, true, `${route} keeps the action dock inside the reserved table gutter at ${viewport.name}`);
       assert.equal(introGeometry.visibleFoldBadges, 0, `${route} removes unlabeled fold dots at ${viewport.name}`);
+      assert.equal(introGeometry.visibleEmptyBadges, 0, `${route} removes every unlabeled seat-action dot at ${viewport.name}`);
       assert.equal(introGeometry.distinctActionColors, 4, `${route} gives all four decisions distinct semantic colors at ${viewport.name}`);
       if (viewport.name === "reported") {
         await page.screenshot({ path: `/private/tmp/${route.slice(1)}-intro-reported.png`, fullPage: false });
@@ -88,6 +108,7 @@ try {
       const firstAction = page.locator("#introTableHost [data-option-key]").first();
       await firstAction.click();
       await page.getByRole("tab", { name: "2. Главное" }).click();
+      await captureState(page, route, viewport, "main");
       assert.equal(await page.locator("#wisdomSlides .wisdom-rule-card").count(), 3, `${route} has three actionable rules`);
       assert.equal(await page.locator("#wisdomSlides .wisdom-evidence").count(), 3, `${route} supports each rule with a comparison`);
       if (route === "/vs-one-raiser-sb-lesson") {
@@ -101,6 +122,7 @@ try {
       }
       assert(!/MSP|ранг на момент|N≥|наблюдаем|выборк|солвер|эталон|малонаблюдаем/i.test(await page.locator('[data-screen="main"]').innerText()), `${route} main lesson hides technical language`);
       await page.getByRole("tab", { name: "3. Чарты" }).click();
+      await captureState(page, route, viewport, "ranges");
       assert.equal(await page.locator("#benchmarkRange > *").count(), 169, `${route} has a 13x13 matrix`);
       assert.equal(await page.locator("#benchmarkRange [data-hand]").count(), 169, `${route} default chart has 169/169 observed hand cells`);
       assert.equal(await page.locator("#benchmarkRange .is-unavailable").count(), 0, `${route} default chart has no missing hand cells`);
@@ -117,9 +139,11 @@ try {
         }
       }
       await page.getByRole("tab", { name: "4. Сравнение" }).click();
+      await captureState(page, route, viewport, "comparison");
       assert.equal(await page.locator("#comparisonGrid .cohort-card").count(), 2, `${route} compares two cohorts`);
       assert.equal(await page.locator("#comparisonGap p").count(), 1, `${route} turns the largest gap into a table rule`);
       await page.getByRole("tab", { name: "5. Мудрости" }).click();
+      await captureState(page, route, viewport, "wisdom");
       assert.equal(await page.locator("#insightGrid .insight-card").count(), 3, `${route} renders three data-derived insights`);
       if (route === "/vs-one-raiser-sb-lesson") {
         const wisdomText = await page.locator("#insightGrid").innerText();
@@ -136,6 +160,7 @@ try {
         await page.screenshot({ path: `/private/tmp/sb-unopened-wisdom-${viewport.name}.png`, fullPage: false });
       }
       await page.getByRole("tab", { name: "6. Практика" }).click();
+      await captureState(page, route, viewport, "practice-landing");
       await page.getByRole("button", { name: "Запустить", exact: true }).click();
       await page.waitForSelector("#practiceTable [data-trainer-simulator-actions]");
       await page.locator("#practiceTable [data-option-key]").first().click();
@@ -145,6 +170,11 @@ try {
         overflowX: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
         actionBottom: document.querySelector("#practiceTable [data-trainer-simulator-actions]")?.getBoundingClientRect().bottom || 0,
         actionWidth: document.querySelector("#practiceTable [data-trainer-simulator-actions]")?.getBoundingClientRect().width || 0,
+        tableHeight: document.querySelector("#practiceTable .table-shell")?.getBoundingClientRect().height || 0,
+        roomHeight: document.querySelector(".practice-stage .room-stage")?.getBoundingClientRect().height || 0,
+        coachHeight: document.querySelector(".practice-stage .coach")?.getBoundingClientRect().height || 0,
+        hudStatCount: document.querySelectorAll(".practice-hud > span").length,
+        hudStatBackground: getComputedStyle(document.querySelector(".practice-hud > span")).backgroundColor,
         actionHit: (() => {
           const button = document.querySelector("#practiceTable [data-option-key]");
           const rect = button?.getBoundingClientRect();
@@ -156,7 +186,12 @@ try {
       assert(geometry.overflowX <= 1, `${route} has no page-level horizontal overflow at ${viewport.name}`);
       assert(geometry.actionWidth > 0, `${route} action dock is visible at ${viewport.name}`);
       assert(geometry.actionHit, `${route} action dock is not clipped or covered at ${viewport.name}`);
+      assert.equal(geometry.hudStatCount, 3, `${route} practice keeps three compact HUD stats at ${viewport.name}`);
+      assert.notEqual(geometry.hudStatBackground, "rgba(0, 0, 0, 0)", `${route} practice HUD stats use the shared surface treatment at ${viewport.name}`);
+      if (viewport.width > 700) assert(geometry.tableHeight > 360, `${route} practice table uses the available height at ${viewport.name}: ${JSON.stringify(geometry)}`);
+      if (viewport.width > 980) assert(Math.abs(geometry.roomHeight - geometry.coachHeight) <= 1, `${route} practice coach aligns with the table surface at ${viewport.name}: ${JSON.stringify(geometry)}`);
       assert.deepEqual(errors, [], `${route} has no browser errors at ${viewport.name}`);
+      await captureState(page, route, viewport, "practice-running");
       if (route === "/sb-unopened-lesson") {
         await page.waitForTimeout(350);
         await page.screenshot({ path: `/private/tmp/sb-unopened-practice-${viewport.name}.png`, fullPage: false });
