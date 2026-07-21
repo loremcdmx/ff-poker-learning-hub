@@ -6,7 +6,7 @@ const routes = [
   "/vs-one-raiser-positions-lesson",
   "/vs-one-raiser-sb-lesson",
   "/sb-unopened-lesson",
-];
+].filter((route) => !process.env.SMOKE_ROUTE || route === process.env.SMOKE_ROUTE);
 const minimumStackSteps = {
   "/vs-one-raiser-positions-lesson": 8,
   "/vs-one-raiser-sb-lesson": 7,
@@ -16,20 +16,66 @@ const viewports = [
   { name: "desktop", width: 1440, height: 900 },
   { name: "comment", width: 1155, height: 870 },
   { name: "laptop", width: 1280, height: 720 },
+  { name: "reported", width: 969, height: 907 },
   { name: "mobile", width: 390, height: 844 },
-];
+].filter((viewport) => !process.env.SMOKE_VIEWPORT || viewport.name === process.env.SMOKE_VIEWPORT);
 const browser = await chromium.launch({ headless: true });
 const results = [];
+const reducedMotion = process.env.REDUCED_MOTION === "1" ? "reduce" : "no-preference";
 
 try {
   for (const viewport of viewports) {
     for (const route of routes) {
-      const page = await browser.newPage({ viewport });
+      const page = await browser.newPage({ viewport, reducedMotion });
       const errors = [];
       page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
       page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
       await page.goto(`${base}${route}`, { waitUntil: "load" });
       await page.waitForSelector("#introTableHost [data-trainer-simulator-actions]");
+      const introGeometry = await page.evaluate(() => {
+        const rect = (selector) => {
+          const node = document.querySelector(selector);
+          if (!node) return null;
+          const box = node.getBoundingClientRect();
+          return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height };
+        };
+        const overlaps = (a, b) => Boolean(a && b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top);
+        const host = rect("#introTableHost");
+        const cards = rect("#introTableHost .seat.is-hero .seat-cards");
+        const heroBet = rect("#introTableHost .hero-felt-bet");
+        const pot = rect("#introTableHost .pot");
+        const controls = rect("#introTableHost .client-controls");
+        const status = rect("#introTableHost .action-status");
+        const card = rect("#introTableHost .seat.is-hero .poker-deck-card");
+        const seatPanels = [...document.querySelectorAll("#introTableHost .seat-panel")].map((node) => {
+          const box = node.getBoundingClientRect();
+          return { width: box.width, height: box.height };
+        });
+        return {
+          heroBet,
+          pot,
+          card,
+          cards,
+          controlsInsideHost: Boolean(host && controls && status && controls.bottom <= host.bottom + 1 && status.bottom <= host.bottom + 1),
+          heroBetOverlapsCards: overlaps(heroBet, cards),
+          heroBetOverlapsPot: overlaps(heroBet, pot),
+          maxSeatHeight: Math.max(...seatPanels.map((seat) => seat.height)),
+          maxSeatWidth: Math.max(...seatPanels.map((seat) => seat.width)),
+        };
+      });
+      const compactLimits = viewport.name === "mobile"
+        ? { cardWidth: 54, seatWidth: 86, seatHeight: 40 }
+        : { cardWidth: 70, seatWidth: 120, seatHeight: 50 };
+      assert(introGeometry.card?.width <= compactLimits.cardWidth, `${route} keeps the Hero cards compact at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
+      assert(introGeometry.maxSeatWidth <= compactLimits.seatWidth, `${route} keeps seat panels compact at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
+      assert(introGeometry.maxSeatHeight <= compactLimits.seatHeight, `${route} keeps seat panels short at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
+      assert.equal(introGeometry.heroBetOverlapsCards, false, `${route} keeps the live bet clear of Hero cards at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
+      assert.equal(introGeometry.heroBetOverlapsPot, false, `${route} keeps the live bet clear of the pot at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
+      assert.equal(introGeometry.controlsInsideHost, true, `${route} keeps the action dock inside the reserved table gutter at ${viewport.name}`);
+      if (viewport.name === "reported") {
+        await page.screenshot({ path: `/private/tmp/${route.slice(1)}-intro-reported.png`, fullPage: false });
+        await page.locator("#introTableHost").screenshot({ path: `/private/tmp/${route.slice(1)}-table-reported.png` });
+      }
       assert.equal(await page.locator("#introTableHost [data-option-key]").count(), 4, `${route} has four in-table actions`);
       const firstAction = page.locator("#introTableHost [data-option-key]").first();
       await firstAction.click();
