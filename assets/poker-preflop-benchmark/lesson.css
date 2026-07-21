@@ -125,6 +125,43 @@
   grid-template-rows: 1fr !important;
   height: 46px;
 }
+.preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot .seat-action-badge.is-fold {
+  display: none;
+}
+.preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action:not(.is-correct):not(.is-wrong):not(.is-alternative) {
+  color: #0b1117;
+  border-color: color-mix(in srgb, var(--trainer-action-color) 72%, white 28%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--trainer-action-color) 84%, white 16%),
+    color-mix(in srgb, var(--trainer-action-color) 78%, #15101a 22%)
+  );
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.24),
+    0 7px 18px color-mix(in srgb, var(--trainer-action-color) 18%, transparent);
+}
+.preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-action[data-option-key="fold"] {
+  --trainer-action-color: var(--benchmark-fold);
+}
+.preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-action[data-option-key="call"] {
+  --trainer-action-color: var(--benchmark-call);
+}
+.preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-action[data-option-key="raise"] {
+  --trainer-action-color: var(--benchmark-raise);
+}
+.preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-action[data-option-key="jam"] {
+  --trainer-action-color: var(--benchmark-jam);
+}
+.preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .client-controls > .client-row .table-action:hover:not(:disabled):not(.is-correct):not(.is-wrong):not(.is-alternative) {
+  border-color: color-mix(in srgb, var(--trainer-action-color) 76%, white 24%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--trainer-action-color) 92%, white 8%),
+    color-mix(in srgb, var(--trainer-action-color) 84%, #15101a 16%)
+  );
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
 .preflop-benchmark-lesson .intro-answer { margin-top: 12px; }
 .preflop-benchmark-lesson .answer-card {
   display: grid;

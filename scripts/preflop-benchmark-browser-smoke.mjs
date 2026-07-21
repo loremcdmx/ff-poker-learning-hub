@@ -47,6 +47,10 @@ try {
         const controls = rect("#introTableHost .client-controls");
         const status = rect("#introTableHost .action-status");
         const card = rect("#introTableHost .seat.is-hero .poker-deck-card");
+        const visibleFoldBadges = [...document.querySelectorAll("#introTableHost .seat-action-badge.is-fold")]
+          .filter((node) => getComputedStyle(node).display !== "none" && node.getBoundingClientRect().width > 0).length;
+        const actionColors = [...document.querySelectorAll("#introTableHost [data-option-key]")]
+          .map((node) => getComputedStyle(node).backgroundImage + " " + getComputedStyle(node).backgroundColor);
         const seatPanels = [...document.querySelectorAll("#introTableHost .seat-panel")].map((node) => {
           const box = node.getBoundingClientRect();
           return { width: box.width, height: box.height };
@@ -59,8 +63,10 @@ try {
           controlsInsideHost: Boolean(host && controls && status && controls.bottom <= host.bottom + 1 && status.bottom <= host.bottom + 1),
           heroBetOverlapsCards: overlaps(heroBet, cards),
           heroBetOverlapsPot: overlaps(heroBet, pot),
+          distinctActionColors: new Set(actionColors).size,
           maxSeatHeight: Math.max(...seatPanels.map((seat) => seat.height)),
           maxSeatWidth: Math.max(...seatPanels.map((seat) => seat.width)),
+          visibleFoldBadges,
         };
       });
       const compactLimits = viewport.name === "mobile"
@@ -72,6 +78,8 @@ try {
       assert.equal(introGeometry.heroBetOverlapsCards, false, `${route} keeps the live bet clear of Hero cards at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
       assert.equal(introGeometry.heroBetOverlapsPot, false, `${route} keeps the live bet clear of the pot at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
       assert.equal(introGeometry.controlsInsideHost, true, `${route} keeps the action dock inside the reserved table gutter at ${viewport.name}`);
+      assert.equal(introGeometry.visibleFoldBadges, 0, `${route} removes unlabeled fold dots at ${viewport.name}`);
+      assert.equal(introGeometry.distinctActionColors, 4, `${route} gives all four decisions distinct semantic colors at ${viewport.name}`);
       if (viewport.name === "reported") {
         await page.screenshot({ path: `/private/tmp/${route.slice(1)}-intro-reported.png`, fullPage: false });
         await page.locator("#introTableHost").screenshot({ path: `/private/tmp/${route.slice(1)}-table-reported.png` });
