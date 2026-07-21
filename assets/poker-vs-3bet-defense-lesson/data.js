@@ -269,14 +269,25 @@
     return `${String(rounded).replace(".", ",")}%`;
   }
 
-  function feedbackFor(action, correctAction, cell, config) {
+  function acceptableActionsFor(cell, correctAction) {
+    const bestFrequency = Number(cell?.[correctAction] || 0);
+    return actionPriority.filter((action) => (
+      action === correctAction
+      || (Number(cell?.[action] || 0) >= 25 && bestFrequency - Number(cell?.[action] || 0) <= 50)
+    ));
+  }
+
+  function feedbackFor(action, correctAction, acceptableActions, cell, config) {
     const selected = actionLabels[action];
     const correct = actionLabels[correctAction];
     if (action === correctAction) {
       const relationCopy = config.relation === "IP"
-        ? "Позиция помогает реализовать equity."
+        ? "Позиция помогает реализовать эквити."
         : "Без позиции граница продолжения уже строже.";
       return `Верно: ${selected.toLowerCase()} — главная учебная линия (${formatFrequency(cell[action])}). ${relationCopy}`;
+    }
+    if (acceptableActions.includes(action)) {
+      return `Допустимая часть микса: ${selected.toLowerCase()} ${formatFrequency(cell[action])}; чаще — ${correct.toLowerCase()} ${formatFrequency(cell[correctAction])}.`;
     }
     return `${selected} получает ${formatFrequency(cell[action])}; главная линия здесь — ${correct.toLowerCase()} (${formatFrequency(cell[correctAction])}).`;
   }
@@ -292,6 +303,7 @@
     const selected = choosePracticeHand(config, scenario, comboIndex);
     const cell = scenario.cells[selected.hand];
     const correctAction = dominantAction(cell);
+    const acceptableActions = acceptableActionsFor(cell, correctAction);
     const stack = rangeModel.stacks.find((item) => item.key === config.stack);
     const stackBb = Number(stack?.sampleBb || 40);
     const heroPosition = heroTablePosition(config.position);
@@ -311,7 +323,8 @@
     ].map((option) => ({
       ...option,
       correct: option.key === correctAction,
-      feedback: feedbackFor(option.key, correctAction, cell, config)
+      acceptableMix: option.key !== correctAction && acceptableActions.includes(option.key),
+      feedback: feedbackFor(option.key, correctAction, acceptableActions, cell, config)
     }));
     const practiceMeta = {
       family: "vs3bet-defense",
@@ -332,6 +345,7 @@
       variant: config.variant,
       actions: { ...cell },
       correctAction,
+      acceptableActions: acceptableActions.slice(),
       sourceStatus: "exact-baseline-plus-transparent-heuristics"
     };
 
@@ -340,8 +354,8 @@
       title: `${config.position} ${relationLabel} · ${selected.hand}`,
       hand: selected.hand,
       question: `${config.position} открыл ${formatBb(openTo)} BB с ${selected.hand}. ${villainPosition} сделал 3-бет ${String(config.size).replace(".", ",")}x до ${formatBb(threeBetTo)} BB. Стек ${stack?.label || config.stack}. Твоя линия?`,
-      answer: `${actionLabels[correctAction]} — главная учебная линия (${formatFrequency(cell[correctAction])}). Точная позиционная матрица дополнена явно эвристическими фильтрами IP/OOP, стека и сайза.`,
-      context: "Сначала назови позицию, цену колла и эффективный стек. Результат не является solver-output или фактической hand-level частотой лиги.",
+      answer: `${actionLabels[correctAction]} — главная линия (${formatFrequency(cell[correctAction])}). После ответа ниже откроется весь ожидаемый розыгрыш.`,
+      context: "Сначала оцени позицию, цену колла и эффективный стек.",
       practiceMeta,
       metadata: { rangeModel: practiceMeta },
       table: {

@@ -15,8 +15,8 @@
   ];
   const labels = {
     cohort: {
-      novice: "Новички · R16–18",
-      league3: "Лига 3 · R11–15",
+      novice: "Новички · R15–18",
+      league3: "Лига 3 · R11–14",
       league2: "Лига 2 · R6–10",
       league1: "Лига 1 · R1–5"
     },
@@ -73,14 +73,30 @@
     return data?.charts?.[chartKey(position, stack)] || null;
   }
 
-  function hasEstimate(estimate) {
-    return Array.isArray(estimate) && estimate.some((value) => count(value) > 0);
+  function startingHandComboCount(hand) {
+    const value = String(hand || "");
+    if (/^([2-9TJQKA])\1$/.test(value)) return 6;
+    return value.endsWith("s") ? 4 : 12;
   }
 
-  function actionMix(cell, estimate = null) {
-    if (hasEstimate(estimate)) {
-      return Object.fromEntries(actions.map((action) => [action.key, count(estimate[action.index - 1]) / 10]));
-    }
+  function occurrenceProfile(current) {
+    const allSizesKey = [state.cohort, state.position, state.relation, state.stack, "all"].join("|");
+    const source = data?.charts?.[allSizesKey] || current;
+    const scores = data.meta.hands.map((hand, index) => (
+      count(source?.cells?.[index]?.[0]) / startingHandComboCount(hand)
+    ));
+    const positive = scores.filter((score) => score > 0).sort((left, right) => left - right);
+    const referenceIndex = Math.max(0, Math.floor((positive.length - 1) * .9));
+    const reference = positive[referenceIndex] || 0;
+    return scores.map((score) => reference ? Math.min(100, score / reference * 100) : 0);
+  }
+
+  function visualOccurrenceFill(frequency) {
+    if (!(frequency > 0)) return 0;
+    return Math.max(10, Math.min(100, frequency));
+  }
+
+  function actionMix(cell) {
     const n = count(cell?.[0]);
     return Object.fromEntries(actions.map((action) => [action.key, n ? count(cell[action.index]) / n * 100 : 0]));
   }
@@ -105,19 +121,15 @@
     return actions.reduce((best, action) => mix[action.key] > mix[best.key] ? action : best, actions[0]).tone;
   }
 
-  function sampleClass(n, estimated = false) {
-    if (estimated) return "is-estimated";
+  function sampleClass(n) {
     const thresholds = data.meta.sampleThresholds;
     if (n < thresholds.unavailableBelow) return "is-unavailable";
     if (n < thresholds.lowConfidenceBelow) return "is-low-sample";
     return "is-measured";
   }
 
-  function sampleNote(n, estimated = false) {
-    if (estimated) return `Сглаженная оценка · исходная выборка N < ${data.meta.sampleThresholds.unavailableBelow}`;
-    if (n < data.meta.sampleThresholds.unavailableBelow) return "Недостаточно данных · точные N и частоты скрыты";
-    if (n < data.meta.sampleThresholds.lowConfidenceBelow) return `N ${formatCount(n)} · малая выборка`;
-    return `N ${formatCount(n)} решений`;
+  function sampleNote(n) {
+    return "";
   }
 
   function createFilterGroup(key, label, values) {
@@ -163,17 +175,16 @@
     const invalid = !relationAllowed(state.relation, position);
     const cell = element("td", invalid ? "is-invalid" : current ? "" : "is-empty");
     if (!current) {
-      const unavailable = element("span", "vs3-wisdom-cell-unavailable", invalid ? "Не бывает" : "Мало данных");
+      const unavailable = element("span", "vs3-wisdom-cell-unavailable", invalid ? "Не бывает" : "—");
       unavailable.title = invalid
-        ? `${position} не может играть ${state.relation} против корректного 3-бета в этом узле`
-        : "Публичный срез скрыт: в сочетании меньше 20 решений";
+        ? `${position} не может играть ${state.relation} против 3-бета в этом споте`
+        : "Для этого сочетания нет отдельного среза";
       cell.append(unavailable);
       return cell;
     }
 
     const totals = current.totals || {};
     const mix = totalsMix(totals);
-    const defend = mix.call + mix.fourbet + mix.jam;
     const aggressive = mix.fourbet + mix.jam;
     const selected = position === state.position && stack === state.stack;
     const button = element("button", "vs3-wisdom-table-cell");
@@ -184,13 +195,12 @@
     button.setAttribute("aria-pressed", String(selected));
     button.setAttribute(
       "aria-label",
-      `${position}, ${labels.stack[stack]}: защищает ${formatPercent(defend)}, колл ${formatPercent(mix.call)}, 4-бет вместе с пушем ${formatPercent(aggressive)}. N ${formatCount(totals.opportunities)}. Показать чарт.`
+      `${position}, ${labels.stack[stack]}: пас ${formatPercent(mix.fold)}, колл ${formatPercent(mix.call)}, 4-бет вместе с пушем ${formatPercent(aggressive)}. Показать чарт.`
     );
     button.append(
-      element("strong", "vs3-wisdom-defense", formatPercent(defend)),
+      element("strong", "vs3-wisdom-fold", formatPercent(mix.fold)),
       element("span", "vs3-wisdom-cell-copy", `колл ${formatPercent(mix.call).replace("%", "")} · 4Б ${formatPercent(aggressive).replace("%", "")}`),
-      createMixBar(mix, "vs3-wisdom-cell-mix"),
-      element("small", "", `N ${formatCount(totals.opportunities)}`)
+      createMixBar(mix, "vs3-wisdom-cell-mix")
     );
     cell.append(button);
     return cell;
@@ -201,14 +211,14 @@
     const head = element("div", "vs3-wisdom-table-head");
     const copy = element("div", "");
     copy.append(
-      element("h3", "", "Таблица дефендов"),
-      element("p", "", "Крупно — вся защита: колл + 4-бет + 4-бет-пуш. Нажми ячейку, чтобы раскрыть руки.")
+      element("h3", "", "Таблица фолдов"),
+      element("p", "", "Крупно — как часто игроки пасуют на 3-бет. Полоса ниже показывает всю реакцию. Нажми ячейку, чтобы раскрыть руки.")
     );
     head.append(copy, createLegend());
 
     const scroll = element("div", "vs3-wisdom-table-scroll");
     scroll.tabIndex = 0;
-    scroll.setAttribute("aria-label", "Таблица защит по позициям и глубине");
+    scroll.setAttribute("aria-label", "Таблица фолдов на 3-бет по позициям и глубине");
     const table = element("table", "vs3-wisdom-table");
     const tableHead = element("thead", "");
     const headRow = element("tr", "");
@@ -236,38 +246,44 @@
   }
 
   function createRangeGrid(current) {
-    const matrix = element("section", "vs3-wisdom-matrix-card");
-    const header = element("div", "vs3-wisdom-matrix-head");
+    const matrix = element("section", "vs3-wisdom-matrix-card ff-chart-panel");
+    const header = element("div", "vs3-wisdom-matrix-head ff-chart-head");
     const copy = element("div", "");
     copy.append(
       element("h3", "", `${state.position} · ${labels.stack[state.stack]}`),
-      element("p", "", `${labels.cohort[state.cohort]} · ${labels.relation[state.relation]} · ${labels.size[state.size]}`)
+      element("p", "", `${labels.cohort[state.cohort]} · ${labels.relation[state.relation]} · ${labels.size[state.size]}`),
+      element("p", "vs3-wisdom-occurrence-note", "Высота цвета — как часто рука встречается среди опенов. Учтено, что пары, suited и offsuit раздают с разной частотой.")
     );
-    const sample = element("span", "vs3-wisdom-chart-sample", `N ${formatCount(current.totals?.opportunities)}`);
-    header.append(copy, sample);
+    header.append(copy);
 
     const scroll = element("div", "vs3-matrix-scroll vs3-wisdom-matrix-scroll");
     scroll.tabIndex = 0;
     scroll.setAttribute("aria-label", "Чарт наблюдаемых решений по 169 рукам");
-    const grid = element("div", "vs3-range-grid vs3-wisdom-range-grid");
+    const grid = element("div", "vs3-range-grid vs3-wisdom-range-grid ff-range-grid");
+    const occurrence = occurrenceProfile(current);
     data.meta.hands.forEach((hand, index) => {
       const cell = current.cells?.[index] || [0, 0, 0, 0, 0];
-      const estimate = current.estimates?.[index] || null;
       const n = count(cell[0]);
-      const estimated = !n && hasEstimate(estimate);
-      const mix = actionMix(cell, estimate);
-      const availability = sampleClass(n, estimated);
-      const available = estimated || availability !== "is-unavailable";
-      const button = element("button", `vs3-field-range-cell vs3-wisdom-range-cell ${available ? dominantTone(mix) : ""} ${availability}`);
+      const mix = actionMix(cell);
+      const availability = sampleClass(n);
+      const available = Boolean(n);
+      const occurrenceFrequency = occurrence[index] || 0;
+      const button = element("button", `vs3-field-range-cell vs3-wisdom-range-cell ff-range-cell has-occurrence-weight ${available ? dominantTone(mix) : ""} ${availability}`);
       button.type = "button";
       button.dataset.vs3WisdomHand = hand;
+      button.dataset.vs3OccurrenceFrequency = occurrenceFrequency.toFixed(1);
+      button.style.setProperty("--vs3-field-occurrence-fill", `${visualOccurrenceFill(occurrenceFrequency)}%`);
       button.setAttribute("aria-pressed", String(hand === state.hand));
-      button.setAttribute("aria-label", `${hand}: ${sampleNote(n, estimated)}. Показать разбивку действий.`);
-      button.append(
-        element("strong", "", hand),
-        element("small", "", estimated ? "оценка" : n ? `N ${formatCount(n)}` : "—")
+      button.setAttribute(
+        "aria-label",
+        available
+          ? `${hand}: относительная встречаемость среди опенов ${formatPercent(occurrenceFrequency)}. Показать разбивку действий.`
+          : `${hand}: нет отдельного среза.`
       );
-      if (available) button.append(createMixBar(mix, "vs3-field-mix"));
+      button.append(
+        element("span", "vs3-field-occurrence-fill"),
+        element("strong", "", hand)
+      );
       grid.append(button);
     });
     scroll.append(grid);
@@ -278,45 +294,42 @@
   function createHandDetail(current) {
     const index = data.meta.hands.indexOf(state.hand);
     const cell = current.cells?.[index] || [0, 0, 0, 0, 0];
-    const estimate = current.estimates?.[index] || null;
     const n = count(cell[0]);
-    const estimated = !n && hasEstimate(estimate);
-    const available = estimated || n >= data.meta.sampleThresholds.unavailableBelow;
-    const detail = element("aside", `vs3-wisdom-hand-detail ${sampleClass(n, estimated)}`);
+    const available = Boolean(n);
+    const detail = element("aside", `vs3-wisdom-hand-detail ${sampleClass(n)}`);
     const head = element("header", "vs3-wisdom-hand-head");
     const copy = element("div", "");
     copy.append(element("span", "vs3-wisdom-detail-kicker", "Выбранная рука"), element("h3", "", state.hand));
-    head.append(copy, element("small", "", sampleNote(n, estimated)));
+    head.append(copy);
     detail.append(head);
     if (!available) {
-      detail.append(element("p", "vs3-field-no-sample", "Выборка ниже публичного минимума N=20. Точные частоты и счётчики не показываем."));
+      detail.append(element("p", "vs3-field-no-sample", "Для этой руки нет отдельного среза."));
       return detail;
     }
 
-    const mix = actionMix(cell, estimate);
+    const mix = actionMix(cell);
     const list = element("div", "vs3-wisdom-hand-actions");
     actions.forEach((action) => {
       const item = element("div", action.tone);
       item.append(
         element("span", "", action.label),
-        element("strong", "", formatPercent(mix[action.key])),
-        element("small", "", estimated ? "сглаженная оценка" : `${formatCount(cell[action.index])} решений`)
+        element("strong", "", formatPercent(mix[action.key]))
       );
       list.append(item);
     });
     detail.append(
       createMixBar(mix, "vs3-field-detail-mix"),
       list,
-      element("p", "vs3-wisdom-boundary", "Это наблюдаемая игра поля, а не рекомендация. За правильной стратегией переходи во вкладку «Чарты».")
+      element("p", "vs3-wisdom-boundary", "Это наблюдаемая игра поля, а не рекомендация. За правильной стратегией выбери «Наш чарт».")
     );
     return detail;
   }
 
   function createChart() {
     const current = chart();
-    const section = element("section", "vs3-wisdom-chart-card");
+    const section = element("section", "vs3-wisdom-chart-card ff-chart-panel");
     if (!current) {
-      section.append(element("p", "vs3-loading", "Для выбранной ячейки недостаточно данных. Выбери соседнюю позицию или глубину."));
+      section.append(element("p", "vs3-loading", "Для выбранного сочетания нет отдельного среза."));
       return section;
     }
     const layout = element("div", "vs3-wisdom-chart-layout");
@@ -329,7 +342,7 @@
     const note = element("footer", "vs3-wisdom-source");
     note.append(
       element("strong", "", "Наблюдаемая игра FF"),
-      element("span", "", "5 051 115 решений · 1 января — 16 июля 2026 · строгий RFI → первый 3-бет без сквиза → ответ Hero. Ранг взят на момент раздачи.")
+      element("span", "", "Один опен, первый 3-бет, без сквизов.")
     );
     return note;
   }
@@ -375,7 +388,7 @@
 
   function render({ preserveScroll = false, focusTarget = null, revealChart = false } = {}) {
     if (!data?.meta || !data?.charts) {
-      host.replaceChildren(element("p", "vs3-loading", "Полевой куб не загрузился. Обнови страницу."));
+      host.replaceChildren(element("p", "vs3-loading", "Данные поля не загрузились. Обнови страницу."));
       return;
     }
     const previousTableScroll = preserveScroll ? host.querySelector(".vs3-wisdom-table-scroll")?.scrollLeft || 0 : 0;

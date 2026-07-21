@@ -306,7 +306,7 @@ assert.deepEqual(
 assert.match(byId.get("xr-22-set").question, /2♣2♠/, "displayed pocket deuces match the table cards");
 assert.match(byId.get("xr-22-set").title, /K92hh/, "the two-tone K-heart board is not mislabeled as rainbow");
 assert.doesNotMatch(data.intro.title, /как кандидат/i, "the intro title does not reveal the teaching answer");
-assert.match(shared, /pluralRu\(folds, "фолд", "фолда", "фолдов"\)/, "field evidence uses Russian plural forms for fold counts");
+assert.doesNotMatch(shared, /formatCount\(folds\).*formatCount\(faced\)|pluralRu\(folds/, "field evidence no longer exposes raw fold counts");
 assert.match(byId.get("fold-j5-weak-backdoor").options.find((option) => option.key === "checkraise").feedback, /эксплойт.*оверфолд.*дисциплинированнее/i);
 assert.match(byId.get("fold-t8-backdoor-only").answer, /эксплойт.*gutshot.*один.*runner-runner/i);
 assert.doesNotMatch(source, /Лишн(?:ий|их) (?:check-raise|рейз|X\/R)/i, "optimistic check-raises are not framed as automatic blunders");

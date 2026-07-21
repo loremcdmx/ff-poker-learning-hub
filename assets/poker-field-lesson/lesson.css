@@ -721,6 +721,194 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   line-height: 1.45;
   text-align: center;
 }
+.example-atlas {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  margin-bottom: 20px;
+  padding: 20px;
+  overflow: visible;
+  border-color: rgba(142, 155, 242, .24);
+  background:
+    radial-gradient(circle at 92% 0%, rgba(142, 155, 242, .13), transparent 34%),
+    linear-gradient(145deg, rgba(15, 14, 24, .98), rgba(8, 9, 14, .98));
+  box-shadow: inset 0 3px 0 rgba(142, 155, 242, .76), 0 20px 54px rgba(0, 0, 0, .27);
+}
+.example-atlas > [data-examples-atlas] {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.example-atlas-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+.example-atlas-head > div { min-width: 0; }
+.example-atlas-head .eyebrow { margin: 0 0 6px; color: var(--lesson-blue); }
+.example-atlas-head h3 { margin: 0; font-size: clamp(23px, 2.2vw, 32px); line-height: 1.08; letter-spacing: -.025em; }
+.example-atlas-head p:not(.eyebrow) { max-width: 68ch; margin: 7px 0 0; color: rgba(244, 241, 236, .7); font-size: 13px; line-height: 1.45; }
+.example-atlas-scope {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border: 1px solid rgba(142, 155, 242, .24);
+  border-radius: 999px;
+  color: #cbd0ff;
+  background: rgba(142, 155, 242, .07);
+  font-size: 10px;
+  font-weight: 820;
+  letter-spacing: .035em;
+  white-space: nowrap;
+}
+.example-atlas-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.example-atlas-tab {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 54px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 12px;
+  color: rgba(244, 241, 236, .66);
+  background: rgba(255, 255, 255, .025);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease, color .16s ease, transform .16s ease;
+}
+.example-atlas-tab:hover { border-color: rgba(142, 155, 242, .3); color: var(--text); transform: translateY(-1px); }
+.example-atlas-tab.is-active {
+  border-color: rgba(255, 223, 81, .62);
+  color: var(--text);
+  background: linear-gradient(135deg, rgba(255, 223, 81, .11), rgba(142, 155, 242, .08));
+  box-shadow: inset 0 0 0 1px rgba(255, 223, 81, .08);
+}
+.example-atlas-tab:focus-visible,
+.example-atlas-hand:focus-visible { outline: 2px solid #fff6c9; outline-offset: 2px; }
+.example-atlas-tab > span { min-width: 0; font-size: 11px; font-weight: 840; line-height: 1.16; text-align: left; }
+.example-atlas-tab .example-cards { gap: 1px; }
+.example-atlas-tab .example-cards.is-mini .example-color-card { --poker-card-width: 20px; }
+.example-atlas-body {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, .075);
+  border-radius: 16px;
+  background: rgba(3, 4, 9, .34);
+}
+.example-atlas-summary {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+.example-atlas-summary-board {
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, .075);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, .025);
+}
+.example-atlas-summary-board .example-cards.is-board .example-color-card { --poker-card-width: 38px; }
+.example-atlas-summary-copy { min-width: 0; }
+.example-atlas-summary-copy .eyebrow { margin: 0 0 3px; color: var(--brand-yellow); font-size: 9px; }
+.example-atlas-summary-copy h4 { margin: 0; font-size: 18px; line-height: 1.16; }
+.example-atlas-summary-copy > p:not(.eyebrow) { max-width: 78ch; margin: 5px 0 0; color: rgba(244, 241, 236, .68); font-size: 12px; line-height: 1.42; }
+.example-atlas-buckets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+.example-atlas-bucket {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, .022);
+}
+.example-atlas-bucket.is-value { border-color: rgba(87, 214, 154, .25); background: rgba(87, 214, 154, .035); }
+.example-atlas-bucket.is-semi-bluff { border-color: rgba(142, 155, 242, .25); background: rgba(142, 155, 242, .035); }
+.example-atlas-bucket.is-call { border-color: rgba(86, 153, 232, .24); background: rgba(86, 153, 232, .032); }
+.example-atlas-bucket.is-fold { border-color: rgba(244, 241, 236, .13); background: rgba(244, 241, 236, .018); }
+.example-atlas-bucket-head { display: grid; gap: 3px; min-width: 0; }
+.example-atlas-bucket-head h5 { margin: 0; font-size: 12px; line-height: 1.15; }
+.example-atlas-bucket.is-value .example-atlas-bucket-head h5 { color: var(--lesson-good); }
+.example-atlas-bucket.is-semi-bluff .example-atlas-bucket-head h5 { color: var(--lesson-blue); }
+.example-atlas-bucket.is-call .example-atlas-bucket-head h5 { color: #8ebcf5; }
+.example-atlas-bucket.is-fold .example-atlas-bucket-head h5 { color: rgba(244, 241, 236, .7); }
+.example-atlas-bucket-head span { color: var(--soft); font-size: 10px; font-weight: 760; }
+.example-atlas-hands { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.example-atlas-hand {
+  display: grid;
+  min-width: 0;
+  min-height: 48px;
+  place-items: center;
+  padding: 5px;
+  border: 1px solid rgba(255, 255, 255, .075);
+  border-radius: 9px;
+  color: inherit;
+  background: rgba(2, 3, 7, .38);
+  font: inherit;
+  cursor: pointer;
+}
+.example-atlas-hand:hover { border-color: rgba(255, 223, 81, .34); background: rgba(255, 223, 81, .045); }
+.example-atlas-hand.is-selected {
+  border-color: rgba(255, 223, 81, .78);
+  background: rgba(255, 223, 81, .08);
+  box-shadow: 0 0 0 1px rgba(255, 223, 81, .12), 0 8px 18px rgba(0, 0, 0, .2);
+}
+.example-atlas-hand .example-cards.is-mini .example-color-card { --poker-card-width: 31px; }
+.example-atlas-inspector-host { min-width: 0; }
+.example-atlas-inspector {
+  display: grid;
+  grid-template-columns: minmax(190px, .38fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-left-width: 3px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .035), rgba(3, 4, 9, .28));
+}
+.example-atlas-inspector.is-value { border-left-color: var(--lesson-good); }
+.example-atlas-inspector.is-semi-bluff { border-left-color: var(--lesson-blue); }
+.example-atlas-inspector.is-call { border-left-color: #8ebcf5; }
+.example-atlas-inspector.is-fold { border-left-color: rgba(244, 241, 236, .38); }
+.example-atlas-inspector-visual { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
+.example-atlas-inspector-cards { display: grid; gap: 4px; min-width: 0; }
+.example-atlas-inspector-cards > span { color: var(--soft); font-size: 8px; font-weight: 850; letter-spacing: .07em; text-transform: uppercase; }
+.example-atlas-inspector-cards .example-cards.is-mini .example-color-card { --poker-card-width: 30px; }
+.example-atlas-inspector-arrow { color: rgba(255, 223, 81, .55); font-style: normal; }
+.example-atlas-inspector-copy { min-width: 0; }
+.example-atlas-inspector-role { margin: 0 0 4px; color: var(--brand-yellow); font-size: 9px; font-weight: 880; letter-spacing: .065em; text-transform: uppercase; }
+.example-atlas-inspector-copy h4 { margin: 0; font-size: 17px; line-height: 1.18; }
+.example-atlas-inspector-copy > p:not(.example-atlas-inspector-role) { margin: 5px 0 0; color: rgba(244, 241, 236, .77); font-size: 12px; line-height: 1.45; }
+.example-atlas-inspector-copy small { display: block; margin-top: 5px; color: var(--soft); font-size: 11px; line-height: 1.42; }
+.example-atlas-note {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, .07);
+  color: var(--soft);
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: center;
+}
+.examples-detail-heading { margin: 26px 0 13px; }
+.examples-detail-heading .eyebrow { margin: 0 0 5px; color: var(--brand-yellow); }
+.examples-detail-heading h3 { margin: 0; font-size: clamp(22px, 2vw, 30px); line-height: 1.1; letter-spacing: -.025em; }
 .example-groups { display: grid; grid-template-columns: 1fr; align-items: start; gap: 18px; }
 .example-group { min-width: 0; padding: 20px; overflow: hidden; }
 .example-group.is-value { box-shadow: inset 0 3px 0 rgba(87, 214, 154, .72), 0 20px 54px rgba(0, 0, 0, .27); }
@@ -1134,6 +1322,7 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   .cohort-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .example-groups { grid-template-columns: 1fr; }
   .observed-example-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .example-atlas-buckets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 1000px) {
@@ -1188,6 +1377,7 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   .flop-checkraise-lesson .practice-footer-controls { justify-content: flex-start; flex-wrap: wrap; }
   .examples-scope { grid-template-columns: 1fr; gap: 8px; }
   .example-observed-head { align-items: flex-start; flex-direction: column; }
+  .example-atlas-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 590px) {
@@ -1230,6 +1420,27 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   .flop-checkraise-lesson .step-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .example-group { padding: 14px; border-radius: 17px; }
   .example-observed { padding: 14px; border-radius: 17px; }
+  .example-atlas { padding: 14px; border-radius: 17px; }
+  .example-atlas-head { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .example-atlas-scope { white-space: normal; }
+  .example-atlas-tabs {
+    display: flex;
+    width: calc(100% + 28px);
+    min-width: 0;
+    max-width: none;
+    margin-inline: -14px;
+    padding: 0 14px 4px;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+  .example-atlas-tab { flex: 0 0 min(220px, 72vw); scroll-snap-align: start; }
+  .example-atlas-body { padding: 11px; }
+  .example-atlas-summary { grid-template-columns: 1fr; }
+  .example-atlas-summary-board { justify-self: start; }
+  .example-atlas-inspector { grid-template-columns: 1fr; align-items: start; }
+  .example-atlas-inspector-visual { justify-content: flex-start; }
   .observed-example-grid { grid-template-columns: 1fr; }
   .example-observed-scope { white-space: normal; }
   .field-example-card { padding: 13px; }
@@ -1265,6 +1476,13 @@ p { color: var(--muted); line-height: 1.6; text-wrap: pretty; }
   .flop-checkraise-lesson .practice-footer-controls { width: 100%; }
   .flop-checkraise-lesson .practice-trainer-footer .field-button { width: 100%; }
   .lesson-footer { align-items: flex-start; flex-direction: column; }
+}
+
+@media (max-width: 520px) {
+  .example-atlas-buckets { grid-template-columns: 1fr; }
+  .example-atlas-bucket { grid-template-columns: minmax(92px, .44fr) minmax(0, 1fr); align-items: center; }
+  .example-atlas-bucket-head { align-content: center; }
+  .example-atlas-hand { min-height: 52px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

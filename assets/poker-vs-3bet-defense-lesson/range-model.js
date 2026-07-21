@@ -41,16 +41,16 @@
     {
       key: "league3",
       label: "League 3",
-      subtitle: "R11–17",
+      subtitle: "R11–14",
       fieldActions: { fold: 59.96, call: 28.49, fourbet: 11.55, jam: 0 },
       provenance: "Учебная hand-level адаптация, направленная агрегатами поля League 3."
     },
     {
       key: "novice",
       label: "Новички",
-      subtitle: "прокси R15–17 · 99% R15",
+      subtitle: "R15–18 · расширено для редких спотов",
       fieldActions: { fold: 59.39, call: 30.14, fourbet: 10.47, jam: 0 },
-      provenance: "Прокси новичков из R15–17; hand-level клетки являются учебной адаптацией."
+      provenance: "Когорта новичков R15–18; hand-level клетки являются учебной адаптацией."
     }
   ]);
 
@@ -183,21 +183,24 @@
   const SIZE_TRANSFERS = deepFreeze({
     2.5: {
       sourceStatus: "heuristic-guided-by-page-15",
-      rationale: "Малый 3-бет оставляет больше suited-call.",
+      rationale: "После опена 2 BB малый 3-бет до 5 BB даёт хорошую цену пограничному продолжению.",
       transfers: [
-        { from: "fold", to: "call", share: 0.16, eligibility: "call-frontier" },
+        { from: "fold", to: "call", share: 0.72, eligibility: "call-frontier" },
         { from: "fourbet", to: "call", share: 0.06 }
       ]
     },
     3: {
-      sourceStatus: "heuristic-neutral",
-      rationale: "3x — нейтральная учебная точка.",
-      transfers: []
+      sourceStatus: "heuristic-guided-by-price",
+      rationale: "После опена 2 BB 3-бет до 6 BB всё ещё оставляет выгодную цену многим suited-рукам в позиции.",
+      transfers: [
+        { from: "fold", to: "call", share: 0.60, eligibility: "call-frontier" }
+      ]
     },
     4: {
       sourceStatus: "heuristic-guided-by-page-15",
       rationale: "Крупный 3-бет сокращает call и переводит часть продолжения в 4-бет.",
       transfers: [
+        { from: "fold", to: "call", share: 0.36, eligibility: "call-frontier" },
         { from: "call", to: "fold", share: 0.25 },
         { from: "call", to: "fourbet", share: 0.18 },
         { from: "fold", to: "fourbet", share: 0.03, eligibility: "fourbet-frontier" }

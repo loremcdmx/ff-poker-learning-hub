@@ -9,6 +9,7 @@
   <title>Защита против 3-бета · FF Poker Learning Hub</title>
   <link rel="icon" href="assets/favicon.svg">
   <link rel="stylesheet" href="assets/poker-kit/tokens.css">
+  <link rel="stylesheet" href="assets/poker-kit/chart-system.css?v=ab5c2d6cf077">
   <link rel="stylesheet" href="assets/poker-kit/decks/decks.css?v=0639396cc47c">
   <link rel="stylesheet" href="assets/poker-kit/suit-text.css?v=7689ca588fe6">
   <link rel="stylesheet" href="assets/poker-kit/chips/chips.css?v=ed4e97084f43">
@@ -17,8 +18,8 @@
   <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=8311f2a34fe9">
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
-  <link rel="stylesheet" href="assets/poker-field-lesson/lesson.css?v=ac74bad7d129">
-  <link rel="stylesheet" href="assets/poker-vs-3bet-defense-lesson/range-explorer.css?v=12be9d29b9e6">
+  <link rel="stylesheet" href="assets/poker-field-lesson/lesson.css?v=8970a66ba6bf">
+  <link rel="stylesheet" href="assets/poker-vs-3bet-defense-lesson/range-explorer.css?v=2a0129dffd92">
   <link rel="stylesheet" href="assets/poker-kit/lesson-header.css?v=9641ee805ef9">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
   <script defer src="assets/poker-kit/lesson-header.js?v=1b28bacb3505"></script>
@@ -36,15 +37,14 @@
       <nav class="step-tabs lesson-chrome__steps" role="tablist" aria-label="Шаги урока">
         <button class="step-tab is-active" id="dealTab" type="button" role="tab" aria-selected="true" aria-controls="dealPanel" data-step-target="deal">1. Раздача</button>
         <button class="step-tab" id="wisdomTab" type="button" role="tab" aria-selected="false" aria-controls="wisdomPanel" data-step-target="wisdom" disabled>2. Главное</button>
-        <button class="step-tab" id="chartsTab" type="button" role="tab" aria-selected="false" aria-controls="chartsPanel" data-step-target="field" disabled>3. Чарты</button>
-        <button class="step-tab" id="leaksTab" type="button" role="tab" aria-selected="false" aria-controls="leaksPanel" data-step-target="leaks" disabled>4. Ошибки</button>
-        <button class="step-tab" id="practiceTab" type="button" role="tab" aria-selected="false" aria-controls="practicePanel" data-step-target="practice" disabled>5. Практика</button>
+        <button class="step-tab" id="chartsTab" type="button" role="tab" aria-selected="false" aria-controls="chartsPanel" data-step-target="field" disabled>3. Чарты и поле</button>
+        <button class="step-tab" id="practiceTab" type="button" role="tab" aria-selected="false" aria-controls="practicePanel" data-step-target="practice" disabled>4. Практика</button>
       </nav>
     </header>
 
     <aside class="data-error-banner" data-data-error role="alert" hidden>
-      <strong>Данные</strong>
-      <span data-data-error-text>Набор урока пока не подключён.</span>
+      <strong>Не загрузилось</strong>
+      <span data-data-error-text>Обнови страницу и попробуй ещё раз.</span>
     </aside>
 
     <section class="lesson-screen is-active" id="dealPanel" role="tabpanel" data-step="deal" aria-labelledby="dealTab">
@@ -54,9 +54,9 @@
           <h2 id="dealTitle" data-lesson-title>Защита против 3-бета</h2>
           <p class="intro-lead" data-intro-lead>Выбери линию на функциональном столе. После ответа урок покажет идею, поле и очередь похожих решений.</p>
           <details class="scope-disclosure">
-            <summary>О выборке и границах урока</summary>
+            <summary>Что тренируем</summary>
             <ol class="scope-list" data-scope-list aria-label="Границы урока">
-              <li class="scope-empty">Границы выборки появятся вместе с данными.</li>
+              <li class="scope-empty">Условия раздачи появятся вместе с заданием.</li>
             </ol>
           </details>
         </div>
@@ -74,97 +74,124 @@
     <section class="lesson-screen" id="wisdomPanel" role="tabpanel" data-step="wisdom" aria-labelledby="wisdomTab" hidden>
       <div class="wisdom-heading">
         <div>
-          <p class="eyebrow">Справочник по полю</p>
-          <h2 id="wisdomTitle">Как лиги защищают свой опен</h2>
+          <p class="eyebrow">Целевая стратегия · защита своего опена</p>
+          <h2 id="wisdomTitle">Сколько пасовать, коллировать и повышать</h2>
         </div>
-        <p><strong>Выбери лигу и спот.</strong> Таблица покажет частоту защиты, а выбранная ячейка — чарт по 169 рукам.</p>
+        <p><strong>Сначала экономика, потом руки.</strong> Цель не даёт BB получать автоприбыль частыми 3-бетами и сохраняет прибыльность наших опенов.</p>
       </div>
-      <article class="vs3-wisdom-reference panel" data-vs3-wisdom-reference aria-label="Справочник защит против 3-бета">
-        <p class="vs3-loading">Собираем таблицу защит…</p>
+      <article class="vs3-target-overview panel" data-vs3-target-overview aria-label="Целевые частоты защиты против 3-бета по позициям">
+        <p class="vs3-loading">Считаем целевые частоты и границу автоприбыли…</p>
       </article>
       <div class="wisdom-actions">
         <button class="field-button is-primary" type="button" data-step-link="practice">Сразу попробовать</button>
-        <button class="field-button is-secondary" type="button" data-step-link="field">Наши рекомендуемые чарты</button>
+        <button class="field-button is-secondary" type="button" data-step-link="field" data-vs3-reg-view-link="target">Открыть чарты рук</button>
       </div>
     </section>
 
     <section class="lesson-screen" id="chartsPanel" role="tabpanel" data-step="field" aria-labelledby="chartsTab" hidden>
       <div class="field-heading">
         <div>
-          <p class="eyebrow">169 рук · одна матрица</p>
-          <h2 id="fieldTitle">Чарты защиты</h2>
+          <p class="eyebrow">Наша стратегия + реальные решения FF</p>
+          <h2 id="fieldTitle">Чарты и поле</h2>
         </div>
-        <p>Выбери позицию, глубину и сайз 3-бета. Нажми на руку, чтобы сравнить её линию во всех учебных слоях.</p>
       </div>
 
-      <article class="vs3-range-explorer panel" data-vs3-range-explorer aria-label="Интерактивный чарт защиты против 3-бета">
-        <p class="vs3-loading">Чарт и фильтры загружаются…</p>
-      </article>
+      <nav class="vs3-reg-switcher panel" role="tablist" aria-label="Чарты стратегии и наблюдаемая игра поля" data-vs3-reg-view-tabs>
+        <button class="vs3-reg-tab" type="button" role="tab" id="vs3RegTargetTab" aria-controls="vs3RegTargetPanel" aria-selected="true" tabindex="0" data-vs3-reg-view="target">
+          <strong>Наш чарт</strong>
+          <small>Рекомендация</small>
+        </button>
+        <button class="vs3-reg-tab" type="button" role="tab" id="vs3RegOverviewTab" aria-controls="vs3RegOverviewPanel" aria-selected="false" tabindex="-1" data-vs3-reg-view="overview">
+          <strong>Сводка поля</strong>
+          <small>Позиции и лиги</small>
+        </button>
+        <button class="vs3-reg-tab" type="button" role="tab" id="vs3RegHandsTab" aria-controls="vs3RegHandsPanel" aria-selected="false" tabindex="-1" data-vs3-reg-view="hands">
+          <strong>Руки поля</strong>
+          <small>По каждой руке</small>
+        </button>
+        <button class="vs3-reg-tab" type="button" role="tab" id="vs3RegErrorsTab" aria-controls="vs3RegErrorsPanel" aria-selected="false" tabindex="-1" data-vs3-reg-view="errors">
+          <strong>Ошибки</strong>
+          <small>Где поле отклоняется</small>
+        </button>
+      </nav>
 
-      <section class="vs3-measured-field" aria-labelledby="measuredFieldTitle">
-        <div class="vs3-section-head">
-          <div>
-            <p class="eyebrow">Как играет поле · реальные решения</p>
-            <h3 id="measuredFieldTitle">Тот же спот в истории раздач</h3>
-          </div>
-          <div class="data-stamp" aria-label="Источник и период измеренного полевого куба">
-            <span>FunFarm HH · exact rank-at-hand</span>
-            <span>1 января — 16 июля 2026</span>
-          </div>
-        </div>
-        <p class="vs3-evidence-boundary">Выбери позицию, IP/OOP, стек и абсолютный размер 3-бета. Здесь показано, что игроки реально нажимали с каждой рукой. Это не оптимальная стратегия и не источник правильного ответа в практике.</p>
-        <article class="vs3-field-explorer panel" data-vs3-field-explorer aria-label="Наблюдаемые решения поля против 3-бета">
-          <p class="vs3-loading">Измеренный полевой куб загружается…</p>
-        </article>
-        <details class="vs3-field-methodology panel">
-          <summary>Что именно измерено</summary>
-          <p>Строгий узел один на один: Hero сделал RFI, получил первый 3-бет без колд-коллера и мог ответить 4-бетом. Сквизы исключены, ранг взят в момент раздачи. Исходная выгрузка сохраняет точную позицию 3-беттора; публичный экран объединяет её только в IP/OOP.</p>
-          <p>Размер — сумма, до которой соперник сделал 3-бет, в BB. Множитель не показываем: исходный размер RFI нельзя достоверно восстановить из Hero-row без отдельного action-history join.</p>
-          <p>Клетки с N&lt;20 полностью подавлены: их counts не попадают в публичный payload. При N 20–79 частоты показаны как малая выборка. Mix над матрицей пересчитан только по опубликованным клеткам с известными картами.</p>
-        </details>
-      </section>
+      <div class="vs3-reg-panels">
+        <section class="vs3-reg-panel is-active" id="vs3RegTargetPanel" role="tabpanel" aria-labelledby="vs3RegTargetTab" data-vs3-reg-view-panel="target">
+          <article class="vs3-range-explorer panel" data-vs3-range-explorer aria-label="Интерактивный чарт защиты против 3-бета">
+            <p class="vs3-loading">Чарт и фильтры загружаются…</p>
+          </article>
+        </section>
 
-      <section class="vs3-aggregate-evidence" aria-labelledby="aggregateTitle">
-        <div class="vs3-section-head">
-          <div>
-            <p class="eyebrow">Факт · агрегированные решения FF</p>
-            <h3 id="aggregateTitle">Как защищаются группы целиком</h3>
+        <section class="vs3-reg-panel" id="vs3RegOverviewPanel" role="tabpanel" aria-labelledby="vs3RegOverviewTab" data-vs3-reg-view-panel="overview" hidden>
+          <div class="examples-heading vs3-field-view-heading">
+            <div>
+              <p class="eyebrow">Реальные раздачи FF</p>
+              <h3>Как защищаются разные лиги</h3>
+            </div>
+            <p>Фактические решения поля помогают увидеть отклонения, но не заменяют нашу рекомендацию.</p>
           </div>
-          <div class="data-stamp" aria-label="Источник и период данных">
-            <span data-source-label>Источник готовится</span>
-            <span data-period-label>Период готовится</span>
-          </div>
-        </div>
-        <p class="vs3-evidence-boundary">Эти карточки — измеренные суммарные частоты. Раскладка отдельных рук выше — учебная модель, откалиброванная по этим агрегатам, а не фактический hand-by-hand отчёт.</p>
-        <div class="cohort-cards" data-cohort-cards aria-label="Фактическое сравнение четырёх групп"></div>
-        <details class="field-table-card panel">
-          <summary>Таблица частот и методология</summary>
-          <div class="field-table-scroll">
-            <table class="field-table">
-              <caption class="visually-hidden">Частоты действий по лигам 1, 2, 3 и игрокам рангов 15–17</caption>
-              <thead data-field-head></thead>
-              <tbody data-field-body></tbody>
-            </table>
-          </div>
-          <p class="sample-note" data-sample-note>Методология и границы выборки появятся вместе с проверенным набором данных.</p>
-        </details>
-      </section>
-    </section>
+          <article class="vs3-wisdom-reference panel" data-vs3-wisdom-reference aria-label="Как поле защищает опен против 3-бета">
+            <p class="vs3-loading">Собираем таблицу наблюдаемых защит…</p>
+          </article>
 
-    <section class="lesson-screen" id="leaksPanel" role="tabpanel" data-step="leaks" aria-labelledby="leaksTab" hidden>
-      <div class="examples-heading">
-        <div>
-          <p class="eyebrow">Граница диапазона · примеры рук</p>
-          <h2 id="leaksTitle">Лишняя и недостающая защита</h2>
-        </div>
-        <p>Сравни типичные руки, которые поле защищает лишний раз или, наоборот, слишком часто выбрасывает.</p>
-      </div>
-      <p class="vs3-evidence-boundary">Примеры ниже показывают расхождение учебных hand-level слоёв с методичкой при одинаковом споте. Это не сырые наблюдения по конкретным рукам игроков.</p>
-      <div class="vs3-leaks" data-vs3-leaks aria-live="polite">
-        <article class="panel vs3-loading">Примеры ошибок загружаются…</article>
+          <details class="vs3-reg-aggregate-disclosure panel">
+            <summary>
+              <span>Общие показатели по группам</span>
+              <small>Суммарные частоты</small>
+            </summary>
+            <section class="vs3-aggregate-evidence" aria-labelledby="aggregateTitle">
+              <div class="vs3-section-head">
+                <div>
+                  <p class="eyebrow">Реальные раздачи FF</p>
+                  <h3 id="aggregateTitle">Как защищаются группы целиком</h3>
+                </div>
+              </div>
+              <p class="vs3-evidence-boundary">Карточки показывают, как группы игроков отвечали на 3-бет в реальных раздачах.</p>
+              <div class="cohort-cards" data-cohort-cards aria-label="Фактическое сравнение четырёх групп"></div>
+              <details class="field-table-card panel">
+                <summary>Подробная таблица</summary>
+                <div class="field-table-scroll">
+                  <table class="field-table">
+                    <caption class="visually-hidden">Частоты действий по лигам 1, 2, 3 и игрокам рангов 15–17</caption>
+                    <thead data-field-head></thead>
+                    <tbody data-field-body></tbody>
+                  </table>
+                </div>
+              </details>
+            </section>
+          </details>
+        </section>
+
+        <section class="vs3-reg-panel" id="vs3RegHandsPanel" role="tabpanel" aria-labelledby="vs3RegHandsTab" data-vs3-reg-view-panel="hands" hidden>
+          <section class="vs3-measured-field" aria-labelledby="measuredFieldTitle">
+            <div class="vs3-section-head">
+              <div>
+                <p class="eyebrow">Реальные раздачи FF</p>
+                <h3 id="measuredFieldTitle">Тот же спот в истории раздач</h3>
+              </div>
+            </div>
+            <p class="vs3-evidence-boundary">Выбери позицию, игру в позиции или без позиции, стек и размер 3-бета. Увидишь реальные решения поля по каждой руке.</p>
+            <article class="vs3-field-explorer panel" data-vs3-field-explorer aria-label="Наблюдаемые решения поля против 3-бета">
+              <p class="vs3-loading">Загружаем реальные решения…</p>
+            </article>
+            <p class="vs3-evidence-boundary">Один опен, первый 3-бет, без сквизов.</p>
+          </section>
+        </section>
+
+        <section class="vs3-reg-panel" id="vs3RegErrorsPanel" role="tabpanel" aria-labelledby="vs3RegErrorsTab" data-vs3-reg-view-panel="errors" hidden>
+          <div class="examples-heading vs3-reg-leaks-heading">
+            <div>
+              <p class="eyebrow">Реальные раздачи FF</p>
+              <h3>Здесь можно увидеть, как стратегия начинающих игроков отличается от топов</h3>
+            </div>
+            <p>Выбери лигу, позицию, стек и размер 3-бета. Матрица покажет направление, а рейтинг — руки, где отклонение встречалось чаще всего.</p>
+          </div>
+          <div class="vs3-leaks" data-vs3-leaks aria-live="off">
+            <article class="panel vs3-loading">Примеры ошибок загружаются…</article>
+          </div>
+        </section>
       </div>
       <div class="wisdom-actions">
-        <button class="field-button is-secondary" type="button" data-step-link="field">Вернуться к чартам</button>
         <button class="field-button is-primary" type="button" data-step-link="practice">Закрепить в практике</button>
       </div>
     </section>
@@ -172,17 +199,17 @@
     <section class="lesson-screen" id="practicePanel" role="tabpanel" data-step="practice" aria-labelledby="practiceTab" hidden>
       <div class="practice-heading">
         <div>
-          <p class="eyebrow">Практика по текущему фильтру</p>
+          <p class="eyebrow">Практика против 3-бета</p>
           <h2 id="practiceTitle">Решай за столом</h2>
         </div>
-        <p>Очередь собирается из тех же позиции, глубины и сайза, которые выбраны в чарте. Ответы остаются в текущей сессии.</p>
+        <p>Начни со всех ситуаций. При желании оставь только игру в позиции или без позиции и уточни конкретный спот.</p>
       </div>
       <div class="practice-setup" data-practice-setup>
         <article class="vs3-practice-filter-card panel">
           <div class="vs3-section-head">
             <div>
-              <p class="eyebrow">Настройка очереди</p>
-              <h3>Какие ситуации тренировать</h3>
+              <p class="eyebrow">От общего к точному</p>
+              <h3>Какие 3-беты тренировать</h3>
             </div>
             <p class="vs3-practice-count" data-vs3-practice-scope role="status" aria-live="polite">Считаем доступные раздачи…</p>
           </div>
@@ -190,9 +217,9 @@
         </article>
         <article class="practice-start-card panel">
           <div>
-            <p class="eyebrow">Функциональный snapshot</p>
-            <h3>Серия решений против 3-бета</h3>
-            <p>Карты, позиции, размеры и действия находятся в очереди урока. Здесь нет статичных «кнопок рядом с картинкой»: каждое решение принимается внутри общего стола.</p>
+              <p class="eyebrow">Практика за столом</p>
+              <h3>Серия решений против 3-бета</h3>
+              <p>Получай новые раздачи с разными картами, позициями и размерами 3-бета. Все решения принимаются прямо за столом.</p>
             <div class="practice-promise" aria-label="Особенности практики">
               <span>случайный порядок</span>
               <span>разбор после ответа</span>
@@ -204,10 +231,16 @@
       </div>
       <div class="practice-run" data-practice-run hidden>
         <div class="practice-hud" aria-live="polite">
-          <span>Раздач <b data-practice-hands>0</b></span>
-          <span>Верно <b data-practice-correct>0</b></span>
-          <span>Промахи <b data-practice-mistakes>0</b></span>
-          <button class="field-button is-secondary" type="button" data-practice-stop>Закончить</button>
+          <div class="practice-hud-overall">
+            <span>Раздач <b data-practice-hands>0</b></span>
+            <span>Верно <b data-practice-correct>0</b></span>
+            <span>Промахи <b data-practice-mistakes>0</b></span>
+            <button class="field-button is-secondary" type="button" data-practice-stop>Закончить</button>
+          </div>
+          <div class="practice-hud-rail" aria-hidden="true">
+            <i class="is-correct"></i>
+            <i class="is-mistake"></i>
+          </div>
         </div>
         <div class="practice-layout">
           <aside class="practice-coach decision-feedback is-neutral panel" data-practice-feedback role="status" aria-live="polite" aria-atomic="true"></aside>
@@ -215,6 +248,7 @@
             <div class="lesson-table-host" data-practice-table aria-label="Практика решений против 3-бета" aria-live="polite"></div>
           </article>
         </div>
+        <section class="vs3-practice-expected panel" data-vs3-practice-expected aria-live="polite" hidden></section>
       </div>
     </section>
   </main>
@@ -234,12 +268,13 @@
   <script src="assets/poker-trainer-shell/simulator-practice.js?v=591b8e2f6784"></script>
   <script src="assets/poker-trainer-shell/simulator-continuation.js?v=20260716-full-hand-1"></script>
   <script src="assets/poker-vs-3bet-defense-lesson/continuations.js?v=2e94ce5a0155"></script>
-  <script src="assets/poker-vs-3bet-defense-lesson/range-model.js?v=c3851f3fda19"></script>
-  <script src="assets/poker-vs-3bet-defense-lesson/data.js?v=a7eaf02a9123"></script>
-  <script src="assets/poker-vs-3bet-defense-lesson/data/vs3bet-field-data.js?v=79b189ed6a4b"></script>
-  <script src="assets/poker-vs-3bet-defense-lesson/wisdom-reference.js?v=a3d1c7204922"></script>
-  <script src="assets/poker-vs-3bet-defense-lesson/range-explorer.js?v=962e5aa567f3"></script>
-  <script src="assets/poker-vs-3bet-defense-lesson/field-explorer.js?v=9791a93d958e"></script>
-  <script src="assets/poker-field-lesson/lesson.js?v=89429ee3640c"></script>
+  <script src="assets/poker-rfi-open-lesson/data.js?v=cb3e050ac2ee"></script>
+  <script src="assets/poker-vs-3bet-defense-lesson/range-model.js?v=4e3eccaece4b"></script>
+  <script src="assets/poker-vs-3bet-defense-lesson/data.js?v=ccfb4b6d773b"></script>
+  <script src="assets/poker-vs-3bet-defense-lesson/data/vs3bet-field-data.js?v=2b0f2045ca4a"></script>
+  <script src="assets/poker-vs-3bet-defense-lesson/wisdom-reference.js?v=7940e38012c8"></script>
+  <script src="assets/poker-vs-3bet-defense-lesson/range-explorer.js?v=5adc9d4d830b"></script>
+  <script src="assets/poker-vs-3bet-defense-lesson/field-explorer.js?v=de7fb1bd9fa8"></script>
+  <script src="assets/poker-field-lesson/lesson.js?v=dd8dafd4db7b"></script>
 </body>
 </html>

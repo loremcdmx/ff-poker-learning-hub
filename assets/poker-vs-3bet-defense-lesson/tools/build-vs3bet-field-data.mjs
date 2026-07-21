@@ -12,17 +12,18 @@ const dataDirectory = path.join(lessonDirectory, 'data');
 const cubeArgumentIndex = process.argv.indexOf('--cube');
 const csvPath = cubeArgumentIndex >= 0 ? process.argv[cubeArgumentIndex + 1] : process.env.FF_VS3BET_FIELD_CUBE;
 const cubeJobArgumentIndex = process.argv.indexOf('--cube-job-id');
-const cubeJobId = cubeJobArgumentIndex >= 0 ? process.argv[cubeJobArgumentIndex + 1] : process.env.FF_VS3BET_FIELD_CUBE_JOB_ID;
+const cubeJobArgument = cubeJobArgumentIndex >= 0 ? process.argv[cubeJobArgumentIndex + 1] : process.env.FF_VS3BET_FIELD_CUBE_JOB_ID;
+const cubeJobIds = (cubeJobArgument || '').split(',').map((id) => id.trim()).filter(Boolean);
 const outputPath = path.join(dataDirectory, 'vs3bet-field-data.js');
 const diagnosticsPath = path.join(dataDirectory, 'vs3bet-field-diagnostics.json');
 const sourceQueryPath = path.join(toolDirectory, 'vs3bet-field-cube.sql');
-if (!csvPath || !cubeJobId) throw new Error('Usage: build-vs3bet-field-data.mjs --cube <external-cube.csv> --cube-job-id <mcp-job-id> [--rank-intervals <external-rank.csv>]');
+if (!csvPath || !cubeJobIds.length) throw new Error('Usage: build-vs3bet-field-data.mjs --cube <external-cube.csv> --cube-job-id <mcp-job-id[,mcp-job-id...]> [--rank-intervals <external-rank.csv>]');
 const rankArgumentIndex = process.argv.indexOf('--rank-intervals');
 const rankPath = rankArgumentIndex >= 0 ? process.argv[rankArgumentIndex + 1] : process.env.FF_VS3BET_RANK_INTERVALS;
 const rankProvenance = {
-  rows: 6542,
-  queryJobId: 'mcp_bq_7ec39be98a71484d8c845ba5df7ac2b9',
-  sha256: '2c2222910fd1b44e7b56d060244e11487ee96f6f0484cc57ba9b90ffafb5fc64',
+  rows: 9621,
+  queryJobId: 'mcp_bq_job_27f28569d524423381552c6f1c152d0d',
+  sha256: 'beda893b3542eb266f75a12e62637aa8f21f55856d3f5497a7a2059cb7a8bccc',
 };
 
 if (rankArgumentIndex >= 0 && !rankPath) throw new Error('Usage: --rank-intervals <external-rank-intervals.csv>');
@@ -56,8 +57,7 @@ const hands = ranks.flatMap((_, row) => ranks.map((__, column) => {
 const handIndex = new Map(hands.map((hand, index) => [hand, index]));
 const missingHand = '__MISSING__';
 const actionKeys = ['folds', 'calls', 'fourbets', 'jams'];
-const cellMinimumN = 20;
-const estimatePriorHands = 16;
+const observedCellMinimumN = 1;
 
 const csvBuffer = fs.readFileSync(csvPath);
 const sourceQueryBuffer = fs.readFileSync(sourceQueryPath);
@@ -114,30 +114,23 @@ for (const [key] of chartEntries) assert(structurallyValidChartKeys.has(key), `u
 const missingStructurallyValidChartKeys = [...structurallyValidChartKeys].filter((key) => !charts[key]).sort();
 assert.equal(chartEntries.length + missingStructurallyValidChartKeys.length, structurallyValidChartCount);
 const cellSamples = chartEntries.flatMap(([, chart]) => chart.cells.map((cell) => cell[0]).filter(Boolean));
-const privacySuppressedChartKeys = [];
-const publicChartEntries = chartEntries.flatMap(([key, chart]) => {
-  if (chart.totals.opportunities < cellMinimumN) {
-    privacySuppressedChartKeys.push(key);
-    return [];
-  }
-  return [[key, publicChart(chart, priorChartFor(key), cellMinimumN)]];
-});
+const publicChartEntries = chartEntries.map(([key, chart]) => [key, publicChart(chart)]);
 const defaultKey = keyFor('league3', 'BTN', 'IP', '31-50', 'all');
 const defaultChart = Object.fromEntries(publicChartEntries)[defaultKey] || publicChartEntries[0]?.[1];
 assert(defaultChart, 'no observed charts built');
 
 const payload = {
-  version: 'vs3bet-field-cube-20260717-v3',
+  version: 'vs3bet-field-cube-20260721-v5',
   meta: {
-    generatedOn: '2026-07-18',
+    generatedOn: '2026-07-21',
     source: 'analytics.int_tracker_hand_joined',
     rankSource: 'analytics_mcp_readonly.mcp__check_rank_history',
-    windowStartInclusive: '2026-01-01T00:00:00Z',
-    windowEndExclusive: '2026-07-17T00:00:00Z',
+    windowStartInclusive: '2025-07-01T00:00:00Z',
+    windowEndExclusive: '2026-07-21T00:00:00Z',
     rankAssignment: 'Exact half-open rank interval at played_at; real players only.',
     cohorts: {
-      novice: { label: 'Совсем новички', ranks: [16, 17, 18] },
-      league3: { label: 'Лига 3', ranks: [11, 12, 13, 14, 15] },
+      novice: { label: 'Новички', ranks: [15, 16, 17, 18] },
+      league3: { label: 'Лига 3', ranks: [11, 12, 13, 14] },
       league2: { label: 'Лига 2', ranks: [6, 7, 8, 9, 10] },
       league1: { label: 'Лига 1', ranks: [1, 2, 3, 4, 5] },
     },
@@ -149,12 +142,9 @@ const payload = {
     sizeBuckets,
     sourceSizeBuckets,
     hands,
-    sampleThresholds: { unavailableBelow: cellMinimumN, lowConfidenceBelow: 80, strongAtLeast: 200 },
-    privacy: {
-      cellMinimumN,
-      chartMinimumN: cellMinimumN,
-      estimatePriorHands,
-      policy: 'Exact known-card hand cells are emitted only at N>=20. For observed lower-N cells, raw counts and N are omitted and a visibly labelled Dirichlet-smoothed action estimate is published. Chart-level totals use every source decision once the chart itself reaches N>=20.',
+    sampleThresholds: { unavailableBelow: observedCellMinimumN, lowConfidenceBelow: 20, strongAtLeast: 80 },
+    coverage: {
+      policy: 'Every observed hand cell is published from its exact integer counters. A zero remains unavailable rather than being filled with a modelled action mix.',
       rawCubeStorage: 'External private build input; the lossless timestamped cube is not shipped as a public lesson asset.',
     },
     filters: {
@@ -175,7 +165,7 @@ const payload = {
       jam: "preflop_face_3bet_action='R' AND preflop_action='RR' AND is_preflop_allin=1",
       fourbet: "all other preflop_face_3bet_action='R' lines",
     },
-    aggregation: 'Chart summaries use all source decisions and are invariant to the hand-cell privacy threshold. Exact cells use integer counts; lower-N observed cells use a leave-current-cohort-out Dirichlet estimate. Browser charts pool exact 3-bettor positions only to IP/OOP; the lossless CSV retains exact positions.',
+    aggregation: 'Chart summaries and hand cells use exact integer counters. Browser charts pool exact 3-bettor positions only to IP/OOP; the lossless CSV retains exact positions.',
     provenance: {
       rankIntervals: {
         ...rankProvenance,
@@ -183,7 +173,7 @@ const payload = {
       },
       handCube: {
         rows: rows.length,
-        queryJobId: cubeJobId,
+        queryJobIds: cubeJobIds,
         sha256: sha256(csvBuffer),
         sourceQueryTemplateSha256: sha256(sourceQueryBuffer),
       },
@@ -202,8 +192,7 @@ const diagnostics = {
   structurallyValidChartCount,
   missingStructurallyValidCharts: missingStructurallyValidChartKeys.length,
   missingStructurallyValidChartKeys,
-  privacySuppressedCharts: privacySuppressedChartKeys.length,
-  privacySuppressedChartKeys,
+  structurallyEmptyPublishedCharts: 0,
   firstHandAt,
   lastHandAt,
   global: { ...global, knownCoveragePct: pct(global.knownOpportunities, global.opportunities) },
@@ -211,7 +200,7 @@ const diagnostics = {
   dimensionTotals,
   cellCoverage: {
     nonEmptyCells: cellSamples.length,
-    unavailableCells: cellSamples.filter((n) => n < payload.meta.sampleThresholds.unavailableBelow).length,
+    unavailableCells: chartEntries.flatMap(([, chart]) => chart.cells).filter((cell) => cell[0] < payload.meta.sampleThresholds.unavailableBelow).length,
     lowConfidenceCells: cellSamples.filter((n) => n >= payload.meta.sampleThresholds.unavailableBelow && n < payload.meta.sampleThresholds.lowConfidenceBelow).length,
     strongCells: cellSamples.filter((n) => n >= payload.meta.sampleThresholds.strongAtLeast).length,
   },
@@ -219,7 +208,7 @@ const diagnostics = {
     key: defaultKey,
     totals: defaultChart.totals,
     populatedHands: defaultChart.cells.filter((cell) => cell[0] > 0).length,
-    estimatedHands: defaultChart.estimates.filter((cell) => cell.some(Boolean)).length,
+    estimatedHands: 0,
   },
   provenance: payload.meta.provenance,
 };
@@ -291,79 +280,13 @@ function finalizeChart(chart) {
   assert.equal(chart.totals.opportunities, actionKeys.reduce((sum, key) => sum + chart.totals[key], 0));
   chart.totals.knownCoveragePct = pct(chart.totals.knownOpportunities, chart.totals.opportunities);
 }
-function publicChart(chart, priorChart, minimumN) {
-  const cells = chart.cells.map((cell) => cell[0] >= minimumN ? [...cell] : [0, 0, 0, 0, 0]);
-  const estimates = chart.cells.map((cell, index) => estimateCell(cell, priorChart.cells[index], priorChart.totals, minimumN));
+function publicChart(chart) {
+  const cells = chart.cells.map((cell) => [...cell]);
   const totals = {
     ...chart.totals,
-    suppressedCellCount: chart.cells.filter((cell) => cell[0] > 0 && cell[0] < minimumN).length,
-    exactCellCount: cells.filter((cell) => cell[0] >= minimumN).length,
-    estimatedCellCount: estimates.filter((cell) => cell.some(Boolean)).length,
+    exactCellCount: cells.filter((cell) => cell[0] >= observedCellMinimumN).length,
   };
-  return { totals, cells, estimates };
-}
-
-function priorChartFor(key) {
-  const [currentCohort, heroPosition, relation, stackBand, sizeBucket] = key.split('|');
-  const prior = { totals: emptyTotals(), cells: hands.map(() => [0, 0, 0, 0, 0]) };
-  for (const cohort of cohorts) {
-    if (cohort === currentCohort) continue;
-    const source = charts[keyFor(cohort, heroPosition, relation, stackBand, sizeBucket)];
-    if (source) addChart(prior, source);
-  }
-  if (prior.totals.opportunities) return prior;
-
-  // Hierarchical fallback: keep position/relation/stack, pool the measured size buckets.
-  if (sizeBucket !== 'all') {
-    for (const cohort of cohorts) {
-      if (cohort === currentCohort) continue;
-      const source = charts[keyFor(cohort, heroPosition, relation, stackBand, 'all')];
-      if (source) addChart(prior, source);
-    }
-  }
-  if (prior.totals.opportunities) return prior;
-
-  // Last-resort prior keeps position/relation and leaves the current cohort out.
-  for (const cohort of cohorts) {
-    if (cohort === currentCohort) continue;
-    for (const candidateStack of stackBands) {
-      const source = charts[keyFor(cohort, heroPosition, relation, candidateStack, 'all')];
-      if (source) addChart(prior, source);
-    }
-  }
-  return prior;
-}
-
-function addChart(target, source) {
-  for (const key of ['opportunities', ...actionKeys, 'knownOpportunities', 'missingOpportunities']) {
-    target.totals[key] += Number(source.totals[key] || 0);
-  }
-  source.cells.forEach((cell, index) => {
-    for (let item = 0; item < cell.length; item += 1) target.cells[index][item] += cell[item];
-  });
-}
-
-function estimateCell(cell, priorCell, priorTotals, minimumN) {
-  const n = cell[0];
-  if (!n || n >= minimumN) return [0, 0, 0, 0];
-  const priorN = priorCell[0] || priorTotals.opportunities;
-  if (!priorN) return [0, 0, 0, 0];
-  const priorCounts = priorCell[0] ? priorCell.slice(1) : actionKeys.map((key) => priorTotals[key]);
-  const weights = cell.slice(1).map((count, index) => count + estimatePriorHands * priorCounts[index] / priorN);
-  return normalizedTenths(weights);
-}
-
-function normalizedTenths(weights) {
-  const total = weights.reduce((sum, value) => sum + value, 0);
-  if (!total) return [0, 0, 0, 0];
-  const raw = weights.map((value) => value / total * 1000);
-  const result = raw.map(Math.floor);
-  let remainder = 1000 - result.reduce((sum, value) => sum + value, 0);
-  raw.map((value, index) => ({ index, fraction: value - result[index] }))
-    .sort((a, b) => b.fraction - a.fraction)
-    .slice(0, remainder)
-    .forEach(({ index }) => { result[index] += 1; });
-  return result;
+  return { totals, cells };
 }
 function emptyTotals() { return { opportunities: 0, folds: 0, calls: 0, fourbets: 0, jams: 0, knownOpportunities: 0, missingOpportunities: 0 }; }
 function addTotals(target, row) { for (const key of ['opportunities', ...actionKeys]) target[key] += row[key]; }

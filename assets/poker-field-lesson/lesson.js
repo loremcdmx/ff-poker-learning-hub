@@ -124,6 +124,39 @@
     return String(value ?? "").replace(/\s+/g, " ").trim();
   }
 
+  const CHECKRAISE_STRUCTURE_LABELS = {
+    a_high_dry: "Туз-хай · сухая",
+    k_high_dry: "Король-хай · сухая",
+    broadway: "Бродвейная",
+    low_connected: "Низкая связанная",
+    paired: "Спаренная",
+    two_tone: "Двухмастная",
+    monotone: "Одномастная",
+    other: "Другие разноцветные"
+  };
+
+  function learnerStructureLabel(key, value) {
+    const label = cleanText(value) || "Тип флопа";
+    if (lessonKey !== "flop-checkraise") return label;
+    if (CHECKRAISE_STRUCTURE_LABELS[cleanText(key)]) return CHECKRAISE_STRUCTURE_LABELS[cleanText(key)];
+    return label
+      .replace(/A-high/gi, "Туз-хай")
+      .replace(/K-high/gi, "Король-хай")
+      .replace(/\brainbow\b/gi, "разных мастей")
+      .replace(/\btrips\b/gi, "трипс")
+      .replace(/\bdry\b/gi, "сухая");
+  }
+
+  function learnerCheckraiseLabel(value) {
+    const label = cleanText(value);
+    if (lessonKey !== "flop-checkraise") return label;
+    return label
+      .replace(/Вэлью/gi, "Велью")
+      .replace(/X\/R/gi, "чек-рейз")
+      .replace(/top-pair/gi, "топ-пара")
+      .replace(/showdown/gi, "вскрытие");
+  }
+
   function numberOrNull(value) {
     if (value == null || (typeof value === "string" && !value.trim())) return null;
     const number = Number(value);
@@ -137,16 +170,6 @@
   function formatCount(value) {
     const number = numberOrNull(value);
     return number === null ? "—" : Math.round(number).toLocaleString("ru-RU");
-  }
-
-  function pluralRu(value, one, few, many) {
-    const number = Math.abs(Math.round(Number(value) || 0));
-    const mod100 = number % 100;
-    const mod10 = number % 10;
-    if (mod100 >= 11 && mod100 <= 14) return many;
-    if (mod10 === 1) return one;
-    if (mod10 >= 2 && mod10 <= 4) return few;
-    return many;
   }
 
   function formatPercent(value) {
@@ -437,8 +460,9 @@
     const banner = $("[data-data-error]");
     const text = $("[data-data-error-text]");
     if (!banner || !text || !errors.length) return;
+    console.error(`[${lessonKey || "poker-field-lesson"}] data validation failed`, errors);
     banner.hidden = false;
-    text.textContent = `Урок открыт, но набор данных неполный: ${errors.join("; ")}.`;
+    text.textContent = "Данные урока не загрузились. Обнови страницу или попробуй позже.";
     body.classList.add("has-field-data-error");
   }
 
@@ -462,7 +486,7 @@
         scope.append(li);
       });
       if (!scope.childElementCount) {
-        scope.append(makeElement("li", "scope-empty", "Границы выборки появятся вместе с данными."));
+        scope.append(makeElement("li", "scope-empty", "Подробности урока появятся здесь."));
       }
     }
   }
@@ -547,11 +571,17 @@
   function renderDecision(host, spot, selectedKey, options = {}) {
     if (!host) return null;
     if (!spot || validation.errors.some((error) => error.startsWith(options.errorPrefix || "__never__"))) {
-      host.innerHTML = '<p class="table-load-error">Ситуация ещё не подключена к уроку.</p>';
+      console.error(`[${lessonKey || "poker-field-lesson"}] decision data unavailable`, {
+        errorPrefix: options.errorPrefix || "",
+        spotId: spot?.id || null,
+        validationErrors: validation.errors
+      });
+      host.innerHTML = '<p class="table-load-error">Ситуация не загрузилась. Обнови страницу или попробуй позже.</p>';
       return null;
     }
     if (!root.FFTrainerSimulator?.renderDecision) {
-      host.innerHTML = '<p class="table-load-error">Функциональный стол не загрузился. Обновите страницу или проверьте shared snapshot.</p>';
+      console.error(`[${lessonKey || "poker-field-lesson"}] FFTrainerSimulator.renderDecision is unavailable`);
+      host.innerHTML = '<p class="table-load-error">Стол не загрузился. Обнови страницу или попробуй позже.</p>';
       return null;
     }
     try {
@@ -566,7 +596,8 @@
         nextLabel: options.nextLabel || ""
       });
     } catch (error) {
-      host.innerHTML = '<p class="table-load-error">Не удалось отрисовать ситуацию: проверьте формат table/options в data-файле.</p>';
+      console.error(`[${lessonKey || "poker-field-lesson"}] decision render failed`, error);
+      host.innerHTML = '<p class="table-load-error">Стол не загрузился. Обнови страницу или попробуй позже.</p>';
       return null;
     }
   }
@@ -592,7 +623,7 @@
         "is-neutral",
         "Твой ход",
         spot?.question || "Данные ситуации готовятся",
-        spot?.context || "Выбери действие прямо под функциональным столом. После ответа откроются остальные шаги урока."
+        spot?.context || "Выбери действие за столом. После ответа откроются остальные шаги урока."
       );
       return;
     }
@@ -643,6 +674,7 @@
   function wisdomBoardFolds(item) {
     const config = asObject(item?.visual);
     if (cleanText(config.type) !== "board-folds") return null;
+    const boardLabel = learnerStructureLabel("", config.boardLabel || "Король-хай · сухая");
     const sizing = asObject(config.sizing);
     const breakeven = clamp(numberOrNull(config.breakeven) ?? 0, 0, 100);
     const card = makeElement("section", "wisdom-board-folds");
@@ -652,8 +684,8 @@
     const head = makeElement("header", "wisdom-board-folds-head");
     const title = makeElement("div", "");
     title.append(
-      makeElement("span", "wisdom-board-kicker", config.boardLabel || "K-high dry"),
-      createExampleCards(config.boardCards, `Пример флопа ${config.boardLabel || "K-high dry"}`, "board")
+      makeElement("span", "wisdom-board-kicker", boardLabel),
+      createExampleCards(config.boardCards, `Пример флопа ${boardLabel}`, "board")
     );
     head.append(title, makeElement("strong", "wisdom-size-badge", "один сайз"));
 
@@ -667,20 +699,21 @@
 
     const list = makeElement("div", "wisdom-fold-list");
     list.setAttribute("role", "list");
-    asArray(config.rows).forEach((rowData) => {
+    asArray(config.rows).forEach((rowData, rowIndex) => {
       const row = asObject(rowData);
       const folds = numberOrNull(row.folds);
       const faced = numberOrNull(row.faced);
       const rate = folds === null || faced === null || faced <= 0 ? null : folds / faced * 100;
+      const reliability = faced === null || faced < 50 ? "thin" : faced < 200 ? "directional" : "solid";
       const itemRow = makeElement("div", `wisdom-fold-row is-${cleanText(row.key)}`);
+      itemRow.dataset.reliability = reliability;
       itemRow.setAttribute("role", "listitem");
       const rowHead = makeElement("div", "wisdom-fold-row-head");
       const rowName = makeElement("span", "");
       rowName.append(
-        makeElement("strong", "", row.label || row.key),
-        makeElement("small", "", row.ranks || "")
+        makeElement("strong", "", `Лига ${rowIndex + 1}`)
       );
-      rowHead.append(rowName, makeElement("b", "", formatPercent(rate)));
+      rowHead.append(rowName, makeElement("b", "", rate === null ? "—" : formatPercent(rate)));
 
       const meter = makeElement("div", "wisdom-fold-meter");
       meter.setAttribute("aria-hidden", "true");
@@ -690,12 +723,7 @@
       marker.style.left = `${breakeven}%`;
       meter.append(fill, marker);
 
-      const sample = makeElement(
-        "small",
-        "wisdom-fold-sample",
-        `${formatCount(folds)} ${pluralRu(folds, "фолд", "фолда", "фолдов")} из ${formatCount(faced)} · ${formatCount(row.players)} игроков`
-      );
-      itemRow.append(rowHead, meter, sample);
+      itemRow.append(rowHead, meter);
       list.append(itemRow);
     });
 
@@ -709,13 +737,14 @@
     if (cleanText(config.type) !== "value-range") return null;
     const card = makeElement("section", "wisdom-value-range");
     card.setAttribute("role", "group");
-    card.setAttribute("aria-label", "Велью чек-рейз на флопе K92 rainbow");
+    card.setAttribute("aria-label", "Велью чек-рейз на разноцветном флопе K92");
 
     const head = makeElement("header", "wisdom-value-range-head");
     const board = makeElement("div", "wisdom-value-board");
+    const boardLabel = learnerStructureLabel("", config.boardLabel || "Король-хай · сухая · K92");
     board.append(
-      makeElement("span", "wisdom-board-kicker", config.boardLabel || "K-high dry · K92r"),
-      createExampleCards(config.boardCards, "Флоп K92 rainbow", "board")
+      makeElement("span", "wisdom-board-kicker", boardLabel),
+      createExampleCards(config.boardCards, "Разноцветный флоп K92", "board")
     );
     const rangeTitle = makeElement("div", "wisdom-value-range-title");
     rangeTitle.append(
@@ -1100,8 +1129,8 @@
     fill.style.width = `${clamp(rate ?? 0, 0, 100)}%`;
     rail.append(fill);
     const detail = makeElement("small", "", pending
-      ? (source.note || "Точный category-level denominator пока не выгружен.")
-      : `${formatCount(source.xraises)} X/R из ${formatCount(source.opportunities)} · ${formatCount(source.players)} игроков`);
+      ? "Нет подходящих раздач."
+      : "Как часто так играют соперники.");
     row.append(header, rail, detail);
     return row;
   }
@@ -1126,9 +1155,12 @@
     const visual = makeElement("div", "example-contrast-visual");
     visual.append(
       createExampleCards(source.heroCards, `Контрпример ${source.hand || "рука"}`, "mini"),
-      makeElement("strong", "", `${source.hand || "Похожая рука"} — ${source.actionLabel || "Call"}`)
+      makeElement("strong", "", `${source.hand || "Похожая рука"} — ${learnerCheckraiseLabel(source.actionLabel || "Колл")}`)
     );
-    card.append(visual, makeElement("p", "", source.shortCopy || source.copy || "Сравни границу между действиями."));
+    card.append(
+      visual,
+      makeElement("p", "", learnerCheckraiseLabel(source.shortCopy || source.copy || "Сравни границу между действиями."))
+    );
     return card;
   }
 
@@ -1139,7 +1171,7 @@
     const representatives = asArray(source.representatives);
     const card = makeElement("article", `field-example-card is-${groupKey}`);
     const heading = makeElement("header", "field-example-head");
-    heading.append(makeElement("h4", "", source.title || "Пример чек-рейза"));
+    heading.append(makeElement("h4", "", learnerCheckraiseLabel(source.title || "Пример чек-рейза")));
 
     const stage = makeElement("div", "example-stage");
     const hand = makeElement("div", "example-card-block");
@@ -1149,7 +1181,7 @@
     stage.append(hand, makeElement("i", "example-stage-arrow", "→"), board);
 
     const action = makeElement("div", "example-action-band");
-    action.append(makeElement("strong", "", playbook.action || "Чек-рейз"));
+    action.append(makeElement("strong", "", learnerCheckraiseLabel(playbook.action || "Чек-рейз")));
 
     const variants = makeElement("div", "example-variants");
     if (representatives.length > 1) {
@@ -1161,8 +1193,16 @@
 
     const lessonGrid = makeElement("div", "example-lesson-grid");
     lessonGrid.append(
-      createExampleLessonCell("Почему рейз", summary.why || source.takeaway || playbook.whyThisHand, "is-why"),
-      createExampleLessonCell("План тёрна", summary.turn || playbook.afterVillainContinues, "is-after")
+      createExampleLessonCell(
+        "Почему рейз",
+        learnerCheckraiseLabel(summary.why || source.takeaway || playbook.whyThisHand),
+        "is-why"
+      ),
+      createExampleLessonCell(
+        "План тёрна",
+        learnerCheckraiseLabel(summary.turn || playbook.afterVillainContinues),
+        "is-after"
+      )
     );
 
     card.append(heading, stage, action);
@@ -1200,27 +1240,28 @@
 
   function createObservedLeagueOneExample(handData, index) {
     const hand = asObject(handData);
+    const structureLabel = learnerStructureLabel(hand.structureKey, hand.structureLabel);
     const response = observedResponse(hand.villainResponse);
     const card = makeElement("article", `observed-example-card is-${response.tone}`);
     card.dataset.structureKey = cleanText(hand.structureKey);
     card.setAttribute(
       "aria-label",
-      `${hand.structureLabel || "Тип флопа"}: BB сделал чек-рейз против ${hand.openerPosition || "поздней позиции"}`
+      `${structureLabel}: BB сделал чек-рейз против ${hand.openerPosition || "поздней позиции"}`
     );
 
     const head = makeElement("header", "observed-example-card-head");
     const title = makeElement("div", "observed-example-title");
     title.append(
       makeElement("span", "observed-example-index", String(index + 1).padStart(2, "0")),
-      makeElement("strong", "", hand.structureLabel || "Тип флопа")
+      makeElement("strong", "", structureLabel)
     );
-    head.append(title, makeElement("span", "observed-example-rank", `R${Math.round(Number(hand.rank) || 0)}`));
+    head.append(title, makeElement("span", "observed-example-rank", `Уровень ${Math.round(Number(hand.rank) || 0)}`));
 
     const stage = makeElement("div", "observed-example-stage");
     const board = makeElement("div", "observed-example-cards");
     board.append(
       makeElement("span", "", "Флоп"),
-      createExampleCards(hand.boardCards, `${hand.structureLabel || "Флоп"}: ${asArray(hand.boardCards).join(" ")}`, "mini")
+      createExampleCards(hand.boardCards, `${structureLabel}: ${asArray(hand.boardCards).join(" ")}`, "mini")
     );
     const hero = makeElement("div", "observed-example-cards");
     hero.append(
@@ -1232,12 +1273,12 @@
     const line = makeElement("p", "observed-example-line");
     line.append(
       makeElement("strong", "", `${hand.openerPosition || "BTN"} ${formatBbValue(hand.openSizeBb)} BB`),
-      makeElement("span", "", `c-bet ${formatBbValue(hand.cbetAmountBb)} → X/R до ${formatBbValue(hand.xrToBb)} BB`)
+      makeElement("span", "", `ставка ${formatBbValue(hand.cbetAmountBb)} → чек-рейз до ${formatBbValue(hand.xrToBb)} BB`)
     );
 
     const foot = makeElement("footer", "observed-example-foot");
     foot.append(
-      makeElement("span", "observed-example-stack", `${formatBbValue(hand.effectiveStackBb)} BB effective`),
+      makeElement("span", "observed-example-stack", `эффективный стек ${formatBbValue(hand.effectiveStackBb)} BB`),
       makeElement("strong", `observed-example-response is-${response.tone}`, response.label)
     );
     card.append(head, stage, line, foot);
@@ -1251,7 +1292,7 @@
     host.replaceChildren();
     replaceText("[data-examples-league-one-title]", source.title);
     replaceText("[data-examples-league-one-lead]", source.lead);
-    replaceText("[data-examples-league-one-scope]", source.scope);
+    replaceText("[data-examples-league-one-scope]", lessonKey === "flop-checkraise" ? "Q2 2026 · уровни 1–5" : source.scope);
     replaceText("[data-examples-league-one-note]", source.note);
     if (!hands.length) {
       host.append(makeElement("p", "examples-empty", "Наблюдавшиеся раздачи пока не загрузились."));
@@ -1260,17 +1301,207 @@
     hands.forEach((hand, index) => host.append(createObservedLeagueOneExample(hand, index)));
   }
 
+  function atlasTone(roleKey) {
+    const tones = {
+      value: "value",
+      semi_bluff: "semi-bluff",
+      check_call: "call",
+      fold: "fold"
+    };
+    return tones[cleanText(roleKey)] || "neutral";
+  }
+
+  function createExampleAtlasInspector(structure, group, hand) {
+    const role = asObject(group);
+    const source = asObject(hand);
+    const structureLabel = learnerStructureLabel(structure.key, structure.label);
+    const roleLabel = learnerCheckraiseLabel(role.roleLabel || "Решение");
+    const actionLabel = learnerCheckraiseLabel(role.actionLabel || "");
+    const inspector = makeElement("aside", `example-atlas-inspector is-${atlasTone(role.roleKey)}`);
+    inspector.setAttribute("aria-live", "polite");
+
+    const visual = makeElement("div", "example-atlas-inspector-visual");
+    const board = makeElement("div", "example-atlas-inspector-cards");
+    board.append(
+      makeElement("span", "", "Флоп"),
+      createExampleCards(structure.boardCards, `${structureLabel}: ${asArray(structure.boardCards).join(" ")}`, "mini")
+    );
+    const hero = makeElement("div", "example-atlas-inspector-cards");
+    hero.append(
+      makeElement("span", "", "BB"),
+      createExampleCards(source.heroCards, `Рука BB ${source.hand || ""}`, "mini")
+    );
+    visual.append(board, makeElement("i", "example-atlas-inspector-arrow", "→"), hero);
+
+    const copy = makeElement("div", "example-atlas-inspector-copy");
+    const eyebrow = makeElement("p", "example-atlas-inspector-role", `${roleLabel} · ${actionLabel}`);
+    copy.append(
+      eyebrow,
+      makeElement("h4", "", learnerCheckraiseLabel(source.title || source.hand || "Учебная рука")),
+      makeElement("p", "", learnerCheckraiseLabel(source.reason || "Сравни силу руки, эквити и план продолжения.")),
+      makeElement("small", "", `План: ${learnerCheckraiseLabel(source.turnPlan || "переоцени тёрн после реакции соперника.")}`)
+    );
+    inspector.append(visual, copy);
+    return inspector;
+  }
+
+  function renderExampleAtlas(host, atlasData) {
+    if (!host) return;
+    const atlas = asObject(atlasData);
+    const structures = asArray(atlas.structures);
+    host.replaceChildren();
+    replaceText("[data-examples-atlas-title]", learnerCheckraiseLabel(atlas.title));
+    replaceText("[data-examples-atlas-lead]", learnerCheckraiseLabel(atlas.lead));
+    replaceText("[data-examples-atlas-scope]", learnerCheckraiseLabel(atlas.scope));
+    replaceText("[data-examples-atlas-note]", learnerCheckraiseLabel(atlas.note));
+    if (!structures.length) {
+      host.append(makeElement("p", "examples-empty", "Примеры не загрузились. Обнови страницу или попробуй позже."));
+      return;
+    }
+
+    const tabs = makeElement("div", "example-atlas-tabs");
+    tabs.setAttribute("role", "tablist");
+    tabs.setAttribute("aria-label", "Тип флопа");
+    const panel = makeElement("div", "example-atlas-body");
+    panel.id = "exampleAtlasPanel";
+    panel.setAttribute("role", "tabpanel");
+    const tabButtons = [];
+
+    const renderStructure = (index) => {
+      const structure = asObject(structures[index]);
+      const structureLabel = learnerStructureLabel(structure.key, structure.label);
+      const groups = asArray(structure.groups);
+      panel.replaceChildren();
+      panel.setAttribute("aria-labelledby", `exampleAtlasTab-${cleanText(structure.key) || index}`);
+
+      const summary = makeElement("header", "example-atlas-summary");
+      const summaryBoard = makeElement("div", "example-atlas-summary-board");
+      summaryBoard.append(createExampleCards(
+        structure.boardCards,
+        `${structureLabel}: ${asArray(structure.boardCards).join(" ")}`,
+        "board"
+      ));
+      const summaryCopy = makeElement("div", "example-atlas-summary-copy");
+      summaryCopy.append(
+        makeElement("p", "eyebrow", structureLabel),
+        makeElement("h4", "", "Четыре границы решения"),
+        makeElement(
+          "p",
+          "",
+          learnerCheckraiseLabel(structure.description || "Сравни кандидатов на рейз с руками колла и паса.")
+        )
+      );
+      summary.append(summaryBoard, summaryCopy);
+
+      const buckets = makeElement("div", "example-atlas-buckets");
+      const inspectorHost = makeElement("div", "example-atlas-inspector-host");
+      inspectorHost.setAttribute("role", "status");
+      inspectorHost.setAttribute("aria-live", "polite");
+      inspectorHost.setAttribute("aria-atomic", "true");
+      const handButtons = [];
+
+      const selectHand = (button, group, hand) => {
+        handButtons.forEach((candidate) => {
+          const selected = candidate === button;
+          candidate.classList.toggle("is-selected", selected);
+          candidate.setAttribute("aria-pressed", String(selected));
+        });
+        inspectorHost.replaceChildren(createExampleAtlasInspector(structure, group, hand));
+      };
+
+      groups.forEach((groupData) => {
+        const group = asObject(groupData);
+        const roleLabel = learnerCheckraiseLabel(group.roleLabel || "Решение");
+        const actionLabel = learnerCheckraiseLabel(group.actionLabel || "");
+        const tone = atlasTone(group.roleKey);
+        const bucket = makeElement("section", `example-atlas-bucket is-${tone}`);
+        const head = makeElement("header", "example-atlas-bucket-head");
+        head.append(
+          makeElement("h5", "", roleLabel),
+          makeElement("span", "", actionLabel)
+        );
+        const hands = makeElement("div", "example-atlas-hands");
+        asArray(group.hands).forEach((handData) => {
+          const hand = asObject(handData);
+          const button = makeElement("button", "example-atlas-hand");
+          button.type = "button";
+          button.setAttribute("aria-pressed", "false");
+          button.setAttribute(
+            "aria-label",
+            `${roleLabel}: ${hand.hand || asArray(hand.heroCards).join(" ")}. ${learnerCheckraiseLabel(hand.title || "")}`
+          );
+          button.append(createExampleCards(hand.heroCards, hand.hand || "Учебная рука", "mini"));
+          button.addEventListener("click", () => selectHand(button, group, hand));
+          handButtons.push(button);
+          hands.append(button);
+        });
+        bucket.append(head, hands);
+        buckets.append(bucket);
+      });
+
+      panel.append(summary, buckets, inspectorHost);
+      const firstGroup = asObject(groups[0]);
+      const firstHand = asObject(asArray(firstGroup.hands)[0]);
+      if (handButtons[0] && Object.keys(firstHand).length) selectHand(handButtons[0], firstGroup, firstHand);
+    };
+
+    const activateStructure = (index, shouldFocus) => {
+      const normalizedIndex = (index + structures.length) % structures.length;
+      tabButtons.forEach((button, buttonIndex) => {
+        const active = buttonIndex === normalizedIndex;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-selected", String(active));
+        button.tabIndex = active ? 0 : -1;
+      });
+      renderStructure(normalizedIndex);
+      if (shouldFocus) tabButtons[normalizedIndex]?.focus();
+    };
+
+    structures.forEach((structureData, index) => {
+      const structure = asObject(structureData);
+      const structureLabel = learnerStructureLabel(structure.key, structure.label);
+      const button = makeElement("button", "example-atlas-tab");
+      button.type = "button";
+      button.id = `exampleAtlasTab-${cleanText(structure.key) || index}`;
+      button.setAttribute("role", "tab");
+      button.setAttribute("aria-controls", panel.id);
+      button.setAttribute("aria-label", `${structureLabel}: ${asArray(structure.boardCards).join(" ")}`);
+      const miniBoard = createExampleCards(structure.boardCards, structureLabel, "mini");
+      button.append(miniBoard, makeElement("span", "", structureLabel || `Флоп ${index + 1}`));
+      button.addEventListener("click", () => activateStructure(index, false));
+      button.addEventListener("keydown", (event) => {
+        const key = event.key;
+        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(key)) return;
+        event.preventDefault();
+        if (key === "Home") activateStructure(0, true);
+        else if (key === "End") activateStructure(structures.length - 1, true);
+        else activateStructure(index + (key === "ArrowRight" ? 1 : -1), true);
+      });
+      tabButtons.push(button);
+      tabs.append(button);
+    });
+
+    host.append(tabs, panel);
+    activateStructure(0, false);
+  }
+
   function renderExamples() {
     const source = asObject(data.examples);
     const observedHost = $("[data-examples-league-one]");
+    const atlasHost = $("[data-examples-atlas]");
     const valueHost = $("[data-examples-value]");
     const bluffHost = $("[data-examples-bluff]");
-    if (!observedHost && !valueHost && !bluffHost) return;
+    if (!observedHost && !atlasHost && !valueHost && !bluffHost) return;
     replaceText("[data-examples-title]", source.title);
-    replaceText("[data-examples-lead]", source.lead);
+    replaceText("[data-examples-lead]", lessonKey === "flop-checkraise"
+      ? "Реальные раздачи и учебные примеры по всем типам флопа."
+      : source.lead);
     replaceText("[data-examples-note]", source.note);
-    replaceText("[data-examples-method]", source.method);
+    replaceText("[data-examples-method]", lessonKey === "flop-checkraise"
+      ? "Сначала — реальные раздачи поля. Ниже — учебные примеры."
+      : source.method);
     renderObservedLeagueOneExamples(observedHost, source.observedLeague1);
+    renderExampleAtlas(atlasHost, source.boardAtlas);
     renderExampleGroup(valueHost, source.value, "value");
     renderExampleGroup(bluffHost, source.bluff, "bluff");
   }
@@ -1356,6 +1587,12 @@
     replaceText("[data-practice-missed-xr]", state.stats.missedXr);
     replaceText("[data-practice-extra-xr]", state.stats.extraXr);
     replaceText("[data-practice-reference]", practiceRateFeedback());
+    const hud = $("[data-step=\"practice\"] .practice-hud");
+    const total = Math.max(0, Number(state.stats.hands) || 0);
+    const correctPercent = total ? Math.max(0, Math.min(100, state.stats.correct / total * 100)) : 0;
+    const mistakePercent = total ? Math.max(0, Math.min(100, state.stats.mistakes / total * 100)) : 0;
+    hud?.style.setProperty("--practice-correct-pct", `${correctPercent}%`);
+    hud?.style.setProperty("--practice-mistake-pct", `${mistakePercent}%`);
   }
 
   function practiceRateFeedback() {
@@ -1649,6 +1886,16 @@
     renderPracticeFeedback();
     renderPracticeHud();
     renderPracticeControls();
+    try {
+      root.FFFieldLessonPracticeExtension?.renderAfterDecision?.({
+        spot,
+        answered: state.practiceAnswered,
+        choice: state.practiceChoice,
+        stats: { ...state.stats }
+      });
+    } catch (error) {
+      console.warn("Practice extension failed", error);
+    }
   }
 
   function startPractice() {
@@ -1761,6 +2008,11 @@
     state.practiceQueue = [];
     state.practiceChoice = "";
     state.practiceAnswered = false;
+    try {
+      root.FFFieldLessonPracticeExtension?.renderAfterDecision?.({ answered: false, spot: null, choice: "", stats: { ...state.stats } });
+    } catch (error) {
+      console.warn("Practice extension failed", error);
+    }
     const run = $("[data-practice-run]");
     const setup = $("[data-practice-setup]");
     if (setup) {
@@ -1807,7 +2059,15 @@
   function restoreProgress() {
     const saved = readProgress();
     if (saved.unlocked) unlockSteps();
-    const next = state.unlocked && STEP_ORDER.includes(saved.step) ? saved.step : "deal";
+    const legacyVs3Field = lessonKey === "vs-3bet-defense" && saved.step === "leaks" && STEP_ORDER.includes("field");
+    const requestedVs3Field = lessonKey === "vs-3bet-defense"
+      && new URLSearchParams(root.location.search).has("regView")
+      && STEP_ORDER.includes("field");
+    if (legacyVs3Field) root.FFVs3BetFieldExplorer?.showView?.("errors", { updateUrl: false });
+    const savedStep = legacyVs3Field ? "field" : saved.step;
+    const next = state.unlocked && requestedVs3Field
+      ? "field"
+      : state.unlocked && STEP_ORDER.includes(savedStep) ? savedStep : "deal";
     showStep(next, { instant: true });
   }
 

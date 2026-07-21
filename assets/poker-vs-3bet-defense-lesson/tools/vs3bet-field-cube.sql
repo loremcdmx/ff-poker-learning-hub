@@ -1,5 +1,5 @@
 -- Strict observed-field cube for Hero RFI -> faces the first non-squeeze 3-bet -> decision.
--- Frozen window: [2026-01-01 00:00:00, 2026-07-17 00:00:00) UTC.
+-- Refresh window: [2025-07-01 00:00:00, 2026-07-21 00:00:00) UTC.
 --
 -- The cube deliberately stores the absolute 3-bet-to amount in BB buckets.
 -- The source does not expose Hero's original RFI size faithfully on Hero's row:
@@ -14,13 +14,13 @@
 SELECT
   h.user_id,
   h.rang,
-  FORMAT_TIMESTAMP('%F %T', GREATEST(h.rang_start_at, TIMESTAMP '2026-01-01 00:00:00+00'), 'UTC') AS rank_start_at,
-  FORMAT_TIMESTAMP('%F %T', LEAST(COALESCE(h.rang_end_at, TIMESTAMP '2026-07-17 00:00:00+00'), TIMESTAMP '2026-07-17 00:00:00+00'), 'UTC') AS rank_end_at
+  FORMAT_TIMESTAMP('%F %T', GREATEST(h.rang_start_at, TIMESTAMP '2025-07-01 00:00:00+00'), 'UTC') AS rank_start_at,
+  FORMAT_TIMESTAMP('%F %T', LEAST(COALESCE(h.rang_end_at, TIMESTAMP '2026-07-21 00:00:00+00'), TIMESTAMP '2026-07-21 00:00:00+00'), 'UTC') AS rank_end_at
 FROM `analytics_mcp_readonly.mcp__check_rank_history` AS h
 JOIN `analytics_mcp_readonly.mcp__check_users` AS u USING (user_id)
 WHERE h.rang BETWEEN 1 AND 18
-  AND h.rang_start_at < TIMESTAMP '2026-07-17 00:00:00+00'
-  AND COALESCE(h.rang_end_at, TIMESTAMP '2026-07-17 00:00:00+00') > TIMESTAMP '2026-01-01 00:00:00+00'
+  AND h.rang_start_at < TIMESTAMP '2026-07-21 00:00:00+00'
+  AND COALESCE(h.rang_end_at, TIMESTAMP '2026-07-21 00:00:00+00') > TIMESTAMP '2025-07-01 00:00:00+00'
   AND u.is_real_player = TRUE
 ORDER BY h.user_id, h.rang_start_at;
 
@@ -58,7 +58,7 @@ latest_versions AS
       h.version
     ) AS x
   FROM analytics.int_tracker_hand_joined AS h
-  WHERE h.month_start_date >= toDate('2026-01-01')
+  WHERE h.month_start_date >= toDate('2025-07-01')
     AND h.month_start_date < toDate('2026-08-01')
     AND h.hand_player_id IS NOT NULL
     AND coalesce(h.is_rfi, 0) = 1
@@ -94,16 +94,18 @@ latest AS
   INNER JOIN rank_intervals AS r ON v.x.1 = r.user_id
   WHERE v.x.2 >= r.rank_start_at
     AND v.x.2 < r.rank_end_at
-    AND v.x.2 >= toDateTime('2026-01-01 00:00:00')
-    AND v.x.2 < toDateTime('2026-07-17 00:00:00')
+    AND v.x.2 >= toDateTime('2025-07-01 00:00:00')
+    AND v.x.2 < toDateTime('2026-07-21 00:00:00')
     AND v.x.1 IS NOT NULL
 ),
 classified AS
 (
   SELECT
     multiIf(
-      rang BETWEEN 16 AND 18, 'novice',
-      rang BETWEEN 11 AND 15, 'league3',
+      -- «Новички» в этом тренажёре — расширенная когорта R15–18. R15
+      -- добавлен именно для покрытия редких, но логически возможных спотов.
+      rang BETWEEN 15 AND 18, 'novice',
+      rang BETWEEN 11 AND 14, 'league3',
       rang BETWEEN 6 AND 10, 'league2',
       'league1'
     ) AS cohort,

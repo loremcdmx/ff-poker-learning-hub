@@ -1,0 +1,601 @@
+/*
+ * Shared chart language for the standalone learning hub.
+ *
+ * Existing lessons can adopt the ff-* primitives incrementally.  The adapters
+ * at the end bind legacy action classes to the common semantic colours and
+ * accessibility states; they never replace chart geometry or grading logic.
+ */
+
+:root {
+  --ff-chart-fold: #9fb2cc;
+  --ff-chart-fold-soft: rgba(159, 178, 204, 0.18);
+  --ff-chart-call: #54d6a6;
+  --ff-chart-call-soft: rgba(84, 214, 166, 0.18);
+  --ff-chart-raise: #e24aa0;
+  --ff-chart-raise-soft: rgba(226, 74, 160, 0.18);
+  --ff-chart-shove: #f7b45c;
+  --ff-chart-shove-soft: rgba(247, 180, 92, 0.18);
+  --ff-chart-mix: #a397db;
+  --ff-chart-mix-soft: rgba(163, 151, 219, 0.18);
+  --ff-chart-focus: var(--brand-yellow, #ffdf51);
+  --ff-chart-surface: var(--surface-1, rgba(15, 14, 20, 0.92));
+  --ff-chart-surface-raised: var(--surface-2, rgba(24, 22, 31, 0.94));
+  --ff-chart-line: var(--line, rgba(255, 255, 255, 0.12));
+  --ff-chart-text: var(--text, #f7f5ef);
+  --ff-chart-muted: var(--muted, #aaa5b3);
+  --ff-chart-radius: 18px;
+  --ff-chart-cell-radius: 6px;
+  --ff-chart-control-height: 44px;
+}
+
+@layer ff-chart-system {
+  .ff-chart-panel {
+    min-width: 0;
+    padding: clamp(16px, 2vw, 26px);
+    border: 1px solid var(--ff-chart-line);
+    border-radius: var(--ff-chart-radius);
+    color: var(--ff-chart-text);
+    background: var(--ff-chart-surface);
+  }
+
+  .ff-chart-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    min-width: 0;
+    margin-bottom: 16px;
+  }
+
+  .ff-chart-head > * {
+    min-width: 0;
+  }
+
+  .ff-chart-head h2,
+  .ff-chart-head h3,
+  .ff-chart-head p {
+    margin: 0;
+  }
+
+  .ff-chart-controls,
+  .ff-chart-filter-group,
+  .ff-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .ff-chart-filter-group {
+    padding: 5px;
+    border: 1px solid var(--ff-chart-line);
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--ff-chart-surface-raised) 84%, transparent);
+  }
+
+  .ff-chart-filter {
+    min-height: var(--ff-chart-control-height);
+    padding: 8px 14px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: var(--ff-chart-muted);
+    background: transparent;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 800;
+    line-height: 1.12;
+    cursor: pointer;
+  }
+
+  .ff-chart-filter:is(:hover, :focus-visible) {
+    color: var(--ff-chart-text);
+    border-color: color-mix(in srgb, var(--ff-chart-focus) 46%, transparent);
+  }
+
+  .ff-chart-filter:is(.is-active, [aria-selected="true"], [aria-pressed="true"]) {
+    color: #16120a;
+    border-color: color-mix(in srgb, var(--ff-chart-focus) 70%, #000);
+    background: var(--ff-chart-focus);
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--ff-chart-focus) 18%, transparent);
+  }
+
+  .ff-chart-filter:focus-visible,
+  .ff-range-cell:focus-visible,
+  .ff-chart-table :is(button, [role="button"], [role="gridcell"]):focus-visible {
+    outline: 3px solid var(--ff-chart-focus);
+    outline-offset: 2px;
+  }
+
+  .ff-chart-legend {
+    color: var(--ff-chart-muted);
+    font-size: 0.76rem;
+    font-weight: 750;
+  }
+
+  .ff-chart-legend > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ff-chart-legend i {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background: var(--ff-chart-action, var(--ff-chart-fold));
+  }
+
+  .ff-chart-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .ff-chart-stat {
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid var(--ff-chart-line);
+    border-radius: 13px;
+    background: var(--ff-chart-surface-raised);
+  }
+
+  .ff-chart-stat > :is(strong, b) {
+    display: block;
+    color: var(--ff-chart-action, var(--ff-chart-text));
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ff-chart-table-wrap {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-gutter: stable;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ff-chart-table {
+    width: 100%;
+    min-width: 680px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ff-chart-table :is(th, td) {
+    min-width: 0;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--ff-chart-line);
+    text-align: left;
+  }
+
+  .ff-range-grid {
+    display: grid;
+    grid-template-columns: repeat(13, minmax(0, 1fr));
+    gap: clamp(2px, 0.35vw, 5px);
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 1;
+  }
+
+  .ff-range-cell {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    min-height: 0;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--ff-chart-action, var(--ff-chart-fold)) 34%, var(--ff-chart-line));
+    border-radius: var(--ff-chart-cell-radius);
+    color: var(--ff-chart-text);
+    background: var(--ff-chart-action-soft, var(--ff-chart-fold-soft));
+    font-size: clamp(0.56rem, 0.82vw, 0.78rem);
+    font-weight: 850;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .ff-chart-action,
+  .ff-range-cell {
+    --ff-chart-action: var(--ff-chart-fold);
+    --ff-chart-action-soft: var(--ff-chart-fold-soft);
+  }
+
+  :is(.ff-chart-action, .ff-range-cell).is-fold,
+  .ff-chart-legend .is-fold {
+    --ff-chart-action: var(--ff-chart-fold);
+    --ff-chart-action-soft: var(--ff-chart-fold-soft);
+  }
+
+  :is(.ff-chart-action, .ff-range-cell).is-call,
+  .ff-chart-legend .is-call {
+    --ff-chart-action: var(--ff-chart-call);
+    --ff-chart-action-soft: var(--ff-chart-call-soft);
+  }
+
+  :is(.ff-chart-action, .ff-range-cell).is-raise,
+  :is(.ff-chart-action, .ff-range-cell).is-fourbet,
+  .ff-chart-legend :is(.is-raise, .is-fourbet) {
+    --ff-chart-action: var(--ff-chart-raise);
+    --ff-chart-action-soft: var(--ff-chart-raise-soft);
+  }
+
+  :is(.ff-chart-action, .ff-range-cell).is-shove,
+  :is(.ff-chart-action, .ff-range-cell).is-jam,
+  .ff-chart-legend :is(.is-shove, .is-jam) {
+    --ff-chart-action: var(--ff-chart-shove);
+    --ff-chart-action-soft: var(--ff-chart-shove-soft);
+  }
+
+  :is(.ff-chart-action, .ff-range-cell).is-mix,
+  .ff-chart-legend .is-mix {
+    --ff-chart-action: var(--ff-chart-mix);
+    --ff-chart-action-soft: var(--ff-chart-mix-soft);
+  }
+
+  :is(.ff-chart-panel, .ff-range-cell, .ff-chart-stat):is(.is-low-sample, .is-thin-sample, [data-sample-state="low"]) {
+    border-style: dashed;
+    opacity: 0.72;
+  }
+
+  :is(.ff-chart-panel, .ff-range-cell, .ff-chart-stat):is(.is-estimated, [data-sample-state="estimated"]) {
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--ff-chart-mix) 72%, var(--ff-chart-line));
+  }
+
+  :is(.ff-chart-panel, .ff-range-cell, .ff-chart-stat):is(.is-unavailable, [data-sample-state="unavailable"]) {
+    opacity: 0.38;
+    filter: saturate(0.45);
+  }
+
+  /* Existing chart roots receive shared semantics without forced geometry. */
+  :where(
+    #rangeMatrix,
+    #fieldRangeMatrix,
+    #practicePositionChart,
+    #noviceDefenseChart,
+    #selectedLeagueDefenseChart,
+    #rangeChart,
+    #memoryChart,
+    #realizationDetail,
+    #rankNoviceMatrix,
+    #rankLeagueMatrix,
+    #handMatrix,
+    #reactionMatrix,
+    #outcomeBars,
+    #structureMatrix,
+    [data-field-table],
+    [data-structure-detail],
+    [data-cbet-size-chart],
+    [data-xr-size-chart],
+    [data-structure-league-matrix],
+    [data-vs3-target-overview],
+    [data-vs3-range-explorer],
+    [data-vs3-wisdom-reference],
+    [data-vs3-field-explorer],
+    [data-vs3-leaks]
+  ) {
+    --chart-fold: var(--ff-chart-fold);
+    --chart-call: var(--ff-chart-call);
+    --chart-raise: var(--ff-chart-raise);
+    --chart-fourbet: var(--ff-chart-raise);
+    --chart-shove: var(--ff-chart-shove);
+    --chart-jam: var(--ff-chart-shove);
+    --chart-mix: var(--ff-chart-mix);
+    --chart-focus: var(--ff-chart-focus);
+    --chart-line: var(--ff-chart-line);
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  :where(
+    #stackTabs,
+    #positionTabs,
+    #fieldLeagueTabs,
+    #fieldStackTabs,
+    #fieldPositionTabs
+  ) {
+    --chart-control-min-height: var(--ff-chart-control-height);
+    min-width: 0;
+  }
+
+  :where(
+    #rangeMatrix,
+    #fieldRangeMatrix,
+    #practicePositionChart,
+    #noviceDefenseChart,
+    #selectedLeagueDefenseChart,
+    #rangeChart,
+    #memoryChart,
+    #realizationDetail,
+    #rankNoviceMatrix,
+    #rankLeagueMatrix,
+    #handMatrix,
+    #reactionMatrix,
+    #structureMatrix,
+    [data-field-table],
+    [data-structure-detail],
+    [data-cbet-size-chart],
+    [data-xr-size-chart],
+    [data-structure-league-matrix],
+    [data-vs3-range-explorer],
+    [data-vs3-field-explorer],
+    [data-vs3-leaks]
+  ) :where(button, [role="button"], [role="gridcell"]):focus-visible {
+    outline: 3px solid var(--ff-chart-focus);
+    outline-offset: 2px;
+  }
+
+  :where(
+    #rangeMatrix,
+    #fieldRangeMatrix,
+    #noviceDefenseChart,
+    #selectedLeagueDefenseChart,
+    #rangeChart,
+    #memoryChart,
+    #rankNoviceMatrix,
+    #rankLeagueMatrix,
+    #handMatrix,
+    #reactionMatrix,
+    #structureMatrix,
+    [data-field-table],
+    [data-structure-league-matrix],
+    [data-vs3-range-explorer],
+    [data-vs3-field-explorer],
+    [data-vs3-leaks]
+  ) :where(.is-low-sample, .is-thin-sample, [data-sample-state="low"]) {
+    opacity: 0.72;
+  }
+
+  :where(
+    #rangeMatrix,
+    #fieldRangeMatrix,
+    #noviceDefenseChart,
+    #selectedLeagueDefenseChart,
+    #rangeChart,
+    #memoryChart,
+    #rankNoviceMatrix,
+    #rankLeagueMatrix,
+    #handMatrix,
+    #reactionMatrix,
+    #structureMatrix,
+    [data-field-table],
+    [data-structure-league-matrix],
+    [data-vs3-range-explorer],
+    [data-vs3-field-explorer],
+    [data-vs3-leaks]
+  ) :where(.is-unavailable, [data-sample-state="unavailable"]) {
+    opacity: 0.38;
+    filter: saturate(0.45);
+  }
+
+  /*
+   * Legacy chart adapters.
+   *
+   * The six lessons predate the shared primitives above, so their renderers
+   * still consume lesson-specific variables and class names.  Keep those
+   * renderers and their geometry intact, but route every action through the
+   * same semantic palette.  The important flag is intentional: this shared
+   * file is loaded before the unlayered lesson styles, while a canonical
+   * action colour must remain the source of truth regardless of load order.
+   */
+
+  /* Open-first charts: open is the non-all-in raise; limp is the mixed line. */
+  .rfi-open-lesson {
+    --rfi-raise: var(--ff-chart-raise) !important;
+    --rfi-shove: var(--ff-chart-shove) !important;
+    --rfi-limp: var(--ff-chart-mix) !important;
+    --rfi-fold: var(--ff-chart-fold) !important;
+    --rfi-field-raise: var(--ff-chart-raise) !important;
+    --rfi-field-shove: var(--ff-chart-shove) !important;
+    --rfi-field-limp: var(--ff-chart-mix) !important;
+    --rfi-field-fold: var(--ff-chart-fold) !important;
+  }
+
+  .preflop-benchmark-lesson {
+    --benchmark-fold: var(--ff-chart-fold) !important;
+    --benchmark-call: var(--ff-chart-call) !important;
+    --benchmark-raise: var(--ff-chart-raise) !important;
+    --benchmark-jam: var(--ff-chart-shove) !important;
+  }
+
+  .rfi-open-lesson .field-matrix .field-cell::before {
+    background: linear-gradient(
+      90deg,
+      var(--ff-chart-raise) 0 var(--field-raise-end),
+      var(--ff-chart-shove) var(--field-raise-end) var(--field-shove-end),
+      var(--ff-chart-mix) var(--field-shove-end) var(--field-limp-end),
+      var(--ff-chart-fold) var(--field-limp-end) 100%
+    ) !important;
+  }
+
+  .rfi-open-lesson :is(.field-hand-actions, .field-action-legend) .is-fold i,
+  .rfi-open-lesson .field-action-legend .key-fold i {
+    background: var(--ff-chart-fold) !important;
+  }
+
+  .rfi-open-lesson .field-matrix .field-cell.is-selected {
+    outline-color: var(--ff-chart-focus) !important;
+  }
+
+  /* BB defence matrices and their compact league summaries. */
+  .bb-call-lesson {
+    --bb-fold: var(--ff-chart-fold) !important;
+    --bb-call: var(--ff-chart-call) !important;
+    --bb-call-soft: var(--ff-chart-call-soft) !important;
+    --bb-raise: var(--ff-chart-raise) !important;
+  }
+
+  .bb-call-lesson :is(.league-action-bar, .league-action-legend) .is-fold {
+    background: var(--ff-chart-fold) !important;
+  }
+
+  .bb-call-lesson .league-range-cell {
+    background: linear-gradient(
+      90deg,
+      var(--ff-chart-fold) 0 var(--fold-end),
+      var(--ff-chart-call) var(--fold-end) var(--call-end),
+      var(--ff-chart-raise) var(--call-end) 100%
+    ) !important;
+  }
+
+  .bb-call-lesson .range-matrix-legend :is(.is-fold, .is-call, .is-raise) {
+    background: var(--ff-chart-action) !important;
+  }
+
+  .bb-call-lesson .range-matrix-legend .is-fold { --ff-chart-action: var(--ff-chart-fold); }
+  .bb-call-lesson .range-matrix-legend .is-call { --ff-chart-action: var(--ff-chart-call); }
+  .bb-call-lesson .range-matrix-legend .is-raise { --ff-chart-action: var(--ff-chart-raise); }
+
+  .bb-call-lesson .bb-range-cell {
+    background: linear-gradient(
+      135deg,
+      var(--ff-chart-raise) 0 var(--raise-end),
+      var(--ff-chart-call) var(--raise-end) var(--call-end),
+      var(--ff-chart-fold) var(--call-end) 100%
+    ) !important;
+  }
+
+  .bb-call-lesson .bb-range-cell[aria-selected="true"] {
+    border-color: var(--ff-chart-focus) !important;
+  }
+
+  /* Resteal comparison: small raise and direct jam remain distinct actions. */
+  .resteal-lesson .rank-spot-actions .is-fold i,
+  .resteal-lesson .rank-action-bar .is-fold {
+    background: var(--ff-chart-fold) !important;
+  }
+
+  .resteal-lesson .rank-spot-actions .is-call i,
+  .resteal-lesson .rank-action-bar .is-call {
+    background: var(--ff-chart-call) !important;
+  }
+
+  .resteal-lesson .rank-spot-actions .is-small-raise i,
+  .resteal-lesson .rank-action-bar .is-small-raise {
+    background: var(--ff-chart-raise) !important;
+  }
+
+  .resteal-lesson .rank-spot-actions .is-jam i,
+  .resteal-lesson .rank-action-bar .is-jam {
+    background: var(--ff-chart-shove) !important;
+  }
+
+  .resteal-lesson .rank-cell.is-selected {
+    border-color: var(--ff-chart-focus) !important;
+  }
+
+  /* C-bet charts use the same neutral / bet / large-bet progression. */
+  .flop-cbet-hu-lesson .cbet-practice-legend .is-check {
+    background: var(--ff-chart-fold) !important;
+  }
+
+  .flop-cbet-hu-lesson .cbet-practice-legend .is-small {
+    background: var(--ff-chart-raise) !important;
+  }
+
+  .flop-cbet-hu-lesson .cbet-practice-legend .is-large {
+    border-color: color-mix(in srgb, var(--ff-chart-shove) 72%, #000) !important;
+    background: var(--ff-chart-shove) !important;
+  }
+
+  .flop-cbet-hu-lesson .rank-cell.is-active {
+    border-color: var(--ff-chart-focus) !important;
+  }
+
+  /* Shared field mixes: aggressive, continue, mix/check, neutral/fold. */
+  :is(.flop-checkraise-lesson, .vs-3bet-defense-lesson) :is(
+    .mix-segment.is-accent,
+    .mix-legend-item i.is-accent
+  ) {
+    background: var(--ff-chart-raise) !important;
+  }
+
+  :is(.flop-checkraise-lesson, .vs-3bet-defense-lesson) :is(
+    .mix-segment.is-positive,
+    .mix-legend-item i.is-positive
+  ) {
+    background: var(--ff-chart-call) !important;
+  }
+
+  :is(.flop-checkraise-lesson, .vs-3bet-defense-lesson) :is(
+    .mix-segment.is-warning,
+    .mix-legend-item i.is-warning
+  ) {
+    background: var(--ff-chart-mix) !important;
+  }
+
+  :is(.flop-checkraise-lesson, .vs-3bet-defense-lesson) :is(
+    .mix-segment.is-neutral,
+    .mix-legend-item i.is-neutral
+  ) {
+    background: var(--ff-chart-fold) !important;
+  }
+
+  /* Check-raise field table: this metric is the opponent folding to X/R. */
+  .flop-checkraise-lesson .structure-league-kpi.is-fold {
+    border-color: color-mix(in srgb, var(--ff-chart-fold) 28%, transparent) !important;
+    background: color-mix(in srgb, var(--ff-chart-fold) 7%, transparent) !important;
+  }
+
+  .flop-checkraise-lesson .structure-league-kpi.is-fold strong {
+    color: var(--ff-chart-fold) !important;
+  }
+
+  .flop-checkraise-lesson .structure-league-legend span.is-fold::before {
+    background: var(--ff-chart-fold) !important;
+  }
+
+  .flop-checkraise-lesson .structure-league-view-tabs button.is-active {
+    border-color: var(--ff-chart-focus) !important;
+  }
+
+  /* Versus-3-bet already has semantic variables; bind them to the system. */
+  .vs-3bet-defense-lesson {
+    --vs3-fold: var(--ff-chart-fold) !important;
+    --vs3-call: var(--ff-chart-call) !important;
+    --vs3-fourbet: var(--ff-chart-raise) !important;
+    --vs3-jam: var(--ff-chart-shove) !important;
+  }
+
+  .vs-3bet-defense-lesson :is(
+    .vs3-range-cell,
+    .vs3-field-range-cell,
+    .vs3-error-range-cell
+  )[aria-pressed="true"] {
+    border-color: var(--ff-chart-focus) !important;
+  }
+
+  @media (max-width: 760px) {
+    .ff-chart-head {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .ff-chart-controls,
+    .ff-chart-filter-group {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ff-chart-filter {
+      width: 100%;
+      padding-inline: 9px;
+    }
+
+    .ff-chart-table {
+      min-width: 620px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ff-chart-filter,
+    .ff-range-cell {
+      transition: none !important;
+    }
+  }
+}

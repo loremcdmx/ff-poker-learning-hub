@@ -11,6 +11,7 @@ const files = {
   controller: "assets/poker-trainer-shell/simulator-continuation.js",
   continuations: "assets/poker-vs-3bet-defense-lesson/continuations.js",
   model: "assets/poker-vs-3bet-defense-lesson/range-model.js",
+  rfiData: "assets/poker-rfi-open-lesson/data.js",
   data: "assets/poker-vs-3bet-defense-lesson/data.js",
   fieldData: "assets/poker-vs-3bet-defense-lesson/data/vs3bet-field-data.js",
   wisdomReference: "assets/poker-vs-3bet-defense-lesson/wisdom-reference.js",
@@ -27,7 +28,7 @@ const source = Object.fromEntries(await Promise.all(Object.entries(files).map(as
 
 const context = { window: {}, console };
 vm.createContext(context);
-for (const key of ["controller", "continuations", "model", "data", "fieldData"]) {
+for (const key of ["controller", "continuations", "rfiData", "model", "data", "fieldData"]) {
   vm.runInContext(source[key], context, { filename: files[key] });
 }
 
@@ -36,6 +37,7 @@ const model = context.window.FF_VS3BET_RANGE_MODEL;
 const continuationApi = context.window.FFTrainerSimulatorContinuation;
 const continuationRegistry = context.window.FF_VS3BET_CONTINUATIONS;
 const fieldData = context.window.FF_VS3BET_FIELD_DATA;
+const rfiData = context.window.PokerRfiData;
 
 assert.equal(data.schemaVersion, 1);
 assert.equal(data.key, "vs-3bet-defense");
@@ -51,11 +53,13 @@ assert.equal(data.cohorts[2].actions[0].pct, 59.96);
 assert.equal(data.cohorts[3].sample, 861445);
 assert.equal(data.cohorts[3].players, 953);
 assert.doesNotMatch(source.data, /42,6 → 21,0%/);
-assert.equal(fieldData.version, "vs3bet-field-cube-20260717-v3");
-assert.equal(fieldData.meta.windowEndExclusive, "2026-07-17T00:00:00Z");
+assert.equal(fieldData.version, "vs3bet-field-cube-20260721-v5");
+assert.equal(fieldData.meta.windowEndExclusive, "2026-07-21T00:00:00Z");
 assert.equal(fieldData.meta.hands.length, 169);
-assert.equal(Object.keys(fieldData.charts).length, 778, "20 chart slices below the public N threshold stay omitted");
-assert.equal(fieldData.summaries.league3.opportunities, 2483604);
+assert.equal(Object.keys(fieldData.charts).length, 800, "all valid chart slices are public");
+assert.deepEqual(Array.from(fieldData.meta.cohorts.novice.ranks), [15, 16, 17, 18]);
+assert.deepEqual(Array.from(fieldData.meta.cohorts.league3.ranks), [11, 12, 13, 14]);
+assert.equal(fieldData.summaries.league3.opportunities, 3485206);
 assert.equal(fieldData.meta.filters.squeezeExcluded, true);
 assert.match(fieldData.meta.aggregation, /descriptive|integer|count/i);
 
@@ -67,6 +71,14 @@ assert.deepEqual(Array.from(model.sizes), [2.5, 3, 4]);
 assert.deepEqual(Array.from(model.cohorts, (cohort) => cohort.key), ["reference", "league1", "league2", "league3", "novice"]);
 assert.equal(model.hands.length, 169);
 assert.equal(new Set(model.hands).size, 169);
+assert.deepEqual(Object.keys(rfiData.sourceFrequencies), ["EP", "MP", "HJ", "CO", "BTN"]);
+assert.equal(Object.keys(rfiData.sourceFrequencies.BTN).length, 169);
+assert.equal(rfiData.sourceFrequencies.BTN.AA, 100, "full cell weight keeps a 100% open visible");
+assert.equal(rfiData.sourceFrequencies.BTN.Q2o, 50, "mixed open uses the source frequency, not the binary training range");
+assert.equal(rfiData.sourceFrequencies.CO.J3s, 5, "rare open keeps its true 5% value behind the 10% visual floor");
+assert.equal(rfiData.sourceFrequencies.CO.Q2o, 0, "a true never-open remains distinguishable from missing data");
+assert.equal(rfiData.sourceFrequencies.EP.K7s, 80, "source frequency preserves methodic mixing");
+assert.equal(rfiData.sourceFrequencies.SB, undefined, "SB stays unavailable instead of being mislabelled as 0% open");
 
 const introScenario = model.scenario({
   position: "CO",
@@ -84,6 +96,22 @@ assert.equal(data.intro.id, "intro-jj-co-vs-btn");
 assert.equal(data.intro.options.find((option) => option.correct)?.key, "fourbet");
 assert.equal(data.intro.options.find((option) => option.key === "jam")?.acceptableMix, true);
 assert.doesNotMatch(data.intro.answer, /колл сохраняет/i);
+
+const t8sSmallThreeBet = model.scenario({
+  position: "HJ",
+  relation: "IP",
+  stack: "31-50",
+  size: 3,
+  cohort: "reference"
+}).cells.T8s;
+assert(
+  t8sSmallThreeBet.call > t8sSmallThreeBet.fold,
+  "HJ T8s in position against a 3x-to-6-BB 3-bet is call-first, not a pure fold"
+);
+assert(
+  t8sSmallThreeBet.call >= 60,
+  "the corrected small-price transfer keeps at least 60% call for HJ T8s IP at 31-50 BB"
+);
 
 const exactChecks = [
   ["EP", "QJs", { fold: 90, call: 10, fourbet: 0, jam: 0 }],
@@ -141,6 +169,32 @@ for (const position of model.positions) {
 assert.equal(scenarioCount, 600);
 assert(jamCellCount > 0, "short-stack scenarios contain a distinct 4-bet jam component");
 
+for (const position of model.positions) {
+  for (const relation of validRelations(position)) {
+    for (const stack of model.stacks) {
+      const scenarios = model.sizes.map((size) => model.scenario({
+        position,
+        relation,
+        stack: stack.key,
+        size,
+        cohort: "reference"
+      }));
+      for (const hand of model.hands) {
+        const hasAggressiveComponent = scenarios.some((scenario) => (
+          scenario.cells[hand].fourbet + scenario.cells[hand].jam >= 1
+        ));
+        if (hasAggressiveComponent) continue;
+        const continuation = scenarios.map((scenario) => 100 - scenario.cells[hand].fold);
+        assert(
+          continuation[0] + 0.5 >= continuation[1]
+            && continuation[1] + 0.5 >= continuation[2],
+          `${position}/${relation}/${stack.key}/${hand} never continues more often versus a meaningfully larger 3-bet`
+        );
+      }
+    }
+  }
+}
+
 assert.equal(model.practiceSpotIds().length, 240);
 assert.equal(new Set(model.practiceSpotIds()).size, 240);
 assert.equal(data.practice.length, 240);
@@ -157,6 +211,14 @@ for (const spot of data.practice) {
   assert.equal(spot.practiceMeta.sourceStatus, "exact-baseline-plus-transparent-heuristics");
   assert.equal(spot.practiceMeta.hand, spot.hand);
   assert.equal(spot.practiceMeta.correctAction, spot.options.find((option) => option.correct).key);
+  assert(spot.practiceMeta.acceptableActions.includes(spot.practiceMeta.correctAction));
+  for (const option of spot.options) {
+    assert.equal(
+      option.acceptableMix === true,
+      option.key !== spot.practiceMeta.correctAction && spot.practiceMeta.acceptableActions.includes(option.key),
+      `${spot.id}/${option.key} exposes every accepted secondary mix and no false alternative`
+    );
+  }
   correctActions.add(spot.practiceMeta.correctAction);
   minimumCorrectFrequency = Math.min(
     minimumCorrectFrequency,
@@ -217,18 +279,57 @@ const stepOrder = Array.from(
   source.html.matchAll(/data-step="([^"]+)"/g),
   (match) => match[1]
 );
-assert.deepEqual(stepOrder, ["deal", "wisdom", "field", "leaks", "practice"]);
+assert.deepEqual(stepOrder, ["deal", "wisdom", "field", "practice"]);
+assert.match(source.html, />3\. Чарты и поле</);
+assert.match(source.html, />4\. Практика</);
+assert.doesNotMatch(source.html, /data-step="leaks"/);
+assert.doesNotMatch(source.html, /id="leaksTab"/);
+assert.match(source.html, /data-vs3-target-overview/);
 assert.match(source.html, /data-vs3-wisdom-reference/);
 assert.doesNotMatch(source.html, /data-wisdom-carousel/);
 assert.match(source.html, /data-vs3-range-explorer/);
 assert.match(source.html, /data-vs3-field-explorer/);
 assert.match(source.html, /data-vs3-leaks/);
 assert.match(source.html, /data-vs3-practice-filters/);
+assert.match(source.html, /data-vs3-practice-expected/);
+assert.match(source.html, /practice-hud-rail/);
+assert.match(source.html, /Начни со всех ситуаций/);
+assert.match(source.html, /data-vs3-reg-view-tabs/);
+assert.match(source.html, /Здесь можно увидеть, как стратегия начинающих игроков отличается от топов/);
+assert.doesNotMatch(source.html, /Где поле защищается лишне или недостаточно/);
+assert.doesNotMatch(source.html, /Сначала открой наш чарт/);
+assert.doesNotMatch(source.html, /Это фактические решения поля, а не совет/);
+assert.doesNotMatch(source.html, /Как играют реги/);
+assert.doesNotMatch(source.fieldExplorer, /vs3-error-context/);
+assert.equal(Array.from(source.html.matchAll(/data-vs3-reg-view="(target|overview|hands|errors)"/g)).length, 4);
+assert.equal(Array.from(source.html.matchAll(/data-vs3-reg-view-panel="(target|overview|hands|errors)"/g)).length, 4);
+assert.equal(Array.from(source.html.matchAll(/class="vs3-reg-tab" type="button" role="tab"/g)).length, 4);
+assert.match(source.html, /id="vs3RegTargetTab"[^>]+aria-controls="vs3RegTargetPanel"[^>]+aria-selected="true"[^>]+tabindex="0"/);
+assert.match(source.html, /id="vs3RegOverviewTab"[^>]+aria-controls="vs3RegOverviewPanel"[^>]+aria-selected="false"[^>]+tabindex="-1"/);
+assert.match(source.html, /id="vs3RegHandsTab"[^>]+aria-controls="vs3RegHandsPanel"[^>]+aria-selected="false"[^>]+tabindex="-1"/);
+assert.match(source.html, /id="vs3RegErrorsTab"[^>]+aria-controls="vs3RegErrorsPanel"[^>]+aria-selected="false"[^>]+tabindex="-1"/);
+assert.match(source.html, /id="vs3RegTargetPanel"[^>]+aria-labelledby="vs3RegTargetTab"/);
+assert.match(source.html, /id="vs3RegOverviewPanel"[^>]+aria-labelledby="vs3RegOverviewTab"[^>]+hidden/);
+assert.match(source.html, /id="vs3RegHandsPanel"[^>]+aria-labelledby="vs3RegHandsTab"[^>]+hidden/);
+assert.match(source.html, /id="vs3RegErrorsPanel"[^>]+aria-labelledby="vs3RegErrorsTab"[^>]+hidden/);
+const regTabMarkup = Array.from(source.html.matchAll(/<button class="vs3-reg-tab"[^>]*>/g), (match) => match[0]);
+assert.equal(regTabMarkup.filter((markup) => /aria-selected="true"/.test(markup)).length, 1);
+assert.equal(regTabMarkup.filter((markup) => /tabindex="0"/.test(markup)).length, 1);
+assert(regTabMarkup.every((markup) => !/data-step-target/.test(markup)), "internal tabs must not trigger lesson navigation");
+const mainHostIndex = source.html.indexOf("data-vs3-target-overview");
+const chartPanelIndex = source.html.indexOf('id="chartsPanel"');
+const practicePanelIndex = source.html.indexOf('id="practicePanel"');
+assert(mainHostIndex > 0 && mainHostIndex < chartPanelIndex, "target overview lives on step 2 Главное");
+for (const marker of ["data-vs3-range-explorer", "data-vs3-reg-view-tabs", "data-vs3-wisdom-reference", "data-vs3-field-explorer", "data-vs3-leaks"]) {
+  const markerIndex = source.html.indexOf(marker);
+  assert(markerIndex > chartPanelIndex && markerIndex < practicePanelIndex, `${marker} lives inside unified step 3`);
+}
 const expectedScriptOrder = [
   "simulator-snapshot.js",
   "simulator-practice.js",
   "simulator-continuation.js",
   "poker-vs-3bet-defense-lesson/continuations.js",
+  "poker-rfi-open-lesson/data.js",
   "poker-vs-3bet-defense-lesson/range-model.js",
   "poker-vs-3bet-defense-lesson/data.js",
   "poker-vs-3bet-defense-lesson/data/vs3bet-field-data.js",
@@ -257,22 +358,126 @@ assert.doesNotMatch(
 assert.match(source.explorer, /4-бет пуш/);
 assert.match(source.explorer, /В позиции/);
 assert.match(source.explorer, /Без позиции/);
+assert.match(source.explorer, /PokerRfiData/);
+assert.match(source.explorer, /sourceFrequencies/);
+assert.match(source.explorer, /function openFrequencyFor/);
+assert.match(source.explorer, /function visualOpenFill/);
+assert.match(source.explorer, /function practiceFilterPayload/);
+assert.match(source.explorer, /function renderPracticeExpected/);
+assert.match(source.explorer, /Любые/);
+assert.match(source.explorer, /Только в позиции/);
+assert.match(source.explorer, /Только без позиции/);
+assert.match(source.explorer, /FFFieldLessonPracticeExtension/);
+assert.match(source.explorer, /Math\.max\(10, Math\.min\(100, frequency\)\)/);
+assert.match(source.explorer, /data-vs3-open-frequency|dataset\.vs3OpenFrequency/);
+assert.match(source.explorer, /Высота — как часто открываем руку\. Цвет — главное действие против 3-бета/);
+assert.match(source.explorer, /минимальная полоса 10%/);
+assert.match(source.explorerCss, /\.vs3-open-weight-fill[\s\S]*height: var\(--vs3-open-fill/);
+assert.match(source.explorer, /vs3-range-grid ff-range-grid/);
+assert.match(source.explorer, /vs3-range-cell ff-range-cell/);
+assert.doesNotMatch(source.explorer, /button\.append\(fill, element\("strong", "", hand\), createMixBar/);
+assert.match(source.explorerCss, /\.vs3-range-cell\.is-open-weight-unavailable/);
+assert.match(source.explorerCss, /\.vs3-practice-presets/);
+assert.match(source.explorerCss, /\.practice-hud-rail/);
+assert.match(source.explorerCss, /\.vs3-practice-expected-grid/);
+assert.match(
+  source.explorerCss,
+  /\.vs3-chart-layout[\s\S]*grid-template-columns: minmax\(0, 1fr\)[\s\S]*width: min\(100%, 980px\)/,
+  "the chart and selected-hand detail must use one readable centered column"
+);
+assert.match(
+  source.explorerCss,
+  /\.vs3-wisdom-chart-layout[\s\S]*grid-template-columns: minmax\(0, 1fr\)[\s\S]*width: min\(100%, 980px\)/,
+  "the observed chart must follow the same readable one-column contract"
+);
+assert.match(source.explorer, /const potBeforeThreeBet = 4\.5/);
+assert.match(source.explorer, /riskBb \/ \(riskBb \+ potBeforeThreeBet\) \* 100/);
+assert.match(source.explorer, /const safetyMargin = 2\.5/);
+assert.match(source.explorer, /Автоприбыль начинается выше/);
+assert.match(source.explorer, /Если мы пасуем чаще .* даже нулевой блеф уже плюсует сразу/);
+assert.doesNotMatch(source.explorer, /solver-MDF/);
+assert.match(source.explorer, /profitBoundary/);
+assert.match(source.explorer, /targets:/);
 assert.match(source.explorer, /mix\.missing \? "is-missing" : dominantAction\(mix\)\.tone/);
 assert.match(source.explorer, /button\.disabled = mix\.missing/);
+assert.match(source.explorer, /const fieldData = root\.FF_VS3BET_FIELD_DATA/);
+assert.match(source.explorer, /"2\.5": "<6"/);
+assert.match(source.explorer, /"3": "6-8"/);
+assert.match(source.explorer, /"4": "8-10"/);
+assert.match(source.explorer, /function measuredFieldRow/);
+assert.match(source.explorer, /vs3-comparison-table/);
+assert.match(source.explorer, /Реальные решения FF/);
+assert.doesNotMatch(source.explorer, /Слабые выборки скрыты|Мало данных|Ориентир/);
+assert.match(source.explorer, /key === "cohort" && \["chart", "practice"\]\.includes\(context\)/);
 assert.match(source.explorerCss, /--vs3-fold: #91a9d0/);
 assert.match(source.explorerCss, /\.is-fold[\s\S]*--vs3-cell-surface/);
 assert.match(source.explorerCss, /\.vs3-range-cell\.is-missing/);
+assert.match(source.explorerCss, /\.vs3-comparison-table/);
+assert.match(source.explorerCss, /\.vs3-comparison-delta\.is-more/);
 assert.match(source.explorerCss, /\.vs3-field-range-cell\.is-unavailable[\s\S]*background: #121016/);
+assert.match(source.explorerCss, /\.vs3-field-occurrence-fill[\s\S]*height: var\(--vs3-field-occurrence-fill/);
+assert.match(source.explorerCss, /\.vs3-field-range-cell\.has-occurrence-weight[\s\S]*background: #151219/);
+assert.match(source.fieldExplorer, /function occurrenceProfile\(current\)/);
+assert.match(source.fieldExplorer, /startingHandComboCount\(hand\)/);
+assert.match(source.fieldExplorer, /--vs3-field-occurrence-fill/);
+assert.match(source.fieldExplorer, /vs3-field-range-cell ff-range-cell has-occurrence-weight/);
+assert.doesNotMatch(source.fieldExplorer, /button\.append\([^\n]+createMixBar/);
 assert.match(source.wisdomReference, /FF_VS3BET_FIELD_DATA/);
 assert.match(source.wisdomReference, /data\?\.charts/);
-assert.match(source.wisdomReference, /call \+ mix\.fourbet \+ mix\.jam/);
+assert.match(source.wisdomReference, /vs3-wisdom-fold[^\n]+formatPercent\(mix\.fold\)/);
+assert.match(source.wisdomReference, /: пас \$\{formatPercent\(mix\.fold\)\}/);
+assert.match(source.wisdomReference, /Таблица фолдов/);
+assert.match(source.wisdomReference, /Крупно — как часто игроки пасуют на 3-бет/);
+assert.doesNotMatch(source.wisdomReference, /Таблица дефендов/);
+assert.doesNotMatch(source.wisdomReference, /vs3-wisdom-defense|Крупно — вся защита/);
 assert.match(source.wisdomReference, /data\.meta\.hands\.forEach/);
+assert.match(source.wisdomReference, /function startingHandComboCount/);
+assert.match(source.wisdomReference, /return value\.endsWith\("s"\) \? 4 : 12/);
+assert.match(source.wisdomReference, /count\(source\?\.cells\?\.\[index\]\?\.\[0\]\) \/ startingHandComboCount\(hand\)/);
+assert.match(source.wisdomReference, /\[state\.cohort, state\.position, state\.relation, state\.stack, "all"\]/);
+assert.match(source.wisdomReference, /dataset\.vs3OccurrenceFrequency/);
+assert.match(source.wisdomReference, /vs3-range-grid vs3-wisdom-range-grid ff-range-grid/);
+assert.match(source.wisdomReference, /vs3-field-range-cell vs3-wisdom-range-cell ff-range-cell/);
+assert.match(source.wisdomReference, /--vs3-field-occurrence-fill/);
+assert.match(source.wisdomReference, /Высота цвета — как часто рука встречается среди опенов/);
 assert.match(source.wisdomReference, /Это наблюдаемая игра поля, а не рекомендация/);
-assert.match(source.wisdomReference, /5 051 115 решений/);
+assert.doesNotMatch(source.wisdomReference, /5 051 115 решений/);
 assert.doesNotMatch(source.wisdomReference, /FF_VS3BET_RANGE_MODEL|scenario\.summary/);
-assert.match(source.fieldExplorer, /Это наблюдаемое поведение поля, не рекомендация/);
+assert.match(source.fieldExplorer, /Высота — встречаемость среди опенов с учётом комбо\. Цвет — главное действие/);
 assert.match(source.fieldExplorer, /unavailableBelow/);
+assert.match(source.fieldExplorer, /function filterValueAvailable\(key, value\)[\s\S]*Boolean\(chart\(next\)\)/, "filter choices are only available when the refreshed cube has an exact slice");
+assert.match(source.fieldExplorer, /button\.disabled = unavailable/, "structurally empty exact slices are disabled instead of receiving a learner-facing placeholder");
+assert.match(source.fieldExplorer, /dataset\.vs3ErrorMatrix/);
+assert.match(source.fieldExplorer, /dataset\.vs3ErrorDetail/);
+assert.match(source.fieldExplorer, /dataset\.vs3ErrorRanking/);
+assert.match(source.fieldExplorer, /dataset\.vs3ErrorHand/);
+assert.match(source.fieldExplorer, /wilsonInterval/);
+assert.match(source.fieldExplorer, /sampleThresholds\.lowConfidenceBelow/);
+assert.match(source.fieldExplorer, /referenceSizeMultiplier/);
+assert.match(source.fieldExplorer, /Самые частые ошибки/);
+assert.doesNotMatch(source.fieldExplorer, /Слабые выборки скрыты|Мало данных|Ориентир/);
+assert.match(source.fieldExplorer, /params\.get\("regView"\)/);
+assert.match(source.fieldExplorer, /params\.has\("errorMatrix"\)/);
+assert.match(source.fieldExplorer, /return "target"/);
+assert.match(source.fieldExplorer, /data-vs3-reg-view-link/);
+assert.match(source.fieldExplorer, /setRegView\("target"\)/);
+assert.match(source.fieldExplorer, /showView\(next, options = \{\}\)/);
+assert.match(source.fieldExplorer, /\["ArrowLeft", "ArrowRight", "Home", "End"\]/);
+assert.match(source.fieldExplorer, /panel\.hidden = !selected/);
+assert.doesNotMatch(source.fieldExplorer, /errorsHost\?\.setAttribute\("aria-live", selected \? "polite" : "off"\)/);
+assert.match(source.html, /data-vs3-leaks aria-live="off"/);
+assert.match(source.explorerCss, /\.vs3-error-layout[\s\S]*grid-template-columns: minmax\(610px/);
+assert.match(source.explorerCss, /\.vs3-error-range-cell\.is-underdefense/);
+assert.match(source.explorerCss, /\.vs3-error-range-cell\.is-overdefense/);
+assert.doesNotMatch(source.explorerCss, /is-estimated/);
+assert.match(source.explorerCss, /\.vs3-reg-switcher[\s\S]*grid-template-columns: repeat\(4/);
+assert.match(source.explorerCss, /\.vs3-reg-tab small \{ display: none; \}/);
+assert.match(source.explorerCss, /\.vs3-reg-panel\[hidden\][^}]*display: none !important/);
 assert.match(source.sharedLesson, /continuationUi/);
+assert.match(source.sharedLesson, /saved\.step === "leaks"/);
+assert.match(source.sharedLesson, /has\("regView"\)/);
+assert.match(source.sharedLesson, /--practice-correct-pct/);
+assert.match(source.sharedLesson, /FFFieldLessonPracticeExtension/);
 assert.match(source.research, /mcp_bq_80039683391746b3bc0cda01a00f1260/);
 assert.match(source.research, /mcp_ch_job_1dc4dcea6c5644578ddb72c9f90a32f2/);
 assert.match(source.research, /5 051 115/);

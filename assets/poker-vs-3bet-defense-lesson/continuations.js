@@ -98,14 +98,14 @@
       coachTitle: "SB принял колл — играем постфлоп в позиции",
       coachCopy: "Первый ответ уже оценён. Теперь выбери готовые действия на флопе и тёрне; они не меняют счёт тренажёра.",
       completeEyebrow: "Шоудаун · диапазон стал конкретным",
-      completeTitle: "SB открыл Q♥Q♣ и полный runout",
-      completeCopy: "Продолжение показывает цену позиции и pot control: корректная защита префлоп не обязана выиграть конкретную раздачу."
+      completeTitle: "SB открыл Q♥Q♣ — доска собрана полностью",
+      completeCopy: "Продолжение показывает цену позиции и контроль банка: правильная защита префлоп не обязана выиграть конкретную раздачу."
     },
     nodes: {
       "flop-vs-cbet": {
         id: "flop-vs-cbet",
         title: "Флоп в позиции",
-        question: "SB ставит 5,5 BB в 17 BB на J♦7♣2♥. Как разыграть top pair с A♠J♠?",
+        question: "SB ставит 5,5 BB в 17 BB на J♦7♣2♥. Как разыграть топ-пару с A♠J♠?",
         table: table({
           street: "flop",
           board: ["Jd", "7c", "2h"],
@@ -114,15 +114,15 @@
           villainStack: 46.5,
           toCall: 5.5,
           currentBet: 5.5,
-          actionLine: ["BTN call 6 BB preflop", "SB bet 5.5 BB"],
-          historyLine: "BTN open 2 BB · SB 3-bet 8 BB · BTN call"
+          actionLine: ["BTN колл 6 BB префлоп", "SB ставка 5,5 BB"],
+          historyLine: "BTN опен 2 BB · SB 3-бет 8 BB · BTN колл"
         }),
         options: [
           {
             key: "fold",
             label: "Пас",
             correct: false,
-            feedback: "Top pair с сильным кикером слишком высоко в диапазоне BTN для немедленного паса на небольшой c-bet.",
+            feedback: "Топ-пара с сильным кикером слишком высоко в диапазоне BTN для немедленного паса на небольшой c-bet.",
             next: "showdown-flop-fold",
             advanceLabel: "Открыть карты SB"
           },
@@ -154,15 +154,15 @@
           pot: 28,
           heroStack: 46.5,
           villainStack: 46.5,
-          actionLine: ["Flop: SB bet 5.5 BB", "BTN call 5.5 BB", "Turn: SB check"],
-          historyLine: "3-bet pot · flop c-bet-call · turn SB check"
+          actionLine: ["Флоп: SB ставка 5,5 BB", "BTN колл 5,5 BB", "Тёрн: SB чек"],
+          historyLine: "3-бет-пот · флоп c-bet-колл · тёрн SB чек"
         }),
         options: [
           {
             key: "check",
             label: "Чек следом",
             correct: true,
-            feedback: "Чек сохраняет showdown value, защищает диапазон check-back и не платит лишнее оверпаре.",
+            feedback: "Чек сохраняет ценность на вскрытии, защищает диапазон чек-бэка и не платит лишнее оверпаре.",
             next: "showdown-turn-check",
             advanceLabel: "Открыть ривер и карты SB"
           },
@@ -170,7 +170,7 @@
             key: "bet",
             label: "Поставить 8 BB",
             correct: false,
-            feedback: "Тонкий bet возможен против более широкого профиля, но в учебной линии чаще изолирует нас против лучшего.",
+            feedback: "Тонкая ставка возможна против более широкого соперника, но здесь чаще оставляет нас против лучших рук.",
             next: "showdown-turn-bet",
             advanceLabel: "Доиграть ветку и открыть карты"
           }
@@ -179,54 +179,54 @@
       "showdown-flop-fold": showdownNode({
         id: "showdown-flop-fold",
         title: "Пас на флопе",
-        question: "Учебный runout открыт вместе с рукой SB.",
+        question: "Открываем оставшиеся карты вместе с рукой SB.",
         board: ["Jd", "7c", "2h", "4s", "3d"],
         pot: 22.5,
         heroStack: 52,
         villainStack: 46.5,
-        actionLine: ["SB bet 5.5 BB", "BTN fold", "SB shows Q♥Q♣"],
-        historyLine: "BTN защитил префлоп, но сдал top pair на первом барреле",
+        actionLine: ["SB ставка 5,5 BB", "BTN пас", "SB показывает Q♥Q♣"],
+        historyLine: "BTN защитил префлоп, но сдал топ-пару на первом барреле",
         winner: "SB",
         summary: "SB показал Q♥Q♣. Пас A♠J♠ на небольшой c-bet недореализовал сильную часть диапазона колла BTN."
       }),
       "showdown-flop-raise": showdownNode({
         id: "showdown-flop-raise",
         title: "Раздутый банк",
-        question: "SB заколлировал рейз; дальнейшие улицы прошли check-check.",
+        question: "SB заколлировал рейз; дальше оба игрока чекали.",
         board: ["Jd", "7c", "2h", "4s", "3d"],
         pot: 51,
         heroStack: 35,
         villainStack: 35,
-        actionLine: ["BTN raise to 17 BB", "SB call 11.5 BB", "Turn check-check", "River check-check"],
-        historyLine: "Flop raise-call · showdown",
+        actionLine: ["BTN рейз до 17 BB", "SB колл 11,5 BB", "Тёрн чек-чек", "Ривер чек-чек"],
+        historyLine: "Флоп рейз-колл · вскрытие",
         winner: "SB",
         summary: "SB показал Q♥Q♣. Флоп-рейз A♠J♠ построил большой банк против оверпары и выбил слабые баррели."
       }),
       "showdown-turn-check": showdownNode({
         id: "showdown-turn-check",
-        title: "Pot control в позиции",
-        question: "Ривер 3♦ прошёл check-check. Открываем карты.",
+        title: "Контроль банка в позиции",
+        question: "На ривере 3♦ оба игрока чекнули. Открываем карты.",
         board: ["Jd", "7c", "2h", "4s", "3d"],
         pot: 28,
         heroStack: 46.5,
         villainStack: 46.5,
-        actionLine: ["Turn check-check", "River check-check", "SB shows Q♥Q♣"],
-        historyLine: "Call preflop · call flop · check back turn · showdown",
+        actionLine: ["Тёрн чек-чек", "Ривер чек-чек", "SB показывает Q♥Q♣"],
+        historyLine: "Колл префлоп · колл флопа · чек-бэк тёрна · вскрытие",
         winner: "SB",
-        summary: "SB показал Q♥Q♣ и выиграл 28 BB. BTN реализовал equity A♠J♠, сохранил слабые руки в диапазоне SB и не раздул банк."
+        summary: "SB показал Q♥Q♣ и выиграл 28 BB. BTN реализовал эквити A♠J♠, сохранил слабые руки в диапазоне SB и не раздул банк."
       }),
       "showdown-turn-bet": showdownNode({
         id: "showdown-turn-bet",
-        title: "Тонкий bet получил call",
-        question: "SB заколлировал 8 BB; ривер прошёл check-check.",
+        title: "Тонкую ставку заколлировали",
+        question: "SB заколлировал 8 BB; на ривере оба игрока чекнули.",
         board: ["Jd", "7c", "2h", "4s", "3d"],
         pot: 44,
         heroStack: 38.5,
         villainStack: 38.5,
-        actionLine: ["BTN bet 8 BB", "SB call 8 BB", "River check-check", "SB shows Q♥Q♣"],
-        historyLine: "Call preflop · call flop · turn bet-call · showdown",
+        actionLine: ["BTN ставка 8 BB", "SB колл 8 BB", "Ривер чек-чек", "SB показывает Q♥Q♣"],
+        historyLine: "Колл префлоп · колл флопа · ставка-колл тёрна · вскрытие",
         winner: "SB",
-        summary: "SB показал Q♥Q♣ и выиграл 44 BB. Turn bet A♠J♠ добавил деньги против верхней части check-range без улучшения руки."
+        summary: "SB показал Q♥Q♣ и выиграл 44 BB. Ставка на тёрне добавила денег в банк против верхней части диапазона чека без улучшения руки."
       })
     }
   });
