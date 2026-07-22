@@ -462,11 +462,9 @@
 
   function setupIntro() {
     $("#introTitle").textContent = cfg.introTitle;
-    $("#introSubtitle").textContent = trainerKey === "sb_unopened" ? "Широкий вход → разделение действий → пуши в коротком стеке" : "Позиция → сайзинг → стек → действие";
     $("#introLead").textContent = cfg.introLead;
     state.introSpot = introItem();
     if (!state.introSpot) { $("#introCoach").innerHTML = '<div class="answer-card is-wrong"><span class="answer-lamp"></span><div><strong>Эта настройка пока недоступна</strong><small>Выбери соседнюю позицию или стек.</small></div></div>'; return; }
-    $("#introTableMeta").textContent = contextLabel(state.introSpot.filters);
     renderDecision($("#introTableHost"), state.introSpot, "", "intro");
   }
   function answerIntro(choice) {

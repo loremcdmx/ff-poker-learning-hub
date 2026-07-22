@@ -99,8 +99,8 @@ function pageHtml(page) {
 
     <section class="screen active is-active" data-screen="hand">
       <article class="panel lesson-intro benchmark-intro">
-        <div class="intro-copy"><p class="eyebrow">Главная мысль урока</p><h2 id="introTitle"></h2><p class="intro-subtitle" id="introSubtitle"></p><p class="intro-lead" id="introLead"></p><p class="intro-support">Сначала реши раздачу. После ответа разберём правило и сравним две группы игроков.</p></div>
-        <div class="intro-table-visual"><article class="table-card"><div class="table-head"><i></i><strong>Учебный стол · 7-max</strong><span id="introTableMeta"></span></div><div class="lesson-table-host" id="introTableHost" aria-label="Интерактивный префлоп-стол" aria-live="polite"></div><div class="intro-answer" id="introCoach" role="status" aria-live="polite" aria-atomic="true"></div></article></div>
+        <div class="intro-copy"><p class="eyebrow">Главная мысль урока</p><h2 id="introTitle"></h2><p class="intro-lead" id="introLead"></p></div>
+        <div class="intro-table-visual"><article class="table-card"><div class="lesson-table-host" id="introTableHost" aria-label="Интерактивный префлоп-стол" aria-live="polite"></div><div class="intro-answer" id="introCoach" role="status" aria-live="polite" aria-atomic="true"></div></article></div>
       </article>
     </section>
 

@@ -121,6 +121,7 @@ try {
       assert.equal(introGeometry.controlsInsideHost, true, `${route} keeps the action dock inside the reserved table gutter at ${viewport.name}`);
       assert.equal(introGeometry.visibleFoldBadges, 0, `${route} removes unlabeled fold dots at ${viewport.name}`);
       assert.equal(introGeometry.visibleEmptyBadges, 0, `${route} removes every unlabeled seat-action dot at ${viewport.name}`);
+      assert.equal(await page.locator("#introSubtitle, .intro-support, .table-head").count(), 0, `${route} removes all three redundant intro labels at ${viewport.name}`);
       assert.equal(introGeometry.distinctActionColors, 4, `${route} gives all four decisions distinct semantic colors at ${viewport.name}`);
       assert.equal(introGeometry.tableCardContainsSeats, true, `${route} keeps every seat panel inside the table card at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
       assert.equal(introGeometry.tableCardContainsVisuals, true, `${route} keeps all table labels and cards inside the table card at ${viewport.name}: ${JSON.stringify(introGeometry)}`);

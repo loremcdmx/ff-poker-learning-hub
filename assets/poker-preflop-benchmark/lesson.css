@@ -29,24 +29,12 @@
   background: rgba(7,5,10,.34);
   box-shadow: 0 24px 54px rgba(0,0,0,.25);
 }
-.preflop-benchmark-lesson .table-head {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin-bottom: 6px;
-  padding-inline: 4px;
-  color: var(--muted);
-  font-size: 12px;
-}
-.preflop-benchmark-lesson .table-head i { width: 7px; height: 7px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 4px rgba(87, 214, 154, .12); }
-.preflop-benchmark-lesson .table-head strong { color: var(--text); }
-.preflop-benchmark-lesson .table-head span { margin-left: auto; }
 .preflop-benchmark-lesson .lesson-table-host {
   --trainer-table-plane-height: clamp(310px, 46cqw, 350px);
   --shell-action-gutter: 82px;
   min-width: 0;
   min-height: calc(var(--trainer-table-plane-height) + var(--shell-action-gutter));
-  padding: 0 10px var(--shell-action-gutter);
+  padding: 14px 10px var(--shell-action-gutter);
 }
 .preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] {
   --trainer-table-plane-height: inherit;
@@ -463,9 +451,7 @@
   }
   .preflop-benchmark-lesson .intro-copy .eyebrow { margin-bottom: 10px; font-size: 12px; }
   .preflop-benchmark-lesson .intro-copy h2 { margin-bottom: 8px; font-size: clamp(36px, 4.6vw, 48px); }
-  .preflop-benchmark-lesson .intro-subtitle { margin-bottom: 12px; font-size: 16px; line-height: 1.35; }
   .preflop-benchmark-lesson .intro-lead { margin-bottom: 12px; font-size: 16px; line-height: 1.42; }
-  .preflop-benchmark-lesson .intro-support { margin-bottom: 0; font-size: 14px; line-height: 1.45; }
   .preflop-benchmark-lesson .lesson-table-host {
     --trainer-table-plane-height: clamp(310px, 52cqw, 320px);
   }
