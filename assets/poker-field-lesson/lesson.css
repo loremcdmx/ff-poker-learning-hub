@@ -1575,6 +1575,16 @@ body.flop-checkraise-lesson .lesson-table-host .ff-shell-simulator-snapshot {
   --trainer-table-plane-height: min(430px, calc(100cqw * 9 / 16)) !important;
 }
 
+/* On a short desktop viewport the shared 430px table leaves the real action
+   row just below the fold. Keep the same layout, but reclaim enough height for
+   all three decisions to remain fully visible without scrolling. */
+@media (min-width: 821px) and (max-height: 920px) {
+  body.flop-checkraise-lesson [data-step="practice"] .lesson-table-host
+  .ff-shell-simulator-snapshot {
+    --trainer-table-plane-height: min(396px, calc(100cqw * 9 / 16)) !important;
+  }
+}
+
 @media (min-width: 621px) {
   body.flop-checkraise-lesson .lesson-table-host
   .ff-shell-simulator-snapshot.table-grid[data-count="1"] .felt.has-board {

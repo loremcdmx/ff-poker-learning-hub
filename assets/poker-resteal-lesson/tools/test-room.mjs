@@ -52,11 +52,11 @@ assert.match(lessonJs, /openPct: controls\.openPct,[\s\S]*callPct: controls\.cal
 assert.match(lessonJs, /const RankData = window\.PokerRestealRankData/, "rank-at-hand cube still powers the league comparison tab");
 assert.match(lessonJs, /state\.data\.hero_outcomes\?\.pooled\?\.ALL/, "validated all-in-adjusted outcomes power the visible chipEV comparison");
 assert.match(lessonJs, /function renderOutcomeBars/, "math tab renders all-in versus call chipEV by hand group");
-assert.match(lessonHtml, /Наблюдаемый chipEV · реальные раздачи FF/, "chipEV comparison is labelled as observed field evidence");
-assert.match(lessonHtml, /Это наблюдаемая выборка/, "chipEV comparison states its self-selection limitation");
+assert.match(lessonHtml, /Реальные раздачи FF/, "chipEV comparison is labelled as field evidence");
+assert.match(lessonHtml, /Сравнение показывает тенденцию поля/, "chipEV comparison states its observational limitation");
 assert.match(lessonJs, /reactionFilters: \{ openerPosition: "BTN", heroPosition: "BB", openSizeBb: 2, depthBand: "25-40" \}/, "reaction tab opens on the exact BB versus BTN 2 BB, 25–40 BB slice");
 assert.match(lessonJs, /resteal-reaction-summary\.json/, "reaction tab reads the compact strict-response cube");
-assert.match(lessonHtml, /относительный индекс, а не точный call%/, "known continuing hands are labelled as a relative proxy, not strategic advice");
+assert.match(lessonHtml, /Яркость показывает, как часто руку продолжали относительно премиумов/, "known continuing hands are explained as a relative comparison");
 
 const introPot = context.PokerChipKit.renderAmount(4.5, { maxVisual: 3, detail: true });
 assert.match(introPot, /poker-chip--one/);

@@ -140,11 +140,11 @@ const restealLessonSource = readFileSync(resolve(root, "assets/poker-resteal-les
 const restealLessonHtml = readFileSync(resolve(root, "resteal-lesson.html"), "utf8");
 assert(restealLessonSource.includes("state.data.hero_outcomes?.pooled?.ALL"), "validated outcomes drive the observed resteal chipEV comparison");
 assert(restealLessonSource.includes("function renderOutcomeBars"), "resteal math renders all-in versus call chipEV by hand group");
-assert(restealLessonHtml.includes("Наблюдаемый chipEV · реальные раздачи FF"), "resteal math labels the comparison as observed field evidence");
-assert(restealLessonHtml.includes("Это наблюдаемая выборка"), "resteal math states the self-selection limitation");
+assert(restealLessonHtml.includes("Реальные раздачи FF"), "resteal math labels the comparison as field evidence");
+assert(restealLessonHtml.includes("Сравнение показывает тенденцию поля"), "resteal math states its observational limitation");
 assert(restealLessonHtml.includes('data-step-target="reaction"'), "opener response evidence has a dedicated lesson tab");
 assert(restealLessonSource.includes("resteal-reaction-summary.json"), "opener response tab loads the compact strict-response cube");
-assert(restealLessonHtml.includes("относительный индекс, а не точный call%"), "response matrix is not presented as an absolute call chart");
+assert(restealLessonHtml.includes("Яркость показывает, как часто руку продолжали относительно премиумов"), "response matrix explains its relative scale");
 
 console.log(`✓ resteal field grids: reg ${goodRegGrid.toFixed(1)}% · nit ${nitGrid.toFixed(1)}% · active fish ${activeFishGrid.toFixed(1)}%`);
 console.log("✓ learning contracts passed");

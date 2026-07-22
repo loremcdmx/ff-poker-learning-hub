@@ -9,6 +9,7 @@
   <title>Рестилы в коротких стеках · FF Префлоп-лаборатория</title>
   <link rel="icon" href="assets/favicon.svg">
   <link rel="stylesheet" href="assets/poker-kit/tokens.css?v=4c5ba88ea3c1">
+  <link rel="stylesheet" href="assets/poker-kit/chart-system.css?v=ab5c2d6cf077">
   <link rel="stylesheet" href="assets/poker-kit/decks/decks.css?v=0639396cc47c">
   <link rel="stylesheet" href="assets/poker-kit/suit-text.css?v=7689ca588fe6">
   <link rel="stylesheet" href="assets/poker-kit/chips/chips.css?v=ed4e97084f43">
@@ -17,13 +18,13 @@
   <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=8311f2a34fe9">
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
-  <link rel="stylesheet" href="assets/poker-resteal-lesson/lesson.css?v=73a95ae68bb5">
+  <link rel="stylesheet" href="assets/poker-resteal-lesson/lesson.css?v=832d6b15e15e">
   <link rel="stylesheet" href="assets/poker-resteal-lesson/rank-comparison.css?v=ab72ead3a368">
   <link rel="stylesheet" href="assets/poker-kit/lesson-header.css?v=9641ee805ef9">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
   <script defer src="assets/poker-kit/lesson-header.js?v=1b28bacb3505"></script>
 </head>
-<body>
+<body class="resteal-lesson">
   <main class="app">
     <header class="topline lesson-chrome" data-lesson-header>
       <div class="lesson-brand lesson-chrome__identity">
@@ -171,12 +172,12 @@
         </ul>
       </article>
 
-      <article class="panel fgs-slide wisdom-slide" data-wisdom-slide aria-label="FGS и будущая подстройка соперника">
+      <article class="panel fgs-slide wisdom-slide" data-wisdom-slide aria-label="Будущая подстройка соперника">
         <div class="fgs-copy">
-          <p class="eyebrow">Продвинутый концепт · FGS</p>
+          <p class="eyebrow">Подстройка на будущие раздачи</p>
           <h3>А если соперник начнёт подстраиваться?</h3>
-          <p><strong>FGS (future game simulation)</strong> напоминает: игра не заканчивается после этой раздачи. Если соперник заметит твои широкие рестилы, в следующих встречах он может открываться осторожнее и коллировать олл-ин шире.</p>
-          <p class="fgs-takeaway">Не перестраивай весь диапазон заранее. Учитывай FGS, когда действительно видишь повторные споты или признаки подстройки.</p>
+          <p><strong>Игра не заканчивается после этой раздачи.</strong> Если соперник заметит твои широкие рестилы, в следующих встречах он может открываться осторожнее и коллировать олл-ин шире.</p>
+          <p class="fgs-takeaway">Не перестраивай весь диапазон заранее. Учитывай будущую подстройку, когда действительно видишь повторные споты или признаки подстройки.</p>
         </div>
         <div class="fgs-board">
           <div class="fgs-adjustments" aria-label="Возможная подстройка соперника">
@@ -326,17 +327,17 @@
       <div class="deep-panel field-insights" id="deepFieldPanel">
       <div class="field-grid field-grid-single">
         <article class="panel comparison-panel ev-comparison-panel" id="outcomeComparisonPanel">
-          <div class="comparison-heading"><div><p class="eyebrow">Наблюдаемый chipEV · реальные раздачи FF</p><h3>Олл-ин против колла</h3></div><span>Не солвер</span></div>
-          <p class="comparison-lead"><strong>На хороших кандидатах рестил-пуш в выборке был более чем на 1 BB выгоднее колла.</strong> Для сильных Ax разница составила +1,68 BB, для 77–99 — +1,20 BB.</p>
-          <div class="ev-takeaways" aria-label="Главные наблюдения сравнения chipEV">
+          <div class="comparison-heading"><div><p class="eyebrow">Реальные раздачи FF</p><h3>Олл-ин против колла</h3></div></div>
+          <p class="comparison-lead"><strong>На хороших кандидатах рестил-пуш был более чем на 1 BB выгоднее колла.</strong> Для сильных Ax разница составила +1,68 BB, для 77–99 — +1,20 BB.</p>
+          <div class="ev-takeaways" aria-label="Главные наблюдения сравнения ожидаемого результата в фишках">
             <article><span>Сильные Ax</span><strong>+1,68 BB</strong><small>олл-ин минус колл</small></article>
             <article><span>77–99</span><strong>+1,20 BB</strong><small>олл-ин минус колл</small></article>
-            <article class="is-caveat"><span>Не для каждой руки</span><strong>TT+ и связки</strong><small>в этой выборке колл не хуже</small></article>
+            <article class="is-caveat"><span>Не для каждой руки</span><strong>TT+ и связки</strong><small>колл не хуже</small></article>
           </div>
-          <p class="comparison-note">Ниже — средний all-in-adjusted chipEV уже выбранных игроками действий в спотах SB/BB против одного CO/BTN, 25–40 BB. Это наблюдаемая выборка, а не две линии одной и той же раздачи: конкретные руки и соперники внутри групп могли отличаться.</p>
-          <div class="bars" id="outcomeBars" aria-label="Сравнение chipEV олл-ина и колла по группам рук"></div>
-          <div class="comparison-pko-note"><strong>Баунти здесь ещё не посчитано.</strong><span>Это преимущество только в chipEV. Когда ты покрываешь соперника, стоимость нокаута может сделать подходящий рестил ещё выгоднее — её отдельно добавляет переключатель в модели выше.</span></div>
-          <p class="comparison-source">FF · 01.01–01.06.2026 · известные карты · опен не больше 3 BB · без лимперов. Сравнение описывает сыгранную выборку и не является причинной оценкой стратегии.</p>
+          <p class="comparison-note">Ниже — средний результат уже сыгранных олл-инов и коллов в одинаковых типах спотов. Сравнение показывает тенденцию поля, а не обещает тот же результат в каждой раздаче.</p>
+          <div class="bars" id="outcomeBars" aria-label="Сравнение ожидаемого результата в фишках для олл-ина и колла по группам рук"></div>
+          <div class="comparison-pko-note"><strong>Баунти здесь ещё не посчитано.</strong><span>Это преимущество только в ожидаемом результате в фишках. Когда ты покрываешь соперника, стоимость нокаута может сделать подходящий рестил ещё выгоднее — её отдельно добавляет переключатель в модели выше.</span></div>
+          <p class="comparison-source">Один опен-рейзер · 25–40 BB.</p>
         </article>
       </div>
       </div>
@@ -370,9 +371,9 @@
           <aside class="reaction-reading" aria-labelledby="reaction-reading-title">
             <p class="eyebrow">Как читать</p>
             <h3 id="reaction-reading-title">Сравнивай с премиумами</h3>
-            <p>В клетке — продолжения на одну физическую комбинацию относительно AA; в узком срезе с малой выборкой — относительно общей премиум-базы. Например, ≈50% означает: с этой рукой продолжали примерно вдвое реже ориентира.</p>
+            <p>Яркость показывает, как часто руку продолжали относительно премиумов. Например, 50% означает: эту руку продолжали примерно вдвое реже AA.</p>
             <div class="reaction-top-hands" id="reactionTopHands" aria-label="Самые частые известные руки продолжения"></div>
-            <p class="reaction-sample-note">Пары, suited и offsuit нормированы на 6 / 4 / 12 комбинаций, шкала линейная. Карты пасов почти всегда скрыты, поэтому это относительный индекс, а не точный call%. Для рук, которые открывают не всегда, внутри остаётся влияние частоты самого опена. Наведи на клетку, чтобы увидеть исходный N.</p>
+            <p class="reaction-sample-note">Это относительная карта продолжения: 50% означает, что руку продолжали примерно вдвое реже AA.</p>
           </aside>
         </div>
         <p class="reaction-source" id="reactionSource"></p>
@@ -439,6 +440,6 @@
   <script defer src="assets/poker-resteal-lesson/engine.js?v=b2b87c4f94e4"></script>
   <script defer src="assets/poker-resteal-lesson/rank-comparison.js?v=6b9fea074d49"></script>
   <script defer src="assets/poker-progress/progress.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-resteal-lesson/lesson.js?v=d0b8c9b87871"></script>
+  <script defer src="assets/poker-resteal-lesson/lesson.js?v=4ba88cf8344a"></script>
 </body>
 </html>

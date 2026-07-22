@@ -618,8 +618,8 @@
     $("#thresholdOut").textContent = signed(state.controls.threshold, 1);
     $("#foldSummary").textContent = usesFieldProfile
       ? field.useObservedFold
-        ? `Опен этого типа уже 12%-ного учебного минимума: матрица использует наблюдаемые ${Math.round(foldAfterOpen)}% пасов и около ${Math.round(field.call * 100)}% продолжения.`
-        : `В выборке на уже сделанные пуши пасовал ${Math.round(foldAfterOpen)} раз из 100. Эту частоту не переносим на все руки: матрица считает отдельный диапазон продолжения ${Math.round(field.call * 100)}%.`
+        ? `После такого опена соперник пасует примерно ${Math.round(foldAfterOpen)} раз из 100 и продолжает около ${Math.round(field.call * 100)}% рук.`
+        : `В похожих раздачах соперник пасовал примерно ${Math.round(foldAfterOpen)} раз из 100. Для расчёта берём осторожный диапазон продолжения ${Math.round(field.call * 100)}%.`
       : `После опена выбросит примерно ${Math.round(foldAfterOpen)} раз из 100.`;
   }
 
@@ -725,13 +725,12 @@
       const jam = Number(jamRow.avg_ev_bb) || 0;
       const call = Number(callRow.avg_ev_bb) || 0;
       const difference = jam - call;
-      const thinSample = Math.min(Number(jamRow.n) || 0, Number(callRow.n) || 0) < 2500;
       const barWidth = (value) => Math.max(4, Math.abs(value) / max * 100);
-      return `<div class="compare-row ${thinSample ? "is-thin-sample" : ""}">
-        <div class="compare-category"><strong>${categoryLabels[key] || key}</strong><small>${categoryDetails[key] || ""}</small>${thinSample ? "<span>небольшая выборка одного действия</span>" : ""}</div>
+      return `<div class="compare-row">
+        <div class="compare-category"><strong>${categoryLabels[key] || key}</strong><small>${categoryDetails[key] || ""}</small></div>
         <div class="compare-lines">
-          <div class="compare-line ${jam < 0 ? "is-negative" : ""}"><span class="compare-action"><b>Олл-ин</b><small>N ${sampleSize(jamRow.n)}</small></span><i><b style="width:${barWidth(jam)}%"></b></i><strong>${signed(jam, 2)}</strong></div>
-          <div class="compare-line is-call ${call < 0 ? "is-negative" : ""}"><span class="compare-action"><b>Колл</b><small>N ${sampleSize(callRow.n)}</small></span><i><b style="width:${barWidth(call)}%"></b></i><strong>${signed(call, 2)}</strong></div>
+          <div class="compare-line ${jam < 0 ? "is-negative" : ""}"><span class="compare-action"><b>Олл-ин</b></span><i><b style="width:${barWidth(jam)}%"></b></i><strong>${signed(jam, 2)}</strong></div>
+          <div class="compare-line is-call ${call < 0 ? "is-negative" : ""}"><span class="compare-action"><b>Колл</b></span><i><b style="width:${barWidth(call)}%"></b></i><strong>${signed(call, 2)}</strong></div>
         </div>
         <div class="compare-delta ${difference < 0 ? "is-negative" : Math.abs(difference) < 0.2 ? "is-close" : ""}"><span>Олл-ин − колл</span><strong>${signed(difference, 2)}</strong></div>
       </div>`;
@@ -826,7 +825,7 @@
     if (!status || !overview || !matrix || !topHands || !scale || !source) return;
     if (!slice?.totals?.N) {
       status.classList.add("is-error");
-      status.textContent = "Для такого сочетания фильтров нет достаточной выборки.";
+      status.textContent = "Для выбранного среза нет раздач.";
       overview.replaceChildren();
       matrix.replaceChildren();
       topHands.replaceChildren();
@@ -843,7 +842,7 @@
     ];
     overview.innerHTML = actions.map(([key, label, className, note]) => {
       const count = key === "continue" ? slice.totals.C + slice.totals.R : slice.totals[key];
-      return `<article class="reaction-stat ${className}"><span>${label}</span><strong>${pct(count / total, 1)}</strong><small>${sampleSize(count)} · ${note}</small></article>`;
+      return `<article class="reaction-stat ${className}"><span>${label}</span><strong>${pct(count / total, 1)}</strong><small>${note}</small></article>`;
     }).join("");
 
     const known = Object.entries(slice.hands).map(([hand, values]) => ({
@@ -873,19 +872,17 @@
       const normalizedPct = Math.round(normalized * 100);
       const strength = values.N ? 0.08 + 0.84 * normalized : 0;
       const title = values.N
-        ? `${hand}: примерно ${normalizedPct}% от ${anchorLabel.toLowerCase()} · N ${sampleSize(values.N)} продолжений · ${reactionComboCount(hand)} комбинаций`
+        ? `${hand}: примерно ${normalizedPct}% от ${anchorLabel.toLowerCase()}`
         : `${hand}: известных продолжений нет`;
-      const sampleClass = values.N > 0 && values.N < 10 ? "is-thin" : "";
-      return `<span class="reaction-cell ${values.N ? "" : "is-empty"} ${sampleClass}" role="gridcell" style="--reaction-strength:${strength.toFixed(3)}" title="${title}" aria-label="${title}"><b>${hand}</b>${values.N ? `<small>≈${normalizedPct}%</small>` : ""}</span>`;
+      return `<span class="reaction-cell ${values.N ? "" : "is-empty"}" role="gridcell" style="--reaction-strength:${strength.toFixed(3)}" title="${title}" aria-label="${title}"><b>${hand}</b>${values.N ? `<small>${normalizedPct}%</small>` : ""}</span>`;
     }).join("");
 
-    const leaders = known.sort((left, right) => right.density - left.density || right.N - left.N).slice(0, 8);
+    const leaders = known.filter((item) => item.N >= 20).sort((left, right) => right.density - left.density || right.N - left.N).slice(0, 8);
     topHands.innerHTML = leaders.map((item, index) => {
       const normalizedPct = Math.round(reactionNormalizedIndex(item.density, anchorDensity) * 100);
-      return `<span><i>${index + 1}</i><b>${item.hand}</b><small>≈${normalizedPct}% · N ${sampleSize(item.N)}</small></span>`;
+      return `<span><i>${index + 1}</i><b>${item.hand}</b><small>${normalizedPct}% от ${anchorLabel.toLowerCase()}</small></span>`;
     }).join("");
-    const meta = state.reactionData.meta || {};
-    source.textContent = `FF · ${formatObservedDate(meta.windowStartInclusive)}–${formatObservedDate(meta.windowEndExclusive)} (правая граница не включена) · N ${sampleSize(total)} в выбранном срезе. В строгой выгрузке однозначно сопоставлено ${number((Number(meta.matchRatePct) || 0), 1)}% исходных опенеров; пропуски не считаются пасами. Только прямые all-in рестилы из SB/BB против CO/BTN, без лимперов. Технические C/R-коды трекера объединены в «продолжил»: после прямого all-in это одно стратегическое решение. Индекс линеен и нормирован на физические комбинации; это не абсолютный call%. Наблюдение поля, не рекомендация.`;
+    source.textContent = "Прямой рестил из SB/BB против одного CO/BTN · без лимперов.";
   }
 
   function renderEvidence() {

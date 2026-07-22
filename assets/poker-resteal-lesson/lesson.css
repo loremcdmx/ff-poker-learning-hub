@@ -653,7 +653,6 @@ p { margin-bottom: 13px; color: var(--muted); line-height: 1.55; }
 .reaction-cell { position: relative; display: grid; place-items: center; align-content: center; gap: 2px; aspect-ratio: 1; min-width: 0; overflow: hidden; border: 1px solid rgba(255, 255, 255, .12); border-radius: 6px; color: #fff; background: rgba(84, 211, 164, var(--reaction-strength)); font-variant-numeric: tabular-nums; box-shadow: inset 0 1px rgba(255, 255, 255, .05); }
 .reaction-cell b { font-size: clamp(9px, .8vw, 12px); line-height: 1; }
 .reaction-cell small { color: rgba(255, 255, 255, .82); font-size: 7.5px; font-weight: 800; line-height: 1; }
-.reaction-cell.is-thin::after { position: absolute; top: 3px; right: 3px; width: 4px; height: 4px; border-radius: 50%; content: ""; background: #ffd35d; box-shadow: 0 0 0 2px rgba(18, 15, 21, .55); }
 .reaction-cell.is-empty { color: rgba(205, 198, 211, .28); background: #15131a; }
 .reaction-reading { display: grid; align-content: start; gap: 8px; }
 .reaction-reading > p { margin: 0; color: rgba(218, 213, 224, .76); font-size: 11px; line-height: 1.5; text-wrap: pretty; }

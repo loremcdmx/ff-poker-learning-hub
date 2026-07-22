@@ -16,7 +16,7 @@ const routes = [
   { path: "/vs-one-raiser-sb-lesson", file: "vs-one-raiser-sb-lesson.html", title: "SB против одного рейзера · FF Префлоп-лаборатория" },
   { path: "/sb-unopened-lesson", file: "sb-unopened-lesson.html", title: "SB без опена до тебя · FF Префлоп-лаборатория" },
   { path: "/resteal-lesson", file: "resteal-lesson.html", title: "Рестилы в коротких стеках · FF Префлоп-лаборатория" },
-  { path: "/flop-cbet-hu-lesson", file: "flop-cbet-hu-lesson.html", title: "C-bet RvBB · урок и библиотека FF" },
+  { path: "/flop-cbet-hu-lesson", file: "flop-cbet-hu-lesson.html", title: "Ставка на флопе против BB · урок FF" },
   { path: "/flop-checkraise-lesson", file: "flop-checkraise-lesson.html", title: "Чек-рейз флопа · FF Poker Learning Hub" },
   { path: "/vs-3bet-defense-lesson", file: "vs-3bet-defense-lesson.html", title: "Защита против 3-бета · FF Poker Learning Hub" },
   { path: "/poker-simulator", file: "poker-simulator.html", title: "Покерный симулятор столов" },

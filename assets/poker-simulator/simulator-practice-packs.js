@@ -23,7 +23,7 @@
       aliases: Object.freeze(["bb-resteal"]),
       styles: Object.freeze(["assets/poker-resteal-lesson/simulator-pack.css?v=d2ab724e7c02"]),
       scripts: Object.freeze([
-        "assets/poker-resteal-lesson/advice.js?v=20260713-2",
+        "assets/poker-resteal-lesson/advice.js?v=3d0bdf0969b4",
         "assets/poker-resteal-lesson/simulator-pack.js?v=19b26307536f"
       ])
     })

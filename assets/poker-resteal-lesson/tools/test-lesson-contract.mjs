@@ -82,15 +82,14 @@ assert.equal((html.match(/id="(?:hand|field)Matrix"/g) || []).length, 1, "deep l
 assert.doesNotMatch(html, /id="fieldMatrix"|id="fieldHandReadout"/, "duplicate field matrix and readout are removed");
 assert.doesNotMatch(html, /class="panel risk-card"|id="bustHeadline"/, "generic bustout card is removed");
 assert.ok(html.indexOf("pko-card-under-matrix") < html.indexOf('id="deepFieldPanel"'), "PKO controls sit directly below the shared matrix section");
-assert.match(html, /Наблюдаемый chipEV · реальные раздачи FF/);
+assert.match(html, /Реальные раздачи FF/);
 assert.match(html, /Олл-ин против колла/);
 assert.match(html, /сильных Ax[^]*\+1,68 BB[^]*77–99[^]*\+1,20 BB/, "the visible lesson leads with the validated one-blind-plus cases");
-assert.match(html, /наблюдаемая выборка, а не две линии одной и той же раздачи/, "self-selection caveat stays beside the EV comparison");
+assert.match(html, /Сравнение показывает тенденцию поля/, "observational caveat stays beside the EV comparison");
 assert.match(html, /Баунти здесь ещё не посчитано/, "field chipEV is kept separate from the PKO model");
 assert.doesNotMatch(html, /class="comparison-method"|Игроки проекта с известными картами|Один фильтр спота/, "removed methodology cards stay removed");
 assert.doesNotMatch(html, /class="comparison-footnote"|Значение линии|Разницы около 0,1 BB/, "removed methodology footnote stays removed");
 assert.match(html, /Как опен-рейзер отвечает на рестил/);
-assert.match(html, /Карты пасов почти всегда скрыты/);
 assert.match(html, /Сравнивай с премиумами/);
 assert.match(html, /Но я могу вылететь/);
 assert.match(html, /Ты не теряешь 30 BB автоматически, даже если получил колл/);
@@ -141,8 +140,8 @@ assert.equal(Math.round(reactionNormalizedIndex(35 / 6, 80 / 6) * 100), 44, "35 
 assert.equal(Math.round(reactionNormalizedIndex(40 / 4, 60 / 6) * 100), 100, "suited and pair hands compare per physical combination");
 assert.equal(Math.round(reactionNormalizedIndex(120 / 12, 60 / 6) * 100), 100, "offsuit and pair hands compare per physical combination");
 assert.match(html, /id="reactionRangeScale">AA = 100/, "reaction legend explains its relative anchor");
-assert.match(html, /относительный индекс, а не точный call%/, "reaction copy does not present the proxy as an absolute call rate");
-assert.match(css, /\.reaction-cell\.is-thin::after/, "thin hand samples are visibly marked");
+assert.match(html, /Яркость показывает, как часто руку продолжали относительно премиумов/, "reaction copy explains the relative comparison");
+assert.doesNotMatch(css, /\.reaction-cell\.is-thin::after/, "thin-sample technical markers are not shown to learners");
 assert.equal(reactionSummary.spots.length, 36, "compact reaction cube keeps every position/size/depth slice");
 assert.equal(reactionSummary.spots.reduce((sum, spot) => sum + spot.totals.N, 0), 128658, "compact cube reconciles all matched original-opener responses");
 assert.doesNotMatch(js, /hero_bustouts|bustHeadline|bustVisual/);
