@@ -54,12 +54,15 @@ latest AS (
     h.holecards_str,
     h.preflop_action,
     toUInt8(coalesce(h.is_preflop_allin, 0)),
-    h.preflop_effective_stack_size_bb
+    h.preflop_effective_stack_size_bb,
+    h.preflop_raise_and_blind_made_amount_bb,
+    if(h.bb_amount > 0, coalesce(h.bet_bb_amount, 0) / h.bb_amount, 0)
   ), tuple(h.version, h.hand_player_id)) AS x
   FROM analytics.int_tracker_hand_joined AS h
   INNER JOIN rank_intervals AS r ON h.user_id = r.member_user_id
   WHERE h.played_at >= r.valid_from
     AND h.played_at < r.valid_to
+    AND (r.rang BETWEEN 1 AND 5 OR r.rang BETWEEN 15 AND 18)
     AND h.month_start_date >= toDate('2023-09-01')
     AND h.month_start_date < toDate('2026-08-01')
     AND h.played_at >= toDateTime('2023-09-01 00:00:00')
@@ -94,7 +97,12 @@ classified AS (
     x.1 AS user_id,
     x.3 AS played_at,
     multiIf(
-      x.5 = 'R' AND x.6 = 1, 'jam',
+      x.5 = 'R' AND (
+        x.6 = 1 OR (
+          isNotNull(x.8)
+          AND x.8 - x.9 >= x.7 - 0.01
+        )
+      ), 'jam',
       startsWith(ifNull(x.5, ''), 'R'), 'raise',
       startsWith(ifNull(x.5, ''), 'C'), 'call',
       x.5 = 'F', 'fold',

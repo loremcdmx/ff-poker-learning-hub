@@ -60,12 +60,16 @@ latest AS (
     h.bb_amount,
     h.preflop_action,
     toUInt8(coalesce(h.is_preflop_allin, 0)),
-    h.holecards_str
+    h.holecards_str,
+    h.preflop_effective_stack_size_bb,
+    h.preflop_raise_and_blind_made_amount_bb,
+    if(h.bb_amount > 0, coalesce(h.bet_bb_amount, 0) / h.bb_amount, 0)
   ), tuple(h.version, h.hand_player_id)) AS x
   FROM analytics.int_tracker_hand_joined AS h
   INNER JOIN rank_intervals AS r ON h.user_id = r.member_user_id
   WHERE h.played_at >= r.valid_from
     AND h.played_at < r.valid_to
+    AND (r.rang BETWEEN 1 AND 5 OR r.rang BETWEEN 15 AND 18)
     AND h.month_start_date >= toDate('2025-10-01')
     AND h.month_start_date < toDate('2026-08-01')
     AND h.played_at >= toDateTime('2025-10-01 00:00:00')
@@ -90,8 +94,12 @@ SELECT
   round(100 * avg(toFloat64(x.3) / toFloat64(x.4)), 2) AS spot_ev_bb_100,
   round(100 * countIf(x.5 = 'F') / count(), 1) AS fold_pct,
   round(100 * countIf(startsWith(ifNull(x.5, ''), 'C')) / count(), 1) AS call_pct,
-  round(100 * countIf(startsWith(ifNull(x.5, ''), 'R') AND x.6 = 0) / count(), 1) AS raise_pct,
-  round(100 * countIf(x.5 = 'R' AND x.6 = 1) / count(), 1) AS jam_pct
+  round(100 * countIf(startsWith(ifNull(x.5, ''), 'R') AND NOT (
+    x.5 = 'R' AND (x.6 = 1 OR (isNotNull(x.9) AND x.9 - x.10 >= x.8 - 0.01))
+  )) / count(), 1) AS raise_pct,
+  round(100 * countIf(x.5 = 'R' AND (
+    x.6 = 1 OR (isNotNull(x.9) AND x.9 - x.10 >= x.8 - 0.01)
+  )) / count(), 1) AS jam_pct
 FROM latest
 GROUP BY cohort
 
@@ -105,8 +113,12 @@ SELECT
   round(100 * avg(toFloat64(x.3) / toFloat64(x.4)), 2) AS spot_ev_bb_100,
   round(100 * countIf(x.5 = 'F') / count(), 1) AS fold_pct,
   round(100 * countIf(startsWith(ifNull(x.5, ''), 'C')) / count(), 1) AS call_pct,
-  round(100 * countIf(startsWith(ifNull(x.5, ''), 'R') AND x.6 = 0) / count(), 1) AS raise_pct,
-  round(100 * countIf(x.5 = 'R' AND x.6 = 1) / count(), 1) AS jam_pct
+  round(100 * countIf(startsWith(ifNull(x.5, ''), 'R') AND NOT (
+    x.5 = 'R' AND (x.6 = 1 OR (isNotNull(x.9) AND x.9 - x.10 >= x.8 - 0.01))
+  )) / count(), 1) AS raise_pct,
+  round(100 * countIf(x.5 = 'R' AND (
+    x.6 = 1 OR (isNotNull(x.9) AND x.9 - x.10 >= x.8 - 0.01)
+  )) / count(), 1) AS jam_pct
 FROM latest
 WHERE x.7 IN ('QJs', 'QTs', 'KTs', '55', 'JTs')
 GROUP BY cohort, hand_class

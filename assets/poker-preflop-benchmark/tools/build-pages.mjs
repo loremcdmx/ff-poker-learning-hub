@@ -17,6 +17,8 @@ const pages = [
     description: "Интерактивный тренажёр решений MP–BTN против одного рейзера: пас, колл, 3-бет и пуш.",
     kicker: "Префлоп · свободные позиции",
     heading: "Против одного рейзера",
+    comparisonKicker: "Сравнение трёх уровней",
+    comparisonCopy: "Один спот, три полных диапазона. Смотри, как меняется главное действие на пути от первой лиги к новичкам.",
     next: "/vs-one-raiser-sb-lesson",
     nextLabel: "Дальше: SB против рейзера →",
   },
@@ -116,7 +118,7 @@ function pageHtml(page) {
     </section>
 
     <section class="screen" data-screen="field">
-      <div class="deep-heading reference-heading"><div><p class="eyebrow">Сравнение двух групп</p><h2>Где теряется правильная ветка</h2></div><p>Одна ситуация, два диапазона. Смотри, какое действие нужно добавить или сократить.</p></div>
+      <div class="deep-heading reference-heading"><div><p class="eyebrow">${page.comparisonKicker || "Сравнение двух групп"}</p><h2>Где теряется правильная ветка</h2></div><p>${page.comparisonCopy || "Одна ситуация, два диапазона. Смотри, какое действие нужно добавить или сократить."}</p></div>
       <article class="ff-chart-panel comparison-panel"><div class="benchmark-filters" data-filter-host></div><div class="comparison-grid" id="comparisonGrid"></div><div class="comparison-gap" id="comparisonGap" aria-live="polite"></div><p class="source-note benchmark-source" data-source-note></p></article>
     </section>
 
