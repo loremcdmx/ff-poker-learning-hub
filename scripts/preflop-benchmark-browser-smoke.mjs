@@ -20,6 +20,8 @@ const viewports = [
   { name: "comment", width: 1155, height: 870 },
   { name: "laptop", width: 1280, height: 720 },
   { name: "reported", width: 969, height: 907 },
+  { name: "split-edge", width: 921, height: 900 },
+  { name: "stacked-edge", width: 920, height: 900 },
   { name: "mobile", width: 390, height: 844 },
 ].filter((viewport) => !process.env.SMOKE_VIEWPORT || viewport.name === process.env.SMOKE_VIEWPORT);
 const browser = await chromium.launch({ headless: true });
@@ -63,6 +65,11 @@ try {
         const controls = rect("#introTableHost .client-controls");
         const status = rect("#introTableHost .action-status");
         const card = rect("#introTableHost .seat.is-hero .poker-deck-card");
+        const tableCard = rect(".table-card");
+        const introPanel = rect(".benchmark-intro");
+        const introCopy = rect(".benchmark-intro .intro-copy");
+        const introVisual = rect(".benchmark-intro .intro-table-visual");
+        const actionBar = rect("#introTableHost .action-bar");
         const visibleFoldBadges = [...document.querySelectorAll("#introTableHost .seat-action-badge.is-fold")]
           .filter((node) => getComputedStyle(node).display !== "none" && node.getBoundingClientRect().width > 0).length;
         const visibleEmptyBadges = [...document.querySelectorAll("#introTableHost .seat-action-badge:empty")]
@@ -71,8 +78,17 @@ try {
           .map((node) => getComputedStyle(node).backgroundImage + " " + getComputedStyle(node).backgroundColor);
         const seatPanels = [...document.querySelectorAll("#introTableHost .seat-panel")].map((node) => {
           const box = node.getBoundingClientRect();
-          return { width: box.width, height: box.height };
+          return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height };
         });
+        const tableVisuals = [...document.querySelectorAll("#introTableHost .seat-panel, #introTableHost .seat-position, #introTableHost .seat-cards, #introTableHost .dealer-dot")]
+          .filter((node) => getComputedStyle(node).display !== "none" && node.getBoundingClientRect().width > 0)
+          .map((node) => {
+            const box = node.getBoundingClientRect();
+            return { left: box.left, top: box.top, right: box.right, bottom: box.bottom };
+          });
+        const contains = (parent, child) => Boolean(parent && child
+          && child.left >= parent.left - 1 && child.right <= parent.right + 1
+          && child.top >= parent.top - 1 && child.bottom <= parent.bottom + 1);
         return {
           heroBet,
           pot,
@@ -84,6 +100,12 @@ try {
           distinctActionColors: new Set(actionColors).size,
           maxSeatHeight: Math.max(...seatPanels.map((seat) => seat.height)),
           maxSeatWidth: Math.max(...seatPanels.map((seat) => seat.width)),
+          introPanelHeight: introPanel?.height || 0,
+          introIsSplit: Boolean(introCopy && introVisual && introCopy.right <= introVisual.left + 1),
+          introUnusedBottom: introPanel && tableCard ? introPanel.bottom - tableCard.bottom : 0,
+          tableCardContainsActions: contains(tableCard, actionBar),
+          tableCardContainsSeats: seatPanels.every((seat) => contains(tableCard, seat)),
+          tableCardContainsVisuals: tableVisuals.every((visual) => contains(tableCard, visual)),
           visibleEmptyBadges,
           visibleFoldBadges,
         };
@@ -100,6 +122,13 @@ try {
       assert.equal(introGeometry.visibleFoldBadges, 0, `${route} removes unlabeled fold dots at ${viewport.name}`);
       assert.equal(introGeometry.visibleEmptyBadges, 0, `${route} removes every unlabeled seat-action dot at ${viewport.name}`);
       assert.equal(introGeometry.distinctActionColors, 4, `${route} gives all four decisions distinct semantic colors at ${viewport.name}`);
+      assert.equal(introGeometry.tableCardContainsSeats, true, `${route} keeps every seat panel inside the table card at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
+      assert.equal(introGeometry.tableCardContainsVisuals, true, `${route} keeps all table labels and cards inside the table card at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
+      assert.equal(introGeometry.tableCardContainsActions, true, `${route} keeps the action dock inside the table card at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
+      assert(introGeometry.introUnusedBottom <= 80, `${route} does not leave a large empty tail inside the intro at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
+      if (viewport.width >= 921) assert.equal(introGeometry.introIsSplit, true, `${route} keeps the compact split intro at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
+      if (viewport.name === "reported") assert(introGeometry.introPanelHeight <= 620, `${route} keeps the reported intro compact: ${JSON.stringify(introGeometry)}`);
+      if (viewport.name === "reported") assert(introGeometry.introUnusedBottom <= 40, `${route} keeps the reported intro tightly cropped: ${JSON.stringify(introGeometry)}`);
       if (viewport.name === "reported") {
         await page.screenshot({ path: `/private/tmp/${route.slice(1)}-intro-reported.png`, fullPage: false });
         await page.locator("#introTableHost").screenshot({ path: `/private/tmp/${route.slice(1)}-table-reported.png` });

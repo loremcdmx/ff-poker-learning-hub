@@ -10,17 +10,31 @@
   --benchmark-surface-shadow: 0 18px 48px rgba(0,0,0,.24);
 }
 
-.preflop-benchmark-lesson .app { width: min(1500px, 100%); }
+.preflop-benchmark-lesson .app { width: min(1500px, 100%); min-height: 0; }
 .preflop-benchmark-lesson .screen { min-width: 0; }
-.preflop-benchmark-lesson .benchmark-intro { grid-template-columns: minmax(0, .78fr) minmax(520px, 1.22fr); }
-.preflop-benchmark-lesson .intro-table-visual { display: grid; min-width: 0; place-items: center; }
-.preflop-benchmark-lesson .table-card { width: min(100%, 720px); min-width: 0; }
+.preflop-benchmark-lesson .benchmark-intro {
+  grid-template-columns: minmax(300px, .72fr) minmax(480px, 1.28fr);
+  gap: clamp(20px, 2.4vw, 36px);
+  min-height: 0;
+  padding: clamp(24px, 3.3vw, 48px);
+}
+.preflop-benchmark-lesson .intro-table-visual { display: grid; min-width: 0; min-height: 0; padding: 0; place-items: center; }
+.preflop-benchmark-lesson .table-card {
+  width: min(100%, 720px);
+  min-width: 0;
+  padding: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.085);
+  border-radius: 18px;
+  background: rgba(7,5,10,.34);
+  box-shadow: 0 24px 54px rgba(0,0,0,.25);
+}
 .preflop-benchmark-lesson .table-head {
   display: flex;
   align-items: center;
   gap: 9px;
-  margin-bottom: 9px;
-  padding-inline: 8px;
+  margin-bottom: 6px;
+  padding-inline: 4px;
   color: var(--muted);
   font-size: 12px;
 }
@@ -32,7 +46,7 @@
   --shell-action-gutter: 82px;
   min-width: 0;
   min-height: calc(var(--trainer-table-plane-height) + var(--shell-action-gutter));
-  padding: 0 3px var(--shell-action-gutter);
+  padding: 0 10px var(--shell-action-gutter);
 }
 .preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] {
   --trainer-table-plane-height: inherit;
@@ -56,6 +70,9 @@
   padding: 5px 9px;
   border-radius: 11px;
 }
+.preflop-benchmark-lesson .table-card .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .seat.seat-slot-model:is(.seat-zone-left, .seat-zone-bottom) .seat-position {
+  left: 0;
+}
 .preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] :is(.seat-name, .seat-stack) {
   font-size: 14px !important;
   line-height: 1.05;
@@ -63,6 +80,16 @@
 }
 .preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .seat-cards.hero-cards .poker-deck-card {
   --poker-card-width: 68px;
+}
+
+@media (min-width: 1101px) {
+  .preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-shell {
+    --hero-card-cap: 64px;
+    --hero-card-width: 64px;
+  }
+  .preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .seat-cards.hero-cards .poker-deck-card {
+    --poker-card-width: 64px;
+  }
 }
 .preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] :is(.bet-marker, .hero-felt-bet) {
   --poker-chip-size: 14px;
@@ -415,8 +442,6 @@
 }
 
 @media (max-width: 980px) {
-  .preflop-benchmark-lesson .benchmark-intro { grid-template-columns: 1fr; }
-  .preflop-benchmark-lesson .lesson-intro { min-height: auto; }
   .preflop-benchmark-lesson .slide { grid-template-columns: 1fr; padding-bottom: 86px; }
   .preflop-benchmark-lesson .insight-grid { grid-template-columns: 1fr; }
   .preflop-benchmark-lesson .insight-card { min-height: auto; }
@@ -428,6 +453,40 @@
   .preflop-benchmark-lesson .stack-story-head { display: block; }
   .preflop-benchmark-lesson .stack-story-head > p { margin-top: 8px; text-align: left; }
   .preflop-benchmark-lesson .stack-ladder { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+
+@media (min-width: 921px) and (max-width: 1100px) {
+  .preflop-benchmark-lesson .benchmark-intro {
+    grid-template-columns: minmax(300px, .72fr) minmax(500px, 1.28fr);
+    gap: 22px;
+    padding: 24px;
+  }
+  .preflop-benchmark-lesson .intro-copy .eyebrow { margin-bottom: 10px; font-size: 12px; }
+  .preflop-benchmark-lesson .intro-copy h2 { margin-bottom: 8px; font-size: clamp(36px, 4.6vw, 48px); }
+  .preflop-benchmark-lesson .intro-subtitle { margin-bottom: 12px; font-size: 16px; line-height: 1.35; }
+  .preflop-benchmark-lesson .intro-lead { margin-bottom: 12px; font-size: 16px; line-height: 1.42; }
+  .preflop-benchmark-lesson .intro-support { margin-bottom: 0; font-size: 14px; line-height: 1.45; }
+  .preflop-benchmark-lesson .lesson-table-host {
+    --trainer-table-plane-height: clamp(310px, 52cqw, 320px);
+  }
+  .preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-shell {
+    --avatar: 30px;
+    --hero-card-cap: 60px;
+    --hero-card-width: 60px;
+    --mini-card-width: 20px;
+    --seat-h: 44px;
+    --seat-w: 108px;
+  }
+  .preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] :is(.seat-name, .seat-stack) {
+    font-size: 13px !important;
+  }
+  .preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] .seat-cards.hero-cards .poker-deck-card {
+    --poker-card-width: 60px;
+  }
+}
+
+@media (max-width: 920px) {
+  .preflop-benchmark-lesson .benchmark-intro { grid-template-columns: 1fr; gap: 18px; min-height: auto; padding: 24px; }
 }
 
 @media (min-width: 701px) and (max-width: 1300px) {
