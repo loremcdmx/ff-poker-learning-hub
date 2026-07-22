@@ -40,6 +40,35 @@ async function captureState(page, route, viewport, state) {
   });
 }
 
+async function actionLabelGeometry(page, rootSelector) {
+  return page.locator(`${rootSelector} [data-option-key]`).evaluateAll((buttons) => buttons.map((button) => {
+    const label = button.querySelector(".table-action-label");
+    const buttonBox = button.getBoundingClientRect();
+    const labelBox = label?.getBoundingClientRect();
+    const buttonStyle = getComputedStyle(button);
+    const labelStyle = label ? getComputedStyle(label) : null;
+    const parts = [...button.querySelectorAll(".table-action-verb, .table-action-amount")];
+    const fits = Boolean(label && labelBox
+      && labelBox.left >= buttonBox.left - 1
+      && labelBox.right <= buttonBox.right + 1
+      && labelBox.top >= buttonBox.top - 1
+      && labelBox.bottom <= buttonBox.bottom + 1
+      && label.scrollWidth <= label.clientWidth + 1
+      && label.scrollHeight <= label.clientHeight + 1
+      && parts.every((part) => part.scrollWidth <= part.clientWidth + 1));
+    return {
+      text: button.getAttribute("aria-label") || button.textContent.trim(),
+      buttonWidth: buttonBox.width,
+      labelWidth: labelBox?.width || 0,
+      labelScrollWidth: label?.scrollWidth || 0,
+      buttonFontSize: buttonStyle.fontSize,
+      buttonPaddingInline: `${buttonStyle.paddingLeft} ${buttonStyle.paddingRight}`,
+      labelFontSize: labelStyle?.fontSize || "",
+      fits,
+    };
+  }));
+}
+
 try {
   for (const viewport of viewports) {
     for (const route of routes) {
@@ -122,6 +151,8 @@ try {
       assert.equal(introGeometry.visibleFoldBadges, 0, `${route} removes unlabeled fold dots at ${viewport.name}`);
       assert.equal(introGeometry.visibleEmptyBadges, 0, `${route} removes every unlabeled seat-action dot at ${viewport.name}`);
       assert.equal(await page.locator("#introSubtitle, .intro-support, .table-head").count(), 0, `${route} removes all three redundant intro labels at ${viewport.name}`);
+      const introActionLabels = await actionLabelGeometry(page, "#introTableHost");
+      assert(introActionLabels.every((item) => item.fits), `${route} keeps every intro action label fully visible at ${viewport.name}: ${JSON.stringify(introActionLabels)}`);
       assert.equal(introGeometry.distinctActionColors, 4, `${route} gives all four decisions distinct semantic colors at ${viewport.name}`);
       assert.equal(introGeometry.tableCardContainsSeats, true, `${route} keeps every seat panel inside the table card at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
       assert.equal(introGeometry.tableCardContainsVisuals, true, `${route} keeps all table labels and cards inside the table card at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
@@ -193,6 +224,8 @@ try {
       await captureState(page, route, viewport, "practice-landing");
       await page.getByRole("button", { name: "Запустить", exact: true }).click();
       await page.waitForSelector("#practiceTable [data-trainer-simulator-actions]");
+      const practiceActionLabels = await actionLabelGeometry(page, "#practiceTable");
+      assert(practiceActionLabels.every((item) => item.fits), `${route} keeps every practice action label fully visible at ${viewport.name}: ${JSON.stringify(practiceActionLabels)}`);
       await page.locator("#practiceTable [data-option-key]").first().click();
       assert.equal(await page.locator("#practiceFeedback:not([hidden])").count(), 1, `${route} practice returns cohort feedback`);
       assert.equal(await page.locator("#practiceCoach .feedback-cohort").count(), 2, `${route} practice shows both comparison groups`);
