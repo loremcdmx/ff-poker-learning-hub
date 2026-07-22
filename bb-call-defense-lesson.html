@@ -9,6 +9,7 @@
   <title>Защита BB коллом · FF Префлоп-лаборатория</title>
   <link rel="icon" href="assets/favicon.svg">
   <link rel="stylesheet" href="assets/poker-kit/tokens.css?v=4c5ba88ea3c1">
+  <link rel="stylesheet" href="assets/poker-kit/chart-system.css?v=ab5c2d6cf077">
   <link rel="stylesheet" href="assets/poker-kit/decks/decks.css?v=0639396cc47c">
   <link rel="stylesheet" href="assets/poker-kit/suit-text.css?v=7689ca588fe6">
   <link rel="stylesheet" href="assets/poker-kit/chips/chips.css?v=ed4e97084f43">
@@ -184,8 +185,8 @@
                     <small>те же ранги, но без флеш-потенциала</small>
                   </div>
                 </div>
-                <p class="shape-source"><strong>32 410</strong> сопоставленных коллов на сторону · 40–70 BB · 01.01–16.07.2026</p>
-                <small class="shape-method">Эквити — модель против 120 638 наблюдаемых опенов BTN. Реализация — EV с поправкой на выставления после фактических коллов; это описание поля, не рекомендация.</small>
+                <p class="shape-source">Реальные раздачи FF · 3-я лига · 40–70 BB</p>
+                <small class="shape-method">Сравниваем руки с одинаковыми рангами: меняется только наличие общей масти.</small>
               </div>
             </article>
 
@@ -224,7 +225,7 @@
                 <h3>Основная защита BB — колл. Но достаточно много рук мы хотим 3&#8209;бетить</h3>
                 <p>Если наш оппонент защищается только коллом, нам в целом без разницы, сколько рук он защищает: играть постфлоп в позиции не страшно. Там мы тоже очень часто получим оверфолды на c-bet.</p>
               </div>
-              <div class="action-split" aria-label="Как играет 3-я лига против опена BTN 2 BB при стеке 40–70 BB, 1 января — 16 июля 2026">
+              <div class="action-split" aria-label="Как играет 3-я лига против опена BTN 2 BB при стеке 40–70 BB">
                 <div class="is-raise"><span>3-бет</span><strong>13,6%</strong></div>
                 <div class="is-call"><span>Колл</span><strong>62,0%</strong></div>
                 <div class="is-fold"><span>Пас</span><strong>24,4%</strong></div>
@@ -253,7 +254,7 @@
                   </dl>
                 </article>
                 <p class="scope-takeaway"><strong>Колл сжимается.</strong> 3-бет почти не меняется.</p>
-                <p class="scope-source">FF · 1-я лига · 30 BB+ · 01.01–16.07.2026 · N 206 135 / 55 770. Наблюдаемая игра поля, не рекомендация; прямой пуш входит в 3-бет.</p>
+                <p class="scope-source">Реальные раздачи FF · 1-я лига · 30 BB+. Прямой пуш включён в 3-бет.</p>
               </div>
             </article>
           </div>
@@ -296,7 +297,7 @@
           <article class="league-range-card is-league" id="selectedLeagueDefenseChart" aria-label="Чарт выбранной лиги"></article>
         </div>
 
-        <p class="league-defense-source" id="leagueDefenseSource">Ранг берётся на момент раздачи. Слева — ранги 15–18; ранг 15 также остаётся внутри 3 лиги справа.</p>
+        <p class="league-defense-source" id="leagueDefenseSource">Реальные раздачи FF. Сравни одинаковый спот у новичков и выбранной лиги.</p>
       </article>
     </section>
 
@@ -339,7 +340,7 @@
           <strong class="realization-ratio" id="realizationRatio">—</strong>
         </div>
         <div class="range-controls realization-stack-controls">
-          <div><span>Эффективный стек в базе FF</span><div class="segmented-control" id="realizationStackTabs" role="tablist" aria-label="Стек для фактической реализации колла"></div></div>
+          <div><span>Эффективный стек</span><div class="segmented-control" id="realizationStackTabs" role="tablist" aria-label="Стек для реализации колла"></div></div>
         </div>
         <div class="realization-detail" id="realizationDetail" aria-live="polite"></div>
       </section>
@@ -436,7 +437,7 @@
   <script defer src="assets/poker-bb-call-defense-lesson/data.js?v=d805eb9f1169"></script>
   <script defer src="assets/poker-bb-call-defense-lesson/recall.js?v=20260716-memory-review-v20"></script>
   <script defer src="assets/poker-progress/progress.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-bb-call-defense-lesson/lesson.js?v=9e936a5025fe"></script>
+  <script defer src="assets/poker-bb-call-defense-lesson/lesson.js?v=3b3bd0ad2c1e"></script>
   <script defer src="assets/ffstart-course/media-player.js?v=20260716-native-metadata-v22"></script>
   <script defer src="assets/ffstart-course/legacy-media.js?v=20260716-bb-direct-video-v2"></script>
 </body>

@@ -2484,6 +2484,15 @@ a:focus-visible,
   color: var(--soft);
 }
 
+.matrix-kpi[data-reliability="thin"] strong,
+.focus-metric[data-reliability="thin"] strong {
+  color: var(--soft);
+  font-size: 0.68rem;
+  line-height: 1.08;
+  text-overflow: clip;
+  white-space: normal;
+}
+
 .delta-cell {
   vertical-align: top;
 }
@@ -2714,6 +2723,22 @@ a:focus-visible,
 
 .rank-cell[data-reliability="directional"] {
   background: rgba(255, 223, 81, 0.07);
+}
+
+.rank-cell[data-reliability="thin"] strong {
+  color: var(--soft);
+  font-size: 0.58rem;
+  line-height: 1.05;
+  white-space: normal;
+}
+
+.wisdom-high-table td small,
+.wisdom-size-matrix td small {
+  display: block;
+  margin-top: 3px;
+  color: var(--soft);
+  font-size: 0.52rem;
+  line-height: 1.15;
 }
 
 .detail-grid {

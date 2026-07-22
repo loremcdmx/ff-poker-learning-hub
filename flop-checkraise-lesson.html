@@ -3,12 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Интерактивный урок FF по чек-рейзу флопа: первое решение, три опоры, срезы поля и практика на функциональном столе.">
+  <meta name="description" content="Интерактивный урок FF по чек-рейзу флопа: первое решение, три опоры, игра поля и практика за столом.">
   <meta property="og:title" content="Чек-рейз флопа · FF Poker Learning Hub">
   <meta property="og:description" content="Учимся находить чек-рейз по структуре доски, диапазонам и размеру ставки — с данными поля и практикой.">
   <title>Чек-рейз флопа · FF Poker Learning Hub</title>
   <link rel="icon" href="assets/favicon.svg">
   <link rel="stylesheet" href="assets/poker-kit/tokens.css">
+  <link rel="stylesheet" href="assets/poker-kit/chart-system.css?v=ab5c2d6cf077">
   <link rel="stylesheet" href="assets/poker-kit/decks/decks.css?v=0639396cc47c">
   <link rel="stylesheet" href="assets/poker-kit/suit-text.css?v=7689ca588fe6">
   <link rel="stylesheet" href="assets/poker-kit/chips/chips.css?v=ed4e97084f43">
@@ -18,7 +19,7 @@
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
   <link rel="stylesheet" href="assets/poker-field-lesson/lesson.css?v=8970a66ba6bf">
-  <link rel="stylesheet" href="assets/poker-flop-checkraise-lesson/field-matrix.css?v=0fbf85b6f5b1">
+  <link rel="stylesheet" href="assets/poker-flop-checkraise-lesson/field-matrix.css?v=43e8263769ce">
   <link rel="stylesheet" href="assets/poker-kit/lesson-header.css?v=9641ee805ef9">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
   <script defer src="assets/poker-kit/lesson-header.js?v=1b28bacb3505"></script>
@@ -52,9 +53,9 @@
         <div class="deal-copy">
           <p class="eyebrow">Первое решение — до теории</p>
           <h2 id="dealTitle" data-lesson-title>Чек-рейз флопа</h2>
-          <p class="intro-lead" data-intro-lead>Выбери линию на функциональном столе. После ответа урок покажет идею, поле и очередь похожих решений.</p>
+          <p class="intro-lead" data-intro-lead>Выбери линию за столом. После ответа разберём идею, игру поля и похожие решения.</p>
           <ol class="scope-list" data-scope-list aria-label="Границы урока">
-            <li class="scope-empty">Границы выборки появятся вместе с данными.</li>
+            <li class="scope-empty">Подробности урока появятся здесь.</li>
           </ol>
         </div>
         <article class="decision-panel panel" aria-labelledby="introSpotTitle">
@@ -96,13 +97,12 @@
           <p class="eyebrow">CO/BTN против BB · структуры флопа</p>
           <h2 id="fieldTitle">Где поле ставит — и где сдаётся</h2>
         </div>
-        <div class="data-stamp" aria-label="Источник и период данных">
-          <span data-source-label>Источник готовится</span>
-          <span data-period-label>Период готовится</span>
+        <div class="data-stamp" aria-label="Период данных">
+          <span>Как играет поле · <b data-period-label>Q2 2026</b></span>
         </div>
       </div>
       <div class="structure-league-matrix" data-structure-league-matrix aria-live="polite">
-        <article class="panel structure-league-loading">Собираем структуру поля…</article>
+        <article class="panel structure-league-loading">Загружаем данные поля…</article>
       </div>
     </section>
 
@@ -112,7 +112,7 @@
           <p class="eyebrow">Примеры</p>
           <h2 id="examplesTitle" data-examples-title>Кандидаты на чек-рейз</h2>
         </div>
-        <p data-examples-lead>Пять категорий: когда рейзить и что делать на тёрне.</p>
+        <p data-examples-lead>Реальные раздачи и учебные примеры по всем типам флопа.</p>
       </div>
       <aside class="examples-scope panel" aria-label="Границы примеров">
         <strong>BB против CO/BTN</strong>
@@ -121,19 +121,33 @@
       <section class="example-observed panel" aria-labelledby="observedExamplesTitle">
         <header class="example-observed-head">
           <div>
-            <p class="eyebrow">По базе FF · Лига 1</p>
+            <p class="eyebrow">Как играет поле · Лига 1</p>
             <h3 id="observedExamplesTitle" data-examples-league-one-title>Реальные чек-рейзы по всем типам флопа</h3>
             <p data-examples-league-one-lead>По одной наблюдавшейся раздаче на каждую категорию.</p>
           </div>
-          <span class="example-observed-scope" data-examples-league-one-scope>Q2 2026 · rank 1–5 на момент раздачи</span>
+          <span class="example-observed-scope" data-examples-league-one-scope>Q2 2026 · уровни 1–5</span>
         </header>
         <div class="observed-example-grid" data-examples-league-one></div>
-        <p class="observed-example-note" data-examples-league-one-note>Это примеры действий поля, а не рекомендация и не частота.</p>
       </section>
+      <section class="example-atlas panel" aria-labelledby="exampleAtlasTitle">
+        <header class="example-atlas-head">
+          <div>
+            <p class="eyebrow">Учебные примеры</p>
+            <h3 id="exampleAtlasTitle" data-examples-atlas-title>8 типов флопа × 4 решения</h3>
+            <p data-examples-atlas-lead>Выбери доску и сравни по две руки для вэлью, полублефа, колла и паса.</p>
+          </div>
+          <span class="example-atlas-scope" data-examples-atlas-scope>BB против BTN · 40–60 BB · c-bet 25–33% банка</span>
+        </header>
+        <div data-examples-atlas></div>
+      </section>
+      <div class="examples-detail-heading">
+        <p class="eyebrow">Подробные разборы</p>
+        <h3>Почему рейзим и как играем тёрн</h3>
+      </div>
       <div class="example-groups">
         <section class="example-group is-value panel" aria-labelledby="valueExamplesTitle">
           <header class="example-group-head">
-            <h3 id="valueExamplesTitle">Вэлью</h3>
+            <h3 id="valueExamplesTitle">Велью</h3>
           </header>
           <div class="example-list" data-examples-value></div>
         </section>
@@ -144,13 +158,13 @@
           <div class="example-list" data-examples-bluff></div>
         </section>
       </div>
-      <p class="examples-method" data-examples-method>Примеры учебные; точных частот по отдельным рукам пока нет.</p>
+      <p class="examples-method" data-examples-method>Сначала — реальные раздачи поля. Ниже — учебные примеры.</p>
     </section>
 
     <section class="lesson-screen" data-step="practice" aria-labelledby="practiceTitle" hidden>
       <div class="practice-heading practice-trainer-heading">
         <div class="practice-heading-copy">
-          <p class="eyebrow">Бесконечная практика · одна раздача на экране</p>
+          <p class="eyebrow">Практика</p>
           <h2 id="practiceTitle">Где здесь чек-рейз?</h2>
           <p class="practice-intro">
             У оппонента есть фолды на рейз. Чек-рейзь сильное вэлью и лучшие полублефы,
@@ -203,8 +217,8 @@
   <script src="assets/poker-trainer-shell/simulator-continuation.js?v=20260716-full-hand-1"></script>
   <script src="assets/poker-flop-checkraise-lesson/continuations.js?v=e5a2e89fd1c0"></script>
   <script src="assets/poker-flop-checkraise-lesson/practice-generator.js?v=f7d164b61253"></script>
-  <script src="assets/poker-flop-checkraise-lesson/data.js?v=176cbc70103e"></script>
-  <script src="assets/poker-flop-checkraise-lesson/field-matrix.js?v=a1acaaf1cc25"></script>
+  <script src="assets/poker-flop-checkraise-lesson/data.js?v=38229a5a626c"></script>
+  <script src="assets/poker-flop-checkraise-lesson/field-matrix.js?v=a2ea2db7c439"></script>
   <script src="assets/poker-field-lesson/lesson.js?v=dd8dafd4db7b"></script>
 </body>
 </html>

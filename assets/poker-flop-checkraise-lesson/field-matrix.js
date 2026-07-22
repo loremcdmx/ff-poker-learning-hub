@@ -3,6 +3,16 @@
 
   const host = document.querySelector("[data-structure-league-matrix]");
   const source = window.FF_POKER_FIELD_LESSON_DATA?.fieldMatrix;
+  const STRUCTURE_COPY = {
+    a_high_dry: ["Туз-хай · сухая", "разные масти · мало связей"],
+    k_high_dry: ["Король-хай · сухая", "разные масти · мало связей"],
+    broadway: ["Бродвейная", "две или три карты от десятки"],
+    low_connected: ["Низкая связанная", "низкие ранги · много стрит-дро"],
+    paired: ["Спаренная", "две или три карты одного ранга"],
+    two_tone: ["Двухмастная", "ровно две карты одной масти"],
+    monotone: ["Одномастная", "три карты одной масти"],
+    other: ["Другие разноцветные", "остальные неспаренные флопы разных мастей"]
+  };
   const STRUCTURE_KEYS = [
     "a_high_dry",
     "k_high_dry",
@@ -26,10 +36,6 @@
 
   function integer(value) {
     return Number.isInteger(value) ? value : null;
-  }
-
-  function count(value) {
-    return Number(value).toLocaleString("ru-RU");
   }
 
   function rate(numerator, denominator) {
@@ -117,21 +123,15 @@
     });
   }
 
-  function appendKpi(parent, label, numerator, denominator, className, { showSample = true } = {}) {
+  function appendKpi(parent, label, numerator, denominator, className) {
     const kpi = element("div", `structure-league-kpi ${className}`);
     const reliability = reliabilityFor(denominator);
-    const value = reliability === "thin" ? "Мало данных" : percent(rate(numerator, denominator));
-    const base = `${count(numerator)} / ${count(denominator)}`;
+    const value = percent(rate(numerator, denominator));
     kpi.dataset.reliability = reliability;
     const content = [
       element("span", "structure-league-kpi-label", label),
       element("strong", "", value)
     ];
-    if (showSample) {
-      content.push(element("small", "", reliability === "thin"
-        ? `${base} · процент скрыт`
-        : (reliability === "directional" ? `${base} · направление` : base)));
-    }
     kpi.append(...content);
     parent.append(kpi);
   }
@@ -140,17 +140,11 @@
     const scope = element("aside", "structure-league-scope panel");
     const copy = element("div", "structure-league-scope-copy");
     copy.append(
-      element("p", "eyebrow", "От лица BB · два решения оппонента"),
-      element("strong", "", "League всегда относится к CO/BTN — префлоп-агрессору"),
-      element("span", "", "Жёлтый процент — как часто CO/BTN ставит в нас после чека BB. Зелёный — как часто он фолдит, когда встречает наш check-raise.")
+      element("p", "eyebrow", "Что показываем"),
+      element("strong", "", "Смотрим на игрока CO/BTN, который открылся префлоп"),
+      element("span", "", "Жёлтый процент — как часто он ставит после чека BB. Зелёный — как часто пасует на чек-рейз. Наблюдение поля, не рекомендация.")
     );
-    const facts = element("div", "structure-league-scope-facts");
-    [
-      `${count(source.sample.coBtnRows)} CO/BTN-спотов`,
-      `${source.period}`,
-      `${source.sample.percent}% HH-выборка`
-    ].forEach((fact) => facts.append(element("span", "", fact)));
-    scope.append(copy, facts);
+    scope.append(copy);
     return scope;
   }
 
@@ -159,20 +153,25 @@
     const copy = element("div", "structure-league-controls-copy");
     const selectedView = source.foldViews.find((item) => item.key === foldView);
     copy.append(
-      element("p", "eyebrow", "Что меняется переключателем"),
-      element("h3", "", "Нам ставят — все сайзы; фолд — выбранный сайз"),
-      element("p", "", selectedView.note)
+      element("p", "eyebrow", "Размеры"),
+      element("h3", "", "Как меняется пас на чек-рейз"),
+      element("p", "", selectedView.key === "matched"
+        ? "Ставка 30–36% банка и чек-рейз примерно до банка."
+        : "Все размеры ставок и чек-рейзов.")
     );
 
     const buttons = element("div", "structure-league-view-tabs");
     buttons.setAttribute("role", "group");
-    buttons.setAttribute("aria-label", "Срез размера для фолда на check-raise");
+    buttons.setAttribute("aria-label", "Размер ставки и чек-рейза");
     source.foldViews.forEach((view) => {
-      const button = element("button", view.key === foldView ? "is-active" : "", view.label);
+      const buttonLabel = view.key === "matched" ? "Один размер" : "Все размеры";
+      const button = element("button", view.key === foldView ? "is-active" : "", buttonLabel);
       button.type = "button";
       button.dataset.foldView = view.key;
       button.setAttribute("aria-pressed", String(view.key === foldView));
-      button.title = view.note;
+      button.title = view.key === "matched"
+        ? "Ставка 30–36% банка и чек-рейз примерно до банка"
+        : "Все размеры ставок и чек-рейзов";
       button.addEventListener("click", () => {
         if (foldView === view.key) return;
         foldView = view.key;
@@ -196,18 +195,13 @@
         element("div", "", undefined)
       );
       heading.lastElementChild.append(
-        element("p", "eyebrow", league.ranks),
-        element("h3", "", league.label)
+        element("p", "eyebrow", "Игра после флопа"),
+        element("h3", "", `Лига ${league.key.slice(-1)}`)
       );
       const metrics = element("div", "structure-league-summary-metrics");
-      appendKpi(metrics, "Нам ставят c-bet", totals.cbets, totals.opportunities, "is-cbet");
-      appendKpi(metrics, `Фолд · ${source.foldViews.find((item) => item.key === foldView).shortLabel}`, fold.folds, fold.faced, "is-fold");
-      const players = foldView === "matched" ? league.matchedPlayers : league.facedPlayers;
-      card.append(
-        heading,
-        metrics,
-        element("p", "structure-league-summary-note", `${count(league.opportunityPlayers)} игроков в c-bet базе · ${count(players)} в fold базе`)
-      );
+      appendKpi(metrics, "Нам ставят", totals.cbets, totals.opportunities, "is-cbet");
+      appendKpi(metrics, `Пас · ${foldView === "matched" ? "сопоставимый размер" : "все размеры"}`, fold.folds, fold.faced, "is-fold");
+      card.append(heading, metrics);
       grid.append(card);
     });
     return grid;
@@ -219,21 +213,21 @@
     const title = element("div", "");
     title.append(
       element("p", "eyebrow", "8 взаимоисключающих типов флопа"),
-      element("h3", "", "Структура × League")
+      element("h3", "", "Тип флопа × лига")
     );
     const legend = element("div", "structure-league-legend");
     legend.append(
-      element("span", "is-cbet", "CO/BTN ставит c-bet в BB"),
-      element("span", "is-fold", "Фолд CO/BTN на X/R")
+      element("span", "is-cbet", "CO/BTN ставит после чека BB"),
+      element("span", "is-fold", "CO/BTN пасует на чек-рейз")
     );
     header.append(title, legend);
 
     const scroll = element("div", "structure-league-table-scroll");
     const table = element("table", "structure-league-table");
-    const caption = element("caption", "visually-hidden", "Как часто CO/BTN ставит c-bet после чека BB и фолдит на check-raise, по структурам флопа и лигам");
+    const caption = element("caption", "visually-hidden", "Как часто CO/BTN ставит после чека BB и пасует на чек-рейз, по типам флопа и лигам");
     const thead = element("thead", "");
     const headRow = element("tr", "");
-    ["Структура", ...source.leagues.map((league) => `${league.label} · ${league.ranks}`)].forEach((label) => {
+    ["Тип флопа", ...source.leagues.map((league, index) => `Лига ${index + 1}`)].forEach((label) => {
       const cell = element("th", "", label);
       cell.scope = "col";
       headRow.append(cell);
@@ -245,21 +239,22 @@
       const tr = element("tr", "");
       const structure = element("th", "structure-league-board");
       structure.scope = "row";
+      const [structureLabel, structureNote] = STRUCTURE_COPY[row.key] || [row.label, row.note];
       structure.append(
         element("span", "structure-league-board-example", row.example),
-        element("strong", "", row.label),
-        element("small", "", row.note)
+        element("strong", "", structureLabel),
+        element("small", "", structureNote)
       );
       tr.append(structure);
-      source.leagues.forEach((league) => {
+      source.leagues.forEach((league, leagueIndex) => {
         const value = row.values[league.key];
         const fold = value.foldVsXr[foldView];
         const cell = element("td", "structure-league-cell");
-        cell.dataset.label = `${league.label} · ${league.ranks}`;
+        cell.dataset.label = `Лига ${leagueIndex + 1}`;
         const metrics = element("div", "structure-league-cell-metrics");
-        metrics.append(element("span", "structure-league-mobile-label", `${league.label} · ${league.ranks}`));
-        appendKpi(metrics, "Нам ставят", value.cbet.made, value.cbet.opportunities, "is-cbet", { showSample: false });
-        appendKpi(metrics, "Фолд на X/R", fold.folds, fold.faced, "is-fold", { showSample: false });
+        metrics.append(element("span", "structure-league-mobile-label", `Лига ${leagueIndex + 1}`));
+        appendKpi(metrics, "Нам ставят", value.cbet.made, value.cbet.opportunities, "is-cbet");
+        appendKpi(metrics, "Пас на чек-рейз", fold.folds, fold.faced, "is-fold");
         cell.append(metrics);
         tr.append(cell);
       });
@@ -273,10 +268,11 @@
   }
 
   function renderError(errors) {
+    console.error("[flop-checkraise] field matrix validation failed", errors);
     const card = element("article", "structure-league-error panel");
     card.append(
-      element("strong", "", "Структурная матрица не прошла проверку данных"),
-      element("p", "", errors.join("; "))
+      element("strong", "", "Данные поля не загрузились"),
+      element("p", "", "Обнови страницу или попробуй позже.")
     );
     host.replaceChildren(card);
   }

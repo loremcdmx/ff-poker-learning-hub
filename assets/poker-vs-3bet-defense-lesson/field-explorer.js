@@ -9,7 +9,10 @@
   const errorsHost = documentRoot.querySelector("[data-vs3-leaks]");
   const regViewTabs = Array.from(documentRoot.querySelectorAll("[data-vs3-reg-view]"));
   const regViewPanels = Array.from(documentRoot.querySelectorAll("[data-vs3-reg-view-panel]"));
+  const fieldTools = Array.from(documentRoot.querySelectorAll("[data-vs3-field-tool]"));
   const regViews = regViewTabs.map((tab) => tab.dataset.vs3RegView).filter(Boolean);
+  const fieldToolKeys = fieldTools.map((tool) => tool.dataset.vs3FieldTool).filter(Boolean);
+  const legacyFieldViews = Object.freeze({ overview: "summary", hands: "hands", errors: "errors" });
   if (!host && !errorsHost) return;
 
   const actions = [
@@ -36,16 +39,50 @@
   state.hand = "AQs";
   state.errorHand = "";
 
+  function initialFieldTool(params = new URLSearchParams(root.location.search)) {
+    const requested = params.get("fieldSection");
+    if (fieldToolKeys.includes(requested)) return requested;
+    const legacy = legacyFieldViews[params.get("regView")];
+    if (legacy) return legacy;
+    if (params.has("errorMatrix")) return "errors";
+    return fieldToolKeys[0] || "summary";
+  }
+
+  let activeFieldTool = initialFieldTool();
+
   function initialRegView() {
     const params = new URLSearchParams(root.location.search);
     const requested = params.get("regView");
     if (regViews.includes(requested)) return requested;
-    if (params.has("errorMatrix")) return "errors";
+    if (legacyFieldViews[requested] || params.has("errorMatrix")) return "field";
     return "target";
   }
 
+  function setFieldTool(next, { focus = false, updateUrl = true } = {}) {
+    const key = fieldToolKeys.includes(next) ? next : fieldToolKeys[0] || "summary";
+    activeFieldTool = key;
+    fieldTools.forEach((tool) => {
+      const selected = tool.dataset.vs3FieldTool === key;
+      tool.open = selected;
+      tool.classList.toggle("is-active", selected);
+      if (selected && focus) tool.querySelector(":scope > summary")?.focus({ preventScroll: true });
+    });
+    if (key === "summary") root.FFVs3BetWisdomReference?.refresh?.({ preserveScroll: true });
+    if (key === "hands") render();
+    if (key === "errors") renderErrors();
+    if (updateUrl && root.history?.replaceState) {
+      const url = new URL(root.location.href);
+      url.searchParams.set("regView", "field");
+      url.searchParams.set("fieldSection", key);
+      root.history.replaceState(root.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+    return key;
+  }
+
   function setRegView(next, { focus = false, updateUrl = true } = {}) {
-    const view = regViews.includes(next) ? next : regViews[0] || "overview";
+    const requestedFieldTool = legacyFieldViews[next] || "";
+    const requestedView = requestedFieldTool ? "field" : next;
+    const view = regViews.includes(requestedView) ? requestedView : regViews[0] || "target";
     regViewTabs.forEach((tab) => {
       const selected = tab.dataset.vs3RegView === view;
       tab.setAttribute("aria-selected", String(selected));
@@ -57,12 +94,12 @@
       panel.hidden = !selected;
       panel.classList.toggle("is-active", selected);
     });
-    if (view === "overview") root.FFVs3BetWisdomReference?.refresh?.({ preserveScroll: true });
-    if (view === "hands") render();
-    if (view === "errors") renderErrors();
+    if (view === "field") setFieldTool(requestedFieldTool || activeFieldTool, { updateUrl: false });
     if (updateUrl && root.history?.replaceState) {
       const url = new URL(root.location.href);
       url.searchParams.set("regView", view);
+      if (view === "field") url.searchParams.set("fieldSection", activeFieldTool);
+      else url.searchParams.delete("fieldSection");
       root.history.replaceState(root.history.state, "", `${url.pathname}${url.search}${url.hash}`);
     }
     return view;
@@ -607,6 +644,15 @@
       setRegView(regView.dataset.vs3RegView);
       return;
     }
+    const fieldToolSummary = event.target.closest("summary");
+    const fieldTool = fieldToolSummary?.parentElement?.matches("[data-vs3-field-tool]")
+      ? fieldToolSummary.parentElement
+      : null;
+    if (fieldTool) {
+      event.preventDefault();
+      setFieldTool(fieldTool.dataset.vs3FieldTool, { focus: true });
+      return;
+    }
     const filter = event.target.closest("[data-vs3-field-filter]");
     if (filter) {
       const key = filter.dataset.vs3FieldFilter;
@@ -683,6 +729,10 @@
     },
     showView(next, options = {}) {
       return setRegView(next, options);
+    },
+    showFieldSection(next, options = {}) {
+      setRegView("field", { ...options, updateUrl: false });
+      return setFieldTool(next, options);
     },
     refresh: renderAll,
     errorSummary() {

@@ -2,14 +2,14 @@
   "use strict";
 
   const BOARD_STRUCTURES = [
-    { key: "a_high_dry", label: "А-хай · сухая", note: "Axx · rainbow · без плотных связей" },
-    { key: "k_high_dry", label: "К-хай · сухая", note: "Kxx · rainbow · без плотных связей" },
-    { key: "broadway", label: "Бродвейная", note: "две или три карты T+" },
-    { key: "low_connected", label: "Низкая связанная", note: "низкие ранги · много straight equity" },
-    { key: "paired", label: "Спаренная / trips", note: "две или три карты одного ранга" },
-    { key: "two_tone", label: "Two-tone", note: "две карты одной масти" },
+    { key: "a_high_dry", label: "Туз-хай · сухая", note: "туз на флопе · три масти · без плотных связей" },
+    { key: "k_high_dry", label: "Король-хай · сухая", note: "король на флопе · три масти · без плотных связей" },
+    { key: "broadway", label: "Бродвейная", note: "две или три карты от десятки" },
+    { key: "low_connected", label: "Низкая связанная", note: "низкие карты · много стрит-дро" },
+    { key: "paired", label: "Спаренная / трипс", note: "две или три карты одного ранга" },
+    { key: "two_tone", label: "Двухмастная", note: "две карты одной масти" },
     { key: "monotone", label: "Монотонная", note: "три карты одной масти" },
-    { key: "other", label: "Другие rainbow", note: "остальные неспаренные rainbow-флопы" }
+    { key: "other", label: "Другие разноцветные", note: "остальные неспаренные флопы трёх мастей" }
   ];
 
   const LEAGUE_COHORTS = [
@@ -39,10 +39,10 @@
   };
 
   const METRICS = {
-    cbet: { label: "C-bet%", short: "C-bet", kind: "percent" },
-    fold: { label: "Получаемое FE · фолды BB", short: "FE", kind: "percent" },
-    cbet_size: { label: "Самый частый сайз", short: "Сайз", kind: "size" },
-    xr: { label: "X/R BB против нас", short: "X/R", kind: "percent" }
+    cbet: { label: "Как часто поле ставит", short: "Ставка поля", kind: "percent" },
+    fold: { label: "Как часто BB пасует", short: "Пас BB", kind: "percent" },
+    cbet_size: { label: "Любимый размер ставки", short: "Размер", kind: "size" },
+    xr: { label: "Как часто BB чек-рейзит", short: "Чек-рейз", kind: "percent" }
   };
 
   const METRIC_ALIASES = {
@@ -69,7 +69,7 @@
       title: "BB чекнул — по умолчанию ставь",
       wisdom: "Сначала научись видеть очевидный c-bet. Исключения добавишь потом.",
       body: "Для новичка рангов 15–17 полезнее широкий и понятный план, чем попытка сразу сбалансировать каждый редкий чек.",
-      note: "Только Hero RFI IP → BB call → BB check."
+      note: "BTN открылся, BB заколлировал и прочекал."
     },
     {
       kind: "high",
@@ -108,7 +108,7 @@
       title: "Низкая связанная — первое исключение, которое ты добавишь позже",
       wisdom: "Сейчас ставь 20–25%; с опытом здесь первым появится больше чеков.",
       body: "На 7-6-5 и 6-5-4 BB реже фолдит и чаще отвечает чек-рейзом. Запомни причину, но на рангах 15–17 не ломай из-за неё простой план.",
-      note: "Доска — пример; проценты по всей категории. FE — фолд BB; X/R: BB чекнул → Hero поставил → BB повысил."
+      note: "Доска — пример; проценты относятся ко всей категории. Пас BB и чек-рейз считаются после ставки поля."
     },
     {
       kind: "algorithm",
@@ -758,26 +758,27 @@
     return `${new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(value)}%`;
   }
 
-  function formatCount(value) {
-    if (!Number.isFinite(value)) return "—";
-    return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(value);
+  function reliabilityLabel(reliability) {
+    return "";
   }
 
-  function observedRateDisplay(value, denominator, denominatorLabel = "N") {
+  function observedRateDisplay(value, denominator) {
     const reliability = reliabilityFor(denominator);
-    const base = `${denominatorLabel} ${formatCount(denominator)}`;
-    if (reliability === "thin") {
-      return { value: "Мало данных", note: `${base} · процент скрыт` };
-    }
     return {
-      value: formatPercent(value),
-      note: reliability === "directional" ? `${base} · направление` : base
+      value: Number.isFinite(value) ? formatPercent(value) : "—",
+      note: reliabilityLabel(reliability),
+      reliability
     };
   }
 
-  function formatMetric(summary) {
-    if (!summary) return "—";
-    return state.metric === "cbet_size" ? summary.mode : formatPercent(summary.value);
+  function metricDisplay(metric, summary) {
+    if (!summary) return { value: "—", note: "", reliability: "unknown" };
+    const reliability = reliabilityFor(summary.n);
+    return {
+      value: metric === "cbet_size" ? (summary.mode || "—") : formatPercent(summary.value),
+      note: reliabilityLabel(reliability),
+      reliability
+    };
   }
 
   function cohortLabel(cohort) {
@@ -826,7 +827,10 @@
       return label.includes("≤29") || label.includes("30–42");
     });
     if (!smallEntries.length) return null;
-    return smallEntries.reduce((sum, entry) => sum + (Number.isFinite(entry.value) ? entry.value : 0), 0);
+    return {
+      value: smallEntries.reduce((sum, entry) => sum + (Number.isFinite(entry.value) ? entry.value : 0), 0),
+      n: summary.n
+    };
   }
 
   function appendWisdomSizeMatrix(host, cohorts) {
@@ -836,7 +840,7 @@
     caption.textContent = "Доля ставок ≤42%";
     const head = document.createElement("thead");
     const headRow = document.createElement("tr");
-    ["Hero", "Спаренные", "Монотонные"].forEach((label) => {
+    ["Уровень", "Спаренные", "Монотонные"].forEach((label) => {
       const cell = document.createElement("th");
       cell.scope = "col";
       cell.textContent = label;
@@ -853,8 +857,13 @@
       label.textContent = item.label;
       row.append(label);
       ["paired", "monotone"].forEach((structure) => {
+        const summary = smallCbetShare(structure, item.cohort);
+        const display = metricDisplay("cbet", summary);
         const cell = document.createElement("td");
-        cell.append(textElement("strong", "", formatPercent(smallCbetShare(structure, item.cohort))));
+        cell.append(
+          textElement("strong", "", display.value),
+          textElement("small", "", display.note)
+        );
         row.append(cell);
       });
       body.append(row);
@@ -871,15 +880,15 @@
     const table = document.createElement("table");
     table.className = "wisdom-high-table";
     const caption = document.createElement("caption");
-    caption.textContent = `${label}: c-bet Hero и получаемая реакция BB`;
+    caption.textContent = `${label}: как ставит поле и отвечает BB`;
 
     const head = document.createElement("thead");
     const headRow = document.createElement("tr");
     [
-      { label: "Игрок" },
-      { label: "c-bet", title: "Частота c-bet Hero" },
-      { label: "FE", title: "Получаемое fold equity: фолд BB" },
-      { label: "X/R", title: "Check-raise BB против нас" }
+      { label: "Уровень" },
+      { label: "Ставка", title: "Как часто поле ставит" },
+      { label: "Пас BB", title: "Как часто BB выбрасывает" },
+      { label: "Чек-рейз", title: "Как часто BB чек-рейзит" }
     ].forEach((item) => {
       const cell = document.createElement("th");
       cell.scope = "col";
@@ -895,19 +904,17 @@
       row.className = `is-${item.tone}`;
       const cohort = document.createElement("th");
       cohort.scope = "row";
-      cohort.append(
-        textElement("span", "", item.label),
-        textElement("small", "", item.ranks)
-      );
+      cohort.append(textElement("span", "", item.label));
       row.append(cohort);
 
       ["cbet", "fold", "xr"].forEach((metric) => {
         const summary = metricSummary(metric, structure, item.cohort);
+        const display = metricDisplay(metric, summary);
         const cell = document.createElement("td");
         cell.title = METRICS[metric].label;
         cell.append(
-          textElement("strong", "", formatPercent(summary && summary.value)),
-          textElement("small", "", `N ${formatCount(summary && summary.n)}`)
+          textElement("strong", "", display.value),
+          textElement("small", "", display.note)
         );
         row.append(cell);
       });
@@ -947,8 +954,8 @@
       const comparison = document.createElement("div");
       comparison.className = "wisdom-high-comparison";
       const cohorts = [
-        { label: "Лига 1", ranks: "R1–5", cohort: leagueOne, tone: "expert" },
-        { label: "Новички", ranks: "R15–17", cohort: newcomers, tone: "new" }
+        { label: "Лига 1", cohort: leagueOne, tone: "expert" },
+        { label: "Новички", cohort: newcomers, tone: "new" }
       ];
       comparison.append(
         createHighBoardComparison("A-high", ["Ac", "7d", "2h"], "a_high_dry", cohorts),
@@ -964,7 +971,7 @@
       const board = createWisdomBoard("Флоп", ["Ac", "7d", "2h"], "is-featured");
       const hand = document.createElement("div");
       hand.className = "wisdom-hand";
-      hand.append(textElement("span", "", "Hero"), createLessonCardRow(["Qs", "Js"], "Карты Hero", "is-hand"));
+      hand.append(textElement("span", "", "Твоя рука"), createLessonCardRow(["Qs", "Js"], "Твоя рука", "is-hand"));
       const signal = document.createElement("div");
       signal.className = "wisdom-range-signal";
       signal.append(
@@ -987,9 +994,9 @@
       );
       host.append(sizes);
       appendWisdomSizeMatrix(host, [
-        { label: "Лига 1 · R1–5", cohort: leagueOne, tone: "expert" },
+        { label: "Лига 1", cohort: leagueOne, tone: "expert" },
         { label: "Ранги 11–14", cohort: ranksElevenToFourteen, tone: "middle" },
-        { label: "Новички · R15–17", cohort: newcomers, tone: "new" }
+        { label: "Новички", cohort: newcomers, tone: "new" }
       ]);
       return;
     }
@@ -1005,7 +1012,7 @@
       const valueSpot = document.createElement("div");
       valueSpot.className = "wisdom-value-spot";
       valueSpot.append(
-        createLessonCardRow(["As", "Kd"], "Карты Hero", "is-hand"),
+        createLessonCardRow(["As", "Kd"], "Твоя рука", "is-hand"),
         createLessonCardRow(["Ah", "7d", "2c"], "Флоп")
       );
       const sizes = document.createElement("div");
@@ -1029,8 +1036,10 @@
         metrics.className = "wisdom-mini-metrics";
         const fold = metricSummary("fold", item.structure, newcomers);
         const xr = metricSummary("xr", item.structure, newcomers);
-        appendWisdomMetric(metrics, "Получаемое FE", formatPercent(fold && fold.value), "против Hero R15–17", item.tone);
-        appendWisdomMetric(metrics, "X/R против нас", formatPercent(xr && xr.value), "против Hero R15–17", item.tone);
+        const foldDisplay = metricDisplay("fold", fold);
+        const xrDisplay = metricDisplay("xr", xr);
+        appendWisdomMetric(metrics, "Пас BB", foldDisplay.value, foldDisplay.note, item.tone);
+        appendWisdomMetric(metrics, "Чек-рейз BB", xrDisplay.value, xrDisplay.note, item.tone);
         card.append(metrics);
         comparison.append(card);
       });
@@ -1274,7 +1283,8 @@
   function renderSnapshotDecision(host, spot, selectedKey, options = {}) {
     if (!host) return null;
     if (!window.FFTrainerSimulator || typeof window.FFTrainerSimulator.renderDecision !== "function") {
-      host.innerHTML = '<p class="table-load-error">Функциональный стол не загрузился. Обнови страницу.</p>';
+      console.error("[c-bet lesson] FFTrainerSimulator.renderDecision is unavailable");
+      host.innerHTML = '<p class="table-load-error">Ситуация временно недоступна.</p>';
       return null;
     }
     try {
@@ -1294,7 +1304,8 @@
       }
       return rendered;
     } catch (error) {
-      host.innerHTML = '<p class="table-load-error">Не удалось собрать ситуацию. Обнови страницу.</p>';
+      console.error("[c-bet lesson] Failed to render simulator decision", error);
+      host.innerHTML = '<p class="table-load-error">Ситуация временно недоступна.</p>';
       return null;
     }
   }
@@ -1323,7 +1334,7 @@
       replaceCoachFeedback(
         "Да — это простой c-bet",
         "На сухом A-high не нужно искать редкую причину для чека. 25–33% — понятный базовый план для широкого диапазона Hero.",
-        "Верный учебный ориентир"
+        "Базовая рекомендация"
       );
       return;
     }
@@ -1415,21 +1426,18 @@
     };
   }
 
-  function metricSetValue(metric, summary) {
-    if (!summary) return "—";
-    return metric === "cbet_size" ? summary.mode : formatPercent(summary.value);
-  }
-
   function appendMatrixKpi(host, metric, summary) {
-    const labels = { cbet: "C-bet", fold: "FE", cbet_size: "Сайз", xr: "X/R" };
+    const labels = { cbet: "Ставка поля", fold: "Пас BB", cbet_size: "Размер", xr: "Чек-рейз" };
+    const display = metricDisplay(metric, summary);
     const item = document.createElement("div");
     item.className = `matrix-kpi is-${metric}${summary ? "" : " is-empty"}`;
+    item.dataset.reliability = display.reliability;
     const label = document.createElement("span");
     label.textContent = labels[metric];
     const value = document.createElement("strong");
-    value.textContent = metricSetValue(metric, summary);
+    value.textContent = display.value;
     const base = document.createElement("small");
-    base.textContent = summary && Number.isFinite(summary.n) ? `N ${formatCount(summary.n)}` : "N —";
+    base.textContent = display.note;
     item.append(label, value, base);
     host.append(item);
   }
@@ -1463,7 +1471,7 @@
     mobileLabel.textContent = deltaLabel;
     const grid = document.createElement("div");
     grid.className = "delta-grid";
-    [["C-bet", "cbet"], ["FE", "fold"], ["X/R", "xr"]].forEach(([label, metric]) => {
+    [["Ставка", "cbet"], ["Пас BB", "fold"], ["Чек-рейз", "xr"]].forEach(([label, metric]) => {
       const item = document.createElement("div");
       const name = document.createElement("span");
       name.textContent = label;
@@ -1498,10 +1506,8 @@
     small.textContent = structure.note;
     const evidence = document.createElement("span");
     evidence.className = `structure-evidence has-${reliabilityFor(cbetSummary ? cbetSummary.n : null)}`;
-    const playerText = cbetSummary && Number.isFinite(cbetSummary.players)
-      ? `${formatCount(cbetSummary.players)} игроков`
-      : "игроки —";
-    evidence.textContent = evidenceContext ? `${evidenceContext} · ${playerText}` : playerText;
+    const reliability = reliabilityLabel(reliabilityFor(cbetSummary ? cbetSummary.n : null));
+    evidence.textContent = evidenceContext ? `${evidenceContext} · ${reliability}` : reliability;
     label.append(strong, small, evidence);
     labelCell.append(label);
     row.append(labelCell);
@@ -1515,11 +1521,12 @@
     mobileLabel.textContent = label;
     const metric = document.createElement("div");
     metric.className = "focus-metric";
-    metric.dataset.reliability = reliabilityFor(summary ? summary.n : null);
+    const display = metricDisplay(state.metric, summary);
+    metric.dataset.reliability = display.reliability;
     const value = document.createElement("strong");
-    value.textContent = metricSetValue(state.metric, summary);
+    value.textContent = display.value;
     const base = document.createElement("small");
-    base.textContent = summary && Number.isFinite(summary.n) ? `N ${formatCount(summary.n)}` : "N —";
+    base.textContent = display.note;
     metric.append(value, base);
     cell.append(mobileLabel, metric);
     row.append(cell);
@@ -1540,7 +1547,7 @@
       value.textContent = formatDeltaPercent(selected, reference);
     }
     const note = document.createElement("small");
-    note.textContent = state.metric === "cbet_size" ? "мода выборки" : "процентных пункта";
+    note.textContent = state.metric === "cbet_size" ? "самый частый размер" : "разница в п.п.";
     cell.append(mobileLabel, value, note);
     row.append(cell);
   }
@@ -1567,7 +1574,7 @@
     if (showLeagueInsight) {
       const overall = LEAGUE_COHORTS.map((item) => overallCbetSummary(item.cohort));
       leagueInsight.textContent = overall.every(Boolean)
-        ? `Общий c-bet почти одинаковый: Л1 ${formatPercent(overall[0].value)}, Л2 ${formatPercent(overall[1].value)}, Л3 ${formatPercent(overall[2].value)}. Главное отличие — в выборе структур.`
+        ? `Общая частота ставки почти одинаковая: Л1 ${formatPercent(overall[0].value)}, Л2 ${formatPercent(overall[1].value)}, Л3 ${formatPercent(overall[2].value)}. Главное отличие — в выборе флопов.`
         : "Общая частота близка — главное отличие видно в выборе структур.";
     }
     appendTableHead([
@@ -1640,11 +1647,9 @@
       heading.className = "structure-profile-heading";
       const title = document.createElement("strong");
       title.textContent = item.label;
-      const players = document.createElement("span");
-      players.textContent = summaries.cbet && Number.isFinite(summaries.cbet.players)
-        ? `${formatCount(summaries.cbet.players)} игроков`
-        : "число игроков —";
-      heading.append(title, players);
+      const reliability = document.createElement("span");
+      reliability.textContent = reliabilityLabel(reliabilityFor(summaries.cbet ? summaries.cbet.n : null));
+      heading.append(title, reliability);
       const grid = document.createElement("div");
       grid.className = "cohort-metrics";
       ["cbet", "fold", "cbet_size", "xr"].forEach((metric) => appendMatrixKpi(grid, metric, summaries[metric]));
@@ -1661,17 +1666,19 @@
     query("[data-rank-map-title]").textContent = `${METRICS[state.metric].short} по рангам 1–17`;
     for (let rank = 1; rank <= 17; rank += 1) {
       const summary = currentMetricSummary(state.structure, { type: "rank", rank });
+      const display = metricDisplay(state.metric, summary);
       const cell = document.createElement("button");
       cell.type = "button";
       cell.className = "rank-cell";
       cell.classList.toggle("is-active", state.cohortMode === "rank" && state.rank === rank);
-      cell.dataset.reliability = reliabilityFor(summary ? summary.n : null);
+      cell.dataset.reliability = display.reliability;
       cell.setAttribute("aria-pressed", String(state.cohortMode === "rank" && state.rank === rank));
-      cell.setAttribute("aria-label", `Ранг ${rank}: ${formatMetric(summary)}`);
+      cell.setAttribute("aria-label", `Ранг ${rank}: ${display.value}. ${display.note}`);
       const label = document.createElement("span");
       label.textContent = `R${rank}`;
       const value = document.createElement("strong");
-      value.textContent = formatMetric(summary);
+      value.textContent = display.value;
+      cell.title = display.note;
       cell.append(label, value);
       cell.addEventListener("click", () => selectRank(rank));
       host.append(cell);
@@ -1689,18 +1696,19 @@
     host.replaceChildren();
     for (let rank = 1; rank <= 17; rank += 1) {
       const summary = overallCbetSummary({ type: "rank", rank });
+      const display = metricDisplay("cbet", summary);
       const cell = document.createElement("button");
       cell.type = "button";
       cell.className = "rank-cell";
       cell.classList.toggle("is-active", state.cohortMode === "rank" && state.rank === rank);
-      cell.dataset.reliability = reliabilityFor(summary ? summary.n : null);
+      cell.dataset.reliability = display.reliability;
       cell.setAttribute("aria-pressed", String(state.cohortMode === "rank" && state.rank === rank));
-      cell.setAttribute("aria-label", `Выбрать ранг ${rank}: общий c-bet ${summary ? formatPercent(summary.value) : "нет данных"}`);
+      cell.setAttribute("aria-label", `Выбрать ранг ${rank}: ставка поля ${display.value}. ${display.note}`);
       const label = document.createElement("span");
       label.textContent = `R${rank}`;
       const value = document.createElement("strong");
-      value.textContent = summary ? formatPercent(summary.value) : "—";
-      cell.title = summary && Number.isFinite(summary.n) ? `N ${formatCount(summary.n)}` : "N не указан";
+      value.textContent = display.value;
+      cell.title = display.note;
       cell.append(label, value);
       cell.addEventListener("click", () => selectRank(rank));
       host.append(cell);
@@ -1715,12 +1723,12 @@
     if (!summary) {
       const empty = document.createElement("div");
       empty.className = "empty-chart";
-      empty.textContent = kind === "cbet" ? "Нет распределения сайзов контбета" : "Нет распределения сайзов чек-рейза";
+      empty.textContent = kind === "cbet" ? "Нет данных о размерах ставки" : "Нет данных о размерах чек-рейза";
       chart.append(empty);
-      base.textContent = "—";
+      base.textContent = "Нет данных";
       return;
     }
-    base.textContent = summary.n !== null ? `N ${formatCount(summary.n)}` : "доля в выборке";
+    base.textContent = reliabilityLabel(reliabilityFor(summary.n));
     summary.entries.forEach((entry) => {
       const row = document.createElement("div");
       row.className = "bar-row";
@@ -1774,20 +1782,20 @@
       const actual = Number.isFinite(entry.meanBetPctPot)
         ? `среднее ${formatPercent(entry.meanBetPctPot)}`
         : "";
+      const share = observedRateDisplay(entry.value, entry.count);
       const observedFe = observedRateDisplay(entry.observedFe, entry.validResponses);
-      const xrRate = observedRateDisplay(entry.xrRate, entry.xrValidResponses, "eligible N");
+      const xrRate = observedRateDisplay(entry.xrRate, entry.xrValidResponses);
+      const reliabilityBase = [entry.count, entry.validResponses, entry.xrValidResponses]
+        .filter(Number.isFinite);
+      const rowReliability = reliabilityBase.length
+        ? reliabilityFor(Math.min(...reliabilityBase))
+        : "unknown";
       appendOutcomeCell(row, entry.label, actual);
-      appendOutcomeCell(row, formatPercent(entry.value), `N ставок ${formatCount(entry.count)}`);
+      appendOutcomeCell(row, share.value, share.note);
       appendOutcomeCell(row, observedFe.value, observedFe.note);
-      appendOutcomeCell(row, formatPercent(entry.breakevenFe), "порог без equity");
+      appendOutcomeCell(row, formatPercent(entry.breakevenFe), "чистый блеф без усилений");
       appendOutcomeCell(row, xrRate.value, xrRate.note);
-      appendOutcomeCell(
-        row,
-        formatCount(entry.validResponses),
-        entry.validResponses === entry.xrValidResponses
-          ? "один denominator"
-          : `для X/R ${formatCount(entry.xrValidResponses)}`
-      );
+      appendOutcomeCell(row, reliabilityLabel(rowReliability), "для этой строки");
       body.append(row);
     });
   }
@@ -1806,42 +1814,15 @@
     stamp.querySelector("span").textContent = asOf ? `Срез на ${asOf}` : "Период данных";
     stamp.querySelector("strong").textContent = periodText;
     status.classList.add("is-ready");
-    status.querySelector("strong").textContent = "Полевая выгрузка подключена";
-    status.querySelector("span").textContent = "Только Hero RFI IP → BB call → BB check. Каждый N относится к своей метрике.";
-    const sample = model.meta.sample || model.meta.sampleSummary || model.meta.sample_summary || {};
-    let rankedSpots = firstNumber(sample, ["rankedSpots", "ranked_spots", "rankedRows", "ranked_rows"]);
-    if (!Number.isFinite(rankedSpots)) {
-      const sampleNote = firstText(model.meta, ["sampleNote", "sample_note", "method"]);
-      const legacyMatch = sampleNote.match(/([\d\s\u00a0]+)\s+с рангом/i);
-      if (legacyMatch) rankedSpots = numberFrom(legacyMatch[1].replace(/[\s\u00a0]+/g, ""));
-    }
-    query("[data-sample-size]").textContent = Number.isFinite(rankedSpots)
-      ? `HH с рангом · N ${formatCount(rankedSpots)}`
-      : "HH с рангом · N не указан";
-    const sourceText = firstText(model.meta, ["sourceNote", "source_note", "source"]);
-    const sampleText = firstText(model.meta, ["sampleNote", "sample_note", "method"]);
-    source.textContent = [sourceText, sampleText].filter(Boolean).join(" · ") || "Описание источника не указано в meta.";
-  }
-
-  function sourceLabel(keys, fallback) {
-    const sources = model.meta.sources || model.meta.metricSources || model.meta.metric_sources || {};
-    for (const key of keys) {
-      const source = sources[key];
-      if (typeof source === "string" && source.trim()) return source.trim();
-      if (source && typeof source === "object") {
-        const label = firstText(source, ["label", "name", "badge"]);
-        if (label) return label;
-      }
-    }
-    return fallback;
+    status.querySelector("strong").textContent = "Как реально играет поле";
+    status.querySelector("span").textContent = "BTN открылся, BB заколлировал и прочекал. Это наблюдение за игрой поля, а не совет.";
+    query("[data-sample-size]").textContent = "Реальные раздачи FF";
+    source.textContent = `Реальные раздачи поля за ${periodText}.`;
   }
 
   function renderSourceBadges() {
-    query("[data-overall-cbet-source]").textContent = sourceLabel(["overallCbet", "overall_cbet", "baseline"], "полная RvBB выборка");
-    query("[data-metric-source]").textContent = `${sourceLabel(["boardCbet", "board_cbet", "board", "hhSample"], model.ready ? "HH sample" : "ожидаем HH sample")} · 4 метрики`;
-    query("[data-cbet-size-source]").textContent = sourceLabel(["cbetSizes", "cbet_sizes", "hhSample"], model.ready ? "HH sample" : "ожидаем HH sample");
-    query("[data-xr-size-source]").textContent = sourceLabel(["checkRaiseSizes", "check_raise_sizes", "checkRaise", "xr", "hhSample"], model.ready ? "HH sample" : "ожидаем HH sample");
-    query("[data-size-outcomes-source]").textContent = `${sourceLabel(["cbetSizes", "cbet_sizes", "hhSample"], model.ready ? "HH sample" : "ожидаем HH sample")} · наблюдение`;
+    queryAll("[data-overall-cbet-source], [data-metric-source], [data-cbet-size-source], [data-xr-size-source], [data-size-outcomes-source]")
+      .forEach((badge) => { badge.textContent = "Реальные раздачи FF"; });
   }
 
   function renderField() {
@@ -2045,17 +2026,13 @@
       return card;
     }
 
-    const boardExampleMeta = model.boardExamples && model.boardExamples.meta;
-    const cohorts = boardExampleMeta && boardExampleMeta.cohorts;
-    const newcomerRanks = firstText(cohorts && cohorts.newcomers, ["ranks"]) || "15–17";
-    const league1Ranks = firstText(cohorts && cohorts.league1, ["ranks"]) || "1–5";
-    const cohortLabelText = `Игроки ${newcomerRanks} рангов`;
+    const cohortLabelText = "Новички";
     const evidence = document.createElement("div");
     evidence.className = "missed-cbet-evidence";
     const evidenceTitle = document.createElement("strong");
-    evidenceTitle.textContent = "Реальные пропуски c-bet";
-    const evidenceMeta = document.createElement("span");
-    evidenceMeta.textContent = `${cohortLabelText} не поставили · Лига 1 (${league1Ranks}) ставит чаще`;
+      evidenceTitle.textContent = "Где новички не поставили";
+      const evidenceMeta = document.createElement("span");
+      evidenceMeta.textContent = `Новички не поставили · Лига 1 ставит чаще`;
     evidence.append(evidenceTitle, evidenceMeta);
 
     const boardGrid = document.createElement("ul");

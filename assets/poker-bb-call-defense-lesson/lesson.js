@@ -351,7 +351,7 @@
         '<p>BTN открыл 2 BB, малый блайнд выбросил. Ты на большом блайнде.</p>' +
         '<div class="spot-facts">' +
           '<div class="spot-fact is-price"><i>18%</i><div><b>Дешёвая цена</b><small>добавить 1 BB в итоговый банк 5,5 BB</small></div></div>' +
-          '<div class="spot-fact is-position"><i>BTN</i><div><b>Широкий рейзер</b><small>52% — допущение чартов защиты; RFI-цель урока шире</small></div></div>' +
+          '<div class="spot-fact is-position"><i>BTN</i><div><b>Широкий рейзер</b><small>с батона открывают заметно больше рук</small></div></div>' +
           '<div class="spot-fact is-hand"><i>K4</i><div><b>Некрасивая, но зелёная</b><small>K4o — чистый колл в базовом чарте</small></div></div>' +
         '</div>' +
         '<p class="coach-nudge">Нажми «Пас», «Колл» или «3-бет» под столом.</p>';
@@ -365,7 +365,7 @@
       '<div class="decision-result ' + (correct ? "is-correct" : "is-wrong") + '"><strong>Ты выбрал: ' + (chosen ? chosen.label : state.firstChoice) + '</strong><p>' + (chosen ? chosen.feedback : "") + '</p></div>' +
       '<div class="reason-list">' +
         '<div class="reason-line"><i></i><div><b>Цена — 18,2%</b><small>нужно добавить 1 BB в итоговый банк 5,5 BB</small></div></div>' +
-        '<div class="reason-line"><i></i><div><b>BTN открывает широко</b><small>базовый ориентир открытия — 52%</small></div></div>' +
+        '<div class="reason-line"><i></i><div><b>BTN открывает широко</b><small>Поэтому BB может защищать больше рук.</small></div></div>' +
         '<div class="reason-line"><i></i><div><b>K4o — это колл</b><small>Именно такие руки часто пасуют на автопилоте.</small></div></div>' +
       '</div>' +
       '<div class="ev-callout bb-boundary-callout"><i>i</i><div><strong>Оддсы — не весь ответ</strong><span>Дальше добавим реализацию эквити, позицию рейзера и сайз.</span></div></div>' +
@@ -632,7 +632,7 @@
     var label = meta.cohorts[cohort].label;
     return hand + ", " + label + ": пас " + fmt(percentOf(row.folds, row.n), 1) +
       "%, колл " + fmt(percentOf(row.calls, row.n), 1) +
-      "%, 3-бет " + fmt(percentOf(row.threeBets, row.n), 1) + "%, решений " + fmtCount(row.n);
+      "%, 3-бет " + fmt(percentOf(row.threeBets, row.n), 1) + "%";
   }
 
   function renderLeagueRangeCard(root, cohort, noviceAggregate) {
@@ -649,7 +649,6 @@
     var callPct = percentOf(aggregate.calls, aggregate.n);
     var threeBetPct = percentOf(aggregate.threeBets, aggregate.n);
     var defendPct = callPct + threeBetPct;
-    var chartLow = aggregate.n < meta.minChartDisplayN;
     var coveragePct = percentOf(aggregate.cardKnownN, aggregate.n);
     var delta = noviceAggregate && cohort !== "novice"
       ? defendPct - percentOf(noviceAggregate.calls + noviceAggregate.threeBets, noviceAggregate.n)
@@ -661,19 +660,19 @@
         var hand = Content.matrixHandAt(rowIndex, columnIndex);
         var handRow = payload.hands[leagueHandKey(cohort, hand)];
         var handN = handRow ? handRow.n : 0;
-        var low = handN < meta.minCellDisplayN;
-        var reliable = handN >= meta.minCellReliableN;
+        var low = !handN;
+        var reliable = handN > 0;
         var handFold = handRow ? percentOf(handRow.folds, handN) : 0;
         var handCall = handRow ? percentOf(handRow.calls, handN) : 0;
         var classes = ['league-range-cell'];
         if (!handN) classes.push('is-no-data');
         else if (low) classes.push('is-low-sample');
         else if (reliable) classes.push('is-reliable');
-        matrix += '<button type="button" class="' + classes.join(' ') + '" data-league-hand="' + hand + '" data-league-cohort="' + cohort + '" data-row="' + String(rowIndex) + '" data-column="' + String(columnIndex) + '" tabindex="' + (hand === state.leagueFocusHand ? '0' : '-1') + '" aria-label="' + leagueCellAria(hand, cohort, handRow) + '" style="--fold-end:' + String(handFold) + '%;--call-end:' + String(handFold + handCall) + '%"><span>' + hand + '</span><small>' + (handN ? fmtCount(handN) : '—') + '</small></button>';
+        matrix += '<button type="button" class="' + classes.join(' ') + '" data-league-hand="' + hand + '" data-league-cohort="' + cohort + '" data-row="' + String(rowIndex) + '" data-column="' + String(columnIndex) + '" tabindex="' + (hand === state.leagueFocusHand ? '0' : '-1') + '" aria-label="' + leagueCellAria(hand, cohort, handRow) + '" style="--fold-end:' + String(handFold) + '%;--call-end:' + String(handFold + handCall) + '%"><span>' + hand + '</span><small></small></button>';
       }
     }
 
-    root.classList.toggle("is-low-chart", chartLow);
+    root.classList.remove("is-low-chart");
     root.innerHTML = '<header class="league-range-head">' +
         '<div><span>' + cohortMeta.label + '</span><strong>' + cohortMeta.detail + '</strong></div>' +
         '<div class="league-defend-total"><small>защита</small><b>' + fmt(defendPct, 1) + '%</b>' + (delta == null ? '' : '<em class="' + (delta >= 0 ? 'is-up' : 'is-down') + '">' + fmtSigned(delta, 1) + ' п.п.</em>') + '</div>' +
@@ -682,9 +681,7 @@
         '<i class="is-fold" style="width:' + String(foldPct) + '%"></i><i class="is-call" style="width:' + String(callPct) + '%"></i><i class="is-raise" style="width:' + String(threeBetPct) + '%"></i>' +
       '</div>' +
       '<div class="league-action-legend"><span><i class="is-fold"></i>Пас <b>' + fmt(foldPct, 1) + '%</b></span><span><i class="is-call"></i>Колл <b>' + fmt(callPct, 1) + '%</b></span><span><i class="is-raise"></i>3-бет <b>' + fmt(threeBetPct, 1) + '%</b></span></div>' +
-      '<div class="league-range-matrix" role="grid" aria-label="Матрица действий ' + cohortMeta.label + '">' + matrix + '</div>' +
-      (chartLow ? '<div class="league-low-chart-note">Мало данных для уверенного чарта: N ' + fmtCount(aggregate.n) + '</div>' : '') +
-      '<footer><span>N ' + fmtCount(aggregate.n) + ' · ' + fmtCount(aggregate.players) + ' игроков</span><span>карты известны в ' + fmt(coveragePct, 0) + '%</span></footer>';
+      '<div class="league-range-matrix" role="grid" aria-label="Матрица действий ' + cohortMeta.label + '">' + matrix + '</div>';
   }
 
   function setupLeagueDefenseInteractions() {
@@ -734,7 +731,7 @@
     renderLeagueRangeCard(noviceRoot, "novice", noviceAggregate);
     renderLeagueRangeCard(leagueRoot, state.leagueCohort, noviceAggregate);
     var selectedAggregate = payload.aggregates[leagueAggregateKey(state.leagueCohort)];
-    source.textContent = 'FF, ' + payload.meta.window.label + ' · ранг на момент раздачи · ' + leagueStackLabel() + ' / ' + state.leaguePosition + ' / ' + Content.sizes[state.leagueSizeKey].label + ' · N ' + fmtCount(noviceAggregate ? noviceAggregate.n : 0) + ' против ' + fmtCount(selectedAggregate ? selectedAggregate.n : 0) + '. Ранг 15 входит в обе когорты. Серый угол — малая выборка; пустая клетка — рук не было.';
+    source.textContent = 'Реальные раздачи FF · ' + leagueStackLabel() + ' · ' + state.leaguePosition + ' · ' + Content.sizes[state.leagueSizeKey].label + '.';
   }
 
   function makeSegmented(root, items, selected, onSelect, options) {
@@ -897,35 +894,30 @@
     var config = Content.ffRealizationModel;
     var stack = stackLabel(state.realizationStackKey);
     if (!state.ffRealizationData) {
-      return '<section class="ff-realization-card is-pending"><div><span class="ff-realization-kicker">База рук FF · ' + stack + '</span><strong>' +
-        (state.ffRealizationError ? "Срез недоступен" : "Загружаем фактические коллы…") +
-        '</strong></div><p>Теоретическая математика выше работает независимо от этого среза.</p></section>';
+      return '<section class="ff-realization-card is-pending"><div><span class="ff-realization-kicker">Реальные раздачи FF · ' + stack + '</span><strong>' +
+        (state.ffRealizationError ? "Сравнение недоступно" : "Загружаем сыгранные коллы…") +
+        '</strong></div></section>';
     }
 
     var payload = state.ffRealizationData;
     var record = payload.rows[ffRealizationKey()];
     var minDisplay = Number(payload.meta.minDisplayN || config.minDisplayN);
     var minReliable = Number(payload.meta.minReliableN || config.minReliableN);
-    var scope = position.label + " · " + size.label + " · " + stack + " · столы FF на 3–9 игроков";
-
-    if (!record || record.n < minDisplay) {
-      var observed = record ? fmtCount(record.n) : "0";
-      var exactObserved = record && record.exact7 ? fmtCount(record.exact7.n) : "0";
-      return '<section class="ff-realization-card is-low-sample"><div class="ff-realization-head"><div><span class="ff-realization-kicker">База рук FF · ' + stack + '</span><strong>Пока мало данных</strong></div><b>Раздач: ' + observed + '</b></div>' +
-        '<p>Для ' + state.selectedHand + " · " + scope + " нужно минимум " + fmtCount(minDisplay) + ' фактических коллов. Процент не показываем, чтобы не выдавать шум за закономерность.</p>' +
-        '<small>Из них за столом ровно на 7 игроков: ' + exactObserved + ". Эти раздачи уже входят в общий срез 3–9 max и второй раз не прибавляются.</small></section>";
+    if (!record || !record.n) {
+      return '<section class="ff-realization-card is-low-sample"><div class="ff-realization-head"><div><span class="ff-realization-kicker">Реальные раздачи FF · ' + stack + '</span><strong>Нет отдельного среза</strong></div></div>' +
+        '<p>Для ' + state.selectedHand + ' в этом споте пока нет сыгранных коллов.</p></section>';
     }
 
     var eqrPct = model.rawEquityPct > 0 ? record.meanRealizedEquityPct / model.rawEquityPct * 100 : 0;
     var reliable = record.n >= minReliable;
 
     return '<section class="ff-realization-card ' + (reliable ? "is-reliable" : "is-preliminary") + '">' +
-      '<div class="ff-realization-head"><div><span class="ff-realization-kicker">Реально в базе FF · ' + stack + '</span><strong>' +
-        (reliable ? "Достаточный срез" : "Предварительный срез") +
+      '<div class="ff-realization-head"><div><span class="ff-realization-kicker">Реальные раздачи FF · ' + stack + '</span><strong>' +
+        "Реализация в сыгранных коллах" +
         '</strong></div><b>' + fmt(eqrPct, 1) + "%</b></div>" +
-      '<p class="ff-realization-lead">Игроки реализовали примерно <strong>' + fmt(eqrPct, 1) + "%</strong> модельного эквити " + state.selectedHand + ". Это соответствует " + fmt(record.meanRealizedEquityPct, 1) + '% эквивалентной доли банка.</p>' +
+      '<p class="ff-realization-lead">В сыгранных коллах ' + state.selectedHand + ' реализовала примерно <strong>' + fmt(eqrPct, 1) + '%</strong> своего эквити.</p>' +
       '<div class="ff-realization-meter" aria-label="Реализация эквити в базе FF ' + fmt(eqrPct, 1) + '%"><i style="width:' + String(clampPercent(eqrPct)) + '%"></i></div>' +
-      '<div class="ff-realization-stats"><span><small>К пасу</small><b>' + fmtSigned(record.meanEvVsFoldBb, 2) + ' BB</b></span><span><small>Коллов</small><b>' + fmtCount(record.n) + '</b></span><span><small>Игроков</small><b>' + fmtCount(record.players) + '</b></span></div></section>';
+      '<div class="ff-realization-stats"><span><small>Вместо паса</small><b>' + fmtSigned(record.meanEvVsFoldBb, 2) + ' BB</b></span><span><small>Качество данных</small><b>' + (reliable ? 'Высокое' : 'Среднее') + '</b></span></div></section>';
   }
 
   function renderRealization() {
@@ -942,7 +934,7 @@
     if (!state.equityData) {
       $("#realizationRatio").textContent = state.equityError ? "—" : "…";
       $("#realizationDetail").innerHTML = '<div class="realization-copy"><h4>' + state.selectedHand + ' · ' + actionLabel(cell) + '</h4><p>' +
-        (state.equityError ? "Модель эквити не загрузилась. Действие клетки выше остаётся доступным." : "Загружаем модельное эквити для выбранной руки…") +
+        (state.equityError ? "Показатель эквити временно недоступен." : "Считаем эквити выбранной руки…") +
         '</p></div>';
       return;
     }
@@ -955,7 +947,7 @@
     var minimum = Engine.minimumRealizationPct(size.potOddsPct, model.rawEquityPct);
     $("#realizationRatio").textContent = fmt(minimum, 1) + "%";
     $("#realizationDetail").innerHTML = '<div class="realization-copy">' +
-        '<h4>Нужно реализовать минимум ' + fmt(minimum, 1) + '% сырого эквити</h4>' +
+        '<h4>Нужно реализовать минимум ' + fmt(minimum, 1) + '% эквити</h4>' +
       '</div>' +
       '<div class="realization-metric-stack"><div class="realization-bars deep-realization-bars">' +
         '<div><span>Эквити</span><i><b style="width:' + String(clampPercent(model.rawEquityPct)) + '%"></b></i><strong>' + fmt(model.rawEquityPct, 1) + '%</strong></div>' +
@@ -1622,7 +1614,7 @@
         '<p>' + spot.question + '</p>' +
         '<div class="spot-facts">' +
           '<div class="spot-fact is-price"><i>' + fmt(size.potOddsPct, 0) + '%</i><div><b>Цена колла</b><small>добавить ' + fmt(size.toCall, 1).replace(",0", "") + ' BB</small></div></div>' +
-          '<div class="spot-fact is-position"><i>' + position.label + '</i><div><b>Позиция рейзера</b><small>ориентир открытия ' + String(position.openerPct) + '%</small></div></div>' +
+          '<div class="spot-fact is-position"><i>' + position.label + '</i><div><b>Позиция рейзера</b><small>частота открытия ' + String(position.openerPct) + '%</small></div></div>' +
           '<div class="spot-fact is-hand"><i>' + spot.hand.replace(/[so]/, "") + '</i><div><b>Найди клетку</b><small>не угадывай по одной силе руки</small></div></div>' +
         '</div>' +
         '<p class="coach-nudge">' + spot.cue + '</p>';

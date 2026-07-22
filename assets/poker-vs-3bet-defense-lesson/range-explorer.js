@@ -265,7 +265,7 @@
       if (next > cursor) stops.push(`${action.color} ${cursor.toFixed(2)}%`, `${action.color} ${next.toFixed(2)}%`);
       cursor = next;
     });
-    return `linear-gradient(135deg, ${stops.join(", ")})`;
+    return `linear-gradient(90deg, ${stops.join(", ")})`;
   }
 
   function createMixBar(mix, className) {
@@ -645,8 +645,8 @@
         "p",
         "vs3-open-weight-note",
         rfiData?.sourceFrequencies?.[state.position]
-          ? "Высота — как часто открываем руку. Цвет — главное действие против 3-бета."
-          : "Для SB частота опена по рукам не опубликована — показан только состав защиты."
+          ? "Высота — как часто открываем руку. Цвета внутри — пас, колл, 4-бет и пуш."
+          : "Для SB показаны частоты паса, колла, 4-бета и пуша."
       )
     );
     head.append(copy, createLegend());
@@ -668,12 +668,14 @@
       button.disabled = mix.missing;
       button.dataset.vs3Hand = hand;
       button.dataset.vs3OpenFrequency = openFrequency === null ? "unavailable" : String(openFrequency);
+      button.dataset.vs3ActionSignature = ACTIONS.map((action) => `${action.key}:${mix[action.key].toFixed(2)}`).join("|");
       button.setAttribute("aria-pressed", String(hand === state.hand));
       button.setAttribute("aria-label", `${hand}: ${openFrequencyLabel(hand)}. После полученного 3-бета: ${mixLabel(mix)}. Сравнить нашу стратегию с реальным полем.`);
       button.style.setProperty("--vs3-open-fill", `${visualOpenFill(openFrequency)}%`);
+      button.style.setProperty("--vs3-mix-background", gradientFor(mix));
       const fill = element("span", "vs3-open-weight-fill");
       fill.setAttribute("aria-hidden", "true");
-      button.append(fill, element("strong", "", hand));
+      button.append(fill, element("strong", "", hand), createMixBar(mix, "vs3-cell-mix"));
       grid.append(button);
     });
     scroll.append(grid);
@@ -1215,10 +1217,12 @@
       const currentClass = hand === currentHand ? " is-current" : "";
       const cell = element("span", `vs3-range-cell ff-range-cell ${mix.missing ? "is-missing" : dominantAction(mix).tone}${unavailableClass}${zeroClass}${currentClass}`);
       cell.style.setProperty("--vs3-open-fill", `${visualOpenFill(openFrequency)}%`);
+      cell.style.setProperty("--vs3-mix-background", gradientFor(mix));
+      cell.dataset.vs3ActionSignature = ACTIONS.map((action) => `${action.key}:${mix[action.key].toFixed(2)}`).join("|");
       cell.setAttribute("aria-label", `${hand}: ${openFrequencyLabel(hand, position)}. Ожидаемый ответ: ${mixLabel(mix)}.`);
       const fill = element("span", "vs3-open-weight-fill");
       fill.setAttribute("aria-hidden", "true");
-      cell.append(fill, element("strong", "", hand));
+      cell.append(fill, element("strong", "", hand), createMixBar(mix, "vs3-cell-mix"));
       grid.append(cell);
     });
     scroll.append(grid);

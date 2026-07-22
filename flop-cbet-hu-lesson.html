@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Короткий урок и библиотека FF по контбетам в позиции в HU SRP RvBB: структуры флопа, фолд-эквити, сайзинги и чек-рейзы BB против нас.">
-  <title>C-bet RvBB · урок и библиотека FF</title>
+  <meta name="description" content="Короткий урок по ставке на флопе в позиции против большого блайнда: типы флопов, размеры ставки и ответы BB.">
+  <title>Ставка на флопе против BB · урок FF</title>
   <link rel="icon" href="assets/favicon.svg">
   <link rel="stylesheet" href="assets/poker-kit/tokens.css">
+  <link rel="stylesheet" href="assets/poker-kit/chart-system.css?v=ab5c2d6cf077">
   <link rel="stylesheet" href="assets/poker-kit/decks/decks.css?v=0639396cc47c">
   <link rel="stylesheet" href="assets/poker-kit/suit-text.css?v=7689ca588fe6">
   <link rel="stylesheet" href="assets/poker-kit/chips/chips.css?v=ed4e97084f43">
@@ -15,7 +16,7 @@
   <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=8311f2a34fe9">
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
-  <link rel="stylesheet" href="assets/poker-flop-cbet-hu-lesson/lesson.css?v=b6997b59d7a9">
+  <link rel="stylesheet" href="assets/poker-flop-cbet-hu-lesson/lesson.css?v=50ad513b287d">
   <link rel="stylesheet" href="assets/poker-kit/lesson-header.css?v=9641ee805ef9">
   <script defer src="assets/poker-kit/decks/deck-library.js?v=b03058b680c1"></script>
   <script defer src="assets/poker-kit/chips/chip-library.js?v=eab58b025e92"></script>
@@ -27,17 +28,17 @@
   <script defer src="assets/poker-trainer-shell/simulator-snapshot.js?v=45c27b16421b"></script>
   <script defer src="assets/poker-trainer-shell/simulator-practice.js?v=591b8e2f6784"></script>
   <script defer src="assets/poker-flop-cbet-hu-lesson/data.js?v=d038ff36f3ed"></script>
-  <script defer src="assets/poker-flop-cbet-hu-lesson/lesson.js?v=f5df08f6c28a"></script>
+  <script defer src="assets/poker-flop-cbet-hu-lesson/lesson.js?v=72dcf6594361"></script>
   <script defer src="assets/poker-kit/lesson-header.js?v=1b28bacb3505"></script>
 </head>
-<body>
+<body class="flop-cbet-hu-lesson">
   <main class="lesson-shell">
     <header class="lesson-header lesson-chrome" data-lesson-header>
       <div class="lesson-title lesson-chrome__identity">
         <a class="brand-mark lesson-home lesson-chrome__back" href="/">← В обучающий хаб</a>
         <div class="lesson-chrome__copy">
           <p class="eyebrow lesson-chrome__eyebrow">Тренировка · постфлоп</p>
-          <h1 class="lesson-chrome__title">C-bet IP против BB</h1>
+          <h1 class="lesson-chrome__title">Ставка на флопе против BB</h1>
         </div>
       </div>
       <nav class="step-tabs lesson-chrome__steps" aria-label="Шаги урока" role="tablist">
@@ -48,13 +49,13 @@
       </nav>
     </header>
 
-    <aside class="scope-strip" aria-label="Границы выборки">
-      <strong>6-max · только RvBB IP</strong>
-      <span>Hero RFI в неоткрытом банке</span>
+    <aside class="scope-strip" aria-label="Ситуация урока">
+      <strong>Стол на шесть игроков</strong>
+      <span>Ты открылся первым</span>
       <i aria-hidden="true">→</i>
-      <span>UTG / HJ / CO / SB — фолд</span>
+      <span>остальные выбросили</span>
       <i aria-hidden="true">→</i>
-      <span>BB — единственный коллер</span>
+      <span>только BB заколлировал</span>
       <i aria-hidden="true">→</i>
       <span>BB чекает флоп</span>
     </aside>
@@ -69,10 +70,10 @@
       </div>
 
       <div class="deal-layout">
-        <article class="poker-stage panel" aria-label="Учебная раздача 6-max RvBB">
+        <article class="poker-stage panel" aria-label="Учебная раздача на шесть игроков">
           <div class="stage-topline">
-            <span><i class="live-dot" aria-hidden="true"></i> 6-max · BTN vs BB · SRP</span>
-            <strong>Флоп · ход Hero IP</strong>
+            <span><i class="live-dot" aria-hidden="true"></i> BTN против BB</span>
+            <strong>Флоп · твой ход</strong>
           </div>
           <div class="lesson-table-host cbet-deal-table" data-deal-table aria-live="polite"></div>
         </article>
@@ -88,7 +89,7 @@
     <section class="lesson-screen" id="mainScreen" role="tabpanel" data-step="main" aria-labelledby="mainTab" hidden>
       <div class="screen-heading wisdom-heading">
         <div>
-          <p class="eyebrow">7 слайдов · одна мысль за раз</p>
+          <p class="eyebrow">Главная идея урока</p>
           <h2 id="mainTitle">Научись видеть простой c-bet</h2>
         </div>
         <div class="wisdom-progress" aria-live="polite">
@@ -110,11 +111,11 @@
       </div>
     </section>
 
-    <section class="lesson-screen" id="fieldScreen" role="tabpanel" data-step="field" aria-label="Библиотека c-bet RvBB" hidden>
+    <section class="lesson-screen" id="fieldScreen" role="tabpanel" data-step="field" aria-label="Как поле играет флоп" hidden>
       <div class="screen-heading field-heading">
         <div>
-          <p class="eyebrow">Измеренное поведение · быстрый рабочий срез</p>
-          <h2 id="fieldTitle">Библиотека c-bet RvBB</h2>
+          <p class="eyebrow">Как реально играет поле</p>
+          <h2 id="fieldTitle">Ставки и ответы на разных флопах</h2>
         </div>
         <div class="data-stamp" data-data-stamp>
           <span>Данные</span>
@@ -147,16 +148,16 @@
           </select>
         </label>
         <div class="control-block metric-control">
-          <span class="control-label">Метрика для сравнения</span>
+          <span class="control-label">Что сравниваем</span>
           <div class="metric-tabs" role="group" aria-label="Показатель таблицы и карты рангов">
-            <button class="is-active" type="button" aria-pressed="true" data-metric="cbet">C-bet</button>
-            <button type="button" aria-pressed="false" data-metric="fold">FE</button>
-            <button type="button" aria-pressed="false" data-metric="cbet_size">Сайз</button>
-            <button type="button" aria-pressed="false" data-metric="xr">X/R</button>
+            <button class="is-active" type="button" aria-pressed="true" data-metric="cbet">Ставка</button>
+            <button type="button" aria-pressed="false" data-metric="fold">Пас BB</button>
+            <button type="button" aria-pressed="false" data-metric="cbet_size">Размер</button>
+            <button type="button" aria-pressed="false" data-metric="xr">Чек-рейз</button>
           </div>
         </div>
         <div class="control-block table-view-control">
-          <span class="control-label">Плотность таблицы</span>
+          <span class="control-label">Что показать</span>
           <div class="segmented-control" role="group" aria-label="Вид таблицы структур">
             <button class="is-active" type="button" aria-pressed="true" data-table-mode="focus">Одна метрика</button>
             <button type="button" aria-pressed="false" data-table-mode="overview">Все сразу</button>
@@ -166,21 +167,21 @@
 
       <div class="data-status" role="status" data-data-status>
         <div class="data-status-copy">
-          <strong>Данные пока не подключены</strong>
-          <span>Только Hero RFI IP → BB call → BB check. Каждый N относится к своей метрике.</span>
+          <strong>Данные загружаются</strong>
+          <span>BTN открылся, BB заколлировал и прочекал. Это наблюдение за игрой поля, а не совет.</span>
         </div>
-        <b class="sample-size-pill" data-sample-size>HH с рангом · N —</b>
+        <b class="sample-size-pill" data-sample-size>Реальные раздачи FF</b>
       </div>
 
       <section class="panel overall-cbet-card" aria-labelledby="overallCbetTitle" data-overall-cbet-card hidden>
         <div class="table-heading">
           <div>
-            <p class="eyebrow">База до деления по доскам</p>
-            <h3 id="overallCbetTitle">Общий c-bet по рангам 1–17</h3>
+            <p class="eyebrow">Все флопы вместе</p>
+            <h3 id="overallCbetTitle">Как часто поле ставит по рангам 1–17</h3>
           </div>
-          <span class="source-badge" data-overall-cbet-source>полная RvBB выборка</span>
+          <span class="source-badge" data-overall-cbet-source>Реальные раздачи FF</span>
         </div>
-        <p class="source-explainer">Эта полоса отвечает только на вопрос «как часто ранг ставит вообще». Таблица структур ниже строится по раздачам, где удалось восстановить флоп и линию из hand history.</p>
+        <p class="source-explainer">Сначала общая картина. Ниже видно, на каких типах флопа поле ставит чаще или реже.</p>
         <div class="rank-strip" data-overall-cbet-strip aria-label="Общая частота контбета по рангам 1–17"></div>
       </section>
 
@@ -191,12 +192,7 @@
             <h3 id="tableTitle" data-table-title>Матрица поля по выбранному рангу</h3>
           </div>
           <div class="table-meta">
-            <span class="source-badge" data-metric-source>HH sample</span>
-            <div class="reliability-legend" aria-label="Надёжность данных">
-              <span><i class="is-solid"></i>надёжнее</span>
-              <span><i class="is-directional"></i>направление</span>
-              <span><i class="is-thin"></i>мало наблюдений</span>
-            </div>
+            <span class="source-badge" data-metric-source>Реальные раздачи FF</span>
           </div>
         </div>
         <p class="source-explainer" data-league-insight hidden></p>
@@ -206,7 +202,7 @@
             <tbody data-field-table-body></tbody>
           </table>
         </div>
-        <p class="overlap-note">Строки — взаимоисключающие учебные семейства. Например, A-high two-tone относится к строке two-tone, а «A-high · сухая» означает rainbow и несвязанный флоп. Точные высота, масти, связность и парность сохранены отдельно в анализе.</p>
+        <p class="overlap-note">Каждый флоп относится только к одной строке. Двухмастные, монотонные, спаренные и связанные доски вынесены в отдельные категории.</p>
       </section>
 
       <section class="panel structure-detail-card" id="selectedStructure" aria-labelledby="structureDetailTitle">
@@ -235,17 +231,17 @@
       <div class="detail-grid" id="sizeDetails">
         <section class="panel distribution-card" aria-labelledby="cbetSizeTitle">
           <div class="distribution-heading">
-            <div><p class="eyebrow">Как ставим мы</p><h3 id="cbetSizeTitle">Сайзы контбета</h3></div>
-            <div class="distribution-meta"><span class="source-badge" data-cbet-size-source>HH sample</span><span data-cbet-size-base>—</span></div>
+            <div><p class="eyebrow">Как ставит поле</p><h3 id="cbetSizeTitle">Размеры ставки</h3></div>
+            <div class="distribution-meta"><span class="source-badge" data-cbet-size-source>Реальные раздачи FF</span><span data-cbet-size-base>—</span></div>
           </div>
           <div class="distribution-bars" data-cbet-size-chart></div>
         </section>
         <section class="panel distribution-card is-xr" aria-labelledby="xrSizeTitle">
           <div class="distribution-heading">
-            <div><p class="eyebrow">Как рейзит BB против нас</p><h3 id="xrSizeTitle">Сайзы чек-рейза</h3></div>
+            <div><p class="eyebrow">Как BB отвечает полю</p><h3 id="xrSizeTitle">Размеры чек-рейза</h3></div>
             <div class="distribution-meta">
-              <span class="source-badge" data-xr-size-source>HH sample</span>
-              <label class="xr-size-filter"><span>После нашего</span><select data-xr-cbet-size-filter aria-label="Размер нашего c-bet перед чек-рейзом"><option value="all">Любой c-bet</option><option value="≤29%">≤29%</option><option value="30–42%">30–42%</option><option value="43–58%">43–58%</option><option value="59–71%">59–71%</option><option value="72–87,5%">72–87,5%</option><option value="88–125%">88–125%</option><option value=">125%">&gt;125%</option></select></label>
+              <span class="source-badge" data-xr-size-source>Реальные раздачи FF</span>
+              <label class="xr-size-filter"><span>После ставки</span><select data-xr-cbet-size-filter aria-label="Размер ставки перед чек-рейзом"><option value="all">Любой размер</option><option value="≤29%">≤29%</option><option value="30–42%">30–42%</option><option value="43–58%">43–58%</option><option value="59–71%">59–71%</option><option value="72–87,5%">72–87,5%</option><option value="88–125%">88–125%</option><option value=">125%">&gt;125%</option></select></label>
               <span data-xr-size-base>—</span>
             </div>
           </div>
@@ -256,58 +252,57 @@
       <section class="panel size-outcomes-card" aria-labelledby="sizeOutcomesTitle">
         <div class="table-heading">
           <div>
-            <p class="eyebrow">Наш сайз → ответ BB</p>
-            <h3 id="sizeOutcomesTitle">FE и чек-рейз по размеру c-bet</h3>
+            <p class="eyebrow">Размер ставки → ответ BB</p>
+            <h3 id="sizeOutcomesTitle">Как BB реагирует на разные ставки</h3>
           </div>
-          <span class="source-badge" data-size-outcomes-source>HH sample · наблюдение</span>
+          <span class="source-badge" data-size-outcomes-source>Реальные раздачи FF</span>
         </div>
         <div class="table-scroll" tabindex="0" aria-label="Ответы BB по размеру нашего контбета">
           <table class="field-table size-outcomes-table">
             <thead>
               <tr>
-                <th scope="col">Наш c-bet</th>
-                <th scope="col">Доля ставок</th>
-                <th scope="col">Получаемое FE</th>
-                <th scope="col">FE<sub>BE</sub> чистого блефа</th>
-                <th scope="col">X/R против нас</th>
-                <th scope="col">Ответов BB</th>
+                <th scope="col">Размер ставки</th>
+                <th scope="col">Как часто</th>
+                <th scope="col">BB пасует</th>
+                <th scope="col">Порог блефа</th>
+                <th scope="col">BB чек-рейзит</th>
+                <th scope="col">Надёжность</th>
               </tr>
             </thead>
             <tbody data-size-outcomes-body></tbody>
           </table>
         </div>
-        <p class="overlap-note">Сравнение описательное: сильные и слабые руки сами выбирали разные сайзы. Разница FE между строками не доказывает, что её вызвал только размер ставки.</p>
+        <p class="overlap-note">Это наблюдение, а не причинный вывод: сильные и слабые руки сами выбирали разные размеры ставки.</p>
       </section>
 
       <details class="method-card panel">
-        <summary>Как читать цифры и N</summary>
+        <summary>Как читать таблицу</summary>
         <div class="method-grid">
-          <div><strong>C-bet%</strong><span>Наши ставки ÷ возможности поставить после чека BB.</span></div>
-          <div><strong>Получаемое FE</strong><span>Фолды BB ÷ наши контбеты с известным первым ответом.</span></div>
-          <div><strong>X/R против нас</strong><span>Чек-рейзы BB ÷ наши не-all-in контбеты с известным ответом: после c-bet jam легального рейза уже нет.</span></div>
-          <div><strong>Сайз X/R</strong><span>Финальный raise-to BB ÷ размер нашего c-bet: 3x означает рейз до трёх наших ставок. Только линия чек → наш bet → raise.</span></div>
-          <div><strong>N</strong><span>Знаменатель конкретной метрики; рядом показывается число уникальных игроков.</span></div>
-          <div><strong>Важно</strong><span>Связь сайза и фолда наблюдаемая: разные руки и игроки сами выбирали разные ставки.</span></div>
+          <div><strong>Ставка поля</strong><span>Как часто префлоп-рейзер ставит после чека BB.</span></div>
+          <div><strong>Пас BB</strong><span>Как часто BB выбрасывает в ответ на ставку.</span></div>
+          <div><strong>Чек-рейз BB</strong><span>Как часто BB повышает после своего чека и ставки поля.</span></div>
+          <div><strong>Размер чек-рейза</strong><span>Во сколько раз итоговый рейз больше ставки поля.</span></div>
+          <div><strong>Важно</strong><span>При малом числе раздач процент скрыт. Связь размера ставки и ответа BB остаётся наблюдением, а не рекомендацией.</span></div>
         </div>
-        <p data-source-note>Источник и период появятся после подключения выгрузки.</p>
+        <p data-source-note>Данные поля появятся после загрузки.</p>
       </details>
     </section>
 
     <section class="lesson-screen" id="practiceScreen" role="tabpanel" data-step="practice" aria-labelledby="practiceTab" hidden>
       <div class="screen-heading trainer-heading">
         <div>
-          <p class="eyebrow">Практика без лимита · одна раздача на экране</p>
+          <p class="eyebrow">Практика</p>
           <h2 id="practiceTitle">Выбери действие после чека BB</h2>
         </div>
-        <p>Три решения, как в остальных тренажёрах: чек, маленький c-bet или крупный c-bet.</p>
+        <p>На каждом флопе выбери чек, маленькую или крупную ставку.</p>
       </div>
 
       <div class="cbet-practice-setup" data-trainer-setup>
         <article class="panel cbet-practice-integrity">
           <div>
-            <p class="eyebrow">Что именно тренируем</p>
-            <h3>Решение на флопе, а не бет-слайдер</h3>
-            <p>Сначала выбери класс действия. Точный сайз внутри группы подскажет разбор после ответа.</p>
+            <p class="eyebrow">Твой выбор</p>
+            <h3>Одно решение на флопе</h3>
+            <p>Выбери действие. После ответа увидишь короткий разбор и подходящий размер ставки.</p>
           </div>
           <div class="cbet-practice-legend" aria-label="Три варианта ответа">
             <span><i class="is-check"></i>Чек</span>
@@ -318,7 +313,7 @@
         <article class="panel cbet-practice-launch">
           <div>
             <strong>Играй сколько хочешь</strong>
-            <span>Счёт и промахи остаются перед глазами; закончить можно в любой момент.</span>
+            <span>Счёт остаётся перед глазами, закончить можно в любой момент.</span>
           </div>
           <button class="primary-button" type="button" data-trainer-start>Попробовать</button>
         </article>
@@ -333,9 +328,9 @@
         </div>
 
         <div class="deal-layout trainer-layout">
-          <article class="poker-stage panel" aria-label="Тренировочная раздача 6-max RvBB">
+          <article class="poker-stage panel" aria-label="Тренировочная раздача на шесть игроков">
             <div class="stage-topline">
-              <span><i class="live-dot" aria-hidden="true"></i> <b data-trainer-context>6-max · BTN vs BB · SRP</b></span>
+              <span><i class="live-dot" aria-hidden="true"></i> <b data-trainer-context>BTN против BB</b></span>
               <strong data-trainer-title>Раздача 1</strong>
             </div>
             <div class="lesson-table-host cbet-practice-table" data-trainer-table aria-live="polite"></div>
@@ -352,10 +347,10 @@
     <section class="lesson-screen" id="examplesScreen" role="tabpanel" data-step="examples" aria-labelledby="examplesTab" hidden>
       <div class="screen-heading examples-heading">
         <div>
-          <p class="eyebrow">Реальные раздачи · игроки 15–17 рангов</p>
-          <h2 id="examplesTitle">Какие c-bet были пропущены</h2>
+          <p class="eyebrow">Реальные раздачи FF</p>
+          <h2 id="examplesTitle">Где новички пропускают ставку</h2>
         </div>
-        <p>Каждая строка — реальный пример из истории раздач: слева флоп, справа руки без ставки. На этих структурах Лига 1 (ранги 1–5) ставит чаще.</p>
+        <p>Слева показан флоп, справа — руки, с которыми новички прочекали. Лига 1 на этих досках ставит чаще.</p>
       </div>
 
       <div class="board-example-library" data-board-example-library aria-live="polite">

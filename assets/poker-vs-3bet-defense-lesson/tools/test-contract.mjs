@@ -97,6 +97,44 @@ assert.equal(data.intro.options.find((option) => option.correct)?.key, "fourbet"
 assert.equal(data.intro.options.find((option) => option.key === "jam")?.acceptableMix, true);
 assert.doesNotMatch(data.intro.answer, /колл сохраняет/i);
 
+const coIpScenario = model.scenario({
+  position: "CO",
+  relation: "IP",
+  stack: "31-50",
+  size: 3,
+  cohort: "reference"
+});
+const coOopScenario = model.scenario({
+  position: "CO",
+  relation: "OOP",
+  stack: "31-50",
+  size: 3,
+  cohort: "reference"
+});
+assert.notDeepEqual(
+  JSON.parse(JSON.stringify(coIpScenario.cells.AQs)),
+  JSON.parse(JSON.stringify(coOopScenario.cells.AQs)),
+  "IP and OOP filters produce visibly different action frequencies for the same hand"
+);
+assert(
+  source.html.indexOf("data-intro-table") < source.html.indexOf("data-intro-feedback"),
+  "the intro feedback must live after the table so stale CSS cannot overlap it with the deal table"
+);
+assert(
+  source.html.indexOf("data-practice-table") < source.html.indexOf("data-practice-feedback"),
+  "the practice feedback must live after the table so stale CSS cannot overlap it with the practice table"
+);
+assert.doesNotMatch(
+  source.explorerCss,
+  /\.decision-panel \.decision-feedback[\s\S]{0,140}order:\s*1/,
+  "decision panel feedback must not be reordered above the table by responsive CSS"
+);
+assert.doesNotMatch(
+  source.explorerCss,
+  /\.decision-panel \.lesson-table-host[\s\S]{0,140}order:\s*2/,
+  "decision panel table must not be reordered below feedback by responsive CSS"
+);
+
 const t8sSmallThreeBet = model.scenario({
   position: "HJ",
   relation: "IP",
@@ -295,23 +333,20 @@ assert.match(source.html, /data-vs3-practice-expected/);
 assert.match(source.html, /practice-hud-rail/);
 assert.match(source.html, /Начни со всех ситуаций/);
 assert.match(source.html, /data-vs3-reg-view-tabs/);
-assert.match(source.html, /Здесь можно увидеть, как стратегия начинающих игроков отличается от топов/);
+assert.match(source.html, /Сравни, как начинающие и сильные игроки разыгрывают один и тот же спот/);
 assert.doesNotMatch(source.html, /Где поле защищается лишне или недостаточно/);
 assert.doesNotMatch(source.html, /Сначала открой наш чарт/);
 assert.doesNotMatch(source.html, /Это фактические решения поля, а не совет/);
 assert.doesNotMatch(source.html, /Как играют реги/);
 assert.doesNotMatch(source.fieldExplorer, /vs3-error-context/);
-assert.equal(Array.from(source.html.matchAll(/data-vs3-reg-view="(target|overview|hands|errors)"/g)).length, 4);
-assert.equal(Array.from(source.html.matchAll(/data-vs3-reg-view-panel="(target|overview|hands|errors)"/g)).length, 4);
-assert.equal(Array.from(source.html.matchAll(/class="vs3-reg-tab" type="button" role="tab"/g)).length, 4);
+assert.equal(Array.from(source.html.matchAll(/data-vs3-reg-view="(target|field)"/g)).length, 2);
+assert.equal(Array.from(source.html.matchAll(/data-vs3-reg-view-panel="(target|field)"/g)).length, 2);
+assert.equal(Array.from(source.html.matchAll(/class="vs3-reg-tab" type="button" role="tab"/g)).length, 2);
+assert.equal(Array.from(source.html.matchAll(/data-vs3-field-tool="(summary|hands|errors)"/g)).length, 3);
 assert.match(source.html, /id="vs3RegTargetTab"[^>]+aria-controls="vs3RegTargetPanel"[^>]+aria-selected="true"[^>]+tabindex="0"/);
-assert.match(source.html, /id="vs3RegOverviewTab"[^>]+aria-controls="vs3RegOverviewPanel"[^>]+aria-selected="false"[^>]+tabindex="-1"/);
-assert.match(source.html, /id="vs3RegHandsTab"[^>]+aria-controls="vs3RegHandsPanel"[^>]+aria-selected="false"[^>]+tabindex="-1"/);
-assert.match(source.html, /id="vs3RegErrorsTab"[^>]+aria-controls="vs3RegErrorsPanel"[^>]+aria-selected="false"[^>]+tabindex="-1"/);
+assert.match(source.html, /id="vs3RegFieldTab"[^>]+aria-controls="vs3RegFieldPanel"[^>]+aria-selected="false"[^>]+tabindex="-1"/);
 assert.match(source.html, /id="vs3RegTargetPanel"[^>]+aria-labelledby="vs3RegTargetTab"/);
-assert.match(source.html, /id="vs3RegOverviewPanel"[^>]+aria-labelledby="vs3RegOverviewTab"[^>]+hidden/);
-assert.match(source.html, /id="vs3RegHandsPanel"[^>]+aria-labelledby="vs3RegHandsTab"[^>]+hidden/);
-assert.match(source.html, /id="vs3RegErrorsPanel"[^>]+aria-labelledby="vs3RegErrorsTab"[^>]+hidden/);
+assert.match(source.html, /id="vs3RegFieldPanel"[^>]+aria-labelledby="vs3RegFieldTab"[^>]+hidden/);
 const regTabMarkup = Array.from(source.html.matchAll(/<button class="vs3-reg-tab"[^>]*>/g), (match) => match[0]);
 assert.equal(regTabMarkup.filter((markup) => /aria-selected="true"/.test(markup)).length, 1);
 assert.equal(regTabMarkup.filter((markup) => /tabindex="0"/.test(markup)).length, 1);
@@ -370,16 +405,30 @@ assert.match(source.explorer, /Только без позиции/);
 assert.match(source.explorer, /FFFieldLessonPracticeExtension/);
 assert.match(source.explorer, /Math\.max\(10, Math\.min\(100, frequency\)\)/);
 assert.match(source.explorer, /data-vs3-open-frequency|dataset\.vs3OpenFrequency/);
-assert.match(source.explorer, /Высота — как часто открываем руку\. Цвет — главное действие против 3-бета/);
+assert.match(source.explorer, /Высота — как часто открываем руку\. Цвета внутри — пас, колл, 4-бет и пуш/);
 assert.match(source.explorer, /минимальная полоса 10%/);
 assert.match(source.explorerCss, /\.vs3-open-weight-fill[\s\S]*height: var\(--vs3-open-fill/);
 assert.match(source.explorer, /vs3-range-grid ff-range-grid/);
 assert.match(source.explorer, /vs3-range-cell ff-range-cell/);
-assert.doesNotMatch(source.explorer, /button\.append\(fill, element\("strong", "", hand\), createMixBar/);
+assert.match(source.explorer, /button\.append\(fill, element\("strong", "", hand\), createMixBar\(mix, "vs3-cell-mix"\)\)/);
+assert.match(source.explorer, /cell\.append\(fill, element\("strong", "", hand\), createMixBar\(mix, "vs3-cell-mix"\)\)/);
+assert.doesNotMatch(source.explorerCss, /\.vs3-range-cell > \.vs3-cell-mix \{ display: none; \}/);
 assert.match(source.explorerCss, /\.vs3-range-cell\.is-open-weight-unavailable/);
 assert.match(source.explorerCss, /\.vs3-practice-presets/);
 assert.match(source.explorerCss, /\.practice-hud-rail/);
 assert.match(source.explorerCss, /\.vs3-practice-expected-grid/);
+assert.match(
+  source.explorerCss,
+  /\.vs3-matrix-card,[\s\S]*\.vs3-hand-comparison[\s\S]*overflow: hidden/,
+  "range cards clip internal decorations and do not let matrices bleed outside the panel"
+);
+assert.match(
+  source.explorerCss,
+  /\.vs3-range-grid[\s\S]*--vs3-range-cell-size: clamp\([\s\S]*grid-template-columns: repeat\(13, minmax\(0, var\(--vs3-range-cell-size\)\)\)[\s\S]*min-width: 0/,
+  "range grids must fit their card with adaptive cells instead of a hard desktop minimum"
+);
+assert.doesNotMatch(source.explorerCss, /min-width: 660px/);
+assert.doesNotMatch(source.explorerCss, /repeat\(13, 47px\)/);
 assert.match(
   source.explorerCss,
   /\.vs3-chart-layout[\s\S]*grid-template-columns: minmax\(0, 1fr\)[\s\S]*width: min\(100%, 980px\)/,
@@ -459,9 +508,13 @@ assert.doesNotMatch(source.fieldExplorer, /Слабые выборки скры�
 assert.match(source.fieldExplorer, /params\.get\("regView"\)/);
 assert.match(source.fieldExplorer, /params\.has\("errorMatrix"\)/);
 assert.match(source.fieldExplorer, /return "target"/);
+assert.match(source.fieldExplorer, /legacyFieldViews = Object\.freeze\(\{ overview: "summary", hands: "hands", errors: "errors" \}\)/);
+assert.match(source.fieldExplorer, /params\.get\("fieldSection"\)/);
+assert.match(source.fieldExplorer, /function setFieldTool/);
 assert.match(source.fieldExplorer, /data-vs3-reg-view-link/);
 assert.match(source.fieldExplorer, /setRegView\("target"\)/);
 assert.match(source.fieldExplorer, /showView\(next, options = \{\}\)/);
+assert.match(source.fieldExplorer, /showFieldSection\(next, options = \{\}\)/);
 assert.match(source.fieldExplorer, /\["ArrowLeft", "ArrowRight", "Home", "End"\]/);
 assert.match(source.fieldExplorer, /panel\.hidden = !selected/);
 assert.doesNotMatch(source.fieldExplorer, /errorsHost\?\.setAttribute\("aria-live", selected \? "polite" : "off"\)/);
@@ -470,7 +523,11 @@ assert.match(source.explorerCss, /\.vs3-error-layout[\s\S]*grid-template-columns
 assert.match(source.explorerCss, /\.vs3-error-range-cell\.is-underdefense/);
 assert.match(source.explorerCss, /\.vs3-error-range-cell\.is-overdefense/);
 assert.doesNotMatch(source.explorerCss, /is-estimated/);
-assert.match(source.explorerCss, /\.vs3-reg-switcher[\s\S]*grid-template-columns: repeat\(4/);
+assert.match(source.explorer, /--vs3-mix-background/);
+assert.match(source.explorer, /dataset\.vs3ActionSignature/);
+assert.match(source.explorerCss, /\.vs3-open-weight-fill[\s\S]*var\(--vs3-mix-background/);
+assert.match(source.explorerCss, /\.vs3-reg-switcher[\s\S]*grid-template-columns: repeat\(2/);
+assert.match(source.explorerCss, /\.vs3-field-tool\[open\]/);
 assert.match(source.explorerCss, /\.vs3-reg-tab small \{ display: none; \}/);
 assert.match(source.explorerCss, /\.vs3-reg-panel\[hidden\][^}]*display: none !important/);
 assert.match(source.sharedLesson, /continuationUi/);

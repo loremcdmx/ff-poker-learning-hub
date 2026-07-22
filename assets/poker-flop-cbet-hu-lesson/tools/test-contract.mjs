@@ -52,6 +52,7 @@ for (const token of [
   "assets/poker-trainer-shell/shell.css",
   "assets/poker-trainer-shell/simulator-snapshot.js",
   "assets/poker-trainer-shell/simulator-practice.js",
+  "assets/poker-kit/chart-system.css",
   "assets/poker-flop-cbet-hu-lesson/data.js",
   "assets/poker-flop-cbet-hu-lesson/lesson.js",
   "href=\"/flop-checkraise-lesson\""
@@ -84,13 +85,16 @@ assert.match(lessonSource, /достаточно компетентные опп
 assert.match(lessonCss, /\.trainer-feedback\.is-alternative[\s\S]*?\.table-action\.is-alternative/, "acceptable sizing has a distinct yellow feedback and action treatment");
 assert.doesNotMatch(lessonSource, /queryAll\("\[data-(?:deal|trainer)-action\]"/, "lesson code has no external poker-action controls");
 assert.match(lessonSource, /function updateTrainerHud\([\s\S]*data-trainer-hands[\s\S]*data-trainer-correct[\s\S]*data-trainer-misses/, "practice HUD tracks hands, correct answers and misses");
-assert.match(
-  lessonSource,
-  /function observedRateDisplay\([\s\S]*reliabilityFor\(denominator\)[\s\S]*reliability === "thin"[\s\S]*Мало данных[\s\S]*процент скрыт[\s\S]*reliability === "directional"[\s\S]*направление/,
-  "thin observed rates are hidden and directional samples are labelled"
-);
+assert.match(lessonSource, /function observedRateDisplay\([\s\S]*reliabilityFor\(denominator\)[\s\S]*value: Number\.isFinite\(value\) \? formatPercent\(value\) : "—"/, "observed rates keep exact values whenever the exported slice has a denominator");
 assert.match(lessonSource, /observedRateDisplay\(entry\.observedFe, entry\.validResponses\)/);
-assert.match(lessonSource, /observedRateDisplay\(entry\.xrRate, entry\.xrValidResponses, "eligible N"\)/);
+assert.match(lessonSource, /observedRateDisplay\(entry\.xrRate, entry\.xrValidResponses\)/);
+assert.match(lessonSource, /function metricDisplay\([\s\S]*reliabilityFor\(summary\.n\)[\s\S]*value: metric === "cbet_size"/, "all chart metrics keep exported values instead of replacing them with a coarse label");
+assert.doesNotMatch(lessonSource, /base\.textContent\s*=\s*summary[^;]*`N /, "chart cells do not expose raw sample denominators");
+assert.doesNotMatch(html, /HH sample|eligible N|Hero RFI|hand history|6-max RvBB|SRP/, "learner-facing chart and practice copy avoids implementation shorthand");
+assert.match(html, /Реальные раздачи FF/, "chart panels use the shared learner-facing source stamp");
+assert.match(lessonSource, /console\.error\("\[c-bet lesson\]/, "technical render failures are kept in the console");
+assert.match(lessonSource, /Ситуация временно недоступна/, "the learner sees a neutral render error");
+assert.doesNotMatch(lessonSource, /Мало данных|Недостаточно раздач/, "c-bet learner UI has no low-sample substitute labels");
 assert.match(lessonCss, /\.cbet-practice-table \.client-controls > \.client-row \{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/, "practice renders three equal shared action columns");
 assert.match(lessonCss, /\.cbet-practice-table \.table-action \{[^}]*min-height:\s*72px/, "shared practice actions keep the large hit target");
 assert.match(lessonCss, /@media \(max-width: 620px\)[\s\S]*?\.cbet-practice-table \.client-controls > \.client-row\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)\s*!important;/, "mobile c-bet actions use two readable columns instead of three squeezed ones");

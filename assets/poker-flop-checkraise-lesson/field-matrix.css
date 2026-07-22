@@ -15,7 +15,7 @@
 
 .flop-checkraise-lesson .structure-league-scope {
   display: grid;
-  grid-template-columns: minmax(320px, 1.35fr) minmax(300px, .65fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   gap: 22px;
   padding: 20px 22px;
@@ -33,24 +33,6 @@
 .flop-checkraise-lesson .structure-league-scope-copy .eyebrow { margin: 0; }
 .flop-checkraise-lesson .structure-league-scope-copy strong { font-size: 17px; line-height: 1.3; }
 .flop-checkraise-lesson .structure-league-scope-copy span { color: var(--muted); font-size: 13px; line-height: 1.5; }
-
-.flop-checkraise-lesson .structure-league-scope-facts {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 7px;
-}
-
-.flop-checkraise-lesson .structure-league-scope-facts span {
-  padding: 7px 10px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  color: rgba(244, 241, 236, .78);
-  background: rgba(0, 0, 0, .16);
-  font-size: 11px;
-  font-weight: 720;
-  white-space: nowrap;
-}
 
 .flop-checkraise-lesson .structure-league-controls {
   display: flex;
@@ -190,13 +172,6 @@
   font-size: 10px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-}
-
-.flop-checkraise-lesson .structure-league-summary-note {
-  margin: 11px 0 0;
-  color: var(--soft);
-  font-size: 10px;
-  line-height: 1.45;
 }
 
 .flop-checkraise-lesson .structure-league-table-card { overflow: hidden; }
@@ -521,6 +496,13 @@
   .flop-checkraise-lesson .structure-league-cell { padding: 9px 8px; }
   .flop-checkraise-lesson .structure-league-cell .structure-league-kpi { padding: 8px 7px; }
   .flop-checkraise-lesson .structure-league-kpi-label { font-size: 8px; }
+  .flop-checkraise-lesson .structure-league-summary .structure-league-kpi-label {
+    min-height: 2.25em;
+    overflow: visible;
+    line-height: 1.15;
+    text-overflow: clip;
+    white-space: normal;
+  }
   .flop-checkraise-lesson .structure-league-kpi small { font-size: 9px; }
   .flop-checkraise-lesson .structure-league-mobile-label { font-size: 10px; }
 }

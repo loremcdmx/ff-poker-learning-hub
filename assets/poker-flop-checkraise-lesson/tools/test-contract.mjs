@@ -154,8 +154,8 @@ assert.match(
 );
 assert.match(
   fieldMatrixSource,
-  /reliability === "thin" \? "Мало данных"[\s\S]*процент скрыт[\s\S]*reliability === "directional"[\s\S]*направление/,
-  "matrix hides thin percentages and labels directional samples"
+  /const value = percent\(rate\(numerator, denominator\)\)[\s\S]*kpi\.dataset\.reliability = reliability/,
+  "matrix keeps available values visible without learner-facing sample labels"
 );
 assert.match(fieldMatrixCss, /data-reliability="thin"[\s\S]*font-size:/, "thin values fit as copy instead of a percentage");
 
@@ -389,6 +389,82 @@ assert.deepEqual(
   observedLeagueOneArtifact.hands,
   "browser data stays byte-for-field aligned with the independently saved exact-HH artifact"
 );
+
+const boardAtlas = data.examples.boardAtlas;
+const expectedAtlasRoles = ["value", "semi_bluff", "check_call", "fold"];
+const atlasObservedOnlyKeys = [
+  "sampleId",
+  "queryVersion",
+  "handKeyHash",
+  "rankTiming",
+  "period",
+  "league",
+  "rank",
+  "villainResponse",
+  "cbetAmountBb",
+  "xrToBb",
+  "source"
+];
+const atlasRoleTotals = Object.fromEntries(expectedAtlasRoles.map((roleKey) => [roleKey, 0]));
+const rankOrder = "23456789TJQKA";
+const handClassFromCards = (cards) => {
+  const [first, second] = Array.from(cards);
+  const firstRank = first[0];
+  const secondRank = second[0];
+  if (firstRank === secondRank) return `${firstRank}${secondRank}`;
+  const [high, low] = rankOrder.indexOf(firstRank) > rankOrder.indexOf(secondRank)
+    ? [first, second]
+    : [second, first];
+  return `${high[0]}${low[0]}${high[1] === low[1] ? "s" : "o"}`;
+};
+assert(boardAtlas, "the Examples tab exposes the teaching board atlas");
+assert.equal(boardAtlas.sourceKind, "teaching");
+assert.match(boardAtlas.note, /учебная стратегия.*не HH поля/i, "the atlas is not presented as observed field play");
+assert.match(boardAtlas.scope, /BB против BTN.*40–60 BB.*25–33% банка/i, "the authored strategy has a concrete spot boundary");
+assert.deepEqual(
+  Array.from(boardAtlas.structures, (structure) => structure.key),
+  expectedObservedStructures,
+  "the teaching atlas covers every canonical flop structure in canonical order"
+);
+let atlasHandCount = 0;
+for (const structure of boardAtlas.structures) {
+  assert.equal(structure.sourceKind, "teaching", `${structure.key} stays inside the teaching layer`);
+  assert(structure.label && structure.description, `${structure.key} has complete board-level teaching copy`);
+  assert.equal(structure.boardCards.length, 3, `${structure.key} has three exact flop cards`);
+  assert(structure.boardCards.every((card) => /^[2-9TJQKA][cdhs]$/.test(card)), `${structure.key} uses canonical flop cards`);
+  assert.equal(new Set(structure.boardCards).size, 3, `${structure.key} has no duplicate flop cards`);
+  assert.deepEqual(
+    Array.from(structure.groups, (group) => group.roleKey),
+    expectedAtlasRoles,
+    `${structure.key} keeps the four teaching decisions in a stable order`
+  );
+  const structureCombos = new Set();
+  for (const group of structure.groups) {
+    assert.equal(group.sourceKind, "teaching", `${structure.key}.${group.roleKey} stays inside the teaching layer`);
+    assert(group.roleLabel && group.actionLabel, `${structure.key}.${group.roleKey} has complete action copy`);
+    assert.equal(group.hands.length, 2, `${structure.key}.${group.roleKey} has two distinct examples`);
+    atlasRoleTotals[group.roleKey] += group.hands.length;
+    for (const hand of group.hands) {
+      assert.equal(hand.sourceKind, "teaching", `${structure.key}.${group.roleKey}.${hand.hand} is not mislabeled as an HH`);
+      assert.equal(hand.heroCards.length, 2, `${structure.key}.${group.roleKey}.${hand.hand} has two exact Hero cards`);
+      assert(hand.heroCards.every((card) => /^[2-9TJQKA][cdhs]$/.test(card)), `${structure.key}.${hand.hand} uses canonical Hero cards`);
+      assert.equal(new Set([...structure.boardCards, ...hand.heroCards]).size, 5, `${structure.key}.${hand.hand} has no duplicate physical cards`);
+      assert.equal(hand.hand, handClassFromCards(hand.heroCards), `${structure.key}.${hand.hand} matches its exact suits and ranks`);
+      const combo = Array.from(hand.heroCards).sort().join("");
+      assert(!structureCombos.has(combo), `${structure.key}.${hand.hand} is not duplicated elsewhere on the same board`);
+      structureCombos.add(combo);
+      atlasObservedOnlyKeys.forEach((key) => assert.equal(hand[key], undefined, `${structure.key}.${hand.hand} has no observed-HH key ${key}`));
+      assert(hand.hand && hand.title && hand.reason && hand.turnPlan, `${structure.key}.${group.roleKey}.${hand.hand} has complete teaching copy`);
+      atlasHandCount += 1;
+    }
+  }
+}
+assert.equal(atlasHandCount, 64, "the atlas exposes 8 boards × 4 decisions × 2 hands");
+assert.deepEqual(atlasRoleTotals, { value: 16, semi_bluff: 16, check_call: 16, fold: 16 });
+const boardAtlasText = JSON.stringify(boardAtlas.structures);
+assert.doesNotMatch(boardAtlasText, /(?:\b20\d{2}-Q[1-4]\b|\bQ[1-4]\s+20\d{2}\b|\bLeague\b|\bЛига\b|\brank\b|\bранг\b|handKeyHash|sampleId|queryVersion)/i);
+assert.doesNotMatch(boardAtlasText, /\d+(?:[.,]\d+)?%/, "the authored atlas does not present unsupported field rates");
+
 assert.equal(data.examples.value.length, 3, "value examples are grouped by category, not duplicated per combo");
 assert.equal(data.examples.bluff.length, 2, "bluff examples are grouped by category, not duplicated per combo");
 const setExample = data.examples.value.find((example) => example.id === "example-set");
@@ -454,8 +530,8 @@ assert.deepEqual(
     .sort(),
   "every authored X/R candidate appears once inside the five category cards"
 );
-assert.match(data.examples.lead, /восемь реальных раздач Лиги 1.*пять учебных категорий/i);
-assert.match(data.examples.method, /восемь реально сыгранных X\/R.*не задаёт частоту или рекомендацию/i);
+assert.match(data.examples.lead, /восемь реальных раздач Лиги 1.*64 учебные руки.*пять подробных разборов/i);
+assert.match(data.examples.method, /восемь реально сыгранных X\/R.*учебная стратегия.*не HH поля.*не задаёт частоту или рекомендацию/i);
 assert.match(data.examples.bluff[0].contrast.copy, /один слабый backdoor.*эксплойт.*два пути усиления/i);
 assert.match(data.examples.bluff[1].contrast.copy, /один runner-runner.*эксплойт.*gutshot/i);
 
@@ -464,6 +540,16 @@ assert.match(html, /data-step-target="examples"/);
 assert.match(html, /data-examples-league-one/, "the Examples tab has a dedicated observed League 1 host");
 assert.match(shared, /observedLeague1/, "the shared lesson renderer reads the observed League 1 data contract");
 assert.match(shared, /data-examples-league-one/, "the shared lesson renderer mounts the observed League 1 cards separately");
+assert.match(html, /data-examples-atlas/, "the Examples tab has a dedicated teaching-atlas host");
+assert.match(html, /example-observed[\s\S]*data-examples-league-one[\s\S]*example-atlas[\s\S]*data-examples-atlas/, "observed HH precede the separately labeled teaching atlas");
+assert.match(shared, /function renderExampleAtlas\(host, atlasData\)/, "the shared renderer owns the compact teaching atlas");
+assert.match(shared, /source\.boardAtlas/, "the renderer consumes the teaching atlas through a separate data contract");
+assert.match(shared, /tabs\.setAttribute\("role", "tablist"\)/, "the board selector exposes tab semantics");
+assert.match(shared, /panel\.setAttribute\("role", "tabpanel"\)/, "the selected board exposes panel semantics");
+assert.match(shared, /button\.setAttribute\("aria-pressed", "false"\)/, "teaching-hand selectors expose pressed state");
+assert.match(sharedCss, /\.example-atlas-tabs\s*\{/, "the atlas has a dedicated compact board selector");
+assert.match(sharedCss, /\.example-atlas-inspector\s*\{/, "the atlas has one shared explanation inspector");
+assert.match(sharedCss, /\.example-atlas\s*>\s*\[data-examples-atlas\][\s\S]*min-width:\s*0/, "the atlas host cannot leak flex min-content width on mobile");
 assert.doesNotMatch(
   html,
   /3 короткие мысли|стрелки, точки или свайп/,
@@ -483,6 +569,10 @@ assert.match(html, /data-practice-continuation-external hidden/);
 assert.doesNotMatch(html, /data-practice-start/, "practice opens directly on the first playable hand");
 assert.doesNotMatch(html, /data-practice-xr-rate|data-practice-missed-xr|data-practice-extra-xr/, "technical X/R counters do not crowd the main loop");
 assert.doesNotMatch(html, /Функциональный snapshot|T♥9♥ до showdown|Оптимистичных X\/R/, "setup and methodological copy stay out of the playable screen");
+assert.doesNotMatch(html, /data-source-label|По базе FF|rank 1–5|Учебный атлас|Бесконечная практика/, "technical source and setup labels stay out of the visible lesson shell");
+assert.match(shared, /console\.error\(`\[\$\{lessonKey \|\| "poker-field-lesson"\}\] data validation failed`/, "full validation detail goes to the console");
+assert.match(shared, /Данные урока не загрузились\. Обнови страницу или попробуй позже\./, "validation failures use neutral learner-facing copy");
+assert.doesNotMatch(shared, /Функциональный стол не загрузился|проверьте shared snapshot|проверьте формат table\/options/, "render failures do not expose implementation details");
 const sharedCssHash = createHash("sha256")
   .update(sharedCss.replace(/\r\n/g, "\n").replace(/\r/g, "\n"))
   .digest("hex")
@@ -524,13 +614,17 @@ assert.ok(html.indexOf("poker-flop-checkraise-lesson/continuations.js") < html.i
 assert.ok(html.indexOf("poker-flop-checkraise-lesson/practice-generator.js") < html.indexOf("poker-flop-checkraise-lesson/data.js"));
 assert.ok(html.indexOf("poker-flop-checkraise-lesson/data.js") < html.indexOf("poker-flop-checkraise-lesson/field-matrix.js"));
 assert.ok(html.indexOf("poker-flop-checkraise-lesson/field-matrix.js") < html.indexOf("poker-field-lesson/lesson.js"));
-assert.match(fieldMatrixSource, /Нам ставят c-bet/);
-assert.match(fieldMatrixSource, /CO\/BTN ставит c-bet в BB/);
+assert.match(fieldMatrixSource, /appendKpi\(metrics, "Нам ставят"/);
+assert.match(fieldMatrixSource, /CO\/BTN ставит после чека BB/);
 assert.match(fieldMatrixSource, /appendKpi\(metrics, "Нам ставят"/);
 assert.doesNotMatch(fieldMatrixSource, /appendKpi\(metrics, "C-bet"/);
-assert.match(fieldMatrixSource, /Фолд на X\/R/);
+assert.match(fieldMatrixSource, /Пас на чек-рейз/);
 assert.match(fieldMatrixSource, /dataset\.foldView/);
-assert.equal((fieldMatrixSource.match(/showSample: false/g) || []).length, 2, "the structure table hides both raw sample counters");
+assert.doesNotMatch(fieldMatrixSource, /showSample|count\(numerator\)|count\(denominator\)/, "raw sample counters are not rendered inside KPI cells");
+assert.match(fieldMatrixSource, /const value = percent\(rate\(numerator, denominator\)\);/, "thin samples retain their actual percentage");
+assert.doesNotMatch(fieldMatrixSource, /Мало данных|Ориентир по небольшой выборке/, "the learner UI has no sample-size substitute labels");
+assert.match(fieldMatrixSource, /console\.error\("\[flop-checkraise\] field matrix validation failed"/, "matrix validation detail goes to the console");
+assert.match(fieldMatrixSource, /Данные поля не загрузились[\s\S]*?Обнови страницу или попробуй позже\./, "matrix failures use neutral learner-facing copy");
 assert.doesNotMatch(fieldMatrixSource, /Как читать N:/, "the table no longer keeps an obsolete sample-size footer");
 assert.match(fieldMatrixCss, /structure-league-table\s*\{[\s\S]*?min-width:\s*0;/, "the desktop matrix has no artificial horizontal floor");
 assert.match(fieldMatrixCss, /structure-league-table th,[\s\S]*?padding:\s*8px;/, "desktop matrix rows stay compact");
