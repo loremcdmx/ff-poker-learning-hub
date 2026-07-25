@@ -514,7 +514,7 @@ p { margin-bottom: 13px; color: var(--muted); line-height: 1.55; }
 .hand-cell small { display: block; margin-top: 3px; color: rgba(255, 255, 255, .92); font-size: 10px; font-weight: 800; line-height: 1; }
 .hand-cell:hover, .hand-cell:focus-visible { z-index: 2; transform: scale(1.06); }
 .hand-cell.is-selected { z-index: 3; outline: 3px solid var(--brand-yellow); outline-offset: -2px; }
-.hand-cell.is-cut { opacity: .42; }
+.hand-cell.is-cut { border-color: rgba(255, 255, 255, .24); box-shadow: inset 0 -3px rgba(255, 255, 255, .18); }
 .matrix.is-loading .hand-cell { animation: pulse 1s ease-in-out infinite alternate; }
 .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 7px; color: var(--muted); font-size: 10px; }
 .legend i { display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 2px; }
@@ -650,9 +650,10 @@ p { margin-bottom: 13px; color: var(--muted); line-height: 1.55; }
 .reaction-range-legend b { color: rgba(231, 255, 246, .86); font-size: 10px; }
 .reaction-matrix-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
 .reaction-matrix { display: grid; grid-template-columns: repeat(13, minmax(34px, 1fr)); gap: 3px; width: min(100%, 760px); min-width: 560px; margin-inline: auto; }
-.reaction-cell { position: relative; display: grid; place-items: center; align-content: center; gap: 2px; aspect-ratio: 1; min-width: 0; overflow: hidden; border: 1px solid rgba(255, 255, 255, .12); border-radius: 6px; color: #fff; background: rgba(84, 211, 164, var(--reaction-strength)); font-variant-numeric: tabular-nums; box-shadow: inset 0 1px rgba(255, 255, 255, .05); }
-.reaction-cell b { font-size: clamp(9px, .8vw, 12px); line-height: 1; }
-.reaction-cell small { color: rgba(255, 255, 255, .82); font-size: 7.5px; font-weight: 800; line-height: 1; }
+.reaction-cell { position: relative; display: grid; place-items: center; align-content: center; gap: 2px; aspect-ratio: 1; min-width: 0; overflow: hidden; border: 1px solid rgba(84, 211, 164, .24); border-radius: 6px; color: #f7f7f4; background: #111a17; font-variant-numeric: tabular-nums; box-shadow: inset 0 1px rgba(255, 255, 255, .05); }
+.reaction-cell::before { position: absolute; right: 0; bottom: 0; left: 0; height: 4px; content: ""; background: #54d3a4; transform: scaleX(var(--reaction-strength)); transform-origin: left center; }
+.reaction-cell b { position: relative; z-index: 1; font-size: clamp(9px, .8vw, 12px); line-height: 1; }
+.reaction-cell small { position: relative; z-index: 1; color: rgba(247, 247, 244, .82); font-size: 9px; font-weight: 800; line-height: 1; }
 .reaction-cell.is-empty { color: rgba(205, 198, 211, .28); background: #15131a; }
 .reaction-reading { display: grid; align-content: start; gap: 8px; }
 .reaction-reading > p { margin: 0; color: rgba(218, 213, 224, .76); font-size: 11px; line-height: 1.5; text-wrap: pretty; }

@@ -131,6 +131,20 @@
     return relationAllowed(next.relation, next.position) && Boolean(chart(next));
   }
 
+  function availableFilterValues(key, config) {
+    if (key !== "position") return config.values;
+    return config.values.filter((value) => filterValueAvailable(key, value));
+  }
+
+  function selectionForFilter(key, value) {
+    const next = { ...state, [key]: value };
+    if (key !== "relation" || relationAllowed(value, next.position)) return next;
+    const preferredPosition = value === "OOP" ? "CO" : "BTN";
+    const candidates = [preferredPosition, ...filters.position.values.filter((position) => position !== preferredPosition)];
+    next.position = candidates.find((position) => relationAllowed(value, position) && Boolean(chart({ ...next, position }))) || next.position;
+    return next;
+  }
+
   function count(value) {
     return Math.max(0, Number(value) || 0);
   }
@@ -299,14 +313,12 @@
       group.dataset.filterKey = key;
       const label = element("span", "vs3-filter-label", config.label);
       const controls = element("div", "vs3-filter-options");
-      config.values.forEach((value) => {
+      availableFilterValues(key, config).forEach((value) => {
         const button = element("button", "vs3-filter-button", labels[key]?.[value] || value);
         button.type = "button";
         button.dataset.vs3FieldFilter = key;
         button.dataset.vs3FieldValue = value;
         button.setAttribute("aria-pressed", String(state[key] === value));
-        const unavailable = !filterValueAvailable(key, value);
-        button.disabled = unavailable;
         controls.append(button);
       });
       group.append(label, controls);
@@ -658,9 +670,9 @@
       const key = filter.dataset.vs3FieldFilter;
       const value = filter.dataset.vs3FieldValue;
       const context = filter.closest("[data-vs3-field-filter-context]")?.dataset.vs3FieldFilterContext || "";
-      if (!filters[key]?.values.includes(value) || !filterValueAvailable(key, value)) return;
-      state[key] = value;
-      if (key === "position" && !relationAllowed(state.relation, value)) state.relation = value === "SB" ? "OOP" : "IP";
+      const next = selectionForFilter(key, value);
+      if (!filters[key]?.values.includes(value) || !relationAllowed(next.relation, next.position) || !chart(next)) return;
+      Object.assign(state, next);
       renderAll();
       root.requestAnimationFrame(() => {
         documentRoot.querySelector(

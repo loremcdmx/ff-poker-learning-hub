@@ -919,26 +919,26 @@
 
 .vs-3bet-defense-lesson .is-fold {
   --vs3-tone: var(--vs3-fold);
-  --vs3-cell-surface: color-mix(in srgb, var(--vs3-fold) 68%, #17141d);
-  --vs3-cell-border: color-mix(in srgb, var(--vs3-fold) 52%, transparent);
+  --vs3-cell-surface: color-mix(in srgb, var(--vs3-fold) 20%, #13161c);
+  --vs3-cell-border: color-mix(in srgb, var(--vs3-fold) 42%, transparent);
 }
 
 .vs-3bet-defense-lesson .is-call {
   --vs3-tone: var(--vs3-call);
-  --vs3-cell-surface: color-mix(in srgb, var(--vs3-call) 61%, #17141d);
-  --vs3-cell-border: color-mix(in srgb, var(--vs3-call) 48%, transparent);
+  --vs3-cell-surface: color-mix(in srgb, var(--vs3-call) 18%, #13161c);
+  --vs3-cell-border: color-mix(in srgb, var(--vs3-call) 40%, transparent);
 }
 
 .vs-3bet-defense-lesson .is-fourbet {
   --vs3-tone: var(--vs3-fourbet);
-  --vs3-cell-surface: color-mix(in srgb, var(--vs3-fourbet) 58%, #17141d);
-  --vs3-cell-border: color-mix(in srgb, var(--vs3-fourbet) 48%, transparent);
+  --vs3-cell-surface: color-mix(in srgb, var(--vs3-fourbet) 18%, #13161c);
+  --vs3-cell-border: color-mix(in srgb, var(--vs3-fourbet) 40%, transparent);
 }
 
 .vs-3bet-defense-lesson .is-jam {
   --vs3-tone: var(--vs3-jam);
-  --vs3-cell-surface: color-mix(in srgb, var(--vs3-jam) 60%, #17141d);
-  --vs3-cell-border: color-mix(in srgb, var(--vs3-jam) 48%, transparent);
+  --vs3-cell-surface: color-mix(in srgb, var(--vs3-jam) 20%, #13161c);
+  --vs3-cell-border: color-mix(in srgb, var(--vs3-jam) 42%, transparent);
 }
 .vs-3bet-defense-lesson .vs3-legend-item i { background: var(--vs3-tone); }
 
@@ -1002,7 +1002,11 @@
   left: 0;
   height: var(--vs3-open-fill, 100%);
   border-top: 1px solid rgba(255, 255, 255, .2);
-  background: var(--vs3-mix-background, linear-gradient(180deg, color-mix(in srgb, var(--vs3-tone, #fff) 16%, var(--vs3-cell-surface, #17141d)), var(--vs3-cell-surface, #17141d)));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--vs3-tone, #fff) 8%, var(--vs3-cell-surface, #17141d)),
+    var(--vs3-cell-surface, #17141d)
+  );
   box-shadow: 0 -2px 10px color-mix(in srgb, var(--vs3-tone, #fff) 12%, transparent);
   transition: height .18s ease;
   pointer-events: none;
@@ -1034,7 +1038,8 @@
   font-weight: 880;
   line-height: 1;
   letter-spacing: -.02em;
-  text-shadow: 0 1px 5px rgba(0, 0, 0, .8);
+  color: #f8f6f1;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, .92);
 }
 
 .vs-3bet-defense-lesson .vs3-range-cell.is-missing {
@@ -1067,7 +1072,7 @@
   bottom: 3px;
   left: 3px;
   display: flex;
-  height: 4px;
+  height: 6px;
   overflow: hidden;
   border-radius: 99px;
   background: rgba(255, 255, 255, .08);
@@ -2434,6 +2439,21 @@
   .vs-3bet-defense-lesson .vs3-error-legend { justify-content: flex-start; }
 }
 
+@media (max-width: 760px) {
+  .vs-3bet-defense-lesson .vs3-matrix-scroll {
+    justify-content: flex-start;
+    padding-block-end: 6px;
+    scrollbar-gutter: stable;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .vs-3bet-defense-lesson .vs3-range-grid {
+    --vs3-range-cell-size: 31px;
+    width: calc(var(--vs3-range-cell-size) * 13 + 48px);
+    min-width: calc(var(--vs3-range-cell-size) * 13 + 48px);
+  }
+}
+
 @media (max-width: 650px) {
   .vs-3bet-defense-lesson .vs3-reg-switcher {
     position: static;
@@ -2529,7 +2549,6 @@
   .vs-3bet-defense-lesson .vs3-wisdom-source { align-items: flex-start; flex-direction: column; }
   .vs-3bet-defense-lesson .vs3-matrix-card,
   .vs-3bet-defense-lesson .vs3-hand-comparison { padding: 10px; border-radius: 13px; }
-  .vs-3bet-defense-lesson .vs3-range-grid { --vs3-range-cell-size: clamp(31px, 6.7vw, 44px); }
   .vs-3bet-defense-lesson .vs3-range-cell strong { font-size: 10px; }
   .vs-3bet-defense-lesson .vs3-comparison-head { align-items: center; }
   .vs-3bet-defense-lesson .vs3-hand-badge { width: 52px; height: 52px; }

@@ -945,7 +945,7 @@
   cursor: pointer;
 }
 
-.league-range-cell span { font-size: clamp(0.34rem, 0.55vw, 0.48rem); font-weight: 950; line-height: 1; letter-spacing: -0.03em; pointer-events: none; }
+.league-range-cell span { font-size: clamp(0.44rem, 1.75vw, 0.62rem); font-weight: 950; line-height: 1; letter-spacing: -0.03em; pointer-events: none; }
 .league-range-cell small { display: none; }
 .league-range-cell.is-low-sample { color: #101117; }
 .league-range-cell.is-low-sample::after {
@@ -1636,6 +1636,10 @@
   transition: border-color 120ms ease, box-shadow 120ms ease, filter 120ms ease, transform 120ms ease;
 }
 
+.bb-call-lesson .bb-range-cell {
+  color: var(--ff-chart-on-call-solid, #071b13);
+}
+
 .bb-range-cell span {
   font-size: clamp(0.46rem, 0.86vw, 0.78rem);
   font-weight: 900;
@@ -1645,7 +1649,7 @@
 .bb-range-cell small {
   font-size: clamp(0.35rem, 0.65vw, 0.58rem);
   font-weight: 800;
-  opacity: 0.62;
+  opacity: 0.82;
 }
 
 .bb-range-cell:hover {
@@ -3521,6 +3525,14 @@
     gap: 10px;
   }
 
+  .bb-league-data-slide .league-range-matrix {
+    width: min(100%, 300px);
+  }
+
+  .bb-league-data-slide .league-range-cell span {
+    font-size: 0.625rem;
+  }
+
   .bb-league-data-slide .league-defense-source {
     text-align: left;
   }
@@ -4072,7 +4084,7 @@
   }
 
   .bb-call-lesson .league-data-screen .league-range-cell span {
-    font-size: clamp(0.5rem, 0.65vw, 0.72rem);
+    font-size: clamp(0.625rem, 0.72vw, 0.75rem);
   }
 
   .bb-call-lesson .league-data-screen .league-action-legend {

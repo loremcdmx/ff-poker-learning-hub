@@ -399,7 +399,12 @@ assert.match(css, /\.action-split \{[\s\S]*?grid-template-columns: repeat\(3, mi
 assert.match(css, /\.action-split div \{[\s\S]*?min-width: 0/);
 assert.match(css, /\.spot-fact\.is-price i \{[^}]*width: 40px/);
 assert.match(css, /@media \(min-width: 761px\)[\s\S]*?\.league-data-screen \.league-range-matrix \{[\s\S]*?clamp\(260px, 45svh, 440px\)/);
-assert.match(css, /\.league-data-screen \.league-range-cell span \{[\s\S]*?font-size: clamp\(0\.5rem, 0\.65vw, 0\.72rem\)/);
+assert.match(css, /\.league-range-cell span \{ font-size: clamp\(0\.44rem, 1\.75vw, 0\.62rem\)/);
+assert.match(css, /\.league-data-screen \.league-range-cell span \{[\s\S]*?font-size: clamp\(0\.625rem, 0\.72vw, 0\.75rem\)/);
+assert.match(css, /@media \(max-width: 760px\) \{[\s\S]*?\.bb-league-data-slide \.league-range-matrix \{[\s\S]*?width: min\(100%, 300px\)/);
+assert.match(css, /@media \(max-width: 760px\) \{[\s\S]*?\.bb-league-data-slide \.league-range-cell span \{[\s\S]*?font-size: 0\.625rem/);
+assert.match(css, /\.bb-call-lesson \.bb-range-cell \{[\s\S]*?color: var\(--ff-chart-on-call-solid, #071b13\)/);
+assert.match(css, /\.bb-range-cell small \{[\s\S]*?opacity: 0\.82/);
 assert.match(css, /\.league-range-cell\.is-low-sample \{ color: #101117; \}/);
 assert.match(css, /\.league-range-cell\.is-low-sample::after \{[\s\S]*?border-top: 7px solid rgba\(72, 74, 82, 0\.88\)/);
 assert.doesNotMatch(css, /\.league-range-cell\.is-low-sample \{[^}]*background:/);

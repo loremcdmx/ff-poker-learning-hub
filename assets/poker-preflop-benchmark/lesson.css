@@ -376,20 +376,39 @@
 .preflop-benchmark-lesson .benchmark-chart-head { margin-top: 4px; }
 .preflop-benchmark-lesson .benchmark-chart-head h2 { font-size: clamp(24px, 3vw, 42px); }
 .preflop-benchmark-lesson .benchmark-range-grid { width: min(100%, 820px); margin: 0 auto; }
-.preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell { cursor: pointer; }
+.preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell {
+  cursor: pointer;
+  color: #f8f6f1;
+  border-color: color-mix(in srgb, var(--ff-chart-action) 46%, #343946);
+  background: color-mix(in srgb, var(--ff-chart-action) 16%, #11141a);
+}
 .preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell::before {
   position: absolute;
-  inset: 0;
+  right: 3px;
+  bottom: 3px;
+  left: 3px;
+  height: 6px;
+  border-radius: 999px;
   content: "";
   background: linear-gradient(90deg,
     var(--benchmark-fold) 0 var(--fold-end),
     var(--benchmark-call) var(--fold-end) var(--call-end),
     var(--benchmark-raise) var(--call-end) var(--raise-end),
     var(--benchmark-jam) var(--raise-end) 100%);
-  opacity: .82;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.12);
 }
-.preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell b { position: relative; z-index: 1; color: #100d12; text-shadow: 0 1px rgba(255,255,255,.28); }
-.preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell.is-unavailable { cursor: default; background: rgba(159,178,204,.08); }
+.preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell b {
+  position: relative;
+  z-index: 1;
+  color: #f8f6f1;
+  text-shadow: 0 1px 4px rgba(0,0,0,.96);
+}
+.preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell.is-unavailable {
+  cursor: default;
+  color: var(--ff-chart-on-unavailable);
+  border-color: rgba(159,178,204,.28);
+  background: repeating-linear-gradient(135deg, #161a22 0 7px, #1d222c 7px 14px);
+}
 .preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell.is-unavailable::before { display: none; }
 .preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell.is-selected { outline: 3px solid var(--ff-chart-focus); outline-offset: 2px; }
 .preflop-benchmark-lesson .benchmark-hand-detail { min-height: 86px; margin-top: 18px; padding: clamp(16px,2vw,22px); border: 1px solid var(--line); border-radius: var(--benchmark-card-radius); background: var(--panel-2); }

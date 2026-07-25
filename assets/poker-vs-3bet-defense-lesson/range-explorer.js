@@ -256,18 +256,6 @@
     return `Из ${position} открываем ${hand} в ${formatPercent(frequency)} случаев${floorNote}`;
   }
 
-  function gradientFor(mix) {
-    if (mix.missing) return "rgba(255, 255, 255, .02)";
-    let cursor = 0;
-    const stops = [];
-    ACTIONS.forEach((action) => {
-      const next = Math.min(100, cursor + mix[action.key]);
-      if (next > cursor) stops.push(`${action.color} ${cursor.toFixed(2)}%`, `${action.color} ${next.toFixed(2)}%`);
-      cursor = next;
-    });
-    return `linear-gradient(90deg, ${stops.join(", ")})`;
-  }
-
   function createMixBar(mix, className) {
     const bar = element("span", className);
     bar.setAttribute("aria-hidden", "true");
@@ -645,7 +633,7 @@
         "p",
         "vs3-open-weight-note",
         rfiData?.sourceFrequencies?.[state.position]
-          ? "Высота — как часто открываем руку. Цвета внутри — пас, колл, 4-бет и пуш."
+          ? "Высота — как часто открываем руку. Полоса снизу — пас, колл, 4-бет и пуш."
           : "Для SB показаны частоты паса, колла, 4-бета и пуша."
       )
     );
@@ -672,7 +660,6 @@
       button.setAttribute("aria-pressed", String(hand === state.hand));
       button.setAttribute("aria-label", `${hand}: ${openFrequencyLabel(hand)}. После полученного 3-бета: ${mixLabel(mix)}. Сравнить нашу стратегию с реальным полем.`);
       button.style.setProperty("--vs3-open-fill", `${visualOpenFill(openFrequency)}%`);
-      button.style.setProperty("--vs3-mix-background", gradientFor(mix));
       const fill = element("span", "vs3-open-weight-fill");
       fill.setAttribute("aria-hidden", "true");
       button.append(fill, element("strong", "", hand), createMixBar(mix, "vs3-cell-mix"));
@@ -1217,7 +1204,6 @@
       const currentClass = hand === currentHand ? " is-current" : "";
       const cell = element("span", `vs3-range-cell ff-range-cell ${mix.missing ? "is-missing" : dominantAction(mix).tone}${unavailableClass}${zeroClass}${currentClass}`);
       cell.style.setProperty("--vs3-open-fill", `${visualOpenFill(openFrequency)}%`);
-      cell.style.setProperty("--vs3-mix-background", gradientFor(mix));
       cell.dataset.vs3ActionSignature = ACTIONS.map((action) => `${action.key}:${mix[action.key].toFixed(2)}`).join("|");
       cell.setAttribute("aria-label", `${hand}: ${openFrequencyLabel(hand, position)}. Ожидаемый ответ: ${mixLabel(mix)}.`);
       const fill = element("span", "vs3-open-weight-fill");

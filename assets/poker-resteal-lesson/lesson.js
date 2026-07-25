@@ -459,7 +459,7 @@
   function evColor(ev) {
     if (!Number.isFinite(ev)) return "var(--panel-3)";
     if (ev >= 0) {
-      const lightness = 28 + clamp(ev / 5, 0, 1) * 17;
+      const lightness = 25 + clamp(ev / 5, 0, 1) * 10;
       return `hsl(151 46% ${lightness}%)`;
     }
     const lightness = 28 + (1 - clamp(Math.abs(ev) / 8, 0, 1)) * 12;

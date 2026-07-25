@@ -9,14 +9,26 @@
 :root {
   --ff-chart-fold: #9fb2cc;
   --ff-chart-fold-soft: rgba(159, 178, 204, 0.18);
+  --ff-chart-fold-solid: #9fb2cc;
+  --ff-chart-on-fold-solid: #111820;
   --ff-chart-call: #54d6a6;
   --ff-chart-call-soft: rgba(84, 214, 166, 0.18);
+  --ff-chart-call-solid: #54d6a6;
+  --ff-chart-on-call-solid: #071b13;
   --ff-chart-raise: #e24aa0;
   --ff-chart-raise-soft: rgba(226, 74, 160, 0.18);
+  --ff-chart-raise-solid: #bd4088;
+  --ff-chart-on-raise-solid: #ffffff;
   --ff-chart-shove: #f7b45c;
   --ff-chart-shove-soft: rgba(247, 180, 92, 0.18);
+  --ff-chart-shove-solid: #ca944f;
+  --ff-chart-on-shove-solid: #241508;
   --ff-chart-mix: #a397db;
   --ff-chart-mix-soft: rgba(163, 151, 219, 0.18);
+  --ff-chart-mix-solid: #877db4;
+  --ff-chart-on-mix-solid: #171326;
+  --ff-chart-unavailable-solid: #171a22;
+  --ff-chart-on-unavailable-solid: #aeb7c5;
   --ff-chart-focus: var(--brand-yellow, #ffdf51);
   --ff-chart-surface: var(--surface-1, rgba(15, 14, 20, 0.92));
   --ff-chart-surface-raised: var(--surface-2, rgba(24, 22, 31, 0.94));
@@ -239,7 +251,6 @@
 
   :is(.ff-chart-panel, .ff-range-cell, .ff-chart-stat):is(.is-low-sample, .is-thin-sample, [data-sample-state="low"]) {
     border-style: dashed;
-    opacity: 0.72;
   }
 
   :is(.ff-chart-panel, .ff-range-cell, .ff-chart-stat):is(.is-estimated, [data-sample-state="estimated"]) {
@@ -248,8 +259,14 @@
   }
 
   :is(.ff-chart-panel, .ff-range-cell, .ff-chart-stat):is(.is-unavailable, [data-sample-state="unavailable"]) {
-    opacity: 0.38;
-    filter: saturate(0.45);
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--ff-chart-fold) 30%, var(--ff-chart-line));
+    color: var(--ff-chart-on-unavailable-solid);
+    background: repeating-linear-gradient(
+      135deg,
+      var(--ff-chart-unavailable-solid) 0 8px,
+      color-mix(in srgb, var(--ff-chart-unavailable-solid) 84%, #fff) 8px 9px
+    );
   }
 
   /* Existing chart roots receive shared semantics without forced geometry. */
@@ -348,7 +365,7 @@
     [data-vs3-field-explorer],
     [data-vs3-leaks]
   ) :where(.is-low-sample, .is-thin-sample, [data-sample-state="low"]) {
-    opacity: 0.72;
+    border-style: dashed;
   }
 
   :where(
@@ -369,8 +386,8 @@
     [data-vs3-field-explorer],
     [data-vs3-leaks]
   ) :where(.is-unavailable, [data-sample-state="unavailable"]) {
-    opacity: 0.38;
-    filter: saturate(0.45);
+    border-style: dashed;
+    filter: none;
   }
 
   /*
@@ -395,6 +412,58 @@
     --rfi-field-limp: var(--ff-chart-mix) !important;
     --rfi-field-fold: var(--ff-chart-fold) !important;
   }
+
+  /*
+   * Full-cell fills need their own paired ink.  The bright action tokens above
+   * stay available for legends and frequency bars; these surface pairs keep
+   * every hand label readable when one action owns the whole cell.
+   */
+  .rfi-open-lesson .matrix.is-empirical .matrix-cell.open,
+  .rfi-open-lesson .field-matrix .field-cell.is-dominant-raise {
+    color: var(--ff-chart-on-raise-solid) !important;
+    background: var(--ff-chart-raise-solid) !important;
+    text-shadow: none !important;
+  }
+
+  .rfi-open-lesson .matrix.is-empirical .matrix-cell.shove,
+  .rfi-open-lesson .field-matrix .field-cell.is-dominant-shove {
+    color: var(--ff-chart-on-shove-solid) !important;
+    background: var(--ff-chart-shove-solid) !important;
+    text-shadow: none !important;
+  }
+
+  .rfi-open-lesson .matrix.is-empirical .matrix-cell.mix,
+  .rfi-open-lesson .field-matrix .field-cell.is-dominant-limp {
+    color: var(--ff-chart-on-mix-solid) !important;
+    background: var(--ff-chart-mix-solid) !important;
+    text-shadow: none !important;
+  }
+
+  .rfi-open-lesson .matrix.is-empirical .matrix-cell:not(.open):not(.shove):not(.mix),
+  .rfi-open-lesson .field-matrix .field-cell.is-dominant-fold {
+    color: var(--ff-chart-on-fold-solid) !important;
+    background: var(--ff-chart-fold-solid) !important;
+    text-shadow: none !important;
+  }
+
+  .rfi-open-lesson .field-matrix .field-cell.is-unavailable {
+    color: var(--ff-chart-on-unavailable-solid) !important;
+    background: repeating-linear-gradient(
+      135deg,
+      var(--ff-chart-unavailable-solid) 0 8px,
+      color-mix(in srgb, var(--ff-chart-unavailable-solid) 84%, #fff) 8px 9px
+    ) !important;
+    filter: none !important;
+  }
+
+  .rfi-open-lesson .field-matrix .field-cell.is-unavailable::before {
+    background: color-mix(in srgb, var(--ff-chart-fold) 38%, transparent) !important;
+  }
+
+  .rfi-open-lesson .field-action-total .is-raise strong { color: var(--ff-chart-raise) !important; }
+  .rfi-open-lesson .field-action-total .is-shove strong { color: var(--ff-chart-shove) !important; }
+  .rfi-open-lesson .field-action-total .is-limp strong { color: var(--ff-chart-mix) !important; }
+  .rfi-open-lesson .field-action-total .is-fold strong { color: var(--ff-chart-fold) !important; }
 
   .preflop-benchmark-lesson {
     --benchmark-fold: var(--ff-chart-fold) !important;

@@ -268,6 +268,7 @@
 .rfi-open-lesson .field-action-bar i{display:block;height:100%}.rfi-open-lesson .field-action-bar .is-raise{background:var(--rfi-field-raise)}.rfi-open-lesson .field-action-bar .is-shove{background:var(--rfi-field-shove)}.rfi-open-lesson .field-action-bar .is-limp{background:var(--rfi-field-limp)}.rfi-open-lesson .field-action-bar .is-fold{background:var(--rfi-field-fold)}
 .rfi-open-lesson .field-action-legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:8px 0 10px;color:var(--muted);font-size:11px}
 .rfi-open-lesson .field-action-legend span{display:flex;align-items:center;gap:6px}.rfi-open-lesson .field-action-legend i{width:10px;height:10px;border:1px solid rgba(255,255,255,.08);border-radius:3px}.rfi-open-lesson .field-action-legend .key-open i{background:var(--rfi-field-raise)}.rfi-open-lesson .field-action-legend .key-shove i{background:var(--rfi-field-shove)}.rfi-open-lesson .field-action-legend .key-fold i{background:var(--rfi-field-fold)}.rfi-open-lesson .field-action-legend small{margin-left:auto;color:#746f78}
+.rfi-open-lesson .field-matrix-scroll{max-inline-size:720px;margin-inline:auto;overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch}
 .rfi-open-lesson .field-matrix{inline-size:min(100%,720px);margin-inline:auto}
 .rfi-open-lesson .field-matrix .field-cell{position:relative;overflow:hidden;border-color:rgba(255,255,255,.09);font-weight:850;text-shadow:none;filter:brightness(1.08);transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}
 .rfi-open-lesson .field-matrix .field-cell:before{content:"";position:absolute;right:2px;bottom:2px;left:2px;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--rfi-field-raise) 0 var(--field-raise-end),var(--rfi-field-shove) var(--field-raise-end) var(--field-shove-end),var(--rfi-field-limp) var(--field-shove-end) var(--field-limp-end),#57515b var(--field-limp-end) 100%);box-shadow:0 0 0 1px rgba(0,0,0,.22);pointer-events:none}
@@ -279,7 +280,7 @@
 .rfi-open-lesson .field-matrix .field-cell:hover{z-index:1;filter:brightness(1.16);transform:translateY(-1px)}
 .rfi-open-lesson .field-matrix .field-cell:focus-visible{z-index:3;outline:2px solid var(--brand-yellow);outline-offset:1px}
 .rfi-open-lesson .field-matrix .field-cell.is-selected{z-index:2;outline:2px solid #fff1b7;outline-offset:1px;box-shadow:0 0 0 3px rgba(255,223,81,.18),0 8px 18px rgba(0,0,0,.32)}
-.rfi-open-lesson .field-matrix .field-cell.is-low-sample:after,.rfi-open-lesson .field-matrix .field-cell.is-very-low-sample:after{content:"";position:absolute;top:2px;right:2px;width:4px;height:4px;border-radius:50%;background:#9b8660;box-shadow:0 0 0 1px rgba(0,0,0,.24)}
+.rfi-open-lesson .field-matrix .field-cell.is-low-sample:after,.rfi-open-lesson .field-matrix .field-cell.is-very-low-sample:after{content:"";position:absolute;top:2px;right:2px;width:4px;height:4px;border-radius:50%;background:var(--ff-chart-fold,#9fb2cc);box-shadow:0 0 0 1px rgba(0,0,0,.24)}
 .rfi-open-lesson .field-matrix .field-cell.is-very-low-sample:after{background:#b96474}
 .rfi-open-lesson .field-hand-detail{display:grid;grid-template-columns:minmax(190px,.55fr) minmax(0,1.45fr);align-items:center;gap:14px;width:min(100%,720px);margin:10px auto 0;padding:11px 13px;border:1px solid var(--line);border-radius:13px;background:rgba(8,6,11,.58)}
 .rfi-open-lesson .field-hand-name{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:0 10px}.rfi-open-lesson .field-hand-name .eyebrow{grid-column:1/-1}.rfi-open-lesson .field-hand-name strong{font-size:26px;line-height:1}.rfi-open-lesson .field-hand-name small{color:var(--muted);font-size:10px}
@@ -434,7 +435,7 @@
   .rfi-open-lesson #positionTabs{grid-template-columns:repeat(5,minmax(0,1fr));overflow:visible}.rfi-open-lesson #positionTabs button{padding-inline:2px}.rfi-open-lesson #positionTabs button span,.rfi-open-lesson #positionTabs button b{font-size:10px}
   .rfi-open-lesson .field-position-tabs{grid-template-columns:repeat(6,minmax(0,1fr));overflow:visible}.rfi-open-lesson .field-position-tabs button{padding-inline:2px;font-size:11px}
   .rfi-open-lesson .field-action-total{grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
-  .rfi-open-lesson .field-action-legend small{width:100%;margin-left:0}.rfi-open-lesson .field-matrix .field-cell{font-size:clamp(7px,1.9vw,8px)}.rfi-open-lesson .field-matrix .field-cell:before{right:1px;bottom:1px;left:1px;height:3px}
+  .rfi-open-lesson .field-action-legend small{width:100%;margin-left:0}.rfi-open-lesson .field-matrix-scroll{padding-block-end:6px}.rfi-open-lesson .field-matrix{min-inline-size:520px}.rfi-open-lesson .field-matrix .field-cell{font-size:10px}.rfi-open-lesson .field-matrix .field-cell:before{right:1px;bottom:1px;left:1px;height:3px}
   .rfi-open-lesson .field-hand-detail{grid-template-columns:1fr}.rfi-open-lesson .field-hand-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
   .rfi-open-lesson #fieldStackTabs .stack-group-pushfold button{flex-direction:column;align-items:center;gap:0;padding-inline:2px}
 }
