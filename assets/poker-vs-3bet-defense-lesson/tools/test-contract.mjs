@@ -63,6 +63,52 @@ assert.equal(fieldData.summaries.league3.opportunities, 3485206);
 assert.equal(fieldData.meta.filters.squeezeExcluded, true);
 assert.match(fieldData.meta.aggregation, /descriptive|integer|count/i);
 
+let auditedFieldCells = 0;
+for (const [chartKey, chart] of Object.entries(fieldData.charts)) {
+  const totals = chart.totals;
+  assert.equal(
+    totals.opportunities,
+    totals.folds + totals.calls + totals.fourbets + totals.jams,
+    `${chartKey} action totals reconcile to all opportunities`
+  );
+  assert.equal(
+    totals.opportunities,
+    totals.knownOpportunities + totals.missingOpportunities,
+    `${chartKey} known and hidden-card opportunities reconcile`
+  );
+  assert.equal(chart.cells.length, 169, `${chartKey} has all 169 hand cells`);
+  const knownByAction = [0, 0, 0, 0, 0];
+  for (const cell of chart.cells) {
+    auditedFieldCells += 1;
+    assert.equal(cell.length, 5, `${chartKey} cell keeps opportunity plus four action counters`);
+    assert(cell.every((value) => Number.isInteger(value) && value >= 0), `${chartKey} cells use non-negative integer counters`);
+    assert.equal(cell[0], cell[1] + cell[2] + cell[3] + cell[4], `${chartKey} cell actions reconcile`);
+    cell.forEach((value, index) => { knownByAction[index] += value; });
+  }
+  assert.equal(knownByAction[0], totals.knownOpportunities, `${chartKey} hand cells reconcile to known-card opportunities`);
+  assert(knownByAction[1] <= totals.folds, `${chartKey} known-card folds do not exceed the all-card total`);
+  assert(knownByAction[2] <= totals.calls, `${chartKey} known-card calls do not exceed the all-card total`);
+  assert(knownByAction[3] <= totals.fourbets, `${chartKey} known-card 4-bets do not exceed the all-card total`);
+  assert(knownByAction[4] <= totals.jams, `${chartKey} known-card jams do not exceed the all-card total`);
+  assert(Math.abs(totals.knownCoveragePct - totals.knownOpportunities / totals.opportunities * 100) < 0.001, `${chartKey} coverage percentage is exact`);
+}
+assert.equal(auditedFieldCells, 800 * 169, "the entire 800-slice / 169-hand field cube is reconciled");
+
+for (const [cohortKey, totals] of Object.entries(fieldData.summaries)) {
+  assert.equal(
+    totals.opportunities,
+    totals.folds + totals.calls + totals.fourbets + totals.jams,
+    `${cohortKey} summary action totals reconcile`
+  );
+  assert.equal(
+    totals.opportunities,
+    totals.knownOpportunities + totals.missingOpportunities,
+    `${cohortKey} summary known and hidden-card opportunities reconcile`
+  );
+  const percentTotal = totals.foldPct + totals.callPct + totals.fourbetPct + totals.jamPct;
+  assert(Math.abs(percentTotal - 100) < 0.002, `${cohortKey} summary percentages reconcile to 100%`);
+}
+
 assert.equal(model.schemaVersion, 1);
 assert.deepEqual(Array.from(model.positions), ["EP", "MP", "HJ", "CO", "BTN", "SB"]);
 assert.deepEqual(Array.from(model.relations), ["IP", "OOP"]);
@@ -79,6 +125,79 @@ assert.equal(rfiData.sourceFrequencies.CO.J3s, 5, "rare open keeps its true 5% v
 assert.equal(rfiData.sourceFrequencies.CO.Q2o, 0, "a true never-open remains distinguishable from missing data");
 assert.equal(rfiData.sourceFrequencies.EP.K7s, 80, "source frequency preserves methodic mixing");
 assert.equal(rfiData.sourceFrequencies.SB, undefined, "SB stays unavailable instead of being mislabelled as 0% open");
+
+assert.equal(typeof model.targetEconomics, "function");
+assert.equal(typeof model.targetPlan, "function");
+assert.deepEqual(
+  JSON.parse(JSON.stringify(model.targetEconomics(3))),
+  {
+    openBb: 2,
+    bbPosted: 1,
+    potBeforeThreeBet: 4.5,
+    multiplier: 3,
+    raiseToBb: 6,
+    riskBb: 5,
+    autoProfitFoldPct: 52.63
+  },
+  "the 3x economic red line is reproducible from the displayed pot and risk"
+);
+
+let targetPlanCount = 0;
+const targetPlans = new Map();
+for (const position of model.positions) {
+  for (const stack of model.stacks) {
+    for (const size of model.sizes) {
+      const plan = model.targetPlan({
+        position,
+        stack: stack.key,
+        size,
+        openFrequencies: rfiData.sourceFrequencies[position]
+      });
+      targetPlanCount += 1;
+      targetPlans.set(`${position}/${stack.key}/${size}`, plan);
+      assert.deepEqual(
+        JSON.parse(JSON.stringify(plan.filters)),
+        { position, stack: stack.key, size },
+        `${position}/${stack.key}/${size} reports the exact selected filters`
+      );
+      const total = ["fold", "call", "fourbet", "jam"].reduce((sum, action) => {
+        assert(plan.mix[action] >= 0 && plan.mix[action] <= 100, `${position}/${stack.key}/${size}/${action} stays in percentage bounds`);
+        return sum + plan.mix[action];
+      }, 0);
+      assert(Math.abs(total - 100) < 0.001, `${position}/${stack.key}/${size} target actions reconcile to 100%`);
+      assert(plan.mix.fold >= 50, `${position}/${stack.key}/${size} does not manufacture the implausible 20–30% fold targets`);
+      assert(plan.mix.fold <= 80, `${position}/${stack.key}/${size} keeps a plausible recommendation rather than a pure-fold range`);
+      if (stack.key === "51-80" || stack.key === "80+") {
+        assert.equal(plan.mix.jam, 0, `${position}/${stack.key}/${size} does not label deep 4-bets as open jams`);
+      }
+    }
+  }
+}
+assert.equal(targetPlanCount, 72, "all position / stack / size target combinations are audited");
+for (const position of model.positions) {
+  for (const stack of model.stacks) {
+    const small = targetPlans.get(`${position}/${stack.key}/2.5`).mix.fold;
+    const neutral = targetPlans.get(`${position}/${stack.key}/3`).mix.fold;
+    const large = targetPlans.get(`${position}/${stack.key}/4`).mix.fold;
+    assert(small < neutral, `${position}/${stack.key} defends wider against 2.5x than against 3x`);
+    assert(neutral < large, `${position}/${stack.key} folds more against 4x than against 3x`);
+  }
+}
+assert.deepEqual(
+  JSON.parse(JSON.stringify(targetPlans.get("EP/80+/3").mix)),
+  { fold: 62.37, call: 24.2, fourbet: 13.43, jam: 0 },
+  "EP 80+ BB versus 3x preserves the exact defense matrix weighted by the hands that EP opens"
+);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(targetPlans.get("EP/20-30/3").mix)),
+  { fold: 65.27, call: 21.3, fourbet: 3.76, jam: 9.67 },
+  "the shallow-stack plan trims speculative calls and moves 72% of the aggressive response into the jam bucket"
+);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(targetPlans.get("BTN/80+/3").mix)),
+  { fold: 67.79, call: 24.76, fourbet: 7.45, jam: 0 },
+  "BTN 80+ BB versus 3x is independently aggregated from BTN open frequencies"
+);
 
 const introScenario = model.scenario({
   position: "CO",
@@ -143,12 +262,12 @@ const t8sSmallThreeBet = model.scenario({
   cohort: "reference"
 }).cells.T8s;
 assert(
-  t8sSmallThreeBet.call > t8sSmallThreeBet.fold,
-  "HJ T8s in position against a 3x-to-6-BB 3-bet is call-first, not a pure fold"
+  t8sSmallThreeBet.call > 0 && t8sSmallThreeBet.fold > 0,
+  "HJ T8s in position against a 3x-to-6-BB 3-bet stays a mixed boundary hand"
 );
 assert(
-  t8sSmallThreeBet.call >= 60,
-  "the corrected small-price transfer keeps at least 60% call for HJ T8s IP at 31-50 BB"
+  t8sSmallThreeBet.call < 60,
+  "the neutral 3x model no longer manufactures a 60%+ call by moving most folds into call"
 );
 
 const exactChecks = [
@@ -439,9 +558,12 @@ assert.match(
   /\.vs3-wisdom-chart-layout[\s\S]*grid-template-columns: minmax\(0, 1fr\)[\s\S]*width: min\(100%, 980px\)/,
   "the observed chart must follow the same readable one-column contract"
 );
-assert.match(source.explorer, /const potBeforeThreeBet = 4\.5/);
-assert.match(source.explorer, /riskBb \/ \(riskBb \+ potBeforeThreeBet\) \* 100/);
-assert.match(source.explorer, /const safetyMargin = 2\.5/);
+assert.match(source.model, /potBeforeThreeBet:\s*4\.5/);
+assert.match(source.model, /riskBb \/ \(riskBb \+ TARGET_POLICY\.potBeforeThreeBet\) \* 100/);
+assert.doesNotMatch(source.model, /safetyMarginPct|maxFoldPct|targetBluffEvBb/);
+assert.match(source.explorer, /model\?\.targetEconomics/);
+assert.match(source.explorer, /model\?\.targetPlan/);
+assert.doesNotMatch(source.explorer, /exactOpenWeightedTarget/);
 assert.match(source.explorer, /Автоприбыль начинается выше/);
 assert.match(source.explorer, /Если мы пасуем чаще .* даже нулевой блеф уже плюсует сразу/);
 assert.doesNotMatch(source.explorer, /solver-MDF/);

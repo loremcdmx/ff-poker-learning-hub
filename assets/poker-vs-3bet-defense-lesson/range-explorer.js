@@ -199,9 +199,11 @@
     return cells && typeof cells === "object" ? cells[hand] || null : null;
   }
 
-  function number(value) {
+  function number(value, fallback = 0) {
     const parsed = Number(value);
-    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+    if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+    const fallbackValue = Number(fallback);
+    return Number.isFinite(fallbackValue) && fallbackValue >= 0 ? fallbackValue : 0;
   }
 
   function rawActionValue(cell, key) {
@@ -302,11 +304,6 @@
     return grid;
   }
 
-  function comboWeight(hand) {
-    if (clean(hand).length === 2) return 6;
-    return clean(hand).endsWith("s") ? 4 : 12;
-  }
-
   function normalizeActionTotals(values) {
     const totals = Object.fromEntries(ACTIONS.map((action) => [action.key, number(values?.[action.key])]));
     const total = ACTIONS.reduce((sum, action) => sum + totals[action.key], 0);
@@ -334,76 +331,15 @@
     return position === "SB" ? "OOP" : "IP";
   }
 
-  function referenceScenario(position) {
-    if (typeof model?.scenario !== "function") return null;
-    try {
-      return model.scenario({
-        position,
-        relation: relationForPosition(position),
-        stack: state.stack,
-        size: Number(state.size),
-        cohort: "reference"
-      });
-    } catch (error) {
-      return null;
-    }
-  }
-
-  function exactOpenWeightedTarget(position, scenario) {
-    const frequencies = rfiData?.sourceFrequencies?.[position];
-    if (!frequencies || !scenario) return null;
-    const totals = Object.fromEntries(ACTIONS.map((action) => [action.key, 0]));
-    let denominator = 0;
-    asArray(model?.hands).forEach((hand) => {
-      const openFrequency = number(frequencies[hand]) / 100;
-      if (!openFrequency) return;
-      const weight = comboWeight(hand) * openFrequency;
-      const mix = normalizeMix(cellFrom(scenario, hand));
-      denominator += weight;
-      ACTIONS.forEach((action) => { totals[action.key] += weight * mix[action.key]; });
-    });
-    if (!denominator) return null;
-    ACTIONS.forEach((action) => { totals[action.key] /= denominator; });
-    return { mix: normalizeActionTotals(totals), source: "Опен и защита после 3-бета" };
-  }
-
-  function sbMethodicTarget(position, scenario) {
-    if (!scenario || typeof model?.baseline !== "function") return null;
-    let baseline;
-    try {
-      baseline = model.baseline(position);
-    } catch (error) {
-      return null;
-    }
-    const target = baseline?.summaryTarget;
-    const baseMix = baseline?.summary?.comboWeighted;
-    const scenarioMix = scenario?.summary?.comboWeighted;
-    if (!target || !baseMix || !scenarioMix) return null;
-    const targetContinue = Math.max(0.001, 100 - number(target.fold));
-    const matrixContinue = Math.max(0.001, 100 - number(baseMix.fold));
-    const impliedOpenCombos = 1326 * matrixContinue / targetContinue;
-    const scenarioScale = 1326 / impliedOpenCombos;
-    const totals = {
-      call: number(target.call) + (number(scenarioMix.call) - number(baseMix.call)) * scenarioScale,
-      fourbet: number(target.fourbet) + (number(scenarioMix.fourbet) - number(baseMix.fourbet)) * scenarioScale,
-      jam: number(target.jam) + (number(scenarioMix.jam) - number(baseMix.jam)) * scenarioScale
-    };
-    totals.fold = Math.max(0, 100 - totals.call - totals.fourbet - totals.jam);
-    return { mix: normalizeActionTotals(totals), source: "Методика SB против BB" };
-  }
-
   function threeBetEconomics() {
-    const openBb = 2;
-    const bbPosted = 1;
-    const potBeforeThreeBet = 4.5;
-    const multiplier = Number(state.size) || 3;
-    const raiseToBb = openBb * multiplier;
-    const riskBb = raiseToBb - bbPosted;
-    const threshold = riskBb / (riskBb + potBeforeThreeBet) * 100;
-    const safetyMargin = 2.5;
-    const targetFoldCap = Math.max(0, threshold - safetyMargin);
-    const targetFoldRate = targetFoldCap / 100;
-    const targetBluffEv = targetFoldRate * potBeforeThreeBet - (1 - targetFoldRate) * riskBb;
+    const base = model?.targetEconomics?.(Number(state.size));
+    const openBb = number(base?.openBb, 2);
+    const bbPosted = number(base?.bbPosted, 1);
+    const potBeforeThreeBet = number(base?.potBeforeThreeBet, 4.5);
+    const multiplier = number(base?.multiplier, Number(state.size) || 3);
+    const raiseToBb = number(base?.raiseToBb, openBb * multiplier);
+    const riskBb = number(base?.riskBb, raiseToBb - bbPosted);
+    const threshold = number(base?.autoProfitFoldPct, riskBb / (riskBb + potBeforeThreeBet) * 100);
     const pressureFold = Math.min(95, threshold + 5);
     const pressureRate = pressureFold / 100;
     const pressureBluffEv = pressureRate * potBeforeThreeBet - (1 - pressureRate) * riskBb;
@@ -415,49 +351,25 @@
       raiseToBb,
       riskBb,
       threshold,
-      safetyMargin,
-      targetFoldCap,
-      targetBluffEv,
       pressureFold,
       pressureBluffEv
     };
   }
 
   function targetForPosition(position) {
-    const scenario = referenceScenario(position);
-    const weighted = exactOpenWeightedTarget(position, scenario) || sbMethodicTarget(position, scenario);
-    const raw = normalizeActionTotals(weighted?.mix);
-    const economics = threeBetEconomics();
-    let safe = raw;
-    let capped = false;
-    if (raw.fold > economics.targetFoldCap) {
-      const rawContinue = Math.max(0.001, 100 - raw.fold);
-      const targetContinue = 100 - economics.targetFoldCap;
-      const factor = targetContinue / rawContinue;
-      safe = {
-        fold: economics.targetFoldCap,
-        call: raw.call * factor,
-        fourbet: raw.fourbet * factor,
-        jam: raw.jam * factor
-      };
-      capped = true;
-    }
-    const displayMix = roundedActionTotals(safe);
-    if (capped) {
-      const displayedCap = Math.floor(economics.targetFoldCap * 10) / 10;
-      const overflow = Math.max(0, displayMix.fold - displayedCap);
-      if (overflow > 0) {
-        displayMix.fold = displayedCap;
-        displayMix.call = Math.round((displayMix.call + overflow) * 10) / 10;
-      }
-    }
+    const plan = model?.targetPlan?.({
+      position,
+      stack: state.stack,
+      size: Number(state.size),
+      openFrequencies: rfiData?.sourceFrequencies?.[position] || null
+    });
+    const displayMix = roundedActionTotals(plan?.mix);
     return {
       position,
       relation: relationForPosition(position),
-      source: weighted?.source || "Наша рекомендация",
-      raw: roundedActionTotals(raw),
+      source: plan?.source || "Наша рекомендация",
       mix: displayMix,
-      capped
+      economics: plan?.economics || null
     };
   }
 
@@ -543,9 +455,9 @@
     const reasons = element("div", "vs3-target-reasons");
     const targetCard = element("article", "vs3-target-reason is-fold");
     targetCard.append(
-      element("span", "", "Пас · с запасом"),
-      element("strong", "", `не выше ${formatPercent(economics.targetFoldCap)}`),
-      element("p", "", `Запас ${formatPercent(economics.safetyMargin)} ниже красной линии оставляет чистому блефу ${formatBb(economics.targetBluffEv)} ещё до учёта эквити.`)
+      element("span", "", "Пас в нашем чарте"),
+      element("strong", "", "считается по рукам"),
+      element("p", "", "Частота получается из точной матрицы защиты, взвешенной по тому, как часто каждая рука вообще открывается. Красная линия выше — сигнал эксплуатации, а не цель.")
     );
     const callCard = element("article", "vs3-target-reason is-call");
     callCard.append(
@@ -589,8 +501,8 @@
 
     const intro = element("div", "vs3-target-intro");
     intro.append(
-      element("p", "", "Ниже — минимальная контрольная цель по каждому открытому диапазону. Форма колла, 4-бета и пуша берётся из наших чартов; фолд ограничен экономической красной линией."),
-      element("p", "", "EP–BTN учитывают, как часто мы открываем каждую руку. Для SB показан отдельный расчёт защиты против 3-бета BB.")
+      element("p", "", "Ниже — план после уже сделанного опена. Каждая позиция рассчитана по точной матрице защиты и взвешена по частоте открытия каждой руки."),
+      element("p", "", "Сайз 3x сохраняет базовую матрицу. На 2,5x защищаемся немного шире, на 4x — заметно тайтовее; короткий стек переводит часть 4-бетов в пуш. Красная линия авто-прибыли показана отдельно и не подменяет чарт.")
     );
 
     const table = element("section", "vs3-target-table");

@@ -185,25 +185,21 @@
       sourceStatus: "heuristic-guided-by-page-15",
       rationale: "После опена 2 BB малый 3-бет до 5 BB даёт хорошую цену пограничному продолжению.",
       transfers: [
-        { from: "fold", to: "call", share: 0.72, eligibility: "call-frontier" },
-        { from: "fourbet", to: "call", share: 0.06 }
+        { from: "fold", to: "call", share: 0.08, eligibility: "call-frontier" },
+        { from: "fourbet", to: "call", share: 0.03 }
       ]
     },
     3: {
-      sourceStatus: "heuristic-guided-by-price",
-      rationale: "После опена 2 BB 3-бет до 6 BB всё ещё оставляет выгодную цену многим suited-рукам в позиции.",
-      transfers: [
-        { from: "fold", to: "call", share: 0.60, eligibility: "call-frontier" }
-      ]
+      sourceStatus: "heuristic-neutral",
+      rationale: "3-бет до 6 BB — нейтральный учебный сайз: сохраняем точную базовую матрицу.",
+      transfers: []
     },
     4: {
       sourceStatus: "heuristic-guided-by-page-15",
       rationale: "Крупный 3-бет сокращает call и переводит часть продолжения в 4-бет.",
       transfers: [
-        { from: "fold", to: "call", share: 0.36, eligibility: "call-frontier" },
-        { from: "call", to: "fold", share: 0.25 },
-        { from: "call", to: "fourbet", share: 0.18 },
-        { from: "fold", to: "fourbet", share: 0.03, eligibility: "fourbet-frontier" }
+        { from: "call", to: "fold", share: 0.20 },
+        { from: "call", to: "fourbet", share: 0.05 }
       ]
     }
   });
@@ -231,12 +227,9 @@
       transfers: []
     },
     "80+": {
-      sourceStatus: "heuristic",
-      rationale: "Глубокий стек сохраняет немного больше коллов и уменьшает долю немедленного 4-бета.",
-      transfers: [
-        { from: "fold", to: "call", share: 0.05, eligibility: "call-frontier" },
-        { from: "fourbet", to: "call", share: 0.05 }
-      ]
+      sourceStatus: "heuristic-neutral",
+      rationale: "80+ BB сохраняет точную базовую матрицу; глубина сама по себе не оправдывает массовый перенос пасов в колл.",
+      transfers: []
     }
   });
 
@@ -420,6 +413,34 @@
     return { cellAverage: summary, comboWeighted };
   }
 
+  function comboWeight(hand) {
+    return hand.length === 2 ? 6 : hand.endsWith("s") ? 4 : 12;
+  }
+
+  function summarizeOpenedRange(cells, openFrequencies) {
+    if (!openFrequencies || typeof openFrequencies !== "object") return null;
+    const totals = actions.reduce((result, action) => {
+      result[action] = 0;
+      return result;
+    }, {});
+    let openedComboWeight = 0;
+
+    hands.forEach((hand) => {
+      const openPct = Math.max(0, Math.min(100, Number(openFrequencies[hand]) || 0));
+      const weight = comboWeight(hand) * openPct;
+      openedComboWeight += weight;
+      actions.forEach((action) => {
+        totals[action] += weight * cells[hand][action];
+      });
+    });
+
+    if (!openedComboWeight) return null;
+    return normalizeCell(actions.reduce((result, action) => {
+      result[action] = totals[action] / openedComboWeight;
+      return result;
+    }, {}));
+  }
+
   function buildExactBaseline(position) {
     const spec = EXACT_SPECS[position];
     if (!spec) throw new Error(`Unknown exact position "${position}"`);
@@ -516,6 +537,89 @@
     if (position === "BTN") return ["IP"];
     if (position === "SB") return ["OOP"];
     return relations;
+  }
+
+  const TARGET_POLICY = deepFreeze({
+    openBb: 2,
+    bbPosted: 1,
+    potBeforeThreeBet: 4.5,
+    sizeTransfers: {
+      2.5: [
+        { from: "fold", to: "call", share: 0.08 }
+      ],
+      3: [],
+      4: [
+        { from: "call", to: "fold", share: 0.20 },
+        { from: "call", to: "fourbet", share: 0.05 }
+      ]
+    },
+    stackTransfers: {
+      "20-30": [
+        { from: "call", to: "fold", share: 0.12 },
+        { from: "fourbet", to: "jam", share: 0.72 }
+      ],
+      "31-50": [
+        { from: "call", to: "fold", share: 0.04 },
+        { from: "fourbet", to: "jam", share: 0.28 }
+      ],
+      "51-80": [],
+      "80+": []
+    }
+  });
+
+  function targetEconomics(sizeValue) {
+    const size = normalizeSize(sizeValue);
+    const raiseToBb = TARGET_POLICY.openBb * size;
+    const riskBb = raiseToBb - TARGET_POLICY.bbPosted;
+    const autoProfitFoldPct = riskBb / (riskBb + TARGET_POLICY.potBeforeThreeBet) * 100;
+    return deepFreeze({
+      openBb: TARGET_POLICY.openBb,
+      bbPosted: TARGET_POLICY.bbPosted,
+      potBeforeThreeBet: TARGET_POLICY.potBeforeThreeBet,
+      multiplier: size,
+      raiseToBb,
+      riskBb,
+      autoProfitFoldPct: round2(autoProfitFoldPct)
+    });
+  }
+
+  function applyAggregateTransfers(input, transfers) {
+    const mix = cloneCell(input);
+    transfers.forEach((transfer) => {
+      const share = Math.min(1, Math.max(0, Number(transfer.share) || 0));
+      const amount = mix[transfer.from] * share;
+      mix[transfer.from] -= amount;
+      mix[transfer.to] += amount;
+    });
+    return normalizeCell(mix);
+  }
+
+  function targetPlan(input = {}) {
+    const position = normalizePosition(input.position || "CO");
+    const stack = normalizeStack(input.stack);
+    const size = normalizeSize(input.size);
+    const exactOpenedRange = position === "SB"
+      ? null
+      : summarizeOpenedRange(exactBaselines[position].cells, input.openFrequencies);
+    const baseline = exactOpenedRange || normalizeCell(exactBaselines[position].summaryTarget);
+    const economics = targetEconomics(size);
+    const sizedMix = applyAggregateTransfers(baseline, TARGET_POLICY.sizeTransfers[size]);
+    const mix = applyAggregateTransfers(sizedMix, TARGET_POLICY.stackTransfers[stack.key]);
+
+    return deepFreeze({
+      filters: { position, stack: stack.key, size },
+      mix,
+      baseline: { ...baseline },
+      economics,
+      source: exactOpenedRange
+        ? "Точная матрица × частота опена"
+        : "Точная матрица · SB против BB",
+      adaptation: {
+        size: TARGET_POLICY.sizeTransfers[size],
+        stack: TARGET_POLICY.stackTransfers[stack.key],
+        boundary: "Сайз и стек — прозрачная учебная адаптация; красная линия авто-прибыли не используется как целевая частота."
+      }
+    });
   }
 
   function scenario(input = {}) {
@@ -741,6 +845,8 @@
     baseline(position) {
       return exactBaselines[normalizePosition(position)];
     },
+    targetEconomics,
+    targetPlan,
     scenario,
     leaks,
     practiceSpotIds
