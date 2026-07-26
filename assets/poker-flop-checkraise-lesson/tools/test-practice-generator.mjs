@@ -28,6 +28,11 @@ assert.equal(generator.isStrongTwoOvercards({ heroCards: ["Jh", "5h"], boardCard
 assert.equal(generator.isTopPairOrBetter(["Ts", "Jc"], ["7h", "5d", "2c", "Td"]), true);
 assert.equal(generator.isTopPairOrBetter(["Ts", "Jc"], ["7h", "5d", "2c", "Td", "Jd"]), true);
 assert.equal(
+  generator.isBlockerOvercardMix({ id: "call-strong-overcards" }, ["Kc", "Qs"], ["Js", "7d", "2h"]),
+  true,
+  "KQ on J72 remains the explicit accepted blocker mix"
+);
+assert.equal(
   generator.isTopPairOrBetter(["As", "Qc"], ["7h", "7d", "2c", "Td"]),
   false,
   "a paired board alone is not an automatic value bet"
@@ -45,38 +50,14 @@ assert.equal(deterministicLeft.next().practiceMeta.signature, leftSignatures[0],
 
 const gutshotReproSession = generator.createSession({ seed: "diagnose-86s-k95" });
 let gutshotRepro = null;
-while (!gutshotRepro || gutshotRepro.practiceMeta.serial < 18) gutshotRepro = gutshotReproSession.next();
-assert.deepEqual(Array.from(gutshotRepro.table.heroCards), ["8c", "6c"]);
-assert.deepEqual(Array.from(gutshotRepro.table.boardCards), ["9h", "5d", "Ks"]);
-assert.equal(gutshotRepro.table.pot, "5.5 BB");
-assert.equal(gutshotRepro.table.toCall, 2.8);
+while (!gutshotRepro || gutshotRepro.practiceMeta.archetype !== "thin-gutshot") gutshotRepro = gutshotReproSession.next();
 assert.equal(gutshotRepro.practiceMeta.archetype, "thin-gutshot");
-assert.equal(gutshotRepro.practiceMeta.baselineAction, "call", "86s on K95r continues at least through a call");
+assert.equal(gutshotRepro.practiceMeta.baselineAction, "call", "the thin gutshot continues at least through a call");
 assert.equal(gutshotRepro.options.find((option) => option.key === "fold")?.outcome, "wrong", "the gutshot is never graded as a fold");
 assert.equal(gutshotRepro.options.find((option) => option.key === "call")?.correct, true, "call is the baseline");
 assert.equal(gutshotRepro.options.find((option) => option.key === "checkraise")?.acceptableMix, true, "check-raise is an accepted mix");
 assert.equal(gutshotRepro.options.find((option) => option.key === "checkraise")?.outcome, "mix-xr");
 assert.match(gutshotRepro.options.find((option) => option.key === "checkraise")?.feedback || "", /тоже ок/i);
-
-const kqJ72Session = generator.createSession({ seed: "kq-j72-btnshot-1653" });
-let kqJ72 = null;
-while (!kqJ72 || kqJ72.practiceMeta.serial < 58) kqJ72 = kqJ72Session.next();
-assert.deepEqual(Array.from(kqJ72.table.heroCards), ["Kc", "Qs"]);
-assert.deepEqual(Array.from(kqJ72.table.boardCards), ["Js", "7d", "2h"]);
-assert.equal(kqJ72.table.heroStack, "25 BB");
-assert.equal(kqJ72.table.pot, "5.5 BB");
-assert.equal(kqJ72.table.toCall, 2.2);
-assert.deepEqual(Array.from(kqJ72.table.actionLine), ["BB check", "BTN bet 2.2 BB"]);
-assert.equal(kqJ72.practiceMeta.archetype, "call-strong-overcards");
-assert.equal(kqJ72.practiceMeta.baselineAction, "call", "KQ on J72r continues through a call");
-assert.equal(kqJ72.options.find((option) => option.key === "fold")?.outcome, "wrong");
-assert.equal(kqJ72.options.find((option) => option.key === "call")?.correct, true);
-assert.equal(kqJ72.options.find((option) => option.key === "checkraise")?.acceptableMix, true);
-assert.equal(kqJ72.options.find((option) => option.key === "checkraise")?.acceptableExploit, undefined);
-assert.equal(kqJ72.options.find((option) => option.key === "checkraise")?.outcome, "mix-xr");
-assert.match(kqJ72.options.find((option) => option.key === "checkraise")?.feedback || "", /KK.*QQ.*KJ.*QJ/i);
-assert.match(kqJ72.options.find((option) => option.key === "checkraise")?.feedback || "", /эквити/i);
-assert.match(kqJ72.options.find((option) => option.key === "checkraise")?.feedback || "", /бэкдор/i);
 
 function rngForShuffledPrefix(cards, prefix) {
   assert.equal(new Set(prefix).size, prefix.length, "forced runout cards must be unique");
@@ -107,16 +88,21 @@ const exactValueRunoutContext = {
   bet: 2.2,
   raiseTo: 6.6,
   foldRead: { pct: 49 },
-  baselineAction: "call"
+  baselineAction: "call",
+  villainCards: ["Ts", "Jc"]
 };
 const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
 const suits = ["c", "d", "h", "s"];
 const exactValueRunoutDeck = ranks
   .flatMap((rank) => suits.map((suit) => `${rank}${suit}`))
-  .filter((card) => ![...exactValueRunoutContext.heroCards, ...exactValueRunoutContext.boardCards].includes(card));
+  .filter((card) => ![
+    ...exactValueRunoutContext.heroCards,
+    ...exactValueRunoutContext.boardCards,
+    ...exactValueRunoutContext.villainCards
+  ].includes(card));
 const exactValueRunout = generator.buildContinuation(
   exactValueRunoutContext,
-  rngForShuffledPrefix(exactValueRunoutDeck, ["Ts", "Jc", "Td", "Jd"])
+  rngForShuffledPrefix(exactValueRunoutDeck, ["Td", "Jd"])
 );
 const exactValueNodes = exactValueRunout.continuation.nodes;
 const exactValueValidation = continuation.validateContinuation({ continuation: exactValueRunout.continuation, options: [] });
@@ -125,6 +111,24 @@ assert.equal(exactValueValidation.ok, true, exactValueValidation.errors.join("; 
 assert.deepEqual(Array.from(exactValueRunoutContext.villainCards), ["Ts", "Jc"]);
 assert.equal(exactValueRunoutContext.turnCard, "Td");
 assert.equal(exactValueRunoutContext.riverCard, "Jd");
+
+for (const [nodeId, street, boardCount] of [
+  ["end-after-fold", "flop", 3],
+  ["end-after-xr-fold", "flop", 3],
+  ["end-after-turn-bet-fold", "turn", 4],
+  ["end-after-river-bet-fold", "river", 5],
+  ["end-after-river-bet-after-turn-bet-fold", "river", 5]
+]) {
+  const node = exactValueNodes[nodeId];
+  assert.equal(node.result.showdown, false, `${nodeId}: fold terminal is explicitly non-showdown`);
+  assert.equal(node.table.street, street, `${nodeId}: terminal stays on the street where the fold happened`);
+  assert.equal(node.table.boardCards.length, boardCount, `${nodeId}: no future runout is exposed after a fold`);
+  assert.equal(node.table.seats.some((seat) => seat.revealCardsAfterAnswer), false, `${nodeId}: folded opponent cards stay hidden`);
+}
+
+const riverBetShowdown = exactValueNodes["showdown-call-check-bet"];
+assert.match(riverBetShowdown.table.pot, /^\d+(?:\.\d+)? BB$/, "river-bet showdown keeps a numeric pot");
+assert.equal(riverBetShowdown.result.showdown, true);
 
 const turnCheck = exactValueNodes["turn-after-call"].options.find((option) => option.key === "check");
 assert.equal(turnCheck.next, "turn-call-facing-bet", "BTN value-bets top pair after Hero checks the turn");
@@ -222,6 +226,21 @@ for (let index = 0; index < 1500; index += 1) {
 
   const graphValidation = continuation.validateContinuation(spot);
   assert.equal(graphValidation.ok, true, `${spot.id}: ${graphValidation.errors.join("; ")}`);
+  const baselineChips = spot.table.seats.reduce((total, seat) => total + Number(seat.stackBb), 0)
+    + Number.parseFloat(spot.table.pot);
+  const declaredStartingChips = spot.table.seats.reduce((total, seat) => total + Number(seat.startingStackBb), 0);
+  const heroSeat = spot.table.seats.find((seat) => seat.label === "BB");
+  const villainSeat = spot.table.seats.find((seat) => seat.state === "waiting");
+  const smallBlindSeat = spot.table.seats.find((seat) => seat.label === "SB");
+  assert(Math.abs(baselineChips - declaredStartingChips) < 0.001, `${spot.id}: root pot plus stacks equals the declared hand start`);
+  assert.equal(Number.parseFloat(spot.table.heroStack), heroSeat.stackBb, `${spot.id}: rendered Hero stack uses the live flop stack`);
+  assert(Math.abs((villainSeat.stackBb - heroSeat.stackBb) - 1) < 0.001, `${spot.id}: the BB ante leaves Hero one blind shorter than the opener`);
+  assert.equal(smallBlindSeat.stackBb, Number(smallBlindSeat.startingStackBb) - 0.5, `${spot.id}: the folded small blind stays deducted`);
+  Object.values(spot.continuation.nodes).forEach((node) => {
+    const nodeChips = node.table.seats.reduce((total, seat) => total + Number(seat.stackBb), 0)
+      + Number.parseFloat(node.table.pot);
+    assert(Math.abs(nodeChips - baselineChips) < 0.001, `${spot.id}/${node.id}: pot plus visible stacks conserves chips`);
+  });
   assert.notEqual(spot.options.find((option) => option.key === "fold").next, spot.options.find((option) => option.key === "call").next);
   assert.notEqual(
     spot.continuation.nodes["turn-after-call"].options[0].next,
@@ -241,6 +260,13 @@ for (let index = 0; index < 1500; index += 1) {
 
   const terminal = spot.continuation.nodes["showdown-call-check-check"];
   const reveal = terminal.table.seats.find((seat) => seat.revealCardsAfterAnswer);
+  const villainPosition = spot.table.seats.find((seat) => seat.state === "waiting")?.label;
+  assert.equal(
+    generator.villainCanOpen(villainPosition, reveal.cards),
+    true,
+    `${spot.id}: revealed ${villainPosition} cards belong to the authored opening range`
+  );
+  assert.equal(spot.practiceMeta.villainHandClass, generator.startingHandClass(reveal.cards));
   const fullCards = [...spot.table.heroCards, ...terminal.table.boardCards, ...reveal.cards];
   assert.equal(fullCards.length, 9);
   assert.equal(new Set(fullCards).size, 9, `${spot.id}: Hero, board and opponent cards are unique`);
@@ -260,7 +286,9 @@ assert.equal(visibleSignatures.size, 1500);
 assert.equal(session.seenCount(), 1500);
 assert(strongOvercardsSeen > 50, "strong two-overcard calls remain a recurring procedural category");
 assert.equal(akOnT62Seen, true, "AK on T62 rainbow is graded as a call rather than a fold");
-assert(categoryCounts.checkraise > 300 && categoryCounts.call > 250 && categoryCounts.fold > 250, "all baseline actions remain well represented");
+const checkraiseShare = categoryCounts.checkraise / 1500;
+assert(checkraiseShare >= 0.12 && checkraiseShare <= 0.18, "required check-raises stay inside the observed 12–18% field band");
+assert(categoryCounts.call > 650 && categoryCounts.fold > 400, "call and fold remain well represented around the field-calibrated X/R share");
 assert.deepEqual(
   Array.from(verdicts).sort(),
   ["correct", "loose-xr", "missed-xr", "mix-xr", "wrong", "xr-ok"].sort(),

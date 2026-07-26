@@ -1,6 +1,8 @@
 (function () {
   "use strict";
 
+  const observedConfidence = window.FFObservedFrequencyConfidence;
+
   const BOARD_STRUCTURES = [
     { key: "a_high_dry", label: "Туз-хай · сухая", note: "туз на флопе · три масти · без плотных связей" },
     { key: "k_high_dry", label: "Король-хай · сухая", note: "король на флопе · три масти · без плотных связей" },
@@ -12,16 +14,28 @@
     { key: "other", label: "Другие разноцветные", note: "остальные неспаренные флопы трёх мастей" }
   ];
 
+  const METHODOLOGY_BOARDS = {
+    a_high_dry: { cards: ["Ac", "7d", "2h"], action: "Ставь 25–33%", note: "Сухой туз-хай хорошо поддерживает широкий диапазон префлоп-рейзера." },
+    k_high_dry: { cards: ["Ks", "8h", "3d"], action: "Ставь 25–33%", note: "На сухом король-хай маленькая ставка сохраняет диапазон широким." },
+    broadway: { cards: ["Qh", "Jc", "4s"], action: "Ставь выборочно", note: "Следи за количеством сильных пар и дро у BB, не нажимай кнопку автоматически." },
+    low_connected: { cards: ["7s", "6h", "5d"], action: "С воздухом чаще чек", note: "Низкая связанная доска лучше цепляет диапазон колла BB." },
+    paired: { cards: ["Jh", "Jc", "4s"], action: "Ставь 25%", note: "Маленький размер давит на воздух и не требует раздувать банк." },
+    two_tone: { cards: ["Qh", "7h", "2c"], action: "Разделяй по руке", note: "Вэлью и дро ставят охотнее; чистый воздух сильнее зависит от блокеров." },
+    monotone: { cards: ["8s", "5s", "3s"], action: "Ставь 25% или чек", note: "На одной масти большой размер редко нужен всему диапазону." },
+    other: { cards: ["Tc", "6d", "2h"], action: "Начни с 25–33%", note: "Если доска не даёт явной причины замедлиться, сохраняй простой план." }
+  };
+
   const LEAGUE_COHORTS = [
     { key: "1-5", label: "Лига 1 · R1–5", cohort: { type: "band", from: 1, to: 5 } },
     { key: "6-10", label: "Лига 2 · R6–10", cohort: { type: "band", from: 6, to: 10 } },
-    { key: "11-17", label: "Лига 3 · R11–17", cohort: { type: "band", from: 11, to: 17 } }
+    { key: "11-14", label: "Лига 3 · R11–14", cohort: { type: "band", from: 11, to: 14 } },
+    { key: "15-18", label: "Ранги 15–18", cohort: { type: "band", from: 15, to: 18 } }
   ];
 
   const BOARD_EXAMPLE_SCENARIOS = [
     {
       key: "league1_more",
-      label: "Лига 1 ставит — новички чекают"
+      label: "Лига 1 ставит — ранги 15–18 чекают"
     }
   ];
 
@@ -68,7 +82,7 @@
       kicker: "Учебный автопилот",
       title: "BB чекнул — по умолчанию ставь",
       wisdom: "Сначала научись видеть очевидный c-bet. Исключения добавишь потом.",
-      body: "Для новичка рангов 15–17 полезнее широкий и понятный план, чем попытка сразу сбалансировать каждый редкий чек.",
+      body: "Для новичка рангов 15–18 полезнее широкий и понятный план, чем попытка сразу сбалансировать каждый редкий чек.",
       note: "BTN открылся, BB заколлировал и прочекал."
     },
     {
@@ -76,8 +90,8 @@
       kicker: "Высокие доски",
       title: "На высокой доске выбирай размер, а не причину для чека",
       wisdom: "A-high и K-high — самые простые места для мелкого c-bet.",
-      body: "Лига 1 почти не пропускает сухие высокие флопы. Новички уже здесь теряют слишком много простых ставок.",
-      note: "Полевые частоты описывают игру, но не доказывают идеальную стратегию."
+      body: "Сухие высокие флопы чаще сохраняют преимущество диапазона префлоп-рейзера. Здесь маленькая ставка давит на воздух BB и не раздувает банк.",
+      note: "Это учебное правило по структуре доски; поле ниже сравнивается только там, где полный источник поддерживает точный срез."
     },
     {
       kind: "range",
@@ -91,8 +105,8 @@
       kind: "small",
       kicker: "Размер ставки",
       title: "Спаренная и монотонная доски просят маленькую ставку",
-      wisdom: "20–25% позволяют ставить широко и не раздувать банк.",
-      body: "На спаренных и монотонных флопах опытное поле часто выбирает маленький сайз. Страшный вид доски сам по себе не причина отдавать бесплатную карту."
+      wisdom: "25% позволяют ставить широко и не раздувать банк.",
+      body: "На спаренных и монотонных флопах маленький сайз позволяет ставить широко. Страшный вид доски сам по себе не причина отдавать бесплатную карту."
     },
     {
       kind: "value",
@@ -105,10 +119,10 @@
     {
       kind: "exception",
       kicker: "Нюанс на будущее",
-      title: "Низкая связанная — первое исключение, которое ты добавишь позже",
-      wisdom: "Сейчас ставь 20–25%; с опытом здесь первым появится больше чеков.",
-      body: "На 7-6-5 и 6-5-4 BB реже фолдит и чаще отвечает чек-рейзом. Запомни причину, но на рангах 15–17 не ломай из-за неё простой план.",
-      note: "Доска — пример; проценты относятся ко всей категории. Пас BB и чек-рейз считаются после ставки поля."
+      title: "Низкая связанная выключает автопилот",
+      wisdom: "С чистым воздухом чаще чек; если ставишь — выбирай 25%.",
+      body: "На 7-6-5 и 6-5-4 диапазон колла BB сильнее цепляется за доску. Поэтому чистый воздух можно прочекать, а ставку оставить рукам с вэлью или понятным усилением.",
+      note: "Доска — методический пример, а не полевой процент для отдельной текстуры."
     },
     {
       kind: "algorithm",
@@ -266,16 +280,16 @@
       opponent: "чек · ридов нет",
       accepted: ["25"],
       title: "Страшная доска — маленькая ставка",
-      explanation: "Монотонный флоп не требует большого сайза. 25% давит на воздух BB и сохраняет управляемым банк, когда он проджает."
+      explanation: "Монотонный флоп не требует большого сайза. 25% давит на воздух BB и сохраняет управляемым банк, когда он продолжает."
     },
     {
       structure: "Низкая связанная",
       board: ["6s", "5h", "4s"],
       hand: ["Kc", "Qd"],
       opponent: "чек · ридов нет",
-      accepted: ["25"],
-      title: "Поставь мало — и запомни исключение на будущее",
-      explanation: "На уровне новичка продолжаем простой план и ставим 25%. Но отмечаем 6-5-4 как первую структуру, где опытные игроки чаще выключают автопилот и добавляют чеки."
+      accepted: ["check"],
+      title: "Не ставь чистый воздух на автопилоте",
+      explanation: "На 6-5-4 диапазон BB хорошо цепляется за доску. Без пары, дро и бэкдоров KQ может взять бесплатную карту."
     }
   ];
 
@@ -320,9 +334,9 @@
     },
     low_connected: {
       structure: "Низкая связанная",
-      accepted: ["25"],
-      title: "Поставь мало — и запомни исключение на будущее",
-      explanation: "На уровне новичка продолжаем простой план и ставим 25%. С опытом здесь первым появится больше чеков."
+      accepted: ["check"],
+      title: "Не ставь чистый воздух на автопилоте",
+      explanation: "Низкая связанная доска хорошо подходит диапазону BB. С чистым воздухом чаще бери бесплатную карту; маленькую ставку оставляй рукам с понятным вэлью или усилением."
     },
     other: {
       structure: "Другая rainbow",
@@ -338,17 +352,24 @@
     { key: "large", label: "С-бет 50–67%" }
   ];
   const SNAPSHOT_SEAT_ORDER = ["UTG", "HJ", "CO", "BTN", "SB", "BB"];
+  const COURSE_PROGRESS = Object.freeze({
+    skillKey: "ff_learning_flop_cbet_hu",
+    targetHands: 25,
+    passScore: 80,
+    mode: "flop-cbet-hu"
+  });
 
   const state = {
     step: "deal",
     dealChoice: "",
     cohortMode: "rank",
     rank: 15,
-    leagueBand: "11-17",
+    leagueBand: "15-18",
     metric: "cbet",
     tableMode: "focus",
     structure: "a_high_dry",
     xrCbetSize: "all",
+    fullHistoryPosition: "BTN",
     wisdomIndex: 0,
     trainerIndex: 0,
     trainerScore: 0,
@@ -357,7 +378,9 @@
     trainerRunning: false,
     trainerSpot: null,
     trainerQueue: [],
-    trainerLastKey: ""
+    trainerLastKey: "",
+    courseReported: false,
+    courseSessionId: ""
   };
 
   const pageParams = new URLSearchParams(window.location.search);
@@ -561,7 +584,7 @@
 
   function buildModel(data) {
     if (!data || typeof data !== "object") {
-      return { ready: false, meta: {}, metrics: [], overallCbet: [], cbetSizes: [], xrSizes: [], boardExamples: null };
+      return { ready: false, status: "missing", meta: {}, metrics: [], overallCbet: [], cbetSizes: [], xrSizes: [], boardExamples: null, fullHistory: null };
     }
 
     const rows = arrayAt(data, ["metrics", "rows"]);
@@ -580,15 +603,50 @@
     const boardExamples = data.boardExamples && typeof data.boardExamples === "object"
       ? data.boardExamples
       : (data.board_examples && typeof data.board_examples === "object" ? data.board_examples : null);
+    const fullHistory = data.fullHistory && typeof data.fullHistory === "object"
+      ? {
+          meta: data.fullHistory.meta && typeof data.fullHistory.meta === "object" ? data.fullHistory.meta : {},
+          rows: Array.isArray(data.fullHistory.rows) ? data.fullHistory.rows.filter((row) => row && typeof row === "object") : []
+        }
+      : null;
 
     return {
-      ready: metrics.length > 0 || overallCbet.length > 0 || cbetSizes.length > 0 || xrSizes.length > 0,
+      ready: metrics.length > 0 || overallCbet.length > 0 || cbetSizes.length > 0 || xrSizes.length > 0 || Boolean(fullHistory && fullHistory.rows.length),
+      status: firstText(data, ["status"]) || "ready",
       meta: data.meta && typeof data.meta === "object" ? data.meta : {},
       metrics,
       overallCbet,
       cbetSizes,
       xrSizes,
-      boardExamples
+      boardExamples,
+      fullHistory
+    };
+  }
+
+  function fullHistoryRows(node) {
+    const rows = model.fullHistory && Array.isArray(model.fullHistory.rows)
+      ? model.fullHistory.rows
+      : [];
+    return node ? rows.filter((row) => row.node === node) : rows;
+  }
+
+  function methodologyOnly() {
+    return model.status === "methodology_only" && !fullHistoryRows().length;
+  }
+
+  function fullHistoryAggregate(cohort, filters = {}) {
+    const rows = fullHistoryRows("cbet").filter((row) => (
+      row.cohort === cohort
+      && (!filters.position || row.position === filters.position)
+      && (!filters.depthBand || row.depthBand === filters.depthBand)
+    ));
+    const opportunities = rows.reduce((sum, row) => sum + Number(row.opportunities || 0), 0);
+    const cbets = rows.reduce((sum, row) => sum + Number(row.cbets || 0), 0);
+    return {
+      opportunities,
+      cbets,
+      value: opportunities >= 50 ? (cbets / opportunities) * 100 : null,
+      publishable: opportunities >= 50
     };
   }
 
@@ -610,7 +668,7 @@
 
   function selectedCohort() {
     if (state.cohortMode === "rank") return { type: "rank", rank: state.rank };
-    const bounds = bandBounds(state.leagueBand) || [11, 17];
+    const bounds = bandBounds(state.leagueBand) || [15, 18];
     return { type: "band", from: bounds[0], to: bounds[1] };
   }
 
@@ -747,10 +805,14 @@
     if (!Number.isFinite(n)) return "unknown";
     const reliability = model.meta.reliability || {};
     const solidMin = numberFrom(reliability.solidMin ?? reliability.solid_min) ?? 200;
-    const directionalMin = numberFrom(reliability.directionalMin ?? reliability.directional_min) ?? 50;
+    const directionalMin = observedConfidence?.MIN_EXACT_DENOMINATOR ?? Number.POSITIVE_INFINITY;
     if (n >= solidMin) return "solid";
     if (n >= directionalMin) return "directional";
     return "thin";
+  }
+
+  function canRenderObservedFrequency(n) {
+    return observedConfidence?.canRenderExact?.(n) === true;
   }
 
   function formatPercent(value) {
@@ -765,7 +827,7 @@
   function observedRateDisplay(value, denominator) {
     const reliability = reliabilityFor(denominator);
     return {
-      value: Number.isFinite(value) ? formatPercent(value) : "—",
+      value: Number.isFinite(value) && canRenderObservedFrequency(denominator) ? formatPercent(value) : "—",
       note: reliabilityLabel(reliability),
       reliability
     };
@@ -775,7 +837,9 @@
     if (!summary) return { value: "—", note: "", reliability: "unknown" };
     const reliability = reliabilityFor(summary.n);
     return {
-      value: metric === "cbet_size" ? (summary.mode || "—") : formatPercent(summary.value),
+      value: canRenderObservedFrequency(summary.n)
+        ? (metric === "cbet_size" ? (summary.mode || "—") : formatPercent(summary.value))
+        : "—",
       note: reliabilityLabel(reliability),
       reliability
     };
@@ -927,9 +991,9 @@
   }
 
   function renderWisdomVisual(host, slide) {
-    const leagueOne = { type: "band", from: 1, to: 5 };
-    const ranksElevenToFourteen = { type: "band", from: 11, to: 14 };
-    const newcomers = { type: "band", from: 15, to: 17 };
+    const leagueOne = LEAGUE_COHORTS.find((item) => item.key === "1-5").cohort;
+    const ranksElevenToFourteen = LEAGUE_COHORTS.find((item) => item.key === "11-14").cohort;
+    const newcomers = LEAGUE_COHORTS.find((item) => item.key === "15-18").cohort;
 
     if (slide.kind === "default") {
       const boards = document.createElement("div");
@@ -951,6 +1015,19 @@
     }
 
     if (slide.kind === "high") {
+      if (fullHistoryRows("cbet").length || methodologyOnly()) {
+        const comparison = document.createElement("div");
+        comparison.className = "wisdom-high-comparison is-methodology";
+        comparison.append(
+          createWisdomBoard("A-high · маленькая ставка", ["Ac", "7d", "2h"]),
+          createWisdomBoard("K-high · маленькая ставка", ["Kh", "4c", "3s"])
+        );
+        const note = document.createElement("p");
+        note.className = "wisdom-field-boundary";
+        note.textContent = "Частоты поля не приписываются этим двум доскам: полный источник сравнивает позицию и стек, а структура здесь — учебная.";
+        host.append(comparison, note);
+        return;
+      }
       const comparison = document.createElement("div");
       comparison.className = "wisdom-high-comparison";
       const cohorts = [
@@ -987,12 +1064,12 @@
     if (slide.kind === "small") {
       const sizes = document.createElement("div");
       sizes.className = "wisdom-size-pair";
-      sizes.append(
-        textElement("strong", "", "20%"),
-        textElement("span", "", "или"),
-        textElement("strong", "", "25%")
-      );
+      sizes.append(textElement("strong", "", "25–33%"));
       host.append(sizes);
+      if (fullHistoryRows("cbet").length || methodologyOnly()) {
+        host.append(textElement("p", "wisdom-field-boundary", "Размер — методический выбор. Полный полевой источник ниже не содержит надёжного разбиения по сайзингу, поэтому проценты здесь не дорисованы."));
+        return;
+      }
       appendWisdomSizeMatrix(host, [
         { label: "Лига 1", cohort: leagueOne, tone: "expert" },
         { label: "Ранги 11–14", cohort: ranksElevenToFourteen, tone: "middle" },
@@ -1032,6 +1109,15 @@
         const card = document.createElement("div");
         card.className = `wisdom-exception is-${item.tone}`;
         card.append(createWisdomBoard(item.label, item.cards));
+        if (fullHistoryRows("cbet").length || methodologyOnly()) {
+          const plan = METHODOLOGY_BOARDS[item.structure];
+          card.append(
+            textElement("strong", "wisdom-method-action", plan.action),
+            textElement("small", "wisdom-method-note", plan.note)
+          );
+          comparison.append(card);
+          return;
+        }
         const metrics = document.createElement("div");
         metrics.className = "wisdom-mini-metrics";
         const fold = metricSummary("fold", item.structure, newcomers);
@@ -1051,9 +1137,9 @@
     algorithm.className = "wisdom-algorithm";
     [
       ["Высокая", "ставь 25–33% банка"],
-      ["Спаренная / монотонная", "ставь 20–25% банка"],
+      ["Спаренная / монотонная", "ставь 25% банка"],
       ["Слабый коллер + вэлью", "добирай 50–67% банка"],
-      ["Низкая связанная", "доска, где c-bet можно пропускать"]
+      ["Низкая связанная", "с чистым воздухом чаще чек"]
     ].forEach(([label, action]) => {
       const item = document.createElement("li");
       item.append(textElement("strong", "", label), textElement("span", "", action));
@@ -1136,10 +1222,16 @@
         primary: item.key === state.leagueBand
       }));
     }
+    const disjointReferences = LEAGUE_COHORTS.filter((item) => (
+      selected.type !== "rank"
+      || selected.rank < item.cohort.from
+      || selected.rank > item.cohort.to
+    ));
+    const referenceItems = [disjointReferences[0], disjointReferences.at(-1)]
+      .filter((item, index, items) => item && items.indexOf(item) === index);
     return [
       { label: cohortLabel(selected), cohort: selected, primary: true },
-      { label: "Опытные · R1–5", cohort: { type: "band", from: 1, to: 5 }, primary: false },
-      { label: "Новички · R15–17", cohort: { type: "band", from: 15, to: 17 }, primary: false }
+      ...referenceItems.map((item) => ({ label: item.label, cohort: item.cohort, primary: false }))
     ];
   }
 
@@ -1154,12 +1246,12 @@
     query("[data-league-select]").value = state.leagueBand;
     queryAll("[data-rank-step]").forEach((button) => {
       const nextRank = state.rank + Number(button.dataset.rankStep);
-      button.disabled = state.cohortMode !== "rank" || nextRank < 1 || nextRank > 17;
+      button.disabled = state.cohortMode !== "rank" || nextRank < 1 || nextRank > 18;
     });
   }
 
   function selectRank(rank) {
-    state.rank = Math.max(1, Math.min(17, Number(rank) || state.rank));
+    state.rank = Math.max(1, Math.min(18, Number(rank) || state.rank));
     state.cohortMode = "rank";
     query("[data-rank-select]").value = String(state.rank);
     syncCohortControls();
@@ -1364,7 +1456,7 @@
 
   function initRankSelect() {
     const select = query("[data-rank-select]");
-    for (let rank = 1; rank <= 17; rank += 1) {
+    for (let rank = 1; rank <= 18; rank += 1) {
       const option = document.createElement("option");
       option.value = String(rank);
       option.textContent = `Ранг ${rank}`;
@@ -1457,7 +1549,14 @@
   }
 
   function formatDeltaPercent(current, reference) {
-    if (!current || !reference || !Number.isFinite(current.value) || !Number.isFinite(reference.value)) return "—";
+    if (
+      !current
+      || !reference
+      || !canRenderObservedFrequency(current.n)
+      || !canRenderObservedFrequency(reference.n)
+      || !Number.isFinite(current.value)
+      || !Number.isFinite(reference.value)
+    ) return "—";
     const delta = current.value - reference.value;
     const value = new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(Math.abs(delta));
     return `${delta > 0 ? "+" : delta < 0 ? "−" : ""}${value} п.п.`;
@@ -1540,7 +1639,10 @@
     mobileLabel.textContent = deltaLabel;
     const value = document.createElement("strong");
     if (state.metric === "cbet_size") {
-      value.textContent = !selected || !reference
+      value.textContent = !selected
+        || !reference
+        || !canRenderObservedFrequency(selected.n)
+        || !canRenderObservedFrequency(reference.n)
         ? "—"
         : (selected.mode === reference.mode ? "тот же сайз" : `${selected.mode} vs ${reference.mode}`);
     } else {
@@ -1563,7 +1665,7 @@
     const focusMode = state.tableMode === "focus";
     table.classList.toggle("is-focus-mode", focusMode);
     query("[data-table-kicker]").textContent = leagueMode
-      ? "Лига 1 vs Лига 2 vs Лига 3 · по структурам"
+      ? "Лига 1 vs Лига 2 vs Лига 3 vs новички · по структурам"
       : (focusMode ? "Структуры флопа · быстрый скан" : "Структуры флопа · полный профиль");
     query("[data-table-title]").textContent = focusMode
       ? `${METRICS[state.metric].label} · ${leagueMode ? "сравнение лиг" : cohortLabel(selected)}`
@@ -1574,7 +1676,7 @@
     if (showLeagueInsight) {
       const overall = LEAGUE_COHORTS.map((item) => overallCbetSummary(item.cohort));
       leagueInsight.textContent = overall.every(Boolean)
-        ? `Общая частота ставки почти одинаковая: Л1 ${formatPercent(overall[0].value)}, Л2 ${formatPercent(overall[1].value)}, Л3 ${formatPercent(overall[2].value)}. Главное отличие — в выборе флопов.`
+        ? `Общая частота ставки: Л1 ${formatPercent(overall[0].value)}, Л2 ${formatPercent(overall[1].value)}, Л3 ${formatPercent(overall[2].value)}, R15–18 ${formatPercent(overall[3].value)}. Главное отличие — в выборе флопов.`
         : "Общая частота близка — главное отличие видно в выборе структур.";
     }
     appendTableHead([
@@ -1663,8 +1765,8 @@
     host.replaceChildren();
     const board = BOARD_STRUCTURES.find((item) => item.key === state.structure);
     query("[data-selected-board]").textContent = board.label;
-    query("[data-rank-map-title]").textContent = `${METRICS[state.metric].short} по рангам 1–17`;
-    for (let rank = 1; rank <= 17; rank += 1) {
+    query("[data-rank-map-title]").textContent = `${METRICS[state.metric].short} по рангам 1–18`;
+    for (let rank = 1; rank <= 18; rank += 1) {
       const summary = currentMetricSummary(state.structure, { type: "rank", rank });
       const display = metricDisplay(state.metric, summary);
       const cell = document.createElement("button");
@@ -1694,7 +1796,7 @@
     }
     card.hidden = false;
     host.replaceChildren();
-    for (let rank = 1; rank <= 17; rank += 1) {
+    for (let rank = 1; rank <= 18; rank += 1) {
       const summary = overallCbetSummary({ type: "rank", rank });
       const display = metricDisplay("cbet", summary);
       const cell = document.createElement("button");
@@ -1720,12 +1822,12 @@
     const chart = query(kind === "cbet" ? "[data-cbet-size-chart]" : "[data-xr-size-chart]");
     const base = query(kind === "cbet" ? "[data-cbet-size-base]" : "[data-xr-size-base]");
     chart.replaceChildren();
-    if (!summary) {
+    if (!summary || !canRenderObservedFrequency(summary.n)) {
       const empty = document.createElement("div");
       empty.className = "empty-chart";
-      empty.textContent = kind === "cbet" ? "Нет данных о размерах ставки" : "Нет данных о размерах чек-рейза";
+      empty.textContent = kind === "cbet" ? "Нет устойчивого среза размеров ставки" : "Нет устойчивого среза размеров чек-рейза";
       chart.append(empty);
-      base.textContent = "Нет данных";
+      base.textContent = "";
       return;
     }
     base.textContent = reliabilityLabel(reliabilityFor(summary.n));
@@ -1769,7 +1871,7 @@
     if (!summary) {
       const row = document.createElement("tr");
       const cell = document.createElement("td");
-      cell.colSpan = 6;
+      cell.colSpan = 5;
       cell.className = "empty-table-cell";
       cell.textContent = "Нет валидных сайзов для выбранного ранга и структуры.";
       row.append(cell);
@@ -1779,25 +1881,179 @@
 
     summary.entries.forEach((entry) => {
       const row = document.createElement("tr");
-      const actual = Number.isFinite(entry.meanBetPctPot)
+      const actual = Number.isFinite(entry.meanBetPctPot) && canRenderObservedFrequency(entry.count)
         ? `среднее ${formatPercent(entry.meanBetPctPot)}`
         : "";
       const share = observedRateDisplay(entry.value, entry.count);
       const observedFe = observedRateDisplay(entry.observedFe, entry.validResponses);
       const xrRate = observedRateDisplay(entry.xrRate, entry.xrValidResponses);
-      const reliabilityBase = [entry.count, entry.validResponses, entry.xrValidResponses]
-        .filter(Number.isFinite);
-      const rowReliability = reliabilityBase.length
-        ? reliabilityFor(Math.min(...reliabilityBase))
-        : "unknown";
       appendOutcomeCell(row, entry.label, actual);
       appendOutcomeCell(row, share.value, share.note);
       appendOutcomeCell(row, observedFe.value, observedFe.note);
       appendOutcomeCell(row, formatPercent(entry.breakevenFe), "чистый блеф без усилений");
       appendOutcomeCell(row, xrRate.value, xrRate.note);
-      appendOutcomeCell(row, reliabilityLabel(rowReliability), "для этой строки");
       body.append(row);
     });
+  }
+
+  function fullHistoryCohortMeta() {
+    return [
+      { key: "league1", label: "Первая лига", ranks: "R1–5", tone: "expert" },
+      { key: "league2", label: "Вторая лига", ranks: "R6–10", tone: "middle" },
+      { key: "league3", label: "Третья лига", ranks: "R11–14", tone: "middle" },
+      { key: "novice", label: "Новички", ranks: "R15–18", tone: "new" }
+    ];
+  }
+
+  function fullHistoryRate(row) {
+    const opportunities = Number(row && row.opportunities || 0);
+    const cbets = Number(row && row.cbets || 0);
+    return opportunities >= 50 && cbets >= 0 && cbets <= opportunities
+      ? (cbets / opportunities) * 100
+      : null;
+  }
+
+  function fullHistoryDelta(value, reference) {
+    if (!Number.isFinite(value) || !Number.isFinite(reference)) return "";
+    const delta = value - reference;
+    if (Math.abs(delta) < 0.05) return "как Л1";
+    return `${delta > 0 ? "+" : "−"}${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 }).format(Math.abs(delta))} п.п. к Л1`;
+  }
+
+  function renderFullHistoryField() {
+    const field = query("#fieldScreen");
+    const rows = fullHistoryRows("cbet");
+    if (!field || !rows.length) return;
+
+    query(".field-controls", field).hidden = true;
+    query("[data-overall-cbet-card]", field).hidden = true;
+    query("#selectedStructure", field).hidden = true;
+    query("#rankComparison", field).hidden = true;
+    query("#sizeDetails", field).hidden = true;
+    query(".size-outcomes-card", field).hidden = true;
+    query("#fieldTitle").textContent = "Как частота c-bet меняется по позиции и стеку";
+    const headingCopy = query(".field-heading > p", field);
+    if (headingCopy) headingCopy.textContent = "Один и тот же точный спот, четыре непересекающиеся группы. Сравнивай действие, а не цветную легенду.";
+
+    const host = query("#structureMatrix", field);
+    host.className = "panel full-history-field-card";
+    host.removeAttribute("aria-labelledby");
+    host.replaceChildren();
+
+    const top = document.createElement("div");
+    top.className = "full-history-field-heading";
+    const copy = document.createElement("div");
+    copy.append(
+      textElement("p", "eyebrow", "RFI → единственный колл BB → HU-флоп"),
+      textElement("h3", "", "Ставит или берёт бесплатную карту"),
+      textElement("p", "", "Выбери позицию. В каждой строке один стек; в каждом столбце одна группа игроков. Полоса показывает долю ставок, остаток — чеки.")
+    );
+    const badge = textElement("span", "source-badge", "Проверенный полевой срез");
+    top.append(copy, badge);
+
+    const positions = ["BTN", "CO", "HJ", "MP", "EP"];
+    if (!positions.includes(state.fullHistoryPosition)) state.fullHistoryPosition = "BTN";
+    const positionControls = document.createElement("div");
+    positionControls.className = "full-history-position-tabs";
+    positionControls.setAttribute("role", "group");
+    positionControls.setAttribute("aria-label", "Позиция префлоп-рейзера");
+    positions.forEach((position) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = position;
+      button.classList.toggle("is-active", position === state.fullHistoryPosition);
+      button.setAttribute("aria-pressed", String(position === state.fullHistoryPosition));
+      button.addEventListener("click", () => {
+        state.fullHistoryPosition = position;
+        renderFullHistoryField();
+      });
+      positionControls.append(button);
+    });
+
+    const cohorts = fullHistoryCohortMeta();
+    const summary = document.createElement("div");
+    summary.className = "full-history-summary";
+    cohorts.forEach((cohort) => {
+      const aggregate = fullHistoryAggregate(cohort.key, { position: state.fullHistoryPosition });
+      const card = document.createElement("article");
+      card.className = `full-history-summary-card is-${cohort.tone}`;
+      const value = aggregate.publishable ? formatPercent(aggregate.value) : "—";
+      card.append(
+        textElement("span", "", cohort.label),
+        textElement("strong", "", value),
+        textElement("small", "", cohort.ranks)
+      );
+      summary.append(card);
+    });
+
+    const tableWrap = document.createElement("div");
+    tableWrap.className = "full-history-table-wrap";
+    tableWrap.tabIndex = 0;
+    const table = document.createElement("table");
+    table.className = "full-history-table";
+    const thead = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    ["Стек", ...cohorts.map((cohort) => `${cohort.label} · ${cohort.ranks}`)].forEach((label) => {
+      const cell = document.createElement("th");
+      cell.scope = "col";
+      cell.textContent = label;
+      headRow.append(cell);
+    });
+    thead.append(headRow);
+    const tbody = document.createElement("tbody");
+    const depthOrder = ["<20", "20-30", "30-40", "40-70", "70+"];
+    let biggest = null;
+    depthOrder.forEach((depthBand) => {
+      const row = document.createElement("tr");
+      const depth = document.createElement("th");
+      depth.scope = "row";
+      depth.innerHTML = `<strong>${depthBand.replace("-", "–")} BB</strong><small>эффективный стек</small>`;
+      row.append(depth);
+      const leagueOneRow = rows.find((item) => item.position === state.fullHistoryPosition && item.depthBand === depthBand && item.cohort === "league1");
+      const reference = fullHistoryRate(leagueOneRow);
+      cohorts.forEach((cohort) => {
+        const source = rows.find((item) => item.position === state.fullHistoryPosition && item.depthBand === depthBand && item.cohort === cohort.key);
+        const value = fullHistoryRate(source);
+        const cell = document.createElement("td");
+        cell.dataset.cohort = cohort.key;
+        const mobile = textElement("span", "full-history-mobile-label", `${cohort.label} · ${cohort.ranks}`);
+        const valueRow = document.createElement("div");
+        valueRow.className = "full-history-value-row";
+        valueRow.append(
+          textElement("strong", "", Number.isFinite(value) ? formatPercent(value) : "—"),
+          textElement("small", "", cohort.key === "league1" ? "ориентир" : fullHistoryDelta(value, reference))
+        );
+        const track = document.createElement("div");
+        track.className = "full-history-action-track";
+        const bet = document.createElement("i");
+        bet.style.width = `${Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0}%`;
+        track.append(bet);
+        const split = textElement("span", "full-history-action-split", Number.isFinite(value) ? `Ставка ${formatPercent(value)} · чек ${formatPercent(100 - value)}` : "Срез скрыт: меньше 50 решений");
+        cell.append(mobile, valueRow, track, split);
+        row.append(cell);
+        if (cohort.key === "novice" && Number.isFinite(value) && Number.isFinite(reference)) {
+          const delta = value - reference;
+          if (!biggest || Math.abs(delta) > Math.abs(biggest.delta)) biggest = { depthBand, delta, value, reference };
+        }
+      });
+      tbody.append(row);
+    });
+    table.append(thead, tbody);
+    tableWrap.append(table);
+
+    const insight = document.createElement("aside");
+    insight.className = "full-history-insight";
+    if (biggest) {
+      const direction = biggest.delta < 0 ? "реже ставят" : "чаще ставят";
+      insight.append(
+        textElement("span", "eyebrow", "Самая заметная разница в выбранной позиции"),
+        textElement("strong", "", `${biggest.depthBand.replace("-", "–")} BB · новички ${direction} на ${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 }).format(Math.abs(biggest.delta))} п.п.`),
+        textElement("p", "", `Первая лига ${formatPercent(biggest.reference)}, новички ${formatPercent(biggest.value)}. Это наблюдение поля для точного спота, не готовая стратегия.`)
+      );
+    }
+
+    const boundary = textElement("p", "full-history-boundary", "В этом агрегированном срезе сравниваются позиция, эффективный стек и факт ставки. Доски и сайзинги здесь не подменяются усреднением и не дорисовываются.");
+    host.append(top, positionControls, summary, tableWrap, insight, boundary);
   }
 
   function renderDataMeta() {
@@ -1806,18 +2062,34 @@
     const source = query("[data-source-note]");
     if (!model.ready) return;
 
-    const period = firstText(model.meta, ["period", "dateRange", "date_range"]);
-    const start = firstText(model.meta, ["windowStart", "window_start", "start"]);
-    const end = firstText(model.meta, ["windowEnd", "window_end", "end"]);
-    const asOf = firstText(model.meta, ["asOf", "as_of", "generatedAt", "generated_at"]);
+    const sourceMeta = model.fullHistory && model.fullHistory.rows.length ? model.fullHistory.meta : model.meta;
+    const period = firstText(sourceMeta, ["period", "dateRange", "date_range"]);
+    const start = firstText(sourceMeta, ["windowStart", "window_start", "start"]);
+    const end = firstText(sourceMeta, ["windowEnd", "window_end", "end"]);
+    const asOf = firstText(sourceMeta, ["asOf", "as_of", "generatedAt", "generated_at"]);
     const periodText = period || ([start, end].filter(Boolean).join(" — ")) || "период указан в источнике";
     stamp.querySelector("span").textContent = asOf ? `Срез на ${asOf}` : "Период данных";
     stamp.querySelector("strong").textContent = periodText;
     status.classList.add("is-ready");
     status.querySelector("strong").textContent = "Как реально играет поле";
-    status.querySelector("span").textContent = "BTN открылся, BB заколлировал и прочекал. Это наблюдение за игрой поля, а не совет.";
+    status.querySelector("span").textContent = model.fullHistory && model.fullHistory.rows.length
+      ? "RFI, единственный колл BB, HU-флоп и возможность поставить в позиции. Это наблюдение за игрой поля, а не совет."
+      : "BTN открылся, BB заколлировал и прочекал. Это наблюдение за игрой поля, а не совет.";
     query("[data-sample-size]").textContent = "Реальные раздачи FF";
-    source.textContent = `Реальные раздачи поля за ${periodText}.`;
+    const sample = model.meta.sample && typeof model.meta.sample === "object"
+      ? model.meta.sample
+      : {};
+    const candidateRows = firstNumber(sample, ["candidateRows", "candidate_rows"]);
+    const matchedRows = firstNumber(sample, ["matchedCompactHands", "matched_compact_hands"]);
+    const coverage = candidateRows > 0 && matchedRows >= 0 && matchedRows <= candidateRows
+      ? matchedRows / candidateRows
+      : null;
+    const coverageCopy = Number.isFinite(coverage)
+      ? ` История действий найдена для ${new Intl.NumberFormat("ru-RU").format(matchedRows)} из ${new Intl.NumberFormat("ru-RU").format(candidateRows)} подходящих раздач (${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 }).format(coverage * 100)}%). Остальные раздачи исключены — значения за них не подставлялись.`
+      : "";
+    source.textContent = model.fullHistory && model.fullHistory.rows.length
+      ? `Агрегированный срез поля за ${periodText}. Ранг определяется на момент каждой раздачи; значения публикуются только при N ≥ 50.`
+      : `Реальные раздачи поля за ${periodText}.${coverageCopy}`;
   }
 
   function renderSourceBadges() {
@@ -1825,7 +2097,55 @@
       .forEach((badge) => { badge.textContent = "Реальные раздачи FF"; });
   }
 
+  function renderPendingField() {
+    const field = query("#fieldScreen");
+    if (!field) return;
+    [
+      query(".field-controls", field),
+      query("[data-overall-cbet-card]", field),
+      query("#selectedStructure", field),
+      query("#rankComparison", field),
+      query("#sizeDetails", field),
+      query(".size-outcomes-card", field),
+      query(".method-card", field)
+    ].filter(Boolean).forEach((node) => { node.hidden = true; });
+
+    query("#fieldTitle").textContent = "Полевые частоты пока скрыты";
+    const headingCopy = query(".field-heading > p", field);
+    if (headingCopy) headingCopy.textContent = "Пока здесь нет ни старой выборки, ни дорисованных процентов.";
+    const stamp = query("[data-data-stamp]", field);
+    stamp.querySelector("span").textContent = "Статус";
+    stamp.querySelector("strong").textContent = model.meta.period || "Источник не опубликован";
+    const status = query("[data-data-status]", field);
+    status.classList.remove("is-ready");
+    status.querySelector("strong").textContent = "Проверяем источник";
+    status.querySelector("span").textContent = "Наличие подходящих раздач ещё не доказывает полноту истории. Частоты скрыты до полной сверки.";
+    query("[data-sample-size]", field).textContent = "Частоты скрыты";
+
+    const host = query("#structureMatrix", field);
+    host.className = "panel full-history-field-card is-pending";
+    host.removeAttribute("aria-labelledby");
+    host.replaceChildren();
+    const pending = document.createElement("article");
+    pending.className = "full-history-pending";
+    pending.append(
+      textElement("p", "eyebrow", "Полная история FF"),
+      textElement("h3", "", "Не выдаём непроверенный срез за актуальные данные"),
+      textElement("p", "", "Финальная матрица появится только после полной проверки раздач и групп игроков."),
+      textElement("strong", "", "До этого здесь намеренно нет процентов, сравнений и выводов о поле.")
+    );
+    host.append(pending);
+  }
+
   function renderField() {
+    if (fullHistoryRows("cbet").length) {
+      renderFullHistoryField();
+      return;
+    }
+    if (methodologyOnly()) {
+      renderPendingField();
+      return;
+    }
     renderOverallCbet();
     renderTable();
     renderStructureDetail();
@@ -1952,6 +2272,16 @@
     return tray;
   }
 
+  function checkedHandEvidenceDenominator(hand) {
+    const bets = firstNumber(hand || {}, ["comparisonActionOccurrences", "comparison_action_occurrences"]);
+    const checks = firstNumber(hand || {}, ["comparisonCheckOccurrences", "comparison_check_occurrences"]);
+    return Number.isFinite(bets) && Number.isFinite(checks) ? bets + checks : 0;
+  }
+
+  function checkedHandHasStableEvidence(hand) {
+    return canRenderObservedFrequency(checkedHandEvidenceDenominator(hand));
+  }
+
   function observationFor(example, cohortKey, scenarioKey) {
     const observations = example && example.observations;
     let observation = observations && !Array.isArray(observations) ? observations[cohortKey] : null;
@@ -1969,7 +2299,7 @@
         ? observation.cards
         : (Array.isArray(example.canonicalCards) ? example.canonicalCards : []),
       checkedHands: Array.isArray(observation && observation.checkedHands)
-        ? observation.checkedHands.slice(0, 2)
+        ? observation.checkedHands.filter(checkedHandHasStableEvidence).slice(0, 2)
         : []
     };
   }
@@ -2052,10 +2382,28 @@
     const payload = model.boardExamples;
     const categories = payload && Array.isArray(payload.categories) ? payload.categories : [];
     if (!categories.length) {
-      const empty = document.createElement("div");
-      empty.className = "examples-empty";
-      empty.textContent = "Учебные примеры пока не загрузились.";
-      host.append(empty);
+      const screen = query("#examplesScreen");
+      const eyebrow = query(".examples-heading .eyebrow", screen);
+      const heading = query("#examplesTitle", screen);
+      const intro = query(".examples-heading > p", screen);
+      if (eyebrow) eyebrow.textContent = "Библиотека ситуаций";
+      if (heading) heading.textContent = "Восемь типов флопа — восемь простых планов";
+      if (intro) intro.textContent = "Здесь нет выдуманных полевых процентов для отдельных досок: только структура, базовое действие и причина.";
+      const grid = document.createElement("div");
+      grid.className = "methodology-board-grid";
+      BOARD_STRUCTURES.forEach((structure) => {
+        const plan = METHODOLOGY_BOARDS[structure.key];
+        const card = document.createElement("article");
+        card.className = "panel methodology-board-card";
+        card.append(
+          textElement("p", "eyebrow", structure.label),
+          createLessonCardRow(plan.cards, `Пример: ${structure.label}`),
+          textElement("strong", "methodology-board-action", plan.action),
+          textElement("p", "", plan.note)
+        );
+        grid.append(card);
+      });
+      host.append(grid);
       return;
     }
 
@@ -2217,6 +2565,8 @@
         const hands = Array.isArray(newcomers && newcomers.checkedHands) ? newcomers.checkedHands : [];
         hands.forEach((hand) => {
           if (
+            !checkedHandHasStableEvidence(hand)
+            ||
             firstText(hand || {}, ["comparisonCohort", "comparison_cohort"]) !== "league1"
             || firstText(hand || {}, ["comparisonAction", "comparison_action"]) !== "bet"
             || !(firstNumber(hand || {}, ["comparisonActionOccurrences", "comparison_action_occurrences"]) > 0)
@@ -2226,7 +2576,14 @@
             ...rule,
             board,
             hand: hand.cards,
-            opponent: "чек · ридов нет"
+            opponent: "чек · ридов нет",
+            // This branch has both reviewed `league1_more` direction and at
+            // least the shared N floor for the exact board/hand evidence.
+            // Sparse examples stay descriptive only and never become a
+            // prescriptive practice answer.
+            accepted: ["small"],
+            title: "Не пропускай подтверждённый маленький c-bet",
+            explanation: "Эта рука пришла из собранного примера, где Лига 1 ставила, а новички чекали. Выбирай 25–33% банка."
           });
           if (spot) spots.push(spot);
         });
@@ -2299,6 +2656,42 @@
     query("[data-trainer-misses]").textContent = String(Math.max(0, completed - state.trainerScore));
   }
 
+  function reportTrainerProgress() {
+    const attempts = state.trainerIndex + (state.trainerAnswered ? 1 : 0);
+    const api = window.FFPlayerProgress;
+    if (
+      state.courseReported
+      || attempts < COURSE_PROGRESS.targetHands
+      || !api
+      || typeof api.setResult !== "function"
+    ) return false;
+    const correct = state.trainerScore;
+    const score = Math.round((correct / attempts) * 100);
+    try {
+      api.setResult(COURSE_PROGRESS.skillKey, {
+        attempts,
+        correct,
+        score,
+        bestScore: score,
+        status: score >= COURSE_PROGRESS.passScore ? "passed" : "repeat"
+      }, {
+        session: {
+          id: state.courseSessionId,
+          type: "lesson",
+          mode: COURSE_PROGRESS.mode,
+          total: attempts,
+          correct,
+          accuracy: score
+        },
+        metadata: { lesson: COURSE_PROGRESS.mode, source: "standalone-course-practice" }
+      });
+      state.courseReported = true;
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   function renderTrainer() {
     const spot = state.trainerSpot || takeTrainerSpot();
     const isLoose = spot.opponentClass === "is-loose";
@@ -2332,6 +2725,7 @@
     state.trainerAnswered = true;
     state.trainerChoice = action;
     if (credited) state.trainerScore += 1;
+    reportTrainerProgress();
 
     renderTrainer();
     const incorrectLead = action === "check" && spot.checkFeedback
@@ -2362,6 +2756,8 @@
     state.trainerSpot = null;
     state.trainerQueue = [];
     state.trainerLastKey = "";
+    state.courseReported = false;
+    state.courseSessionId = `flop-cbet-hu-${Date.now().toString(36)}`;
     takeTrainerSpot();
     renderTrainer();
   }

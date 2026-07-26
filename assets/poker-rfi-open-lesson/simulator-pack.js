@@ -182,9 +182,22 @@
     return "";
   }
 
+  function rangeThreshold() {
+    const threshold = Number(root.PokerRfiData?.rangeThreshold);
+    if (!Number.isFinite(threshold)) throw new Error("PokerRfiData.rangeThreshold is required");
+    return threshold;
+  }
+
   function decisionForFrequency(frequency) {
-    const threshold = Number(root.PokerRfiData?.rangeThreshold ?? 75);
-    return Number(frequency || 0) > threshold ? "open" : "fold";
+    return Number(frequency || 0) > rangeThreshold() ? "open" : "fold";
+  }
+
+  function sourceFrequency(position, combo) {
+    const frequency = Number(root.PokerRfiData?.sourceFrequencies?.[position]?.[combo]);
+    if (!Number.isFinite(frequency)) {
+      throw new Error(`PokerRfiData.sourceFrequencies.${position}.${combo} is required`);
+    }
+    return frequency;
   }
 
   function gradeEntry(entry = {}) {
@@ -294,6 +307,7 @@
     return ranks.map((_, row) => ranks.map((__, column) => {
       const hand = handAt(row, column);
       const frequency = Number(frequencies[hand] || 0);
+      const printedFrequency = sourceFrequency(grade.position, hand);
       const expected = decisionForFrequency(frequency);
       const hit = hand === grade.combo;
       const classes = [
@@ -303,14 +317,15 @@
         hit ? "is-hit" : "",
         hit ? (grade.correct ? "is-correct" : "is-wrong") : ""
       ].filter(Boolean).join(" ");
-      return `<span class="${classes}" aria-label="${hand}: ${expected === "open" ? `рейз ${OPEN_SIZE_LABEL} BB` : "пас"}; исходная частота ${frequency}%"><b>${hand}</b></span>`;
+      return `<span class="${classes}" aria-label="${hand}: ${expected === "open" ? `рейз ${OPEN_SIZE_LABEL} BB` : "пас"}; исходная частота ${printedFrequency}%"><b>${hand}</b></span>`;
     }).join("")).join("");
   }
 
   function reviewSelection(grade) {
     const frequency = Number(root.PokerRfiData?.frequencies?.[grade.position]?.[grade.combo] || 0);
+    const printedFrequency = sourceFrequency(grade.position, grade.combo);
     const expected = decisionForFrequency(frequency);
-    return `<div class="rfi-review-selection" data-rfi-review-selection><strong>${grade.combo}</strong><span>${expected === "open" ? `Рейз ${OPEN_SIZE_LABEL} BB` : "Пас"}</span><small>${frequency}% в исходном чарте</small></div>`;
+    return `<div class="rfi-review-selection" data-rfi-review-selection><strong>${grade.combo}</strong><span>${expected === "open" ? `Рейз ${OPEN_SIZE_LABEL} BB` : "Пас"}</span><small>${printedFrequency}% в исходном чарте</small></div>`;
   }
 
   function syncStageToViewport(viewport) {
@@ -430,7 +445,7 @@
           <div><strong id="rfi-review-title">${verdict.title}</strong><p>${verdict.text}</p><small>Ты выбрал: ${actionLabel(grade.action)} · База: ${actionLabel(grade.expected)}</small></div>
         </footer>
         <div class="rfi-review-details" id="rfi-review-details">
-          <div class="rfi-review-legend"><span class="is-open">Рейз ${OPEN_SIZE_LABEL} BB</span><span class="is-fold">Пас</span><span class="is-hit">Твоя рука</span><small>Учебная граница: открываем руки с исходной частотой выше 75%.</small></div>
+          <div class="rfi-review-legend"><span class="is-open">Рейз ${OPEN_SIZE_LABEL} BB</span><span class="is-fold">Пас</span><span class="is-hit">Твоя рука</span><small>Учебная граница: открываем руки с исходной частотой выше ${rangeThreshold()}%.</small></div>
           <div class="rfi-review-chart" aria-label="Чарт ${grade.position}; сыгранная рука ${grade.combo}">${reviewChart(grade)}</div>
           ${reviewSelection(grade)}
         </div>
@@ -628,13 +643,15 @@
     if (!active || !root.document) return;
     const mount = () => {
       const topbar = root.document.querySelector(".topbar");
-      if (!topbar || topbar.querySelector(".rfi-drill-hud")) return false;
+      const rangeData = root.PokerRfiData;
+      const positions = Object.keys(rangeData?.positions || {});
+      if (!topbar || topbar.querySelector(".rfi-drill-hud") || !rangeData?.targets || !positions.length) return false;
       const hud = root.document.createElement("section");
       hud.className = "rfi-drill-hud";
       hud.setAttribute("aria-live", "polite");
-      const targets = root.PokerRfiData?.targets || { EP: 20, MP: 24, HJ: 32, CO: 48, BTN: 66 };
+      const rangeSummary = positions.map((position) => `${position} ${rangeData.targets[position]}%`).join(" · ");
       const sessionLimit = sessionHands();
-      hud.innerHTML = `<div class="rfi-drill-copy"><strong>Опен-рейз по позициям</strong><span>EP ${targets.EP}% · MP ${targets.MP}% · HJ ${targets.HJ}% · CO ${targets.CO}% · BTN ${targets.BTN}%</span><small>${preflopOnly() ? "Только префлоп" : "Вся раздача"} · все до героя выбросили · опен ${OPEN_SIZE_LABEL} BB, колл или пас</small></div><b data-rfi-score>${sessionLimit > 0 ? `0 / ${sessionLimit} верно` : "0 верно · 0 сыграно"}</b><section class="rfi-position-insights" aria-labelledby="rfiPositionHeading"><div class="rfi-position-heading"><strong id="rfiPositionHeading">По позициям</strong><span>Наведи или нажми, чтобы увидеть промахи</span></div><div class="rfi-position-summary" data-rfi-position-summary aria-label="Точность по позициям"></div><div class="rfi-position-chart" id="rfiPositionChart" data-rfi-position-chart role="region" hidden></div></section>`;
+      hud.innerHTML = `<div class="rfi-drill-copy"><strong>Опен-рейз по позициям</strong><span>${rangeSummary}</span><small>${preflopOnly() ? "Только префлоп" : "Вся раздача"} · все до героя выбросили · опен ${OPEN_SIZE_LABEL} BB, колл или пас</small></div><b data-rfi-score>${sessionLimit > 0 ? `0 / ${sessionLimit} верно` : "0 верно · 0 сыграно"}</b><section class="rfi-position-insights" aria-labelledby="rfiPositionHeading"><div class="rfi-position-heading"><strong id="rfiPositionHeading">По позициям</strong><span>Наведи или нажми, чтобы увидеть промахи</span></div><div class="rfi-position-summary" data-rfi-position-summary aria-label="Точность по позициям"></div><div class="rfi-position-chart" id="rfiPositionChart" data-rfi-position-chart role="region" hidden></div></section>`;
       topbar.prepend(hud);
       hud.addEventListener("pointerover", (event) => {
         const button = event.target?.closest?.("[data-rfi-position]");
@@ -757,6 +774,7 @@
     comboForEntry,
     heroPreflopAction,
     decisionForFrequency,
+    sourceFrequency,
     gradeEntry,
     statsForGrades,
     positionChartMarkup,

@@ -58,7 +58,9 @@
         const revealSeat = asArray(node.table?.seats).some((seat) => (
           seat?.revealCardsAfterAnswer === true && asArray(seat.cards).length === 2
         ));
-        if (!revealSeat) errors.push(`${label}.table.seats: terminal node must reveal one two-card opponent hand`);
+        const reachesShowdown = node.result?.showdown !== false;
+        if (reachesShowdown && !revealSeat) errors.push(`${label}.table.seats: showdown terminal must reveal one two-card opponent hand`);
+        if (!reachesShowdown && revealSeat) errors.push(`${label}.table.seats: fold terminal must keep opponent cards hidden`);
         nextByNode.set(nodeId, []);
         return;
       }
@@ -281,7 +283,9 @@
       button.className = "practice-next-button continuation-next-button";
       button.type = "button";
       button.setAttribute("data-continuation-next", "");
-      const defaultLabel = nextNode?.terminal === true ? "Показать шоудаун" : "Продолжить раздачу";
+      const defaultLabel = nextNode?.terminal === true
+        ? (nextNode?.result?.showdown === false ? "Показать результат" : "Показать шоудаун")
+        : "Продолжить раздачу";
       appendText(button, "span", "", selected.advanceLabel || defaultLabel);
       row.appendChild(button);
       const controls = host.querySelector?.(".client-controls") || host;
@@ -307,7 +311,14 @@
       result.setAttribute("aria-live", "polite");
       result.setAttribute("aria-atomic", "true");
       result.tabIndex = -1;
-      appendText(result, "p", "eyebrow", node.result?.winner ? `Результат: ${node.result.winner}` : "Шоудаун");
+      appendText(
+        result,
+        "p",
+        "eyebrow",
+        node.result?.showdown === false
+          ? "Раздача завершена без шоудауна"
+          : (node.result?.winner ? `Результат: ${node.result.winner}` : "Шоудаун")
+      );
       appendText(result, "h3", "", node.title || "Шоудаун");
       appendText(result, "p", "continuation-result-copy", node.result?.summary || "Раздача завершена.");
 

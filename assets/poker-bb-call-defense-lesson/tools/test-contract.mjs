@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
@@ -8,9 +9,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const rangeSource = fs.readFileSync(path.join(root, "range-data.js"), "utf8");
 const source = fs.readFileSync(path.join(root, "data.js"), "utf8");
 const context = { window: {} };
+vm.runInNewContext(fs.readFileSync(path.resolve(root, "../poker-trainer-shell/simulator-snapshot.js"), "utf8"), context);
 vm.runInNewContext(rangeSource, context);
 vm.runInNewContext(source, context);
 const Data = context.window.PokerBbCallData;
+const RangeData = context.window.PokerBbCallRangeData;
 
 assert.ok(Data);
 assert.equal(Data.firstSpot.correct, "call");
@@ -23,15 +26,15 @@ assert.deepEqual([Data.matrixCellForHand("AKo").row, Data.matrixCellForHand("AKo
 assert.throws(() => Data.matrixCellForHand("AK"));
 assert.throws(() => Data.matrixCellForHand("TTs"));
 assert.match(Data.rangeDataVersion, /source-png-pages-10-11/);
-assert.equal(Number(Data.rangeSummaryFor("2_0", "BTN").defendPct.toFixed(1)), 88.2);
+assert.equal(Number(Data.rangeSummaryFor("2_0", "BTN").defendPct.toFixed(1)), 91.0);
 assert.equal(Number(Data.rangeSummaryFor("2_5", "BTN").defendPct.toFixed(1)), 53.8);
 assert.equal(Number(Data.rangeSummaryFor("3_0", "BTN").defendPct.toFixed(1)), 27.0);
 assert.equal(Data.sizes["2_5"].potOddsPct, 23.1);
 assert.equal(Data.sizes["3_0"].potOddsPct, 26.7);
-assert.equal(Data.rangeCellFor("2_0", "BTN", "84o").code, "F");
-assert.equal(Data.rangeCellFor("2_0", "BTN", "84o").callPct, 0);
-assert.equal(Data.rangeCellFor("2_0", "BTN", "84o").foldPct, 100);
-assert.equal(Data.rangeCellFor("2_0", "BTN", "42o").code, "F");
+assert.equal(Data.rangeCellFor("2_0", "BTN", "84o").code, "M");
+assert.equal(Data.rangeCellFor("2_0", "BTN", "84o").callPct, 50);
+assert.equal(Data.rangeCellFor("2_0", "BTN", "84o").foldPct, 50);
+assert.equal(Data.rangeCellFor("2_0", "BTN", "42o").code, "M");
 assert.equal(Data.rangeCellFor("2_0", "BTN", "A5s").code, "B");
 assert.equal(Data.rangeCellFor("2_0", "BTN", "A5s").raisePct, 50);
 assert.equal(Data.rangeCellFor("2_0", "BTN", "A5s").callPct, 50);
@@ -55,8 +58,7 @@ for (const sizeKey of ["2_0", "2_5", "3_0"]) {
         const combos = row === column ? 6 : row < column ? 4 : 12;
         hands.add(hand);
         assert.equal(cell.raisePct + cell.callPct + cell.foldPct, 100, sizeKey + ":" + position + ":" + hand);
-        assert.notEqual(cell.code, "M", sizeKey + ":" + position + ":" + hand + " partial call/fold simplified");
-        assert.equal(cell.callPct > 0 && cell.foldPct > 0, false, sizeKey + ":" + position + ":" + hand + " no weighted call/fold");
+        assert.equal(cell.code, RangeData.scenarios[sizeKey + ":" + position][row * 13 + column], sizeKey + ":" + position + ":" + hand + " keeps extracted source code");
         actionCombos.raise += combos * cell.raisePct / 100;
         actionCombos.call += combos * cell.callPct / 100;
         actionCombos.fold += combos * cell.foldPct / 100;
@@ -74,9 +76,33 @@ for (const sizeKey of ["2_0", "2_5", "3_0"]) {
   }
 }
 
+const sourcePngFiles = fs.readdirSync(path.join(root, "source"))
+  .filter((file) => /^range-.*\.png$/.test(file))
+  .sort();
+const sourcePngHash = createHash("sha256");
+for (const file of sourcePngFiles) {
+  sourcePngHash.update(file);
+  sourcePngHash.update("\0");
+  sourcePngHash.update(fs.readFileSync(path.join(root, "source", file)));
+  sourcePngHash.update("\0");
+}
+assert.equal(sourcePngFiles.length, 15, "all source range PNGs are present");
+assert.equal(sourcePngHash.digest("hex"), "af54a7fb1a83c440a87748b0ce224b491c710b939b11a7e2349be438569b707c", "source PNG content identity");
+
+const semanticRangeText = Object.keys(RangeData.scenarios)
+  .sort()
+  .map((key) => key + "=" + RangeData.scenarios[key])
+  .join("\n");
+assert.equal(
+  createHash("sha256").update(semanticRangeText).digest("hex"),
+  "4a40c4cc3bf6a811dae31c1b1c45430f9b1fafb7b9a8cda974ac4e87595004e2",
+  "all 2,535 extracted actions keep the reviewed source transcription"
+);
+
 for (const spot of [Data.firstSpot, ...Data.practiceSpots]) {
   assert.equal(spot.table.heroPosition, "BB");
   assert.equal(spot.table.anteBb, 1);
+  assert.equal(Number.parseFloat(spot.table.pot), Data.sizes[spot.sizeKey].openSize + 2.5, `${spot.id} includes both blinds, the BB ante and the opener contribution`);
   assert.equal(spot.options.length, 3);
   assert.equal(spot.options.filter((option) => option.correct).length, 1);
   assert.equal(spot.options.find((option) => option.key === "raise").label, "3-бет");

@@ -14,7 +14,6 @@
       leaderboardPlayerKey,
       leaderboardRatingFromMetrics,
       leaderboardDeleteTokenForEntry = () => "",
-      cachedPokerStats,
       sessionGraphKit,
       roundBbMetric,
       emptyRateStat,
@@ -142,7 +141,7 @@
       `;
     }
     const displayEntries = leaderboardDisplayEntries(entries, filters);
-    const current = currentLeaderboardPlayerEntry(entries);
+    const current = currentLeaderboardEntryInSlice(entries);
     const currentRank = leaderboardRankFor(current, entries);
     const top = displayEntries.slice(0, 10);
     // The podium is a result, not a preview of the table below. Short samples
@@ -159,7 +158,10 @@
     // Keep a ranked current player visible below a score/hands/EV top-10, but do
     // not inject them into an unrelated search or a facet they do not match.
     const extraCurrent = current && currentRank > 0 && !currentIsVisible && !filters.query ? [current] : [];
-    const score = current?.rating || leaderboardRatingFromMetrics(cachedPokerStats());
+    // Never fall back to the unfiltered all-time cache. If the active player
+    // has no entry in this table-size/difficulty facet, show an empty result
+    // instead of a convincing score borrowed from another slice.
+    const score = current?.rating || leaderboardRatingFromMetrics(current?.metrics || {});
     const profile = activeSimulatorProfile();
     const rows = [...tableEntries, ...extraCurrent]
       .map((entry) => renderLeaderboardRow(entry, entries.indexOf(entry), current?.id, currentKey, entries))
@@ -170,14 +172,26 @@
         ${initialLoading ? renderLeaderboardRefreshNote() : ""}
         <div class="leaderboard-main-grid">
           <section class="leaderboard-focus" aria-label="Твой результат и график">
-            ${renderLeaderboardCurrent(profile, currentRank, score)}
+            ${renderLeaderboardCurrent(profile, currentRank, score, current)}
             ${renderLeaderboardGraph(score)}
           </section>
           ${renderLeaderboardPodium(podiumEntries, entries)}
         </div>
-        ${renderLeaderboardTable(rows, entries, currentRank, score)}
+        ${renderLeaderboardTable(rows, entries, currentRank, score, Boolean(current))}
       </div>
     `;
+  }
+
+  function currentLeaderboardEntryInSlice(entries) {
+    const source = Array.isArray(entries) ? entries : [];
+    const candidate = currentLeaderboardPlayerEntry(source);
+    if (!candidate) return null;
+    const candidateKey = leaderboardPlayerKey(candidate);
+    return source.find((entry) => (
+      entry === candidate
+      || (candidate.id && entry?.id === candidate.id)
+      || (candidateKey && leaderboardPlayerKey(entry) === candidateKey)
+    )) || null;
   }
 
   function leaderboardRemoteInitialLoading() {
@@ -393,9 +407,11 @@
     return pieces.join(" ").toLowerCase();
   }
 
-  function renderLeaderboardTable(rows, entries, currentRank, score) {
+  function renderLeaderboardTable(rows, entries, currentRank, score, hasCurrent = true) {
     const qualifiedCount = entries.filter((entry) => (entry.rating || leaderboardRatingFromMetrics(entry.metrics || {})).qualified).length;
-    const currentPosition = !score.qualified
+    const currentPosition = !hasCurrent
+      ? "<b>—</b> вне фильтра"
+      : !score.qualified
       ? `<b>${escapeHtml(score.neededHands || 0)}</b> рук до`
       : currentRank
         ? `<b>${escapeHtml(`#${currentRank}`)}</b> ты`
@@ -504,19 +520,41 @@
     `;
   }
 
-  function renderLeaderboardCurrent(profile, currentRank, score) {
+  function renderLeaderboardCurrent(profile, currentRank, score, currentEntry = null) {
+    if (!currentEntry) {
+      const playerLabel = String(profile?.loggedIn ? profile.name : "").trim() || "Ты";
+      return `
+        <section class="leaderboard-current is-empty" aria-label="Твоя сессия">
+          <div class="leaderboard-current-main">
+            <span class="leaderboard-current-tag">Твой результат</span>
+            <div class="leaderboard-current-person">
+              <span class="leaderboard-avatar" aria-hidden="true">${escapeHtml(leaderboardInitials(playerLabel))}</span>
+              <div>
+                <small title="${escapeHtml(playerLabel)}">${escapeHtml(playerLabel)}</small>
+                <b>—</b>
+              </div>
+            </div>
+          </div>
+          <div class="leaderboard-current-notes" aria-label="Детали результата">
+            <span><small>Выбранный фильтр</small><b>Нет результата в этом срезе</b><small>Смени размер стола или сыграй раздачу в этом формате.</small></span>
+          </div>
+        </section>
+      `;
+    }
     const rankLabel = score.qualified && currentRank ? `#${currentRank}` : "—";
     const playerLabel = String(profile?.loggedIn ? profile.name : "").trim() || "Ты";
     const filters = currentLeaderboardFilters();
     const entries = leaderboardEntries(filters);
-    const currentEntry = currentLeaderboardPlayerEntry(entries);
     const nextEntry = currentRank && currentRank > 1 ? entries[currentRank - 2] : null;
     const nextScore = Number((nextEntry?.rating || leaderboardRatingFromMetrics(nextEntry?.metrics || {})).score || 0);
     const neededScore = nextEntry
       ? Math.max(0, Math.ceil(nextScore - Number(score.score || 0)))
       : 0;
     const sessionHands = leaderboardGraphEntries(filters).length;
-    const recentHands = Math.max(0, Number(currentSessionPayload()?.history?.length || 0));
+    // The badge describes the live session only when its hands belong to the
+    // active table-size/difficulty/period facet. Falling back to the raw history
+    // length made a 7-max live session appear inside a selected 6-max result.
+    const recentHands = currentSessionGraphEntries(filters).length;
     const sessionCount = Math.max(0, Math.round(Number(currentEntry?.sessionCount || 0)));
     const totalHands = Math.max(0, Math.round(Number(score.hands || 0)));
     const progress = leaderboardVolumeProgressPercent(totalHands);
@@ -709,17 +747,11 @@
   function renderLeaderboardGraph(score = null) {
     const filters = currentLeaderboardFilters();
     const graphPeriod = currentLeaderboardGraphPeriod();
-    // The personal winnings graph must NOT narrow by the table-size chip. In a
-    // tournament / multi-table session the seat count changes hand-to-hand, so
-    // the leaderboard facet (which drives the KPIs on the left) counts the whole
-    // session under one size, while the per-hand stream carries each hand's real
-    // size. Applying "Short/Full" to the per-hand graph split one logical session
-    // across brackets and dropped its off-size hands — so the curve stopped
-    // matching "Твой результат". Keep only the genuine per-session filters
-    // (difficulty + the graph's own period).
-    const graphFilters = { ...filters, players: "all", period: graphPeriod };
+    // The graph, KPI card and period counts share the exact same facet. A hand
+    // played at another table size must not leak into the selected result.
+    const graphFilters = { ...filters, period: graphPeriod };
     const graphEntries = leaderboardGraphEntries(graphFilters);
-    const graphScore = leaderboardGraphScoreForPeriod(filters, graphPeriod, score);
+    const graphScore = leaderboardGraphScoreForPeriod(filters, graphPeriod);
     const rawGraph = buildSessionGraph(graphEntries);
     const loadState = leaderboardGraphLoadState(graphPeriod, rawGraph, graphScore);
     // The chart plots ONLY hands recorded in this browser — no synthetic
@@ -727,9 +759,9 @@
     // points up to the all-time count painted a fake straight diagonal. The
     // gap to the server volume is stated in the note below instead.
     const graph = rawGraph;
-    // The select labels show the period's full known volume (server total for
-    // all-time); how much of it is plottable locally is stated by the note.
-    const periodControl = renderLeaderboardGraphPeriodControl(filters, graphPeriod, loadState.targetHands || graph.hands, loadState);
+    // Dropdown counts describe plotted hands. A larger aggregate rating sample
+    // is disclosed by leaderboardGraphVolumeNote instead.
+    const periodControl = renderLeaderboardGraphPeriodControl(filters, graphPeriod, graph.hands, loadState);
     if (!graph.hands) {
       if (loadState.loading) {
         return `
@@ -858,19 +890,17 @@
   }
 
   function leaderboardGraphPeriodHands(filters, period) {
-    // Mirror renderLeaderboardGraph: the period dropdown counts the same
-    // table-size-agnostic per-hand set the curve plots (see the comment there).
-    const graphFilters = { ...(filters || {}), players: "all", period: sanitizeLeaderboardGraphPeriod(period) };
-    const rawHands = leaderboardGraphEntries(graphFilters).length;
-    if (!["season", "all"].includes(graphFilters.period)) return rawHands;
-    const rating = currentLeaderboardPlayerEntry(leaderboardEntries({ ...(filters || {}), period: graphFilters.period }))?.rating;
-    return Math.max(rawHands, Math.round(Number(rating?.hands || 0)));
+    // Every option reports the number of points the graph can actually draw.
+    // Aggregate server volume is disclosed separately below the graph; mixing
+    // it into only season/all-time compared two different sources in one menu.
+    const graphFilters = { ...(filters || {}), period: sanitizeLeaderboardGraphPeriod(period) };
+    return leaderboardGraphEntries(graphFilters).length;
   }
 
-  function leaderboardGraphScoreForPeriod(filters, period, fallbackScore = null) {
+  function leaderboardGraphScoreForPeriod(filters, period) {
     const graphPeriod = sanitizeLeaderboardGraphPeriod(period);
     if (!["season", "all"].includes(graphPeriod)) return null;
-    return currentLeaderboardPlayerEntry(leaderboardEntries({ ...(filters || {}), period: graphPeriod }))?.rating || fallbackScore;
+    return currentLeaderboardEntryInSlice(leaderboardEntries({ ...(filters || {}), period: graphPeriod }))?.rating || null;
   }
 
   function renderLeaderboardGraphPeriodControl(filters, selectedPeriod, selectedHands, state = {}) {
@@ -921,6 +951,23 @@
       remoteGraphHandEntries()
     );
     return merged.filter((entry) => graphEntryMatchesFilters(entry, filters));
+  }
+
+  function currentSessionGraphEntries(filters = currentLeaderboardFilters()) {
+    const payload = currentSessionPayload() || {};
+    const fallbackSettings = payload.settings && typeof payload.settings === "object"
+      ? payload.settings
+      : state.settings && typeof state.settings === "object"
+        ? state.settings
+        : null;
+    return mergeGraphEntries(
+      Array.isArray(payload.handLog) ? payload.handLog : [],
+      Array.isArray(payload.history) ? payload.history : []
+    ).map((entry) => {
+      const hand = entry?.handHistory && typeof entry.handHistory === "object" ? entry.handHistory : {};
+      if (!fallbackSettings || entry?.settings || hand.settings) return entry;
+      return { ...entry, settings: fallbackSettings };
+    }).filter((entry) => graphEntryMatchesFilters(entry, filters));
   }
 
   // Per-hand chart points recorded by other devices (view=graph), fetched by

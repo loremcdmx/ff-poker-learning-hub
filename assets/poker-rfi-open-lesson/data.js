@@ -1,5 +1,22 @@
 (function(){"use strict";
 var ranks="AKQJT98765432".split("");
+var preflopPotBb=window.FFTrainerSimulatorSnapshot&&window.FFTrainerSimulatorSnapshot.preflopPotBb;
+// The simulator content pack can import this range file without the lesson
+// renderer. The lesson route uses the shared model; the data-only pack keeps
+// the same audited unopened total as a serialization fallback.
+var unopenedPotBb=typeof preflopPotBb==="function"?preflopPotBb({anteBb:1}):2.5;
+var sourceHeadingTargets={EP:20,MP:26,HJ:32,CO:47,BTN:75};
+// Page 7 is a two-colour chart: every printed value above 75 is filled,
+// while 5 and 50 stay white. The lesson intentionally teaches that filled
+// 35+ BB core; the printed heading percentages remain separate source labels.
+var PAGE7_BINARY_FILL_THRESHOLD=75;
+var rangeRule={
+ id:"page7-filled-core-35plus",
+ label:"учебное бинарное ядро",
+ sourceLabel:"подпись страницы 7",
+ stackScope:"35+ BB",
+ threshold:PAGE7_BINARY_FILL_THRESHOLD
+};
 var positions={
  EP:{pct:0,label:"ранняя",hint:"Все одномастные тузы, сильные бродвеи и компактная связанная часть диапазона. Шесть игроков ещё могут ответить."},
  MP:{pct:0,label:"средняя",hint:"Добавляем разномастные бродвеи и часть младших одномастных королей. Редкие варианты оставляем за границей учебного чарта."},
@@ -88,18 +105,18 @@ var chartRows={
 };
 
 function handAt(row,col){return row===col?ranks[row]+ranks[row]:row<col?ranks[row]+ranks[col]+"s":ranks[col]+ranks[row]+"o"}
-var RANGE_THRESHOLD=75,sourceFrequencies={},frequencies={},opens={},targets={},exactTargets={};
+var sourceFrequencies={},frequencies={},opens={},targets={},exactTargets={};
 Object.keys(chartRows).forEach(function(position){
  var sourceFrequency={},frequency={},open={};
  chartRows[position].forEach(function(row,rowIndex){
-  row.split(" ").forEach(function(value,colIndex){var hand=handAt(rowIndex,colIndex),sourcePct=Number(value),pct=sourcePct>RANGE_THRESHOLD?100:0;sourceFrequency[hand]=sourcePct;frequency[hand]=pct;if(pct===100)open[hand]=true});
+  row.split(" ").forEach(function(value,colIndex){var hand=handAt(rowIndex,colIndex),sourcePct=Number(value),pct=sourcePct>PAGE7_BINARY_FILL_THRESHOLD?100:0;sourceFrequency[hand]=sourcePct;frequency[hand]=pct;if(pct===100)open[hand]=true});
  });
  sourceFrequencies[position]=sourceFrequency;frequencies[position]=frequency;opens[position]=open;
 });
 function comboWeight(hand){return hand.length===2?6:hand.slice(-1)==="s"?4:12}
 Object.keys(frequencies).forEach(function(position){
  var combos=Object.keys(frequencies[position]).reduce(function(total,hand){return total+(frequencies[position][hand]===100?comboWeight(hand):0)},0),exact=Math.round(combos/1326*1000)/10,rounded=Math.round(exact);
- exactTargets[position]=exact;targets[position]=rounded;positions[position].pct=rounded;
+ exactTargets[position]=exact;targets[position]=rounded;positions[position].pct=rounded;positions[position].sourcePct=sourceHeadingTargets[position];
 });
 
 var firstSpot={
@@ -116,16 +133,14 @@ var firstSpot={
    {label:"CO",state:"waiting",stackBb:40},
    {label:"BTN",state:"waiting",stackBb:40},
    {label:"SB",state:"blind",stackBb:40},
-   // The snapshot subtracts the posted big blind. One more BB is already in
-   // the middle as the BB ante, so 39 here renders the intended visible 38 BB.
+   // The snapshot subtracts the posted big blind. The pre-deducted BB ante
+   // makes 39 render the intended visible 38 BB without charging it twice.
    {label:"BB",state:"blind",stackBb:39}
   ],
   heroPosition:"UTG",
   heroStack:"40 BB",
   effectiveStack:"40 BB",
-  // Only the BB ante is in the centre. The shared renderer keeps SB and BB
-  // in front of their seats, for a visible total of 2.5 BB without doubling.
-  pot:"1 BB",
+  pot:unopenedPotBb+" BB",
   anteBb:1,
   heroCards:["As","9d"],
   boardCards:[],
@@ -151,5 +166,5 @@ var spots=[
  ["BTN","Q7o",1,"Q7o входит в основной чарт BTN."],["BTN","87o",1,"87o входит в основной чарт BTN."],["BTN","72o",0,"Широкий BTN — не любые две карты: 72o остаётся пасом."],["BTN","54s",1,"54s входит в основной чарт BTN."]
 ].map(function(item,index){return{id:"rfi-"+index,position:item[0],hand:item[1],open:!!item[2],frequency:frequencies[item[0]][item[1]],reason:item[3]}});
 
-window.PokerRfiData=Object.freeze({version:"rfi-open-page7-20260713-v5",physicalPage:7,rangeThreshold:RANGE_THRESHOLD,positions:positions,ranks:ranks,sourceFrequencies:sourceFrequencies,frequencies:frequencies,opens:opens,firstSpot:Object.freeze(firstSpot),spots:spots,targets:targets,exactTargets:exactTargets})
+window.PokerRfiData=Object.freeze({version:"rfi-open-page7-20260726-v6",physicalPage:7,rangeThreshold:PAGE7_BINARY_FILL_THRESHOLD,rangeRule:Object.freeze(rangeRule),sourceHeadingTargets:Object.freeze(sourceHeadingTargets),positions:positions,ranks:ranks,sourceFrequencies:sourceFrequencies,frequencies:frequencies,opens:opens,firstSpot:Object.freeze(firstSpot),spots:spots,targets:targets,exactTargets:exactTargets})
 })();

@@ -3,10 +3,19 @@
 
   const root = window;
   const documentRoot = document;
-  const data = root.FF_VS3BET_FIELD_DATA;
+  const rawData = root.FF_VS3BET_FIELD_DATA;
+  const data = root.FFVs3BetFieldDataReadiness?.ready ? rawData : null;
   const model = root.FF_VS3BET_RANGE_MODEL;
+  const observedConfidence = root.FFObservedFrequencyConfidence;
+  const enabledComparisonKeys = new Set(data?.meta?.enabledComparisonKeys || []);
   const host = documentRoot.querySelector("[data-vs3-field-explorer]");
   const errorsHost = documentRoot.querySelector("[data-vs3-leaks]");
+  const regSwitcher = documentRoot.querySelector("[data-vs3-reg-view-tabs]");
+  const targetPanel = documentRoot.querySelector('[data-vs3-reg-view-panel="target"]');
+  const fieldPanel = documentRoot.querySelector('[data-vs3-reg-view-panel="field"]');
+  const chartsTab = documentRoot.querySelector("#chartsTab");
+  const fieldTitle = documentRoot.querySelector("#fieldTitle");
+  const fieldEyebrow = fieldTitle?.previousElementSibling;
   const regViewTabs = Array.from(documentRoot.querySelectorAll("[data-vs3-reg-view]"));
   const regViewPanels = Array.from(documentRoot.querySelectorAll("[data-vs3-reg-view-panel]"));
   const fieldTools = Array.from(documentRoot.querySelectorAll("[data-vs3-field-tool]"));
@@ -14,6 +23,39 @@
   const fieldToolKeys = fieldTools.map((tool) => tool.dataset.vs3FieldTool).filter(Boolean);
   const legacyFieldViews = Object.freeze({ overview: "summary", hands: "hands", errors: "errors" });
   if (!host && !errorsHost) return;
+  if (!data) {
+    if (chartsTab) chartsTab.textContent = "3. Чарты";
+    if (fieldTitle) fieldTitle.textContent = "Чарты рук";
+    if (fieldEyebrow) fieldEyebrow.textContent = "Наша стратегия";
+    if (regSwitcher) regSwitcher.hidden = true;
+    if (targetPanel) {
+      targetPanel.hidden = false;
+      targetPanel.classList.add("is-active");
+    }
+    if (fieldPanel) {
+      fieldPanel.hidden = true;
+      fieldPanel.classList.remove("is-active");
+    }
+    host?.replaceChildren();
+    errorsHost?.replaceChildren();
+    const unavailableApi = Object.freeze({
+      schemaVersion: 1,
+      available: false,
+      filters: () => ({}),
+      setFilters: () => ({}),
+      showView: () => "target",
+      showFieldSection: () => "target",
+      refresh: () => {},
+      errorSummary: () => ({ filters: {}, underdefense: [], overdefense: [] })
+    });
+    root.FFVs3BetFieldExplorer = unavailableApi;
+    root.FFVs3BetFieldErrorExplorer = unavailableApi;
+    return;
+  }
+  if (chartsTab) chartsTab.textContent = "3. Чарты и поле";
+  if (fieldTitle) fieldTitle.textContent = "Чарты и поле";
+  if (fieldEyebrow) fieldEyebrow.textContent = "Наша стратегия + проверенные решения FF";
+  if (regSwitcher) regSwitcher.hidden = false;
 
   const actions = [
     { key: "fold", index: 1, label: "Пас", tone: "is-fold" },
@@ -21,8 +63,15 @@
     { key: "fourbet", index: 3, label: "4-бет", tone: "is-fourbet" },
     { key: "jam", index: 4, label: "4-бет пуш", tone: "is-jam" }
   ];
+  function cohortLabel(key) {
+    const cohort = data?.meta?.cohorts?.[key];
+    const ranks = Array.isArray(cohort?.ranks) ? cohort.ranks.filter(Number.isFinite) : [];
+    const rankLabel = ranks.length ? `R${Math.min(...ranks)}–${Math.max(...ranks)}` : "";
+    return [cohort?.label || key, rankLabel].filter(Boolean).join(" · ");
+  }
+
   const labels = {
-    cohort: { novice: "Новички · R15–18", league3: "Лига 3 · R11–14", league2: "Лига 2 · R6–10", league1: "Лига 1 · R1–5" },
+    cohort: Object.fromEntries((data?.meta?.cohortOrder || []).map((key) => [key, cohortLabel(key)])),
     position: { EP: "EP", MP: "MP", HJ: "HJ", CO: "CO", BTN: "BTN", SB: "SB" },
     relation: { IP: "В позиции", OOP: "Без позиции" },
     stack: { "20-30": "20–30 BB", "31-50": "31–50 BB", "51-80": "51–80 BB", "80+": "80+ BB" },
@@ -35,6 +84,7 @@
     stack: { label: "Эффективный стек", values: data?.meta?.stackBands || ["31-50"], preferred: "31-50" },
     size: { label: "Размер 3-бета", values: data?.meta?.sizeBuckets || ["2.5", "3", "4"], preferred: "3" }
   };
+  const filterOrder = Object.keys(filters);
   const state = Object.fromEntries(Object.entries(filters).map(([key, config]) => [key, config.values.includes(config.preferred) ? config.preferred : config.values[0]]));
   state.hand = "AQs";
   state.errorHand = "";
@@ -122,22 +172,70 @@
     return [selection.cohort, selection.position, selection.relation, selection.stack, selection.size].join("|");
   }
 
-  function chart(selection = state) {
-    return data?.charts?.[chartKey(selection)] || null;
+  function comparisonKey(selection = state) {
+    return [selection.position, selection.relation, selection.stack, selection.size].join("|");
   }
 
-  function filterValueAvailable(key, value) {
-    const next = { ...state, [key]: value };
-    return relationAllowed(next.relation, next.position) && Boolean(chart(next));
+  function comparisonAvailable(selection = state) {
+    return relationAllowed(selection.relation, selection.position)
+      && enabledComparisonKeys.has(comparisonKey(selection));
+  }
+
+  function chart(selection = state) {
+    if (!comparisonAvailable(selection)) return null;
+    const candidate = data?.charts?.[chartKey(selection)] || null;
+    return candidate;
+  }
+
+  const publishedStates = Array.from(enabledComparisonKeys).flatMap((key) => {
+    const [position, relation, stack, size] = String(key).split("|");
+    return filters.cohort.values.map((cohort) => ({ cohort, position, relation, stack, size }));
+  }).filter((selection) => (
+    relationAllowed(selection.relation, selection.position)
+    && Boolean(data?.charts?.[chartKey(selection)])
+  ));
+
+  function valuesForFilter(key) {
+    const index = filterOrder.indexOf(key);
+    const upstream = index < 0 ? [] : filterOrder.slice(0, index);
+    return (filters[key]?.values || []).filter((value) => publishedStates.some((selection) => (
+      selection[key] === value
+      && upstream.every((upstreamKey) => selection[upstreamKey] === state[upstreamKey])
+    )));
+  }
+
+  function reconcileFilters(changedKey = "") {
+    const changedIndex = filterOrder.indexOf(changedKey);
+    filterOrder.forEach((key, index) => {
+      if (index <= changedIndex) return;
+      const values = valuesForFilter(key);
+      if (values.includes(state[key])) return;
+      state[key] = values.includes(filters[key].preferred) ? filters[key].preferred : values[0];
+    });
+    if (comparisonAvailable(state) && chart()) return true;
+    const fallback = publishedStates[0];
+    if (!fallback) return false;
+    Object.assign(state, fallback);
+    return true;
+  }
+
+  function selectAvailableState() {
+    if (comparisonAvailable(state) && chart()) return true;
+    return reconcileFilters();
   }
 
   function availableFilterValues(key, config) {
-    if (key !== "position") return config.values;
-    return config.values.filter((value) => filterValueAvailable(key, value));
+    if (key !== "relation") return valuesForFilter(key);
+    return config.values.filter((value) => publishedStates.some((selection) => (
+      selection.cohort === state.cohort && selection.relation === value
+    )));
   }
 
   function selectionForFilter(key, value) {
     const next = { ...state, [key]: value };
+    if (key === "position" && !relationAllowed(next.relation, value)) {
+      next.relation = value === "SB" ? "OOP" : "IP";
+    }
     if (key !== "relation" || relationAllowed(value, next.position)) return next;
     const preferredPosition = value === "OOP" ? "CO" : "BTN";
     const candidates = [preferredPosition, ...filters.position.values.filter((position) => position !== preferredPosition)];
@@ -154,8 +252,8 @@
   }
 
   function percent(numerator, denominator) {
-    if (!denominator) return "—";
-    const value = numerator / denominator * 100;
+    const value = observedConfidence?.rate?.(numerator, denominator);
+    if (!Number.isFinite(value)) return "—";
     return `${value.toLocaleString("ru-RU", { minimumFractionDigits: value < 10 ? 1 : 0, maximumFractionDigits: 1 })}%`;
   }
 
@@ -182,9 +280,7 @@
   }
 
   function sampleClass(n) {
-    const thresholds = data.meta.sampleThresholds;
-    if (n < thresholds.unavailableBelow) return "is-unavailable";
-    return "is-measured";
+    return observedConfidence?.canRenderExact?.(n) === true ? "is-measured" : "is-unavailable";
   }
 
   function sampleNote(n) {
@@ -256,7 +352,7 @@
     const foldDelta = observed.fold - target.fold;
     const aggressionDelta = observed.fourbet + observed.jam - target.fourbet - target.jam;
     const kind = Math.abs(foldDelta) < 3 ? "balanced" : foldDelta > 0 ? "underdefense" : "overdefense";
-    const rankable = n >= data.meta.sampleThresholds.lowConfidenceBelow;
+    const rankable = observedConfidence?.canRenderExact?.(n) === true;
     const [foldLow, foldHigh] = rankable ? wilsonInterval(cell[1], n) : [0, 100];
     const confirmedGap = !rankable
       ? 0
@@ -362,8 +458,8 @@
       const cell = current.cells[index] || [0, 0, 0, 0, 0];
       const n = count(cell[0]);
       const availability = sampleClass(n);
-      const reveal = Boolean(n);
-      const occurrenceFrequency = occurrence[index] || 0;
+      const reveal = observedConfidence?.canRenderExact?.(n) === true;
+      const occurrenceFrequency = reveal ? (occurrence[index] || 0) : 0;
       const button = element("button", `vs3-field-range-cell ff-range-cell has-occurrence-weight ${reveal ? dominantTone(cell) : ""} ${availability}`);
       button.type = "button";
       button.dataset.vs3FieldHand = hand;
@@ -383,7 +479,7 @@
     const index = data.meta.hands.indexOf(state.hand);
     const cell = current?.cells?.[index] || [0, 0, 0, 0, 0];
     const n = count(cell[0]);
-    const available = Boolean(n);
+    const available = observedConfidence?.canRenderExact?.(n) === true;
     const aside = element("aside", `vs3-field-hand-detail ${sampleClass(n)}`);
     const head = element("header", "vs3-comparison-head");
     const copy = element("div", "");
@@ -391,7 +487,7 @@
     head.append(copy, element("strong", "vs3-hand-badge", state.hand));
     aside.append(head);
     if (!available) {
-      aside.append(element("p", "vs3-field-no-sample", "Для этой руки нет отдельного среза."));
+      aside.append(element("p", "vs3-field-no-sample", "Для этой руки нет устойчивого отдельного среза."));
       return aside;
     }
     const rows = element("div", "vs3-field-hand-actions");
@@ -458,11 +554,11 @@
       button.dataset.errorKind = entry.kind;
       button.setAttribute("aria-pressed", String(entry.hand === state.errorHand));
       button.style.setProperty("--vs3-error-intensity", String(Math.min(1, Math.abs(entry.foldDelta) / maximum)));
-      const sample = entry.n ? signedPercentPoints(entry.foldDelta).replace(" п.п.", "") : "—";
+      const sample = entry.rankable ? signedPercentPoints(entry.foldDelta).replace(" п.п.", "") : "—";
       button.append(element("strong", "", entry.hand), element("small", "", sample));
-      button.setAttribute("aria-label", entry.n
+      button.setAttribute("aria-label", entry.rankable
         ? `${entry.hand}: ${errorLabel(entry)}, пас ${signedPercentPoints(entry.foldDelta)}. Открыть разбор.`
-        : `${entry.hand}: нет отдельного среза.`);
+        : `${entry.hand}: нет устойчивого отдельного среза.`);
       grid.append(button);
     });
     scroll.append(grid);
@@ -502,12 +598,12 @@
     );
     head.append(copy, element("strong", "vs3-hand-badge", selected.hand));
     aside.append(head);
-    if (!selected.n) {
-      aside.append(element("p", "vs3-field-no-sample", "Для этой руки нет отдельного среза."));
+    if (!selected.rankable) {
+      aside.append(element("p", "vs3-field-no-sample", "Для этой руки нет устойчивого отдельного среза."));
       return aside;
     }
     const metrics = element("div", "vs3-error-metrics");
-    const direction = selected.kind === "underdefense" ? "лишних пасов" : selected.kind === "overdefense" ? "лишних продолжений" : "решений около цели";
+    const direction = selected.kind === "underdefense" ? "Поле чаще пасует лишний раз." : selected.kind === "overdefense" ? "Поле чаще продолжает слишком широко." : "Решения поля близки к учебной цели.";
     [
       ["Поле пасует", percentValue(selected.observed.fold)],
       ["Наша стратегия", percentValue(selected.target.fold)],
@@ -518,7 +614,7 @@
       metrics.append(item);
     });
     aside.append(metrics);
-    if (selected.n) aside.append(element("p", "vs3-error-decision-context", `Чаще встречаются ${direction}.`));
+    aside.append(element("p", "vs3-error-decision-context", direction));
     const mixes = element("div", "vs3-error-mixes");
     mixes.append(
       createErrorMixRow("Наблюдаемая игра", selected.observed, "is-observed"),
@@ -588,7 +684,7 @@
     if (!errorsHost) return;
     errorsHost.classList.add("is-error-explorer");
     if (!data?.meta || !data?.charts || typeof model?.scenario !== "function") {
-      errorsHost.replaceChildren(element("p", "vs3-loading", "Матрица ошибок не загрузилась."));
+      errorsHost.replaceChildren(element("p", "vs3-loading vs3-data-unavailable", "Сравнение ошибок временно скрыто. Оно вернётся только после полной сверки всех периодов и групп."));
       return;
     }
     const current = chart();
@@ -597,8 +693,8 @@
       return;
     }
     const entries = errorEntries(current);
-    const defaultEntry = rankedErrors(entries, "underdefense")[0] || rankedErrors(entries, "overdefense")[0] || entries.find((entry) => entry.n) || entries[0];
-    if (!entries.some((entry) => entry.hand === state.errorHand && entry.n)) state.errorHand = defaultEntry?.hand || data.meta.hands[0];
+    const defaultEntry = rankedErrors(entries, "underdefense")[0] || rankedErrors(entries, "overdefense")[0] || entries.find((entry) => entry.rankable) || entries[0];
+    if (!entries.some((entry) => entry.hand === state.errorHand && entry.rankable)) state.errorHand = defaultEntry?.hand || data.meta.hands[0];
     const wrapper = element("article", "panel vs3-error-explorer");
     const head = element("header", "vs3-error-head");
     const copy = element("div", "");
@@ -623,7 +719,7 @@
   function render() {
     if (!host) return;
     if (!data?.meta || !data?.charts) {
-      host.replaceChildren(element("p", "vs3-loading", "Данные не загрузились. Обнови страницу."));
+      host.replaceChildren(element("p", "vs3-loading vs3-data-unavailable", "Решения поля временно скрыты. Старые проценты и неполные периоды здесь не показываются."));
       return;
     }
     const current = chart();
@@ -637,6 +733,7 @@
   }
 
   function renderAll() {
+    selectAvailableState();
     render();
     renderErrors();
   }
@@ -667,8 +764,9 @@
       const value = filter.dataset.vs3FieldValue;
       const context = filter.closest("[data-vs3-field-filter-context]")?.dataset.vs3FieldFilterContext || "";
       const next = selectionForFilter(key, value);
-      if (!filters[key]?.values.includes(value) || !relationAllowed(next.relation, next.position) || !chart(next)) return;
+      if (!availableFilterValues(key, filters[key]).includes(value)) return;
       Object.assign(state, next);
+      reconcileFilters(key);
       renderAll();
       root.requestAnimationFrame(() => {
         documentRoot.querySelector(
@@ -730,8 +828,8 @@
         if (filters[key].values.includes(next[key])) state[key] = next[key];
       });
       if (!relationAllowed(state.relation, state.position)) state.relation = state.position === "SB" ? "OOP" : "IP";
-      if (data.meta.hands.includes(next.hand)) state.hand = next.hand;
-      if (data.meta.hands.includes(next.errorHand)) state.errorHand = next.errorHand;
+      if (data?.meta?.hands?.includes(next.hand)) state.hand = next.hand;
+      if (data?.meta?.hands?.includes(next.errorHand)) state.errorHand = next.errorHand;
       renderAll();
       return { ...state };
     },

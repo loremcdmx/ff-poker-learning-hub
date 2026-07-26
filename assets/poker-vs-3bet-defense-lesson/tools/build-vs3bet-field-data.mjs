@@ -4,36 +4,45 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 const toolDirectory = path.dirname(fileURLToPath(import.meta.url));
 const lessonDirectory = path.resolve(toolDirectory, '..');
+const require = createRequire(import.meta.url);
+const observedConfidence = require(path.resolve(lessonDirectory, '../poker-kit/observed-frequency-confidence.js'));
 const dataDirectory = path.join(lessonDirectory, 'data');
-const cubeArgumentIndex = process.argv.indexOf('--cube');
-const csvPath = cubeArgumentIndex >= 0 ? process.argv[cubeArgumentIndex + 1] : process.env.FF_VS3BET_FIELD_CUBE;
-const cubeJobArgumentIndex = process.argv.indexOf('--cube-job-id');
-const cubeJobArgument = cubeJobArgumentIndex >= 0 ? process.argv[cubeJobArgumentIndex + 1] : process.env.FF_VS3BET_FIELD_CUBE_JOB_ID;
-const cubeJobIds = (cubeJobArgument || '').split(',').map((id) => id.trim()).filter(Boolean);
-const outputPath = path.join(dataDirectory, 'vs3bet-field-data.js');
-const diagnosticsPath = path.join(dataDirectory, 'vs3bet-field-diagnostics.json');
+const cubePaths = repeatedArgument('--cube', process.env.FF_VS3BET_FIELD_CUBES);
+const cubeJobIds = repeatedArgument('--cube-job-id', process.env.FF_VS3BET_FIELD_CUBE_JOB_IDS);
+const cubeExecutionModes = repeatedArgument('--cube-execution-mode', process.env.FF_VS3BET_FIELD_CUBE_EXECUTION_MODES);
+const cubeQuerySha256 = repeatedArgument('--cube-query-sha256', process.env.FF_VS3BET_FIELD_CUBE_QUERY_SHA256);
+const cubeWindowStarts = repeatedArgument('--cube-window-start', process.env.FF_VS3BET_FIELD_CUBE_WINDOW_STARTS);
+const cubeWindowEnds = repeatedArgument('--cube-window-end', process.env.FF_VS3BET_FIELD_CUBE_WINDOW_ENDS);
+const outputPath = singleArgument('--output') || path.join(dataDirectory, 'vs3bet-field-data.js');
+const diagnosticsPath = singleArgument('--diagnostics') || path.join(dataDirectory, 'vs3bet-field-diagnostics.json');
 const sourceQueryPath = path.join(toolDirectory, 'vs3bet-field-cube.sql');
-if (!csvPath || !cubeJobIds.length) throw new Error('Usage: build-vs3bet-field-data.mjs --cube <external-cube.csv> --cube-job-id <mcp-job-id[,mcp-job-id...]> [--rank-intervals <external-rank.csv>]');
-const rankArgumentIndex = process.argv.indexOf('--rank-intervals');
-const rankPath = rankArgumentIndex >= 0 ? process.argv[rankArgumentIndex + 1] : process.env.FF_VS3BET_RANK_INTERVALS;
-const rankProvenance = {
-  rows: 19699,
-  queryJobId: 'mcp_bq_job_e9147a172e0a455faa21292b7aa80a4d',
-  sha256: '64b309058fabffe1d2f25e4a7d68f4aae84867d96a3faa9a743c4b0c39f78cd6',
-};
+const rankPath = singleArgument('--rank-intervals') || process.env.FF_VS3BET_RANK_INTERVALS;
+const rankJobId = singleArgument('--rank-job-id') || process.env.FF_VS3BET_RANK_JOB_ID;
+const rankExecutionMode = singleArgument('--rank-execution-mode') || process.env.FF_VS3BET_RANK_EXECUTION_MODE;
+const rankQuerySha256 = singleArgument('--rank-query-sha256') || process.env.FF_VS3BET_RANK_QUERY_SHA256;
+const rankWindowStart = singleArgument('--rank-window-start') || process.env.FF_VS3BET_RANK_WINDOW_START;
+const rankWindowEnd = singleArgument('--rank-window-end') || process.env.FF_VS3BET_RANK_WINDOW_END;
+const requestedVersion = singleArgument('--version') || 'vs3bet-field-cube-20260722-v6';
+const requestedGeneratedOn = singleArgument('--generated-on');
 
-if (rankArgumentIndex >= 0 && !rankPath) throw new Error('Usage: --rank-intervals <external-rank-intervals.csv>');
-if (rankPath) validateExternalRankSource(rankPath);
+const usage = 'Usage: build-vs3bet-field-data.mjs --cube <external-cube.csv> --cube-job-id <job-or-sync:sha> --cube-execution-mode <async|sync> --cube-query-sha256 <sha256> --cube-window-start <ISO> --cube-window-end <ISO> [repeat all six per non-overlapping shard] --rank-intervals <external-rank.csv> --rank-job-id <job> --rank-execution-mode <async|sync> --rank-query-sha256 <sha256> --rank-window-start <ISO> --rank-window-end <ISO> [--output <js>] [--diagnostics <json>]';
+assert(cubePaths.length > 0, usage);
+for (const [label, values] of [['cube job ids', cubeJobIds], ['cube execution modes', cubeExecutionModes], ['cube query hashes', cubeQuerySha256], ['cube window starts', cubeWindowStarts], ['cube window ends', cubeWindowEnds]]) {
+  assert.equal(values.length, cubePaths.length, `${label} must have one explicit value per --cube. ${usage}`);
+}
+assert(rankPath && rankJobId && rankExecutionMode && rankQuerySha256 && rankWindowStart && rankWindowEnd, usage);
 
-const columns = [
+const legacyColumns = [
   'cohort', 'hero_position', 'threebettor_position', 'relation', 'stack_band',
   'threebet_to_bucket', 'holecards_str', 'opportunities', 'unique_players',
   'folds', 'calls', 'fourbets', 'jams', 'other', 'first_hand_at', 'last_hand_at',
 ];
+const columns = legacyColumns.filter((column) => column !== 'unique_players');
 const cohorts = ['novice', 'league3', 'league2', 'league1'];
 const heroPositions = ['EP', 'MP', 'HJ', 'CO', 'BTN', 'SB'];
 const threebettorPositions = ['EP', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
@@ -46,8 +55,8 @@ const positionRelations = [
   ['BTN', 'IP'], ['SB', 'OOP'],
 ];
 const stackBands = ['20-30', '31-50', '51-80', '80+'];
-const sourceSizeBuckets = ['2.5', '3', '4'];
-const sizeBuckets = [...sourceSizeBuckets];
+const sourceSizeBuckets = ['<6', '6-8', '8-10', '10+'];
+const sizeBuckets = ['all', ...sourceSizeBuckets];
 const ranks = 'AKQJT98765432'.split('');
 const hands = ranks.flatMap((_, row) => ranks.map((__, column) => {
   if (row === column) return `${ranks[row]}${ranks[column]}`;
@@ -57,13 +66,46 @@ const hands = ranks.flatMap((_, row) => ranks.map((__, column) => {
 const handIndex = new Map(hands.map((hand, index) => [hand, index]));
 const missingHand = '__MISSING__';
 const actionKeys = ['folds', 'calls', 'fourbets', 'jams'];
-const observedCellMinimumN = 1;
+const publishedCellMinimumN = 1;
+const exactFrequencyMinimumN = observedConfidence.MIN_EXACT_DENOMINATOR;
 
-const csvBuffer = fs.readFileSync(csvPath);
 const sourceQueryBuffer = fs.readFileSync(sourceQueryPath);
-const csv = csvBuffer.toString('utf8').trimEnd().split(/\r?\n/);
-assert.deepEqual(csv.shift().split(','), columns, 'unexpected field cube columns');
-const rows = csv.map((line, index) => parseRow(line, index + 2));
+const shardInputs = cubePaths.map((sourcePath, index) => readCubeShard({
+  sourcePath,
+  queryJobId: cubeJobIds[index],
+  executionMode: cubeExecutionModes[index],
+  querySha256: cubeQuerySha256[index],
+  windowStartInclusive: canonicalIso(cubeWindowStarts[index], `cube ${index + 1} window start`),
+  windowEndExclusive: canonicalIso(cubeWindowEnds[index], `cube ${index + 1} window end`),
+  ordinal: index + 1,
+}));
+validateShardWindows(shardInputs);
+const rankProvenance = readRankProvenance({
+  sourcePath: rankPath,
+  queryJobId: rankJobId,
+  executionMode: rankExecutionMode,
+  querySha256: rankQuerySha256,
+  windowStartInclusive: canonicalIso(rankWindowStart, 'rank window start'),
+  windowEndExclusive: canonicalIso(rankWindowEnd, 'rank window end'),
+});
+const windowStartInclusive = shardInputs.map((shard) => shard.windowStartInclusive).sort()[0];
+const windowEndExclusive = shardInputs.map((shard) => shard.windowEndExclusive).sort().at(-1);
+assert.equal(rankProvenance.windowStartInclusive, windowStartInclusive, 'rank bridge must cover the exact full cube window start');
+assert.equal(rankProvenance.windowEndExclusive, windowEndExclusive, 'rank bridge must cover the exact full cube window end');
+const generatedOn = requestedGeneratedOn || windowEndExclusive.slice(0, 10);
+assert(/^\d{4}-\d{2}-\d{2}$/.test(generatedOn), 'generated-on must be YYYY-MM-DD');
+
+const mergedRows = new Map();
+for (const shard of shardInputs) {
+  for (const row of shard.rows) {
+    const rowKey = cubeRowKey(row);
+    const existing = mergedRows.get(rowKey);
+    if (existing) mergeCubeRow(existing, row);
+    else mergedRows.set(rowKey, { ...row });
+  }
+}
+const rows = [...mergedRows.values()];
+const rawCsvRowCount = shardInputs.reduce((sum, shard) => safeAdd(sum, shard.rows.length, 'raw CSV row count'), 0);
 const charts = {};
 const seen = new Set();
 const global = emptyTotals();
@@ -79,7 +121,7 @@ let firstHandAt = null;
 let lastHandAt = null;
 
 for (const row of rows) {
-  const rowKey = [row.cohort, row.heroPosition, row.threebettorPosition, row.relation, row.stackBand, row.sizeBucket, row.hand].join('|');
+  const rowKey = cubeRowKey(row);
   assert(!seen.has(rowKey), `duplicate cube row ${rowKey}`);
   seen.add(rowKey);
   assert.equal(row.other, 0, `unknown action in ${rowKey}`);
@@ -87,15 +129,16 @@ for (const row of rows) {
   addTotals(global, row);
   addTotals(byCohort[row.cohort], row);
   const coverageKey = row.hand === missingHand ? 'missingOpportunities' : 'knownOpportunities';
-  global[coverageKey] += row.opportunities;
-  byCohort[row.cohort][coverageKey] += row.opportunities;
+  global[coverageKey] = safeAdd(global[coverageKey], row.opportunities, `global ${coverageKey}`);
+  byCohort[row.cohort][coverageKey] = safeAdd(byCohort[row.cohort][coverageKey], row.opportunities, `${row.cohort} ${coverageKey}`);
   const positionKey = [row.cohort, row.heroPosition, row.threebettorPosition].join('|');
-  exactThreebettorCounts[positionKey] = (exactThreebettorCounts[positionKey] || 0) + row.opportunities;
-  dimensionTotals.heroPosition[row.heroPosition] += row.opportunities;
-  dimensionTotals.relation[row.relation] += row.opportunities;
-  dimensionTotals.stackBand[row.stackBand] += row.opportunities;
-  dimensionTotals.sizeBucket[row.sizeBucket] += row.opportunities;
+  exactThreebettorCounts[positionKey] = safeAdd(exactThreebettorCounts[positionKey] || 0, row.opportunities, `position total ${positionKey}`);
+  dimensionTotals.heroPosition[row.heroPosition] = safeAdd(dimensionTotals.heroPosition[row.heroPosition], row.opportunities, `hero position ${row.heroPosition}`);
+  dimensionTotals.relation[row.relation] = safeAdd(dimensionTotals.relation[row.relation], row.opportunities, `relation ${row.relation}`);
+  dimensionTotals.stackBand[row.stackBand] = safeAdd(dimensionTotals.stackBand[row.stackBand], row.opportunities, `stack ${row.stackBand}`);
+  dimensionTotals.sizeBucket[row.sizeBucket] = safeAdd(dimensionTotals.sizeBucket[row.sizeBucket], row.opportunities, `size ${row.sizeBucket}`);
   addToChart(chartFor(row.cohort, row.heroPosition, row.relation, row.stackBand, row.sizeBucket), row);
+  addToChart(chartFor(row.cohort, row.heroPosition, row.relation, row.stackBand, 'all'), row);
   firstHandAt = minDate(firstHandAt, row.firstHandAt);
   lastHandAt = maxDate(lastHandAt, row.lastHandAt);
 }
@@ -114,21 +157,38 @@ const missingStructurallyValidChartKeys = [...structurallyValidChartKeys].filter
 assert.equal(chartEntries.length + missingStructurallyValidChartKeys.length, structurallyValidChartCount);
 const cellSamples = chartEntries.flatMap(([, chart]) => chart.cells.map((cell) => cell[0]).filter(Boolean));
 const publicChartEntries = chartEntries.map(([key, chart]) => [key, publicChart(chart)]);
-const defaultKey = keyFor('league3', 'BTN', 'IP', '31-50', '3');
-const defaultChart = Object.fromEntries(publicChartEntries)[defaultKey] || publicChartEntries[0]?.[1];
+const publicCharts = Object.fromEntries(publicChartEntries);
+const comparisonDimensionKeys = positionRelations.flatMap(([heroPosition, relation]) => (
+  stackBands.flatMap((stackBand) => sizeBuckets.map((sizeBucket) => comparisonKey(heroPosition, relation, stackBand, sizeBucket)))
+));
+const comparisonCoverageByKey = Object.fromEntries(comparisonDimensionKeys.map((dimensionKey) => {
+  const [heroPosition, relation, stackBand, sizeBucket] = dimensionKey.split('|');
+  const cohortCharts = cohorts.map((cohort) => publicCharts[keyFor(cohort, heroPosition, relation, stackBand, sizeBucket)]);
+  const allCohortsPresent = cohortCharts.every(Boolean);
+  const minCommonPerHandN = allCohortsPresent
+    ? Math.min(...cohortCharts.flatMap((chart) => chart.cells.map((cell) => cell[0])))
+    : 0;
+  return [dimensionKey, { minCommonPerHandN, enabled: allCohortsPresent && minCommonPerHandN >= exactFrequencyMinimumN }];
+}));
+const enabledComparisonKeys = comparisonDimensionKeys.filter((key) => comparisonCoverageByKey[key].enabled);
+const defaultKey = keyFor('league3', 'BTN', 'IP', '31-50', 'all');
+const [resolvedDefaultKey, defaultChart] = publicCharts[defaultKey]
+  ? [defaultKey, publicCharts[defaultKey]]
+  : (publicChartEntries[0] || []);
 assert(defaultChart, 'no observed charts built');
 
 const payload = {
-  version: 'vs3bet-field-cube-20260725-v7',
+  status: 'ready',
+  version: requestedVersion,
   meta: {
-    generatedOn: '2026-07-25',
+    generatedOn,
     source: 'analytics.int_tracker_hand_joined',
     rankSource: 'analytics_mcp_readonly.mcp__check_rank_history',
-    windowStartInclusive: '2025-07-01T00:00:00Z',
-    windowEndExclusive: '2026-07-22T00:00:00Z',
+    windowStartInclusive,
+    windowEndExclusive,
     rankAssignment: 'Exact half-open rank interval at played_at; real players only.',
     cohorts: {
-      novice: { label: 'Новички', ranks: [15, 16, 17, 18] },
+      novice: { label: 'Ранги 15–18', ranks: [15, 16, 17, 18] },
       league3: { label: 'Лига 3', ranks: [11, 12, 13, 14] },
       league2: { label: 'Лига 2', ranks: [6, 7, 8, 9, 10] },
       league1: { label: 'Лига 1', ranks: [1, 2, 3, 4, 5] },
@@ -141,7 +201,8 @@ const payload = {
     sizeBuckets,
     sourceSizeBuckets,
     hands,
-    sampleThresholds: { unavailableBelow: observedCellMinimumN, lowConfidenceBelow: 20, strongAtLeast: 80 },
+    samplePolicy: { publishedCellMinimumN, exactFrequencyMinimumN, strongAtLeast: 80, smoothing: false },
+    enabledComparisonKeys,
     coverage: {
       policy: 'Every observed hand cell is published from its exact integer counters. A zero remains unavailable rather than being filled with a modelled action mix.',
       rawCubeStorage: 'External private build input; the lossless timestamped cube is not shipped as a public lesson asset.',
@@ -155,13 +216,13 @@ const payload = {
       threebetToMinimumBb: 3,
     },
     sizeBoundary: {
-      measuredField: 'Observed 3-bet / Hero RFI ratio: 2.5x=[2.25,2.75), 3x=[2.75,3.5), 4x=[3.5,4.5).',
-      omitted: 'Ratios outside the three chart controls are omitted so the field and recommendation tabs address the same measured scenarios.',
+      measuredField: 'Absolute 3-bet-to amount in BB: <6, 6-8, 8-10, 10+.',
+      omitted: 'RFI-to amount and 3-bet multiplier are omitted: Hero-row preflop_2bet_and_blind_facing_amount_bb is not Hero RFI size.',
     },
     actionContract: {
       fold: "preflop_face_3bet_action='F'",
       call: "preflop_face_3bet_action='C'",
-      jam: "preflop_face_3bet_action='R' AND preflop_action='RR' AND is_preflop_allin=1",
+      jam: "preflop_face_3bet_action='R' AND preflop_action='RR' AND (is_preflop_allin=1 OR raise_and_blind_bb-posted_blind_bb>=effective_stack_bb-0.01)",
       fourbet: "all other preflop_face_3bet_action='R' lines",
     },
     aggregation: 'Chart summaries and hand cells use exact integer counters. Browser charts pool exact 3-bettor positions only to IP/OOP; the lossless CSV retains exact positions.',
@@ -171,20 +232,31 @@ const payload = {
         storage: 'External private build input; individual user_id rank histories are not shipped as a public lesson asset.',
       },
       handCube: {
-        rows: rows.length,
-        queryJobIds: cubeJobIds,
-        sha256: sha256(csvBuffer),
+        rows: rawCsvRowCount,
+        mergedRows: rows.length,
+        shards: shardInputs.map(({ ordinal, rows: shardRows, buffer, ...shard }) => ({
+          ordinal,
+          rows: shardRows.length,
+          queryJobId: shard.queryJobId,
+          executionMode: shard.executionMode,
+          querySha256: shard.querySha256,
+          windowStartInclusive: shard.windowStartInclusive,
+          windowEndExclusive: shard.windowEndExclusive,
+          sha256: sha256(buffer),
+        })),
         sourceQueryTemplateSha256: sha256(sourceQueryBuffer),
       },
     },
   },
   summaries: Object.fromEntries(cohorts.map((cohort) => [cohort, summary(byCohort[cohort])])),
-  charts: Object.fromEntries(publicChartEntries),
+  charts: publicCharts,
 };
 
 const diagnostics = {
   version: payload.version,
-  csvRows: rows.length,
+  csvRows: rawCsvRowCount,
+  mergedCellRows: rows.length,
+  crossShardMergedRows: rawCsvRowCount - rows.length,
   duplicateRows: rows.length - seen.size,
   chartCount: chartEntries.length,
   publicChartCount: publicChartEntries.length,
@@ -199,12 +271,21 @@ const diagnostics = {
   dimensionTotals,
   cellCoverage: {
     nonEmptyCells: cellSamples.length,
-    unavailableCells: chartEntries.flatMap(([, chart]) => chart.cells).filter((cell) => cell[0] < payload.meta.sampleThresholds.unavailableBelow).length,
-    lowConfidenceCells: cellSamples.filter((n) => n >= payload.meta.sampleThresholds.unavailableBelow && n < payload.meta.sampleThresholds.lowConfidenceBelow).length,
-    strongCells: cellSamples.filter((n) => n >= payload.meta.sampleThresholds.strongAtLeast).length,
+    unpublishedCells: chartEntries.flatMap(([, chart]) => chart.cells).filter((cell) => cell[0] < payload.meta.samplePolicy.publishedCellMinimumN).length,
+    hiddenExactFrequencyCells: chartEntries.flatMap(([, chart]) => chart.cells).filter((cell) => cell[0] < payload.meta.samplePolicy.exactFrequencyMinimumN).length,
+    visibleExactFrequencyCells: cellSamples.filter((n) => n >= payload.meta.samplePolicy.exactFrequencyMinimumN).length,
+    strongCells: cellSamples.filter((n) => n >= payload.meta.samplePolicy.strongAtLeast).length,
+  },
+  comparisonCoverage: {
+    totalDimensionKeys: comparisonDimensionKeys.length,
+    enabledDimensionKeys: enabledComparisonKeys.length,
+    disabledDimensionKeys: comparisonDimensionKeys.length - enabledComparisonKeys.length,
+    minimumCommonPerHandN: Math.min(...Object.values(comparisonCoverageByKey).map((entry) => entry.minCommonPerHandN)),
+    maximumCommonPerHandN: Math.max(...Object.values(comparisonCoverageByKey).map((entry) => entry.minCommonPerHandN)),
+    byKey: comparisonCoverageByKey,
   },
   defaultSlice: {
-    key: defaultKey,
+    key: resolvedDefaultKey,
     totals: defaultChart.totals,
     populatedHands: defaultChart.cells.filter((cell) => cell[0] > 0).length,
     estimatedHands: 0,
@@ -216,12 +297,12 @@ const output = `window.FF_VS3BET_FIELD_DATA=${JSON.stringify(payload)};\n`;
 const diagnosticsOutput = `${JSON.stringify(diagnostics, null, 2)}\n`;
 fs.writeFileSync(outputPath, output);
 fs.writeFileSync(diagnosticsPath, diagnosticsOutput);
-console.log(JSON.stringify({ rows: rows.length, charts: chartEntries.length, global: diagnostics.global, defaultSlice: diagnostics.defaultSlice }, null, 2));
+console.log(JSON.stringify({ sourceRows: rawCsvRowCount, mergedRows: rows.length, charts: chartEntries.length, enabledComparisonKeys: enabledComparisonKeys.length, global: diagnostics.global, defaultSlice: diagnostics.defaultSlice }, null, 2));
 
-function parseRow(line, rowNumber) {
+function parseRow(line, rowNumber, headerColumns = columns) {
   const values = line.split(',');
-  assert.equal(values.length, columns.length, `CSV width mismatch on row ${rowNumber}`);
-  const source = Object.fromEntries(columns.map((column, index) => [column, values[index]]));
+  assert.equal(values.length, headerColumns.length, `CSV width mismatch on row ${rowNumber}`);
+  const source = Object.fromEntries(headerColumns.map((column, index) => [column, values[index]]));
   assert(cohorts.includes(source.cohort), `bad cohort on row ${rowNumber}`);
   assert(heroPositions.includes(source.hero_position), `bad hero position on row ${rowNumber}`);
   assert(threebettorPositions.includes(source.threebettor_position), `bad 3bettor position on row ${rowNumber}`);
@@ -240,7 +321,6 @@ function parseRow(line, rowNumber) {
     sizeBucket: source.threebet_to_bucket,
     hand: source.holecards_str,
     opportunities: integer(source.opportunities, 'opportunities', rowNumber),
-    uniquePlayers: integer(source.unique_players, 'unique_players', rowNumber),
     folds: integer(source.folds, 'folds', rowNumber),
     calls: integer(source.calls, 'calls', rowNumber),
     fourbets: integer(source.fourbets, 'fourbets', rowNumber),
@@ -249,12 +329,14 @@ function parseRow(line, rowNumber) {
     firstHandAt: source.first_hand_at,
     lastHandAt: source.last_hand_at,
   };
-  assert(result.uniquePlayers <= result.opportunities, `players exceed decisions on row ${rowNumber}`);
   return result;
 }
 
 function keyFor(cohort, heroPosition, relation, stackBand, sizeBucket) {
   return [cohort, heroPosition, relation, stackBand, sizeBucket].join('|');
+}
+function comparisonKey(heroPosition, relation, stackBand, sizeBucket) {
+  return [heroPosition, relation, stackBand, sizeBucket].join('|');
 }
 function chartFor(cohort, heroPosition, relation, stackBand, sizeBucket) {
   const key = keyFor(cohort, heroPosition, relation, stackBand, sizeBucket);
@@ -263,15 +345,15 @@ function chartFor(cohort, heroPosition, relation, stackBand, sizeBucket) {
 }
 function addToChart(chart, row) {
   addTotals(chart.totals, row);
-  if (row.hand === missingHand) chart.totals.missingOpportunities += row.opportunities;
+  if (row.hand === missingHand) chart.totals.missingOpportunities = safeAdd(chart.totals.missingOpportunities, row.opportunities, 'chart missing opportunities');
   else {
-    chart.totals.knownOpportunities += row.opportunities;
+    chart.totals.knownOpportunities = safeAdd(chart.totals.knownOpportunities, row.opportunities, 'chart known opportunities');
     const cell = chart.cells[handIndex.get(row.hand)];
-    cell[0] += row.opportunities;
-    cell[1] += row.folds;
-    cell[2] += row.calls;
-    cell[3] += row.fourbets;
-    cell[4] += row.jams;
+    cell[0] = safeAdd(cell[0], row.opportunities, 'chart hand opportunities');
+    cell[1] = safeAdd(cell[1], row.folds, 'chart hand folds');
+    cell[2] = safeAdd(cell[2], row.calls, 'chart hand calls');
+    cell[3] = safeAdd(cell[3], row.fourbets, 'chart hand fourbets');
+    cell[4] = safeAdd(cell[4], row.jams, 'chart hand jams');
   }
 }
 function finalizeChart(chart) {
@@ -281,14 +363,28 @@ function finalizeChart(chart) {
 }
 function publicChart(chart) {
   const cells = chart.cells.map((cell) => [...cell]);
+  const known = cells.reduce(
+    (totals, cell) => totals.map((value, index) => safeAdd(value, cell[index], `public chart cell total ${index}`)),
+    [0, 0, 0, 0, 0],
+  );
   const totals = {
-    ...chart.totals,
-    exactCellCount: cells.filter((cell) => cell[0] >= observedCellMinimumN).length,
+    opportunities: known[0],
+    folds: known[1],
+    calls: known[2],
+    fourbets: known[3],
+    jams: known[4],
+    knownOpportunities: known[0],
+    missingOpportunities: chart.totals.missingOpportunities,
+    sourceOpportunities: chart.totals.opportunities,
+    knownCoveragePct: chart.totals.knownCoveragePct,
+    exactCellCount: cells.filter((cell) => cell[0] >= publishedCellMinimumN).length,
   };
+  assert.equal(totals.opportunities, totals.folds + totals.calls + totals.fourbets + totals.jams);
+  assert.equal(totals.sourceOpportunities, totals.knownOpportunities + totals.missingOpportunities);
   return { totals, cells };
 }
 function emptyTotals() { return { opportunities: 0, folds: 0, calls: 0, fourbets: 0, jams: 0, knownOpportunities: 0, missingOpportunities: 0 }; }
-function addTotals(target, row) { for (const key of ['opportunities', ...actionKeys]) target[key] += row[key]; }
+function addTotals(target, row) { for (const key of ['opportunities', ...actionKeys]) target[key] = safeAdd(target[key], row[key], `total ${key}`); }
 function summary(totals) { return { ...totals, knownCoveragePct: pct(totals.knownOpportunities, totals.opportunities), foldPct: pct(totals.folds, totals.opportunities), callPct: pct(totals.calls, totals.opportunities), fourbetPct: pct(totals.fourbets, totals.opportunities), jamPct: pct(totals.jams, totals.opportunities) }; }
 function integer(value, label, row) { const n = Number(value); assert(Number.isSafeInteger(n) && n >= 0, `bad ${label} on row ${row}`); return n; }
 function assertDate(value, row) { assert(/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}$/.test(value), `bad date on row ${row}`); }
@@ -297,9 +393,117 @@ function maxDate(a, b) { return !a || b > a ? b : a; }
 function pct(n, d) { return d ? Math.round(n / d * 100000) / 1000 : 0; }
 function sha256(buffer) { return crypto.createHash('sha256').update(buffer).digest('hex'); }
 
-function validateExternalRankSource(sourcePath) {
+function repeatedArgument(name, environmentValue) {
+  const values = [];
+  for (let index = 2; index < process.argv.length; index += 1) {
+    if (process.argv[index] !== name) continue;
+    const value = process.argv[index + 1];
+    assert(value && !value.startsWith('--'), `${name} requires a value`);
+    values.push(value);
+  }
+  if (values.length) return values;
+  return (environmentValue || '').split(',').map((value) => value.trim()).filter(Boolean);
+}
+
+function singleArgument(name) {
+  const values = repeatedArgument(name);
+  assert(values.length <= 1, `${name} may be provided only once`);
+  return values[0] || '';
+}
+
+function canonicalIso(value, label) {
+  const parsed = new Date(value);
+  assert(!Number.isNaN(parsed.valueOf()), `${label} must be a valid UTC timestamp`);
+  assert(/Z$/.test(value), `${label} must be explicit UTC (Z)`);
+  return parsed.toISOString().replace('.000Z', 'Z');
+}
+
+function readCubeShard({ sourcePath, queryJobId, executionMode, querySha256, windowStartInclusive, windowEndExclusive, ordinal }) {
+  assert(windowStartInclusive < windowEndExclusive, `cube ${ordinal} has an empty or reversed window`);
+  assert(/^[a-f0-9]{64}$/.test(querySha256), `cube ${ordinal} requires a lowercase SHA-256 query hash`);
+  validateExecutionIdentity({ queryJobId, executionMode, querySha256, label: `cube ${ordinal}` });
   const buffer = fs.readFileSync(sourcePath);
-  const rows = buffer.toString('utf8').trimEnd().split(/\r?\n/).length - 1;
-  assert.equal(rows, rankProvenance.rows, 'unexpected external rank-interval row count');
-  assert.equal(sha256(buffer), rankProvenance.sha256, 'unexpected external rank-interval SHA-256');
+  const lines = buffer.toString('utf8').trimEnd().split(/\r?\n/);
+  assert(lines.length > 1, `cube ${ordinal} contains no rows`);
+  const headerColumns = lines.shift().split(',');
+  assert(
+    arraysEqual(headerColumns, columns) || arraysEqual(headerColumns, legacyColumns),
+    `unexpected field cube columns in shard ${ordinal}`,
+  );
+  const seenInShard = new Set();
+  const rows = lines.map((line, index) => {
+    const row = parseRow(line, index + 2, headerColumns);
+    const rowKey = cubeRowKey(row);
+    assert(!seenInShard.has(rowKey), `duplicate row inside cube shard ${ordinal}: ${rowKey}`);
+    seenInShard.add(rowKey);
+    assert.equal(row.other, 0, `unknown action in shard ${ordinal}: ${rowKey}`);
+    assert.equal(row.folds + row.calls + row.fourbets + row.jams, row.opportunities, `actions do not sum in shard ${ordinal}: ${rowKey}`);
+    const first = canonicalCubeTimestamp(row.firstHandAt);
+    const last = canonicalCubeTimestamp(row.lastHandAt);
+    assert(first >= windowStartInclusive && first < windowEndExclusive, `first_hand_at outside cube ${ordinal} window: ${rowKey}`);
+    assert(last >= windowStartInclusive && last < windowEndExclusive, `last_hand_at outside cube ${ordinal} window: ${rowKey}`);
+    return row;
+  });
+  return { ordinal, queryJobId, executionMode, querySha256, windowStartInclusive, windowEndExclusive, buffer, rows };
+}
+
+function readRankProvenance({ sourcePath, queryJobId, executionMode, querySha256, windowStartInclusive, windowEndExclusive }) {
+  assert(windowStartInclusive < windowEndExclusive, 'rank bridge has an empty or reversed window');
+  assert(/^[a-f0-9]{64}$/.test(querySha256), 'rank bridge requires a lowercase SHA-256 query hash');
+  validateExecutionIdentity({ queryJobId, executionMode, querySha256, label: 'rank bridge' });
+  const buffer = fs.readFileSync(sourcePath);
+  const lines = buffer.toString('utf8').trimEnd().split(/\r?\n/);
+  assert(lines.length > 1, 'rank bridge contains no rows');
+  return {
+    rows: lines.length - 1,
+    queryJobId,
+    executionMode,
+    querySha256,
+    windowStartInclusive,
+    windowEndExclusive,
+    sha256: sha256(buffer),
+  };
+}
+
+function validateExecutionIdentity({ queryJobId, executionMode, querySha256, label }) {
+  assert(['async', 'sync'].includes(executionMode), `${label} execution mode must be async or sync`);
+  assert(queryJobId, `${label} requires a source execution identity`);
+  if (executionMode === 'sync') assert.equal(queryJobId, `sync:${querySha256}`, `${label} sync identity must equal sync:<querySha256>`);
+  else assert(!queryJobId.startsWith('sync:'), `${label} async execution must use its provider job id`);
+}
+
+function validateShardWindows(shards) {
+  shards.sort((a, b) => a.windowStartInclusive.localeCompare(b.windowStartInclusive));
+  for (let index = 1; index < shards.length; index += 1) {
+    const previous = shards[index - 1];
+    const current = shards[index];
+    assert(previous.windowEndExclusive <= current.windowStartInclusive, `cube windows overlap: ${previous.ordinal} and ${current.ordinal}`);
+    assert.equal(previous.windowEndExclusive, current.windowStartInclusive, `cube windows must be contiguous: ${previous.ordinal} and ${current.ordinal}`);
+  }
+}
+
+function mergeCubeRow(target, source) {
+  for (const key of ['opportunities', 'folds', 'calls', 'fourbets', 'jams', 'other']) {
+    target[key] = safeAdd(target[key], source[key], `merged ${key}`);
+  }
+  target.firstHandAt = minDate(target.firstHandAt, source.firstHandAt);
+  target.lastHandAt = maxDate(target.lastHandAt, source.lastHandAt);
+}
+
+function cubeRowKey(row) {
+  return [row.cohort, row.heroPosition, row.threebettorPosition, row.relation, row.stackBand, row.sizeBucket, row.hand].join('|');
+}
+
+function canonicalCubeTimestamp(value) {
+  return canonicalIso(`${value.replace(' ', 'T')}Z`, 'cube timestamp');
+}
+
+function safeAdd(left, right, label) {
+  const value = left + right;
+  assert(Number.isSafeInteger(value) && value >= 0, `${label} exceeds exact integer range`);
+  return value;
+}
+
+function arraysEqual(left, right) {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }

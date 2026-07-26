@@ -16,19 +16,21 @@
   <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=8311f2a34fe9">
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
-  <link rel="stylesheet" href="assets/poker-flop-cbet-hu-lesson/lesson.css?v=50ad513b287d">
+  <link rel="stylesheet" href="assets/poker-flop-cbet-hu-lesson/lesson.css?v=c1cce40da2bc">
   <link rel="stylesheet" href="assets/poker-kit/lesson-header.css?v=9641ee805ef9">
   <script defer src="assets/poker-kit/decks/deck-library.js?v=b03058b680c1"></script>
   <script defer src="assets/poker-kit/chips/chip-library.js?v=eab58b025e92"></script>
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
+  <script defer src="assets/poker-kit/observed-frequency-confidence.js?v=d4d5d6e4129f"></script>
   <script defer src="assets/poker-simulator/simulator-board-render.js?v=cb215df9f7dd"></script>
   <script defer src="assets/poker-simulator/simulator-seat-slots.js?v=d7ddfd732333"></script>
   <script defer src="assets/poker-simulator/simulator-seat-renderer.js?v=c5dd4f6c2a15"></script>
   <script defer src="assets/poker-simulator/simulator-table-renderer.js?v=37282f928111"></script>
-  <script defer src="assets/poker-trainer-shell/simulator-snapshot.js?v=45c27b16421b"></script>
+  <script defer src="assets/poker-trainer-shell/simulator-snapshot.js?v=3606de843e50"></script>
   <script defer src="assets/poker-trainer-shell/simulator-practice.js?v=591b8e2f6784"></script>
-  <script defer src="assets/poker-flop-cbet-hu-lesson/data.js?v=d038ff36f3ed"></script>
-  <script defer src="assets/poker-flop-cbet-hu-lesson/lesson.js?v=72dcf6594361"></script>
+  <script defer src="assets/poker-progress/progress.js?v=63993336739b"></script>
+  <script defer src="assets/poker-flop-cbet-hu-lesson/data.js?v=c473fc9596fa"></script>
+  <script defer src="assets/poker-flop-cbet-hu-lesson/lesson.js?v=d829f74afed6"></script>
   <script defer src="assets/poker-kit/lesson-header.js?v=1b28bacb3505"></script>
 </head>
 <body class="flop-cbet-hu-lesson">
@@ -44,8 +46,9 @@
       <nav class="step-tabs lesson-chrome__steps" aria-label="Шаги урока" role="tablist">
         <button class="step-tab is-active" id="dealTab" type="button" role="tab" aria-selected="true" aria-controls="dealScreen" data-step-target="deal">1. Раздача</button>
         <button class="step-tab" id="mainTab" type="button" role="tab" aria-selected="false" aria-controls="mainScreen" data-step-target="main" tabindex="-1">2. Урок</button>
-        <button class="step-tab" id="practiceTab" type="button" role="tab" aria-selected="false" aria-controls="practiceScreen" data-step-target="practice" tabindex="-1">3. Практика</button>
-        <button class="step-tab" id="examplesTab" type="button" role="tab" aria-selected="false" aria-controls="examplesScreen" data-step-target="examples" tabindex="-1">4. Примеры</button>
+        <button class="step-tab" id="fieldTab" type="button" role="tab" aria-selected="false" aria-controls="fieldScreen" data-step-target="field" tabindex="-1">3. Библиотека</button>
+        <button class="step-tab" id="practiceTab" type="button" role="tab" aria-selected="false" aria-controls="practiceScreen" data-step-target="practice" tabindex="-1">4. Практика</button>
+        <button class="step-tab" id="examplesTab" type="button" role="tab" aria-selected="false" aria-controls="examplesScreen" data-step-target="examples" tabindex="-1">5. Примеры</button>
       </nav>
     </header>
 
@@ -107,19 +110,19 @@
         </div>
       </section>
       <div class="wisdom-footnote">
-        <p><strong>Это учебный автопилот для рангов 15–17,</strong> а не универсальная стратегия на все составы и глубины.</p>
+        <p><strong>Это учебный автопилот для рангов 15–18,</strong> а не универсальная стратегия на все составы и глубины.</p>
       </div>
     </section>
 
-    <section class="lesson-screen" id="fieldScreen" role="tabpanel" data-step="field" aria-label="Как поле играет флоп" hidden>
+    <section class="lesson-screen" id="fieldScreen" role="tabpanel" data-step="field" aria-labelledby="fieldTab" hidden>
       <div class="screen-heading field-heading">
         <div>
-          <p class="eyebrow">Как реально играет поле</p>
-          <h2 id="fieldTitle">Ставки и ответы на разных флопах</h2>
+          <p class="eyebrow">Полевые данные · проверка</p>
+          <h2 id="fieldTitle">Полевые частоты пока скрыты</h2>
         </div>
         <div class="data-stamp" data-data-stamp>
-          <span>Данные</span>
-          <strong>ожидаем выгрузку</strong>
+          <span>Статус</span>
+          <strong>Источник не опубликован</strong>
         </div>
       </div>
 
@@ -144,7 +147,8 @@
           <select data-league-select aria-label="Лига для деталей">
             <option value="1-5">Лига 1 · ранги 1–5</option>
             <option value="6-10">Лига 2 · ранги 6–10</option>
-            <option value="11-17">Лига 3 · ранги 11–17</option>
+            <option value="11-14">Лига 3 · ранги 11–14</option>
+            <option value="15-18">Ранги 15–18</option>
           </select>
         </label>
         <div class="control-block metric-control">
@@ -167,22 +171,22 @@
 
       <div class="data-status" role="status" data-data-status>
         <div class="data-status-copy">
-          <strong>Данные загружаются</strong>
-          <span>BTN открылся, BB заколлировал и прочекал. Это наблюдение за игрой поля, а не совет.</span>
+          <strong>Сначала проверяем всю историю</strong>
+          <span>Урок и практика доступны как методика. Частоты появятся только после полной сверки раздач.</span>
         </div>
-        <b class="sample-size-pill" data-sample-size>Реальные раздачи FF</b>
+        <b class="sample-size-pill" data-sample-size>Частоты скрыты</b>
       </div>
 
       <section class="panel overall-cbet-card" aria-labelledby="overallCbetTitle" data-overall-cbet-card hidden>
         <div class="table-heading">
           <div>
             <p class="eyebrow">Все флопы вместе</p>
-            <h3 id="overallCbetTitle">Как часто поле ставит по рангам 1–17</h3>
+            <h3 id="overallCbetTitle">Как часто поле ставит по рангам 1–18</h3>
           </div>
           <span class="source-badge" data-overall-cbet-source>Реальные раздачи FF</span>
         </div>
         <p class="source-explainer">Сначала общая картина. Ниже видно, на каких типах флопа поле ставит чаще или реже.</p>
-        <div class="rank-strip" data-overall-cbet-strip aria-label="Общая частота контбета по рангам 1–17"></div>
+        <div class="rank-strip" data-overall-cbet-strip aria-label="Общая частота контбета по рангам 1–18"></div>
       </section>
 
       <section class="panel field-table-card" id="structureMatrix" aria-labelledby="tableTitle">
@@ -221,11 +225,11 @@
         <div class="table-heading">
           <div>
             <p class="eyebrow">Одна структура · все ранги</p>
-            <h3 id="rankMapTitle" data-rank-map-title>Ранги 1–17</h3>
+            <h3 id="rankMapTitle" data-rank-map-title>Ранги 1–18</h3>
           </div>
           <span class="selected-board" data-selected-board>А-хай · сухая</span>
         </div>
-        <div class="rank-strip" data-rank-strip aria-label="Показатель по рангам 1–17"></div>
+        <div class="rank-strip" data-rank-strip aria-label="Показатель по рангам 1–18"></div>
       </section>
 
       <div class="detail-grid" id="sizeDetails">
@@ -266,7 +270,6 @@
                 <th scope="col">BB пасует</th>
                 <th scope="col">Порог блефа</th>
                 <th scope="col">BB чек-рейзит</th>
-                <th scope="col">Надёжность</th>
               </tr>
             </thead>
             <tbody data-size-outcomes-body></tbody>
@@ -347,10 +350,10 @@
     <section class="lesson-screen" id="examplesScreen" role="tabpanel" data-step="examples" aria-labelledby="examplesTab" hidden>
       <div class="screen-heading examples-heading">
         <div>
-          <p class="eyebrow">Реальные раздачи FF</p>
-          <h2 id="examplesTitle">Где новички пропускают ставку</h2>
+          <p class="eyebrow">Учебные примеры</p>
+          <h2 id="examplesTitle">Восемь типов флопа — восемь простых планов</h2>
         </div>
-        <p>Слева показан флоп, справа — руки, с которыми новички прочекали. Лига 1 на этих досках ставит чаще.</p>
+        <p>Здесь нет выдуманных полевых процентов для отдельных досок: только структура, базовое действие и причина.</p>
       </div>
 
       <div class="board-example-library" data-board-example-library aria-live="polite">

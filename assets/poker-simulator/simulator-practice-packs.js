@@ -14,9 +14,9 @@
       aliases: Object.freeze(["rfi-open-position"]),
       styles: Object.freeze(["assets/poker-rfi-open-lesson/simulator-pack.css?v=9e340651fec1"]),
       scripts: Object.freeze([
-        "assets/poker-rfi-open-lesson/data.js?v=cb3e050ac2ee",
+        "assets/poker-rfi-open-lesson/data.js?v=08ebee04d142",
         "assets/poker-rfi-open-lesson/practice-stats.js?v=8264ad18789d",
-        "assets/poker-rfi-open-lesson/simulator-pack.js?v=680ca93746cf"
+        "assets/poker-rfi-open-lesson/simulator-pack.js?v=283fed91d95c"
       ])
     }),
     resteal: Object.freeze({

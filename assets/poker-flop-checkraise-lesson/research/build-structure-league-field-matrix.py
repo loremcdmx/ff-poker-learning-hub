@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Build the CO/BTN structure × league c-bet/check-raise response matrix.
+"""Build an offline CO/BTN structure × cohort response diagnostic.
 
 The compact source contains lossless preflop payloads, while parsed_hands.csv
 contains the validated flop features and responses. parsed_hands is an ordered
 subsequence of the compact source, so this script joins them in one streaming
 pass with O(1) row memory (player sets are the only growing state).
+
+This legacy residue-export helper is not a release source. In particular, it
+does not certify current raw-HH coverage, latest-first deduplication or the
+exact rank-at-hand contract required by the browser field cube.
 
 League always belongs to the tracked preflop aggressor. CO/BTN is recovered
 from the number of voluntary actions left after the single unopened raise:
@@ -18,6 +22,7 @@ import base64
 import collections
 import csv
 import re
+import statistics
 import sys
 from pathlib import Path
 from typing import Iterable, Mapping, TextIO
@@ -33,8 +38,13 @@ STRUCTURES = (
     "monotone",
     "other",
 )
-LEAGUES = ("league1", "league2", "league3")
-RANK_LABELS = {"league1": "R1-5", "league2": "R6-10", "league3": "R11-17"}
+LEAGUES = ("league1", "league2", "league3", "novice")
+RANK_LABELS = {
+    "league1": "R1-5",
+    "league2": "R6-10",
+    "league3": "R11-14",
+    "novice": "R15-18",
+}
 PREFLOP_DELIMITER = "__FF_PREFLOP_ACTIONS__"
 GENERIC_VERB = re.compile(r"(?i)\b(folds?|calls?|raises?|bets?)\b")
 IPOKER_ACTION = re.compile(r"(?i)<action\b[^>]*\btype=[\"'](\d+)[\"']")
@@ -53,29 +63,40 @@ FIELDNAMES = (
     "overall_faced_players",
     "matched_faced_players",
 )
-EXPECTED_Q2_CONTROLS = {
-    "compact": 2_300_854,
-    "matched": 2_297_953,
-    "skipped": 2_901,
-    "ranked": 2_256_311,
-    "position_error": 21,
-    "co_btn": 1_267_631,
-}
-
-
+SIZE_MATCHED_FIELDNAMES = (
+    "period",
+    "sample",
+    "cohort",
+    "rank_min",
+    "rank_max",
+    "board_class",
+    "cbet_pct_min_inclusive",
+    "cbet_pct_max_inclusive",
+    "xr_pct_starting_pot_min_inclusive",
+    "xr_pct_starting_pot_max_inclusive",
+    "folds",
+    "faced_xr",
+    "players",
+    "fold_rate",
+    "median_cbet_pct_pot",
+    "median_xr_multiple_cbet",
+    "median_xr_pct_starting_pot",
+)
 def exact_key(row: Mapping[str, str]) -> tuple[str, str, str]:
     return row["user_id"], row["network"], row["hh_id"]
 
 
 def league_for(rank_raw: str) -> str:
     rank = int(rank_raw)
-    if not 1 <= rank <= 17:
-        raise ValueError(f"rank outside 1..17: {rank}")
+    if not 1 <= rank <= 18:
+        raise ValueError(f"rank outside 1..18: {rank}")
     if rank <= 5:
         return "league1"
     if rank <= 10:
         return "league2"
-    return "league3"
+    if rank <= 14:
+        return "league3"
+    return "novice"
 
 
 def actions_after_raise(payload_base64: str) -> int | None:
@@ -126,6 +147,14 @@ def build(compact_path: Path, parsed_path: Path) -> tuple[dict, dict, dict]:
     players: dict[tuple[str, str, str], set[str]] = collections.defaultdict(set)
     controls: collections.Counter = collections.Counter()
     positions: collections.Counter = collections.Counter()
+    matched_k_high_sizes: dict[str, dict[str, list[float]]] = {
+        league: {
+            "cbet_pct_pot": [],
+            "checkraise_to_multiple_cbet": [],
+            "checkraise_to_pct_starting_pot": [],
+        }
+        for league in LEAGUES
+    }
 
     parsed_iterator = iter(read_rows(parsed_path))
     parsed = next(parsed_iterator, None)
@@ -180,12 +209,27 @@ def build(compact_path: Path, parsed_path: Path) -> tuple[dict, dict, dict]:
                             players[structure, league, "matched_faced"].add(actor)
                             if response == "fold":
                                 aggregate["matched_folds"] += 1
+                            if structure == "k_high_dry":
+                                matched_k_high_sizes[league]["cbet_pct_pot"].append(
+                                    float(parsed["cbet_pct_pot"])
+                                )
+                                if parsed["checkraise_to_multiple_cbet"]:
+                                    matched_k_high_sizes[league][
+                                        "checkraise_to_multiple_cbet"
+                                    ].append(float(parsed["checkraise_to_multiple_cbet"]))
+                                matched_k_high_sizes[league][
+                                    "checkraise_to_pct_starting_pot"
+                                ].append(float(parsed["checkraise_to_pct_starting_pot"]))
 
         parsed = next(parsed_iterator, None)
 
     if parsed is not None:
         controls["parsed_remaining"] = 1 + sum(1 for _ in parsed_iterator)
-    return aggregates, players, {"controls": controls, "positions": positions}
+    return aggregates, players, {
+        "controls": controls,
+        "positions": positions,
+        "matched_k_high_sizes": matched_k_high_sizes,
+    }
 
 
 def output_rows(aggregates: dict, players: dict) -> Iterable[dict[str, object]]:
@@ -215,11 +259,73 @@ def write_csv(rows: Iterable[dict[str, object]], handle: TextIO) -> None:
     writer.writerows(rows)
 
 
+def size_matched_k_high_rows(
+    aggregates: dict,
+    players: dict,
+    diagnostics: dict,
+    *,
+    sample_id: str,
+) -> Iterable[dict[str, object]]:
+    rank_bounds = {
+        "league1": (1, 5),
+        "league2": (6, 10),
+        "league3": (11, 14),
+        "novice": (15, 18),
+    }
+    size_values = diagnostics["matched_k_high_sizes"]
+    for league in LEAGUES:
+        aggregate = aggregates["k_high_dry", league]
+        folds = aggregate["matched_folds"]
+        faced = aggregate["matched_faced"]
+        rank_min, rank_max = rank_bounds[league]
+        yield {
+            "period": "2026-Q2",
+            "sample": sample_id,
+            "cohort": league,
+            "rank_min": rank_min,
+            "rank_max": rank_max,
+            "board_class": "k_high_dry",
+            "cbet_pct_min_inclusive": 30,
+            "cbet_pct_max_inclusive": 36,
+            "xr_pct_starting_pot_min_inclusive": 95,
+            "xr_pct_starting_pot_max_inclusive": 105,
+            "folds": folds,
+            "faced_xr": faced,
+            "players": len(players["k_high_dry", league, "matched_faced"]),
+            "fold_rate": f"{folds / faced:.4f}" if faced else "",
+            "median_cbet_pct_pot": f"{statistics.median(size_values[league]['cbet_pct_pot']):.2f}" if size_values[league]["cbet_pct_pot"] else "",
+            "median_xr_multiple_cbet": f"{statistics.median(size_values[league]['checkraise_to_multiple_cbet']):.2f}" if size_values[league]["checkraise_to_multiple_cbet"] else "",
+            "median_xr_pct_starting_pot": f"{statistics.median(size_values[league]['checkraise_to_pct_starting_pot']):.2f}" if size_values[league]["checkraise_to_pct_starting_pot"] else "",
+        }
+
+
+def write_size_matched_csv(rows: Iterable[dict[str, object]], handle: TextIO) -> None:
+    writer = csv.DictWriter(
+        handle, fieldnames=SIZE_MATCHED_FIELDNAMES, lineterminator="\n"
+    )
+    writer.writeheader()
+    writer.writerows(rows)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--base", type=Path, required=True, help="flop-cbet-hu-2026-07-15 output directory")
+    parser.add_argument(
+        "--base",
+        type=Path,
+        required=True,
+        help="local legacy residue-export directory (diagnostic only)",
+    )
     parser.add_argument("--output", type=Path, help="write CSV here instead of stdout")
-    parser.add_argument("--verify-q2-controls", action="store_true", help="assert the published Q2 row counters")
+    parser.add_argument(
+        "--size-matched-output",
+        type=Path,
+        help="write the K-high matched-size teaching-card CSV from the same pass",
+    )
+    parser.add_argument(
+        "--sample-id",
+        default="all_candidate_residues_hh_co_btn",
+        help="sample id recorded in --size-matched-output",
+    )
     args = parser.parse_args()
 
     compact_path = args.base / "source" / "compact_hh_q2_2026.csv"
@@ -227,16 +333,23 @@ def main() -> int:
     aggregates, players, diagnostics = build(compact_path, parsed_path)
     controls = diagnostics["controls"]
 
-    if args.verify_q2_controls:
-        actual = {key: controls[key] for key in EXPECTED_Q2_CONTROLS}
-        if actual != EXPECTED_Q2_CONTROLS:
-            raise SystemExit(f"Q2 controls drifted: {actual} != {EXPECTED_Q2_CONTROLS}")
-
     if args.output:
         with args.output.open("w", encoding="utf-8", newline="") as handle:
             write_csv(output_rows(aggregates, players), handle)
     else:
         write_csv(output_rows(aggregates, players), sys.stdout)
+
+    if args.size_matched_output:
+        with args.size_matched_output.open("w", encoding="utf-8", newline="") as handle:
+            write_size_matched_csv(
+                size_matched_k_high_rows(
+                    aggregates,
+                    players,
+                    diagnostics,
+                    sample_id=args.sample_id,
+                ),
+                handle,
+            )
 
     print(f"controls={dict(controls)}", file=sys.stderr)
     print(f"actions_after_raise={dict(diagnostics['positions'])}", file=sys.stderr)

@@ -649,13 +649,41 @@
       }
     }
 
+    // The learning hub is shipped as static files, so its default
+    // /api/simulator-sessions URL is not a backend capability. Keep the local
+    // leaderboard fully usable without probing that missing route. A future
+    // deployment that actually provides the endpoint must opt in explicitly;
+    // non-static simulator deployments preserve their existing behaviour.
+    function leaderboardBackendEnabled() {
+      return windowRef.FF_STATIC_LEARNING_HUB !== true
+        || windowRef.FF_SIMULATOR_SESSION_BACKEND_ENABLED === true
+        || windowRef.FF_SIMULATOR_LEADERBOARD_BACKEND_ENABLED === true;
+    }
+
+    function markLeaderboardLocalOnly(state = currentState()) {
+      if (!state) return false;
+      state.leaderboardRemote = {
+        ...(state.leaderboardRemote || {}),
+        status: "not-configured",
+        message: "Локальный рейтинг",
+        configured: false
+      };
+      state.leaderboardSync = {
+        ...(state.leaderboardSync || {}),
+        status: "not-configured",
+        message: "Рейтинг хранится в этом браузере"
+      };
+      return false;
+    }
+
     function canSyncLeaderboardProfile(profile = activeSimulatorProfile()) {
-      return isPublicLeaderboardProfile(profile);
+      return leaderboardBackendEnabled() && isPublicLeaderboardProfile(profile);
     }
 
     function shouldSyncCurrentLeaderboardSnapshot(entry, options = {}) {
       const state = currentState();
       if (!state || !entry || !isPublicLeaderboardProfile(entry.profile)) return false;
+      if (!leaderboardBackendEnabled()) return false;
       if (isSessionReadOnly()) return false;
       if (typeof windowRef.fetch !== "function") return false;
       const hands = Number(entry.metrics?.hands || entry.rating?.hands || 0);
@@ -757,6 +785,7 @@
     function refreshRemoteLeaderboard(options = {}) {
       const state = currentState();
       if (!state || typeof windowRef.fetch !== "function") return Promise.resolve(false);
+      if (!leaderboardBackendEnabled()) return Promise.resolve(markLeaderboardLocalOnly(state));
       if (remoteLeaderboardRefreshInflight) {
         // A post-publish refresh (afterSync) must observe data fetched AFTER
         // its publish landed — a GET that started earlier can't contain the
@@ -851,6 +880,7 @@
     async function refreshRemotePlayerStats(options = {}) {
       const state = currentState();
       if (!state || typeof windowRef.fetch !== "function") return false;
+      if (!leaderboardBackendEnabled()) return markLeaderboardLocalOnly(state);
       const profile = activeSimulatorProfile();
       if (!isPublicLeaderboardProfile(profile)) return false;
       const playerKey = leaderboardPlayerKey({ profile });
@@ -920,6 +950,7 @@
     function refreshRemoteGraphHands(options = {}) {
       const state = currentState();
       if (!state || typeof windowRef.fetch !== "function") return Promise.resolve(false);
+      if (!leaderboardBackendEnabled()) return Promise.resolve(markLeaderboardLocalOnly(state));
       if (remoteGraphHandsInflight) return remoteGraphHandsInflight;
       remoteGraphHandsInflight = runRemoteGraphHandsRefresh(state, options).finally(() => {
         remoteGraphHandsInflight = null;
@@ -1037,7 +1068,22 @@
       }
       const state = currentState();
       const entry = options.entry || currentLeaderboardEntry();
-      if (!state || !entry || typeof windowRef.fetch !== "function") return false;
+      if (!state || !entry) return false;
+      if (!leaderboardBackendEnabled()) {
+        const key = leaderboardPlayerKey(entry);
+        state.leaderboard = (state.leaderboard || []).filter((item) => leaderboardPlayerKey(item) !== key);
+        state.leaderboardRemote = {
+          ...(state.leaderboardRemote || {}),
+          entries: (state.leaderboardRemote?.entries || []).filter((item) => leaderboardPlayerKey(item) !== key)
+        };
+        saveLeaderboardData(state.leaderboard, { replace: true });
+        removeLeaderboardDeleteToken(entry);
+        markLeaderboardLocalOnly(state);
+        state.leaderboardSync.message = "Запись удалена из этого браузера";
+        renderLeaderboard();
+        return true;
+      }
+      if (typeof windowRef.fetch !== "function") return false;
       const endpoint = simulatorArchiveEndpoint();
       const token = String(options.deleteToken || leaderboardDeleteTokenForEntry(entry) || "");
       state.leaderboardSync = {
@@ -1118,6 +1164,7 @@
       simulatorArchiveEndpoint,
       simulatorLeaderboardEndpoint,
       simulatorPlayerStatsEndpoint,
+      leaderboardBackendEnabled,
       canSyncLeaderboardProfile,
       shouldSyncCurrentLeaderboardSnapshot,
       isLeaderboardEndpointNotConfigured,

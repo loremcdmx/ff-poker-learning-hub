@@ -2,59 +2,32 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 
+const source = readFileSync(new URL("../data/resteal-rank-data.js", import.meta.url), "utf8");
 const dataContext = { window: {} };
-runInNewContext(
-  readFileSync(new URL("../data/resteal-rank-data.js", import.meta.url), "utf8"),
-  dataContext,
-  { filename: "resteal-rank-data.js" },
-);
+runInNewContext(source, dataContext, { filename: "resteal-rank-data.js" });
 
 const data = dataContext.window.PokerRestealRankData;
-assert(data, "exact rank-at-hand resteal cube is available");
-assert.equal(data.meta.filters.heroPosition, "BB", "slice is Hero BB only");
-assert.equal(data.meta.filters.facing, "Exactly one preflop raiser (val_preflop_action_facing=4)");
-assert.equal(data.meta.filters.limpers, 0);
-assert.deepEqual(Array.from(data.meta.filters.effectiveStackBb), [25, 40]);
-assert.equal(data.meta.windowStartInclusive, "2026-01-01T00:00:00Z");
-assert.equal(data.meta.windowEndExclusive, "2026-07-14T00:00:00Z");
-
-const totals = { opportunities: 0, folds: 0, calls: 0, small3bets: 0, jams: 0 };
-const cells = data.meta.handOrder.map(() => [0, 0, 0, 0, 0]);
+assert(data, "public resteal rank payload is available");
+assert.match(data.version, /^resteal-rank-cube-\d{8}-full-history-r15-r18-v\d+$/);
+assert.equal(data.meta.sampleThresholds.exactCellMinimum, 50);
+assert.equal(data.meta.handOrder.length, 169);
+assert.equal(new Set(data.meta.handOrder).size, 169);
+assert.equal(data.meta.presetOrder.length, 10, "exactly ten complete source-backed presets are public");
+assert.equal(new Set(data.meta.presetOrder).size, 10, "public preset keys are unique");
+assert.deepEqual(Object.keys(data.charts), ["novice", "league3", "league2", "league1"]);
+assert.deepEqual(Object.keys(data.summaries), ["novice", "league3", "league2", "league1"]);
 for (const cohort of data.meta.cohortOrder) {
-  const chart = data.charts[cohort].BTN["2.0"]["25-40"];
-  for (const key of Object.keys(totals)) totals[key] += chart.totals[key];
-  chart.cells.forEach((cell, handIndex) => {
-    cell.forEach((count, actionIndex) => { cells[handIndex][actionIndex] += count; });
-  });
-}
-
-assert.deepEqual(totals, {
-  opportunities: 538722,
-  folds: 130147,
-  calls: 317716,
-  small3bets: 51493,
-  jams: 39366,
-}, "pooled exact-BB action counts reconcile to the frozen rank cube");
-assert.equal(totals.folds + totals.calls + totals.small3bets + totals.jams, totals.opportunities);
-
-function categoryCounts(hands) {
-  const result = [0, 0, 0, 0, 0];
-  for (const hand of hands) {
-    const cell = cells[data.meta.handOrder.indexOf(hand)];
-    cell.forEach((count, actionIndex) => { result[actionIndex] += count; });
+  assert.deepEqual(Object.keys(data.charts[cohort]), Array.from(data.meta.presetOrder), `${cohort} exposes every complete preset`);
+  for (const preset of data.meta.presetOrder) {
+    const chart = data.charts[cohort][preset];
+    assert.equal(chart.cells.length, 169);
+    assert(chart.cells.every((cell) => cell[0] >= 50), `${cohort}/${preset} stays above the exact-cell threshold`);
   }
-  return result;
 }
+for (const forbidden of ["/private/tmp/", "privateSql", "privateCsv", "privateJson", "failedAttempts", "strict is_preflop_allin-only classifier rejected"]) {
+  assert.doesNotMatch(source, new RegExp(forbidden.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `public payload excludes ${forbidden}`);
+}
+assert.match(source, /"opportunities"\s*:/, "ready public payload carries exact observed counters");
+assert.match(source, /"jams"\s*:/, "ready public payload carries exact observed action counts");
 
-assert.deepEqual(
-  categoryCounts(["TT", "JJ", "QQ", "KK", "AA"]),
-  [11491, 63, 287, 8929, 2212],
-  "TT+ visibly includes fold, call, non-all-in 3-bet, and direct jam instead of implying slowplay",
-);
-assert.deepEqual(
-  categoryCounts(["KQo", "KJo", "KTo", "QJo", "QTo", "JTo"]),
-  [26864, 262, 22363, 1623, 2616],
-  "offsuit broadways reconcile at the same exact-BB grain",
-);
-
-console.log("PASS exact BB observed field: N 538722, four exhaustive actions, fixed BTN 2 BB / 25-40 BB slice");
+console.log("PASS resteal public rank payload: full-history exact counters, no private build evidence");

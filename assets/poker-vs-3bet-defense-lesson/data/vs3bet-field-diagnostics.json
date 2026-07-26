@@ -1,125 +1,939 @@
 {
-  "version": "vs3bet-field-cube-20260725-v7",
-  "csvRows": 103288,
+  "version": "vs3bet-field-cube-20260722-v6",
+  "csvRows": 718125,
+  "mergedCellRows": 156091,
+  "crossShardMergedRows": 562034,
   "duplicateRows": 0,
-  "chartCount": 480,
-  "publicChartCount": 480,
-  "structurallyValidChartCount": 480,
+  "chartCount": 800,
+  "publicChartCount": 800,
+  "structurallyValidChartCount": 800,
   "missingStructurallyValidCharts": 0,
   "missingStructurallyValidChartKeys": [],
   "structurallyEmptyPublishedCharts": 0,
-  "firstHandAt": "2025-07-01T00:00:49",
+  "firstHandAt": "2023-09-01T00:01:35",
   "lastHandAt": "2026-07-21T23:54:56",
   "global": {
-    "opportunities": 5958573,
-    "folds": 3697945,
-    "calls": 1521595,
-    "fourbets": 328071,
-    "jams": 410962,
-    "knownOpportunities": 5103330,
-    "missingOpportunities": 855243,
-    "knownCoveragePct": 85.647
+    "opportunities": 23885809,
+    "folds": 13939353,
+    "calls": 6678058,
+    "fourbets": 1317753,
+    "jams": 1950645,
+    "knownOpportunities": 21012160,
+    "missingOpportunities": 2873649,
+    "knownCoveragePct": 87.969
   },
   "byCohort": {
     "novice": {
-      "opportunities": 797431,
-      "folds": 510171,
-      "calls": 207996,
-      "fourbets": 36921,
-      "jams": 42343,
-      "knownOpportunities": 660515,
-      "missingOpportunities": 136916,
-      "knownCoveragePct": 82.83,
-      "foldPct": 63.977,
-      "callPct": 26.083,
-      "fourbetPct": 4.63,
-      "jamPct": 5.31
+      "opportunities": 2789502,
+      "folds": 1628081,
+      "calls": 851674,
+      "fourbets": 134380,
+      "jams": 175367,
+      "knownOpportunities": 2397856,
+      "missingOpportunities": 391646,
+      "knownCoveragePct": 85.96,
+      "foldPct": 58.365,
+      "callPct": 30.531,
+      "fourbetPct": 4.817,
+      "jamPct": 6.287
     },
     "league3": {
-      "opportunities": 2087200,
-      "folds": 1358548,
-      "calls": 498009,
-      "fourbets": 102174,
-      "jams": 128469,
-      "knownOpportunities": 1721811,
-      "missingOpportunities": 365389,
-      "knownCoveragePct": 82.494,
-      "foldPct": 65.089,
-      "callPct": 23.86,
-      "fourbetPct": 4.895,
-      "jamPct": 6.155
+      "opportunities": 8022995,
+      "folds": 4881857,
+      "calls": 2154643,
+      "fourbets": 395542,
+      "jams": 590953,
+      "knownOpportunities": 6921186,
+      "missingOpportunities": 1101809,
+      "knownCoveragePct": 86.267,
+      "foldPct": 60.848,
+      "callPct": 26.856,
+      "fourbetPct": 4.93,
+      "jamPct": 7.366
     },
     "league2": {
-      "opportunities": 2223157,
-      "folds": 1342901,
-      "calls": 576980,
-      "fourbets": 131353,
-      "jams": 171923,
-      "knownOpportunities": 1942139,
-      "missingOpportunities": 281018,
-      "knownCoveragePct": 87.36,
-      "foldPct": 60.405,
-      "callPct": 25.953,
-      "fourbetPct": 5.908,
-      "jamPct": 7.733
+      "opportunities": 8938995,
+      "folds": 5163488,
+      "calls": 2471199,
+      "fourbets": 512715,
+      "jams": 791593,
+      "knownOpportunities": 7922349,
+      "missingOpportunities": 1016646,
+      "knownCoveragePct": 88.627,
+      "foldPct": 57.764,
+      "callPct": 27.645,
+      "fourbetPct": 5.736,
+      "jamPct": 8.856
     },
     "league1": {
-      "opportunities": 850785,
-      "folds": 486325,
-      "calls": 238610,
-      "fourbets": 57623,
-      "jams": 68227,
-      "knownOpportunities": 778865,
-      "missingOpportunities": 71920,
-      "knownCoveragePct": 91.547,
-      "foldPct": 57.162,
-      "callPct": 28.046,
-      "fourbetPct": 6.773,
-      "jamPct": 8.019
+      "opportunities": 4134317,
+      "folds": 2265927,
+      "calls": 1200542,
+      "fourbets": 275116,
+      "jams": 392732,
+      "knownOpportunities": 3770769,
+      "missingOpportunities": 363548,
+      "knownCoveragePct": 91.207,
+      "foldPct": 54.808,
+      "callPct": 29.038,
+      "fourbetPct": 6.654,
+      "jamPct": 9.499
     }
   },
   "dimensionTotals": {
     "heroPosition": {
-      "EP": 386649,
-      "MP": 1553052,
-      "HJ": 1158258,
-      "CO": 1313780,
-      "BTN": 1495315,
-      "SB": 51519
+      "EP": 1858519,
+      "MP": 6823721,
+      "HJ": 4713443,
+      "CO": 4888580,
+      "BTN": 4648309,
+      "SB": 953237
     },
     "relation": {
-      "IP": 3201251,
-      "OOP": 2757322
+      "IP": 10188241,
+      "OOP": 13697568
     },
     "stackBand": {
-      "20-30": 321772,
-      "31-50": 1135051,
-      "51-80": 1697879,
-      "80+": 2803871
+      "20-30": 1923938,
+      "31-50": 5532822,
+      "51-80": 6925757,
+      "80+": 9503292
     },
     "sizeBucket": {
-      "3": 2733404,
-      "4": 929551,
-      "2.5": 2295618
+      "<6": 14638813,
+      "6-8": 6879542,
+      "8-10": 1571729,
+      "10+": 795725
     }
   },
   "cellCoverage": {
-    "nonEmptyCells": 54404,
-    "unavailableCells": 26716,
-    "lowConfidenceCells": 26140,
-    "strongCells": 15881
+    "nonEmptyCells": 106759,
+    "unpublishedCells": 28441,
+    "hiddenExactFrequencyCells": 82092,
+    "visibleExactFrequencyCells": 53108,
+    "strongCells": 45467
+  },
+  "comparisonCoverage": {
+    "totalDimensionKeys": 200,
+    "enabledDimensionKeys": 1,
+    "disabledDimensionKeys": 199,
+    "minimumCommonPerHandN": 0,
+    "maximumCommonPerHandN": 53,
+    "byKey": {
+      "EP|IP|20-30|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|20-30|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|20-30|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|20-30|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|20-30|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|31-50|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|31-50|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|31-50|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|31-50|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|31-50|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|51-80|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|51-80|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|51-80|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|51-80|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|51-80|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|80+|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|80+|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|80+|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|80+|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|IP|80+|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|20-30|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|20-30|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|20-30|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|20-30|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|20-30|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|31-50|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|31-50|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|31-50|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|31-50|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|31-50|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|51-80|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|51-80|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|51-80|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|51-80|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|51-80|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|80+|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|80+|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|80+|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|80+|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "EP|OOP|80+|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|20-30|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|20-30|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|20-30|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|20-30|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|20-30|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|31-50|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|31-50|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|31-50|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|31-50|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|31-50|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|51-80|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|51-80|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|51-80|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|51-80|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|51-80|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|80+|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|80+|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|80+|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|80+|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|IP|80+|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|20-30|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|20-30|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|20-30|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|20-30|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|20-30|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|31-50|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|31-50|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|31-50|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|31-50|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|31-50|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|51-80|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|51-80|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|51-80|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|51-80|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|51-80|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|80+|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|80+|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|80+|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|80+|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "MP|OOP|80+|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|20-30|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|20-30|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|20-30|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|20-30|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|20-30|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|31-50|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|31-50|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|31-50|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|31-50|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|31-50|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|51-80|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|51-80|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|51-80|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|51-80|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|51-80|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|80+|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|80+|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|80+|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|80+|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|IP|80+|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|20-30|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|20-30|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|20-30|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|20-30|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|20-30|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|31-50|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|31-50|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|31-50|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|31-50|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|31-50|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|51-80|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|51-80|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|51-80|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|51-80|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|51-80|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|80+|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|80+|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|80+|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|80+|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "HJ|OOP|80+|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|20-30|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|20-30|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|20-30|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|20-30|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|20-30|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|31-50|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|31-50|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|31-50|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|31-50|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|31-50|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|51-80|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|51-80|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|51-80|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|51-80|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|51-80|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|80+|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|80+|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|80+|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|80+|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|IP|80+|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|20-30|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|20-30|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|20-30|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|20-30|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|20-30|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|31-50|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|31-50|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|31-50|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|31-50|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|31-50|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|51-80|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|51-80|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|51-80|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|51-80|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|51-80|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|80+|all": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|80+|<6": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|80+|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|80+|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "CO|OOP|80+|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "BTN|IP|20-30|all": {
+        "minCommonPerHandN": 10,
+        "enabled": false
+      },
+      "BTN|IP|20-30|<6": {
+        "minCommonPerHandN": 7,
+        "enabled": false
+      },
+      "BTN|IP|20-30|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "BTN|IP|20-30|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "BTN|IP|20-30|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "BTN|IP|31-50|all": {
+        "minCommonPerHandN": 36,
+        "enabled": false
+      },
+      "BTN|IP|31-50|<6": {
+        "minCommonPerHandN": 18,
+        "enabled": false
+      },
+      "BTN|IP|31-50|6-8": {
+        "minCommonPerHandN": 11,
+        "enabled": false
+      },
+      "BTN|IP|31-50|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "BTN|IP|31-50|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "BTN|IP|51-80|all": {
+        "minCommonPerHandN": 35,
+        "enabled": false
+      },
+      "BTN|IP|51-80|<6": {
+        "minCommonPerHandN": 15,
+        "enabled": false
+      },
+      "BTN|IP|51-80|6-8": {
+        "minCommonPerHandN": 16,
+        "enabled": false
+      },
+      "BTN|IP|51-80|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "BTN|IP|51-80|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "BTN|IP|80+|all": {
+        "minCommonPerHandN": 53,
+        "enabled": true
+      },
+      "BTN|IP|80+|<6": {
+        "minCommonPerHandN": 15,
+        "enabled": false
+      },
+      "BTN|IP|80+|6-8": {
+        "minCommonPerHandN": 21,
+        "enabled": false
+      },
+      "BTN|IP|80+|8-10": {
+        "minCommonPerHandN": 7,
+        "enabled": false
+      },
+      "BTN|IP|80+|10+": {
+        "minCommonPerHandN": 2,
+        "enabled": false
+      },
+      "SB|OOP|20-30|all": {
+        "minCommonPerHandN": 7,
+        "enabled": false
+      },
+      "SB|OOP|20-30|<6": {
+        "minCommonPerHandN": 5,
+        "enabled": false
+      },
+      "SB|OOP|20-30|6-8": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "SB|OOP|20-30|8-10": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "SB|OOP|20-30|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "SB|OOP|31-50|all": {
+        "minCommonPerHandN": 33,
+        "enabled": false
+      },
+      "SB|OOP|31-50|<6": {
+        "minCommonPerHandN": 15,
+        "enabled": false
+      },
+      "SB|OOP|31-50|6-8": {
+        "minCommonPerHandN": 7,
+        "enabled": false
+      },
+      "SB|OOP|31-50|8-10": {
+        "minCommonPerHandN": 1,
+        "enabled": false
+      },
+      "SB|OOP|31-50|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "SB|OOP|51-80|all": {
+        "minCommonPerHandN": 39,
+        "enabled": false
+      },
+      "SB|OOP|51-80|<6": {
+        "minCommonPerHandN": 10,
+        "enabled": false
+      },
+      "SB|OOP|51-80|6-8": {
+        "minCommonPerHandN": 12,
+        "enabled": false
+      },
+      "SB|OOP|51-80|8-10": {
+        "minCommonPerHandN": 4,
+        "enabled": false
+      },
+      "SB|OOP|51-80|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      },
+      "SB|OOP|80+|all": {
+        "minCommonPerHandN": 49,
+        "enabled": false
+      },
+      "SB|OOP|80+|<6": {
+        "minCommonPerHandN": 5,
+        "enabled": false
+      },
+      "SB|OOP|80+|6-8": {
+        "minCommonPerHandN": 16,
+        "enabled": false
+      },
+      "SB|OOP|80+|8-10": {
+        "minCommonPerHandN": 6,
+        "enabled": false
+      },
+      "SB|OOP|80+|10+": {
+        "minCommonPerHandN": 0,
+        "enabled": false
+      }
+    }
   },
   "defaultSlice": {
-    "key": "league3|BTN|IP|31-50|3",
+    "key": "league3|BTN|IP|31-50|all",
     "totals": {
-      "opportunities": 66121,
-      "folds": 49939,
-      "calls": 8881,
-      "fourbets": 966,
-      "jams": 6335,
-      "knownOpportunities": 55831,
-      "missingOpportunities": 10290,
-      "knownCoveragePct": 84.438,
+      "opportunities": 353150,
+      "folds": 251570,
+      "calls": 58535,
+      "fourbets": 6726,
+      "jams": 36319,
+      "knownOpportunities": 353150,
+      "missingOpportunities": 47848,
+      "sourceOpportunities": 400998,
+      "knownCoveragePct": 88.068,
       "exactCellCount": 169
     },
     "populatedHands": 169,
@@ -129,19 +943,79 @@
     "rankIntervals": {
       "rows": 19699,
       "queryJobId": "mcp_bq_job_e9147a172e0a455faa21292b7aa80a4d",
+      "executionMode": "async",
+      "querySha256": "622ecd00f28bba7baccc02de4cd4b2d46fe24e59d88e4bb2a1c488d20b28daaf",
+      "windowStartInclusive": "2023-09-01T00:00:00Z",
+      "windowEndExclusive": "2026-07-22T00:00:00Z",
       "sha256": "64b309058fabffe1d2f25e4a7d68f4aae84867d96a3faa9a743c4b0c39f78cd6",
       "storage": "External private build input; individual user_id rank histories are not shipped as a public lesson asset."
     },
     "handCube": {
-      "rows": 103288,
-      "queryJobIds": [
-        "mcp_ch_job_f86ea4d27fed4b6496e0deb4588d15ed",
-        "mcp_ch_job_eef6cc26b8474a7fa3a889013ccab002",
-        "mcp_ch_job_6230a8486d6f42c88d2d22e295d1a7f5",
-        "mcp_ch_job_25530dec09974baf8a67ab6fbc7bcadc"
+      "rows": 718125,
+      "mergedRows": 156091,
+      "shards": [
+        {
+          "ordinal": 1,
+          "rows": 117543,
+          "queryJobId": "mcp_ch_job_18c3030d737e418c8d0c0a26727b2dd8",
+          "executionMode": "async",
+          "querySha256": "f568949b8815345514e5366bf32a8436b6b65db0e2ab62b832e204ab5e29bec1",
+          "windowStartInclusive": "2023-09-01T00:00:00Z",
+          "windowEndExclusive": "2024-03-01T00:00:00Z",
+          "sha256": "1f01153ea023b4e42df86f78acd9503dfd781870c7aec662467707e5a8d7a88e"
+        },
+        {
+          "ordinal": 2,
+          "rows": 118550,
+          "queryJobId": "mcp_ch_job_a172cfc8889e4f3cb966dab71fd63098",
+          "executionMode": "async",
+          "querySha256": "315639538e1068d8e58c32dd6aa3b18dbdbb303c5db863d8b7668d9664d6c50a",
+          "windowStartInclusive": "2024-03-01T00:00:00Z",
+          "windowEndExclusive": "2024-09-01T00:00:00Z",
+          "sha256": "edff32589d086b718bafac2e8459599298a7921fcae17c455b25447253962e93"
+        },
+        {
+          "ordinal": 3,
+          "rows": 119816,
+          "queryJobId": "mcp_ch_job_428d5c05cec14d30a683c472ecb20fdc",
+          "executionMode": "async",
+          "querySha256": "14937dc97b6eedfeea00bf0bf5c7e71516d71a3641a6a9de24b970a4e5014b1c",
+          "windowStartInclusive": "2024-09-01T00:00:00Z",
+          "windowEndExclusive": "2025-03-01T00:00:00Z",
+          "sha256": "2ff39606a1bfcd7cfdb0acfd833d8ad637375f59c262ce899d5f6a1dd5045b31"
+        },
+        {
+          "ordinal": 4,
+          "rows": 122193,
+          "queryJobId": "mcp_ch_job_de43595e2ccc4d119370f067355ffad6",
+          "executionMode": "async",
+          "querySha256": "d93d2e0bcd988529216a5ce5967a623379cb16c8f331052a54e4b182b29f9d9e",
+          "windowStartInclusive": "2025-03-01T00:00:00Z",
+          "windowEndExclusive": "2025-09-01T00:00:00Z",
+          "sha256": "61a3e788d387e1c1b93221863eed76d81ed1a324988166f379c1ff7040406333"
+        },
+        {
+          "ordinal": 5,
+          "rows": 122932,
+          "queryJobId": "mcp_ch_job_d4d277433f8844419f8b4ef8f4be5747",
+          "executionMode": "async",
+          "querySha256": "19cb6eb9f185f93de42ad34098034793f2112ecf5f9cf9abe58d028a40df8b8f",
+          "windowStartInclusive": "2025-09-01T00:00:00Z",
+          "windowEndExclusive": "2026-03-01T00:00:00Z",
+          "sha256": "7d8c0bb411ad80591e1fdbc6995c56ab64b2de20058732ea583f03cc9669ef8f"
+        },
+        {
+          "ordinal": 6,
+          "rows": 117091,
+          "queryJobId": "mcp_ch_job_6c2ec439dbe8473cadc9e7de093b1b87",
+          "executionMode": "async",
+          "querySha256": "bf6161bdfb42cb4a25b23027e7ee6641764d2f9a1a4c49b795fb6ce2135350fd",
+          "windowStartInclusive": "2026-03-01T00:00:00Z",
+          "windowEndExclusive": "2026-07-22T00:00:00Z",
+          "sha256": "13679b82fccfc3cf39a5d1c692666bc03132a47f02b4399d34c1cc6a23a50cfc"
+        }
       ],
-      "sha256": "b8ed793da346550c5020adc71c8fa5f1a8530bf7c092880db2cdeeebeac935a9",
-      "sourceQueryTemplateSha256": "3be414c250b31d9c6deb8c952cb3cc1ca1b02a95ed2307ecf438ff6a61b23787"
+      "sourceQueryTemplateSha256": "4b183196c4d22cfffe635128e6e29ca1cb69ecc94982a1ac91b43bc2ab9d07ad"
     }
   }
 }

@@ -115,7 +115,7 @@ assert(rfiPackSource.includes("workspace.scrollTop = workspace.scrollHeight"), "
 assert.match(rfiPackSource, /<footer class="rfi-review-footer" aria-live="polite">[\s\S]*?<div class="rfi-review-details"/s, "review announces and shows the verdict before the optional chart");
 assert(!rfiPackSource.includes('feedback.setAttribute("aria-live", "polite")'), "the 169-cell chart is not part of the live announcement");
 assert(!rfiPackSource.includes('title="${hand}:'), "native cell tooltips no longer cover the matrix");
-assert.match(rfiPackSource, /aria-label="\$\{hand\}:[\s\S]*?исходная частота \$\{frequency\}%"/, "every chart cell keeps an accessible action and frequency label");
+assert.match(rfiPackSource, /aria-label="\$\{hand\}:[\s\S]*?исходная частота \$\{printedFrequency\}%"/, "every chart cell keeps an accessible action and source-frequency label");
 assert.match(rfiPackSource, /data-rfi-review-selection/, "played-hand details stay visible without hover");
 assert.match(rfiPackSource, /function ensureReviewActionDock[\s\S]*?host\.appendChild\(dock\)/, "next-hand dock is mounted directly in the workspace, outside the review region");
 assert(!/<\/section>\s*<div class="rfi-review-action-dock"/.test(rfiPackSource), "review markup does not own the next-hand dock");

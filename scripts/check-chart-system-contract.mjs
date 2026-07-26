@@ -29,6 +29,7 @@ for (const route of routes) {
 }
 
 const chartSystem = readFileSync(resolve(root, "assets/poker-kit/chart-system.css"), "utf8");
+const rfiCss = readFileSync(resolve(root, "assets/poker-rfi-open-lesson/lesson.css"), "utf8");
 for (const token of [
   "--ff-chart-fold",
   "--ff-chart-call",
@@ -94,5 +95,10 @@ for (const routeClass of [
 ]) {
   assert(chartSystem.includes(routeClass), `shared chart system adapts ${routeClass}`);
 }
+
+assert.match(rfiCss, /--chart-open:var\(--ff-chart-raise\)/, "RFI open-range cells use semantic raise pink");
+assert.match(rfiCss, /--rfi-raise:var\(--ff-chart-raise\)/, "RFI empirical raise cells use semantic raise pink");
+assert.match(rfiCss, /--rfi-shove:var\(--ff-chart-shove\)/, "RFI empirical shove cells use semantic shove amber");
+assert.doesNotMatch(rfiCss, /--(?:chart-open|rfi-raise):#ffdf51/, "RFI action colors cannot reuse yellow filter focus");
 
 console.log(`chart system contract: ok · ${routes.length} trainer routes`);

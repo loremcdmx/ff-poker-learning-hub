@@ -2,6 +2,8 @@
   "use strict";
 
   const root = typeof window !== "undefined" ? window : globalThis;
+  const rawFieldData = root.FF_VS3BET_FIELD_DATA;
+  const fieldData = root.FFVs3BetFieldDataReadiness?.ready ? rawFieldData : null;
   const schemaVersion = 1;
   const ranks = Object.freeze(["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]);
   const positions = Object.freeze(["EP", "MP", "HJ", "CO", "BTN", "SB"]);
@@ -16,6 +18,24 @@
     { key: "80+", label: "80+ BB", sampleBb: 90 }
   ]);
 
+  function fieldCohort(key) {
+    const meta = fieldData?.meta?.cohorts?.[key] || {};
+    const summary = fieldData?.summaries?.[key] || {};
+    const cohortRanks = Array.isArray(meta.ranks) ? meta.ranks.filter(Number.isFinite) : [];
+    return {
+      key,
+      label: meta.label || key,
+      subtitle: cohortRanks.length ? `R${Math.min(...cohortRanks)}–${Math.max(...cohortRanks)}` : "",
+      fieldActions: {
+        fold: Number(summary.foldPct) || 0,
+        call: Number(summary.callPct) || 0,
+        fourbet: Number(summary.fourbetPct) || 0,
+        jam: Number(summary.jamPct) || 0
+      },
+      provenance: "Проверенные частоты раздач FF."
+    };
+  }
+
   const cohorts = deepFreeze([
     {
       key: "reference",
@@ -24,34 +44,7 @@
       fieldActions: null,
       provenance: "Точные клетки страниц 7 и 12; не solver-чарт."
     },
-    {
-      key: "league1",
-      label: "League 1",
-      subtitle: "R1–5",
-      fieldActions: { fold: 53.82, call: 29.88, fourbet: 16.3, jam: 0 },
-      provenance: "Учебная hand-level адаптация, направленная агрегатами поля League 1."
-    },
-    {
-      key: "league2",
-      label: "League 2",
-      subtitle: "R6–10",
-      fieldActions: { fold: 56.18, call: 29, fourbet: 14.82, jam: 0 },
-      provenance: "Учебная hand-level адаптация, направленная агрегатами поля League 2."
-    },
-    {
-      key: "league3",
-      label: "League 3",
-      subtitle: "R11–14",
-      fieldActions: { fold: 59.96, call: 28.49, fourbet: 11.55, jam: 0 },
-      provenance: "Учебная hand-level адаптация, направленная агрегатами поля League 3."
-    },
-    {
-      key: "novice",
-      label: "Новички",
-      subtitle: "R15–18 · расширено для редких спотов",
-      fieldActions: { fold: 59.39, call: 30.14, fourbet: 10.47, jam: 0 },
-      provenance: "Когорта новичков R15–18; hand-level клетки являются учебной адаптацией."
-    }
+    ...(fieldData?.meta?.cohortOrder || []).slice().reverse().map(fieldCohort)
   ]);
 
   const SOURCE = deepFreeze({
@@ -243,7 +236,7 @@
     },
     league1: {
       sourceStatus: "heuristic-calibrated-to-field-aggregate",
-      rationale: "League 1 реже сдаёт опен и чаще находит 4-бет.",
+      rationale: "Первая лига реже сдаёт опен и чаще находит 4-бет.",
       transfers: [
         { from: "fold", to: "fourbet", share: 0.05, eligibility: "fourbet-frontier" },
         { from: "fold", to: "call", share: 0.015, eligibility: "call-frontier" }

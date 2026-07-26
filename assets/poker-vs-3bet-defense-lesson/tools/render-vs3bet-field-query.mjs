@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,12 +26,19 @@ if (intervalStart && (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(intervalStar
 const outputArgumentIndex = process.argv.indexOf('--output');
 const outputPath = outputArgumentIndex >= 0 ? process.argv[outputArgumentIndex + 1] : null;
 if (outputArgumentIndex >= 0 && !outputPath) throw new Error('--output requires a file path');
+const userShardIndexArgument = process.argv.indexOf('--user-shard-index');
+const userShardCountArgument = process.argv.indexOf('--user-shard-count');
+const userShardIndex = userShardIndexArgument >= 0 ? Number(process.argv[userShardIndexArgument + 1]) : 0;
+const userShardCount = userShardCountArgument >= 0 ? Number(process.argv[userShardCountArgument + 1]) : 1;
+if (!Number.isInteger(userShardIndex) || !Number.isInteger(userShardCount) || userShardCount < 1 || userShardIndex < 0 || userShardIndex >= userShardCount) {
+  throw new Error(`invalid user shard ${userShardIndex}/${userShardCount}`);
+}
 
 const rankText = fs.readFileSync(rankPath, 'utf8').trimEnd();
 const [header, ...lines] = rankText.split(/\r?\n/);
 assert.equal(header, 'user_id,rang,rank_start_at,rank_end_at');
 
-const tuples = lines.flatMap((line, index) => {
+const intervals = lines.flatMap((line, index) => {
   const [userId, rank, startAt, endAt] = line.split(',');
   assert(/^\d+$/.test(userId), `bad user_id on rank row ${index + 2}`);
   assert(/^\d+$/.test(rank), `bad rank on rank row ${index + 2}`);
@@ -40,17 +48,43 @@ const tuples = lines.flatMap((line, index) => {
   const clippedStart = intervalStart && startAt < intervalStart ? intervalStart : startAt;
   const clippedEnd = intervalEnd && endAt > intervalEnd ? intervalEnd : endAt;
   return clippedStart < clippedEnd
-    ? [`(${userId},${rank},'${clippedStart}','${clippedEnd}')`]
+    ? [{ userId: Number(userId), rank: Number(rank), startAt: clippedStart, endAt: clippedEnd }]
     : [];
 });
-if (!tuples.length) throw new Error('rank filter selected no intervals');
+if (!intervals.length) throw new Error('rank filter selected no intervals');
+const eligibleUserIds = [...new Set(intervals.map((interval) => interval.userId))].sort((left, right) => left - right);
+const userShardStart = Math.floor(eligibleUserIds.length * userShardIndex / userShardCount);
+const userShardEnd = Math.floor(eligibleUserIds.length * (userShardIndex + 1) / userShardCount);
+const userIds = eligibleUserIds.slice(userShardStart, userShardEnd);
+if (!userIds.length) throw new Error(`empty user shard ${userShardIndex}/${userShardCount}`);
+const selectedUsers = new Set(userIds);
+const selectedIntervals = intervals.filter((interval) => selectedUsers.has(interval.userId));
+const tuples = selectedIntervals.map((interval) => `(${interval.userId},${interval.rank},'${interval.startAt}','${interval.endAt}')`);
 
 const source = fs.readFileSync(sqlPath, 'utf8');
 const clickhouseMarker = '-- 2. ClickHouse: lossless action-count cube.';
 const clickhouseStart = source.indexOf(clickhouseMarker);
 assert(clickhouseStart >= 0, 'ClickHouse marker missing');
 const query = source.slice(clickhouseStart + clickhouseMarker.length).trim()
-  .replace('{{RANK_INTERVAL_ROWS}}', tuples.join(',\n    '));
-assert(!query.includes('{{RANK_INTERVAL_ROWS}}'), 'rank placeholder was not replaced');
+  .replace('{{RANK_INTERVAL_ROWS}}', tuples.join(',\n    '))
+  .replaceAll('{{RANK_USER_IDS}}', userIds.join(','))
+  .replaceAll('{{WINDOW_START}}', intervalStart || '{{WINDOW_START}}')
+  .replaceAll('{{WINDOW_END}}', intervalEnd || '{{WINDOW_END}}')
+  .replaceAll('{{MONTH_END_EXCLUSIVE}}', intervalEnd ? intervalEnd.slice(0, 10) : '{{MONTH_END_EXCLUSIVE}}');
+assert(!query.includes('{{RANK_INTERVAL_ROWS}}') && !query.includes('{{RANK_USER_IDS}}'), 'rank placeholders were not replaced');
+if (intervalStart) assert(!query.includes('{{WINDOW_') && !query.includes('{{MONTH_END_EXCLUSIVE}}'), 'window placeholders were not replaced');
+process.stderr.write(`${JSON.stringify({
+  sourceIntervals: intervals.length,
+  eligibleUsers: eligibleUserIds.length,
+  selectedIntervals: selectedIntervals.length,
+  selectedUsers: userIds.length,
+  userShard: {
+    index: userShardIndex,
+    count: userShardCount,
+    firstUserId: userIds[0],
+    lastUserId: userIds.at(-1),
+    userIdsSha256: crypto.createHash('sha256').update(userIds.join(',')).digest('hex')
+  }
+})}\n`);
 if (outputPath) fs.writeFileSync(outputPath, `${query}\n`);
 else process.stdout.write(`${query}\n`);

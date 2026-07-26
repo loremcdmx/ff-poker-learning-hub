@@ -31,6 +31,15 @@
     const bumpArchiveRevision = typeof ctx.bumpArchiveRevision === "function" ? ctx.bumpArchiveRevision : () => {};
     const windowRef = ctx.windowRef || root;
 
+    // Static lesson builds do not own /api/simulator-sessions. Persist the
+    // complete archive locally and skip transport unless a deployment with a
+    // real session backend opts in explicitly. Non-static simulator builds
+    // preserve the existing backend behaviour.
+    function sessionArchiveBackendEnabled() {
+      return windowRef.FF_STATIC_LEARNING_HUB !== true
+        || windowRef.FF_SIMULATOR_SESSION_BACKEND_ENABLED === true;
+    }
+
     function sanitizeArchiveBackendState(backend) {
       if (!backend || typeof backend !== "object") return { status: "local" };
       return {
@@ -135,7 +144,7 @@
         reason,
         profile,
         metrics: compactSessionMetrics(metrics),
-        backend: { status: profile.loggedIn ? "pending" : "local", attemptedAt: "", syncedAt: "", endpoint: "", statusCode: 0, error: "" },
+        backend: { status: profile.loggedIn && sessionArchiveBackendEnabled() ? "pending" : "local", attemptedAt: "", syncedAt: "", endpoint: "", statusCode: 0, error: "" },
         session
       };
     }
@@ -179,6 +188,19 @@
     async function syncSessionArchiveToBackend(record) {
       if (isSessionReadOnly()) return false;
       const archive = normalizeSessionArchiveRecord(record);
+      if (!sessionArchiveBackendEnabled()) {
+        if (archive?.id && archive.backend?.status !== "local") {
+          saveArchiveSyncStatus(archive.id, {
+            status: "local",
+            attemptedAt: "",
+            syncedAt: "",
+            endpoint: "",
+            statusCode: 0,
+            error: ""
+          });
+        }
+        return false;
+      }
       if (!archive?.profile?.loggedIn || typeof windowRef.fetch !== "function") return false;
       const endpoint = simulatorArchiveEndpoint();
       if (!endpoint) return false;
@@ -255,6 +277,7 @@
 
     return {
       sanitizeArchiveBackendState,
+      sessionArchiveBackendEnabled,
       normalizeSessionArchiveRecord,
       loadSessionArchive,
       saveSessionArchive,

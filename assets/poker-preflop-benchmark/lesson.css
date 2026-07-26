@@ -10,6 +10,27 @@
   --benchmark-surface-shadow: 0 18px 48px rgba(0,0,0,.24);
 }
 
+.preflop-benchmark-lesson .benchmark-unavailable-copy {
+  grid-column: 1 / -1;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 116px;
+  padding: 24px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(255,255,255,.045), rgba(92,69,135,.08));
+  color: var(--muted);
+  text-align: center;
+}
+.preflop-benchmark-lesson .benchmark-unavailable-copy strong { color: var(--text); font-size: clamp(17px, 1.8vw, 23px); }
+.preflop-benchmark-lesson .benchmark-unavailable-copy span { max-width: 660px; line-height: 1.55; }
+.preflop-benchmark-lesson .benchmark-intro-unavailable { min-height: clamp(260px, 31vw, 430px); }
+.preflop-benchmark-lesson .benchmark-methodology-proof { align-content: center; min-height: 180px; }
+.preflop-benchmark-lesson .benchmark-methodology-proof strong { color: var(--yellow); }
+.preflop-benchmark-lesson .btn:disabled { cursor: not-allowed; filter: grayscale(.35); opacity: .58; box-shadow: none; }
+
 .preflop-benchmark-lesson .app { width: min(1500px, 100%); min-height: 0; }
 .preflop-benchmark-lesson .screen { min-width: 0; }
 .preflop-benchmark-lesson .benchmark-intro {
@@ -35,6 +56,29 @@
   min-width: 0;
   min-height: calc(var(--trainer-table-plane-height) + var(--shell-action-gutter));
   padding: 14px 10px var(--shell-action-gutter);
+}
+
+/* The fail-closed state has no poker table or action dock to reserve space for. */
+.preflop-benchmark-lesson[data-field-availability="methodology_only"] .benchmark-intro {
+  grid-template-columns: minmax(300px, .86fr) minmax(420px, 1.14fr);
+  align-items: center;
+}
+.preflop-benchmark-lesson[data-field-availability="methodology_only"] .intro-copy,
+.preflop-benchmark-lesson[data-field-availability="methodology_only"] .intro-table-visual {
+  align-self: center;
+}
+.preflop-benchmark-lesson[data-field-availability="methodology_only"] .table-card {
+  width: min(100%, 620px);
+}
+.preflop-benchmark-lesson[data-field-availability="methodology_only"] .lesson-table-host {
+  --trainer-table-plane-height: auto;
+  --shell-action-gutter: 0px;
+  min-height: 0;
+  padding: 0;
+}
+.preflop-benchmark-lesson[data-field-availability="methodology_only"] .benchmark-intro-unavailable {
+  min-height: clamp(190px, 18vw, 224px);
+  padding: clamp(24px, 3vw, 36px);
 }
 .preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] {
   --trainer-table-plane-height: inherit;
@@ -407,8 +451,10 @@
   font-weight: 900;
   text-shadow: none;
 }
+.preflop-benchmark-lesson .benchmark-filter-status { min-height: 18px; margin: 0 0 -4px 124px; color: rgba(255,223,81,.78); font-size: 12px; line-height: 1.35; }
 .preflop-benchmark-lesson .benchmark-chart-head { margin-top: 4px; }
 .preflop-benchmark-lesson .benchmark-chart-head h2 { font-size: clamp(24px, 3vw, 42px); }
+.preflop-benchmark-lesson .benchmark-range-scroll { max-width: 100%; overflow-x: auto; padding: 3px; overscroll-behavior-inline: contain; scrollbar-width: thin; }
 .preflop-benchmark-lesson .benchmark-range-grid { width: min(100%, 820px); margin: 0 auto; }
 .preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell {
   cursor: pointer;
@@ -660,6 +706,32 @@
 
 @media (max-width: 920px) {
   .preflop-benchmark-lesson .benchmark-intro { grid-template-columns: 1fr; gap: 18px; min-height: auto; padding: 24px; }
+  .preflop-benchmark-lesson[data-field-availability="methodology_only"] .benchmark-intro {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .preflop-benchmark-lesson[data-field-availability="methodology_only"] .intro-copy,
+  .preflop-benchmark-lesson[data-field-availability="methodology_only"] .intro-table-visual {
+    align-self: stretch;
+  }
+  .preflop-benchmark-lesson[data-field-availability="methodology_only"] .table-card {
+    width: 100%;
+  }
+}
+
+@media (max-width: 860px) {
+  .preflop-benchmark-lesson[data-field-availability="methodology_only"] [data-lesson-header].lesson-chrome .lesson-chrome__steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+  .preflop-benchmark-lesson[data-field-availability="methodology_only"] [data-lesson-header].lesson-chrome .lesson-chrome__steps .step-tab {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 5px;
+    white-space: normal;
+  }
 }
 
 @media (min-width: 701px) and (max-width: 1300px) {
@@ -722,12 +794,13 @@
   .preflop-benchmark-lesson .wisdom-strategy-pair { grid-template-columns: 1fr; }
   .preflop-benchmark-lesson .wisdom-metric-row { align-items: flex-start; flex-direction: column; gap: 5px; }
   .preflop-benchmark-lesson .filter-row { grid-template-columns: 1fr; gap: 5px; }
+  .preflop-benchmark-lesson .benchmark-filter-status { margin-left: 0; }
   .preflop-benchmark-lesson .benchmark-chart-panel,
   .preflop-benchmark-lesson .comparison-panel { padding: 14px; }
   .preflop-benchmark-lesson .benchmark-chart-head { display: block; }
   .preflop-benchmark-lesson .benchmark-chart-head .ff-chart-legend { margin-top: 10px; }
-  .preflop-benchmark-lesson .benchmark-range-grid { gap: 2px; }
-  .preflop-benchmark-lesson .benchmark-range-grid .ff-range-cell { border-radius: 3px; font-size: 7px; }
+  .preflop-benchmark-lesson .benchmark-range-scroll .benchmark-range-grid { width: 596px; max-width: none; gap: 2px; }
+  .preflop-benchmark-lesson .benchmark-range-scroll .benchmark-range-grid .ff-range-cell { border-radius: 4px; font-size: 9px; }
   .preflop-benchmark-lesson .action-rate-row { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .preflop-benchmark-lesson .hand-detail-head,
   .preflop-benchmark-lesson .hand-compare-note { align-items: flex-start; flex-direction: column; gap: 7px; }

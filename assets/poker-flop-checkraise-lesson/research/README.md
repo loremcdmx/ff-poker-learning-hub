@@ -1,175 +1,92 @@
-# Чек-рейз BB против CO/BTN: Q2 2026 field evidence
+# Чек-рейз BB против CO/BTN: границы источников
 
-Материалы урока и тренажёра используют один узел:
+Урок и тренажёр используют один узел:
 
-`CO/BTN RFI → BB call → HU flop → BB check → aggressor c-bet → решение BB`.
+`CO/BTN RFI → BB call → HU flop → BB check → aggressor c-bet → BB response`.
 
-Cold-call pot, где Hero был префлоп-рейзером, и 3-bet pot в этот урок не входят.
+Cold-call pots, 3-bet pots, limpers и multiway в этот урок не входят.
+Пас, колл и check-raise BB считаются в одном exact response denominator;
+отдельные denominator для каждой кнопки запрещены.
 
-## Канонический denominator
+## Текущий статус пубикации
 
-Подготовленные признаки берутся из `analytics.tracker_stats_users_by_day`:
+Browser payload работает в `methodology_only`. Полевая матрица и
+наблюдаемые руки скрыты. Учебный атлас остаётся доступен, но
+его рукам не приписываются field rates.
 
-- opportunity: `cases_bb_vs_raiser_check_raise_flop`;
-- made: `made_bb_vs_raiser_check_raise_flop`.
+Единый publication floor — `N >= 50`. Процент считается только как
+exact numerator / exact shared denominator после additive merge. `N=49`
+скрыт, `N=50` можно показать. Smoothing, интерполяция и нули
+вместо неизвестной частоты запрещены.
 
-Определение признаков в dbt:
+## Канонический exact node
+
+Полевой cube должен сохранять:
 
 - 3–9 max;
-- Hero находится на BB;
-- первый preflop actor не SB;
-- stack и effective stack не меньше 20 BB;
-- facing amount не больше 3 BB;
-- ровно одно действие до Hero, без лимперов;
-- first aggressor находится от EP до BTN, для урока оставлены только CO/BTN;
-- `preflop_action = 'C'`, на флопе два игрока;
-- opportunity: Hero чекнул и встретил ставку raiser;
-- made: `flop_action = 'XR'`.
+- Hero на BB;
+- один unopened RFI от CO или BTN, без лимперов;
+- open `1.5–3.0 BB`;
+- effective stack не меньше `20 BB`;
+- BB коллирует, на флопе остаются два игрока;
+- BB чекает и встречает c-bet;
+- response разложен на ровно одно из трёх действ: fold, call,
+  raise. Любой `other` блокирует публикацию.
 
-Период: `2026-04-01`…`2026-06-30`. Rank назначен по доминирующему пересечению игрока с календарным месяцем. League 3 и R15–17 вложены и не являются независимыми группами.
+Ранг берётся на timestamp раздачи. Группы не пересекаются:
+League 1 `R1–5`, League 2 `R6–10`, League 3 `R11–14`, newcomers `R15–18`.
 
-## 1. Как часто BB делает check-raise
+## 1. All-history availability probe
 
-| Cohort | X/R | Opportunities | Players | Rate | BTN | CO |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| League 1, R1–5 | 24 170 | 151 874 | 179 | 15,91% | 16,64% | 15,03% |
-| League 2, R6–10 | 60 081 | 378 226 | 525 | 15,88% | 16,62% | 14,98% |
-| League 3, R11–17 | 66 136 | 488 230 | 1 275 | 13,55% | 13,96% | 13,03% |
-| R15–17 | 10 833 | 100 372 | 657 | 10,79% | 11,21% | 10,27% |
+Общий с c-bet уроком `all-history-candidate-probe.sql` считает только
+candidate keys у близкого RFI-vs-BB узла. Он не проверяет raw-HH
+coverage, exact BB response, rank-at-hand или latest-version семантику.
+Поэтому это availability evidence, а не источник процентов check-raise.
 
-Rank-matched total: `150 387 / 1 018 330`. Полный strict-tree denominator до rank matching: BTN `91 371 / 593 709`, CO `67 854 / 481 722`, вместе `159 225 / 1 075 431`. Покрытие rank-matched denominator — `94,69%`, numerator — `94,45%`.
+## 2. Точный Q2 raw-HH cube
 
-Это исправляет черновой устный ориентир «около 6% против 15%»: в точном дереве разница равна примерно `10,8% против 15,9%`. Урок использует измеренное значение, а не усиливает контраст ради сюжета.
+Доска, сайзинги и response aggressor после check-raise требуют raw HH.
+Воспроизводимое окно этого pipeline — `[2026-04-01, 2026-07-01)`.
+`q2-all-residue-extract.sql` выдаёт 200 непересекающихся residue. Только их
+полная текущая сборка, один candidate manifest и один parser pass могут
+дать Q2 cube.
 
-## 2. Как часто aggressor фолдит на check-raise
+Текущий rebuild не завершён. Старые `structure-league-field-matrix.csv`,
+`size-matched-k-high-dry-folds.csv` и Q2 HH examples не являются browser
+source. Их нельзя смешивать с частичными шардами текущей выгрузки.
+Builder должен создать общую structure matrix и size-matched card в одном
+проходе, с четырьмя непересекающимися группами до `R18`.
 
-Это другая роль и другой denominator. Из hand-action mart берутся ситуации, где поздний preflop aggressor поставил флоп и встретил `BB check → raise`. Fold — действие `BF` в `flop_action`; denominator включает все известные ответы на check-raise.
+## 3. Exact latest-first field cube
 
-| Cohort aggressor | Folds | Faced X/R | Players | Fold rate |
-| --- | ---: | ---: | ---: | ---: |
-| League 1, R1–5 | 15 545 | 34 781 | 179 | 44,69% |
-| League 2, R6–10 | 43 338 | 89 584 | 524 | 48,38% |
-| League 3, R11–17 | 63 535 | 115 837 | 1 239 | 54,85% |
-| R15–17 | 12 303 | 22 434 | 623 | 54,84% |
+Частоту всего ответа BB можно строить из
+`analytics.int_tracker_hand_joined`, но это hand-level mart, а не raw HH.
+`full-history-postflop-field-cube.sql` обязан:
 
-Основные outcomes в неразмеченной action distribution после check-raise: `BF 128 857`, `BC 101 689`, `BR 20 426`, `BRC 1 392`, `BRF 885`, `BRR 239`; полный denominator со всеми редкими кодами — `253 525`, immediate fold — `50,83%`.
+1. сначала выбрать latest row по `hand_player_id`;
+2. потом привязать exact rank-at-hand;
+3. только после этого применить poker/business filters;
+4. доказать `folds + calls + raises + other = opportunities`;
+5. отклонить артефакт, если `other != 0`;
+6. применить `N >= 50` только после additive merge.
 
-Частоты BB X/R и aggressor fold vs X/R нельзя складывать в 100% или показывать как одно распределение действий.
+Этот cube пока не собран в валидированный browser artifact. До тех пор
+UI не показывает ни общие частоты, ни разницы между лигами.
 
-## 3. Экономика учебного размера
+## Учебные руки и сайзинг
 
-В snapshot используется фиксированный пример:
+Карточные примеры и практика — методическая модель. Они не являются
+доказательством, что конкретная рука рейзит с конкретной частотой.
+Пример c-bet `25–33%` и check-raise-to около банка — учебный сайзинг,
+а не полевая target frequency. Его нельзя сравнивать с overall field rate без
+одинакового size window.
 
-- банк до c-bet: `5,5 BB`;
-- c-bet: `1,8 BB`;
-- check-raise до `5,5 BB`.
+## Воспроизводимая публикация
 
-Для чистого блефа без equity и без дальнейших ставок:
+Один merged artifact из manifest-gated pipeline инжектируется в c-bet и
+check-raise уроки скриптом `inject-full-history-field-data.mjs`. Если
+нет источника, манифеста, exact rank timing, action identity или достаточного
+denominator, browser остаётся в `methodology_only`.
 
-`required fold = 5,5 / (5,5 + 1,8 + 5,5) = 42,97%`.
-
-Observed aggregate fold R15–17 выше этой границы на `11,87 п.п.`, League 1 — только на `1,72 п.п.`. Это направляющее, а не apples-to-apples сравнение: field rates объединяют все наблюдавшиеся доски и размеры, тогда как `42,97%` относится только к фиксированному учебному sizing. Это не готовый EV стратегии: реальные руки имеют equity, opponent может продолжить, а другой размер меняет required fold.
-
-### 3.1. Сопоставимый HH-срез для карточки урока
-
-Правая карточка на третьем слайде использует отдельный hand-level срез из воспроизводимого RvBB c-bet pipeline Q2 2026. Это детерминированная 70% выборка физических раздач, а не агрегат из таблицы выше. Общий фильтр для всех трёх лиг:
-
-- `analysis_included = 1` и ранг префлоп-агрессора назначен as-of времени раздачи;
-- префлоп-агрессор находится на CO или BTN: в строгом unopened-RFI payload после опена остаётся соответственно два или один fold до call BB;
-- `lesson_structure = 'k_high_dry'`: unpaired rainbow K-high, disconnected, без второго broadway;
-- `30 <= cbet_pct_pot <= 36`, узкое окно вокруг ставки в треть банка;
-- `checkraise_against_us = 1`, известен fold/call/reraise ответ;
-- надёжный non-all-in raise-to размер;
-- `95 <= checkraise_to_pct_starting_pot <= 105`, то есть raise-to примерно равен банку до c-bet.
-
-| Когорта агрессора | Folds | Faced X/R | Players | Fold rate | Median c-bet | Median X/R | Median raise-to / starting pot |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| League 1, R1–5 | 46 | 93 | 69 | 49,46% | 33,00% | 3,01× | 99,50% |
-| League 2, R6–10 | 110 | 242 | 178 | 45,45% | 33,00% | 3,02× | 99,52% |
-| League 3, R11–17 | 162 | 269 | 211 | 60,22% | 33,00% | 3,02× | 99,51% |
-
-Агрегат сохранён в `size-matched-k-high-dry-folds.csv`. Доска `K♣8♥2♠` в интерфейсе — визуальный представитель класса `k_high_dry`, а не exact-board denominator. Exact K82r после фиксации позиций и двух size-фильтров слишком мал, поэтому его нельзя честно показывать как устойчивую оценку.
-
-Лига в этой карточке относится к CO/BTN aggressor, который встретил check-raise, а не к BB/checkraiser. Соседний RvBB extract не сохраняет все строгие фильтры canonical-узла урока по размеру опена, эффективному стеку и числу мест за столом. Даже после фиксации структуры и размеров это описательная частота: выбор руки, позиция внутри CO/BTN, стек и другие признаки не рандомизированы.
-
-Поэтому два опубликованных знаменателя K-high / League 2 намеренно различаются: отдельная строгая карточка использует `110 / 242`, а обзорная матрица структур — `110 / 243`. Это не две версии одного агрегата: `strict-k-high-size-window-q2-2026` и `nearby-rvbb-structure-matrix-q2-2026` закреплены разными `sampleId`, а интерфейс прямо называет матрицу обзорным RvBB-срезом.
-
-## 3.2. Структура × League для вкладки «Поле»
-
-Матрица вкладки «Поле» использует тот же hand-level RvBB extract, но считает все восемь взаимоисключающих `lesson_structure` и только префлоп-агрессоров CO/BTN. В каждой ячейке две независимые частоты:
-
-- `c-bet`: ставки CO/BTN после чека BB / все возможности поставить;
-- `fold on X/R`: фолды того же CO/BTN / встреченные check-raise с известным ответом.
-
-CO/BTN восстановлены из полного порядка preflop actions. После единственного unopened raise две добровольные реакции (`SB fold → BB call`) означают BTN, три — CO. Из `2 300 854` compact rows с `parsed_hands.csv` совпали `2 297 953`; `2 901` невалидная строка пропущена как отсутствующая в порядковой подпоследовательности. После rank matching осталось `2 256 311` строк, из них CO `519 232`, BTN `748 399`, вместе `1 267 631`. Не распарсилась позиция в `21` ranked row (`0,00093%`).
-
-Контрольные totals восьми структур:
-
-| League aggressor | C-bets | Opportunities | C-bet | Folds | Faced X/R | Fold rate |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| League 1, R1–5 | 150 558 | 169 252 | 88,95% | 10 433 | 23 009 | 45,34% |
-| League 2, R6–10 | 409 656 | 454 300 | 90,17% | 28 611 | 58 987 | 48,50% |
-| League 3, R11–17 | 578 228 | 644 079 | 89,78% | 40 808 | 74 387 | 54,86% |
-
-UI по умолчанию показывает все наблюдавшиеся размеры: минимальный fold denominator в одной structure×league ячейке равен `472`. Вторичный переключатель фиксирует один sizing window: c-bet `30–36%` стартового банка и финальный X/R-to `95–105%` стартового банка. В нём minimum N равен `38`, поэтому он показывается как сравнение при одном размере с обязательным numerator/denominator, а не как более точный headline.
-
-Опубликованные counts лежат в `structure-league-field-matrix.csv`. Воспроизведение одним streaming pass:
-
-```bash
-python3 build-structure-league-field-matrix.py \
-  --base "/path/to/outputs/flop-cbet-hu-2026-07-15" \
-  --verify-q2-controls \
-  --output /tmp/structure-league-field-matrix.csv
-```
-
-Скрипт использует O(1) row memory; растут только множества уникальных player IDs для aggregate counts. Общие fold rates дополнительно сходятся с canonical actor aggregate `44,69 / 48,38 / 54,85%` с разницей `+0,65 / +0,13 / +0,01 п.п.` соответственно. Это sanity-check response semantics, а не доказательство полной эквивалентности двух источников.
-
-## 4. Карточные примеры и практика
-
-Точный hand-level разрез по каждой доске и комбинации для этого дерева не публикуется. Поэтому карточки K82/K92:
-
-- объясняют методический выбор value и полублеф-кандидатов;
-- не получают общий field rate узла как будто это частота конкретной руки;
-- прямо маркируются как representative candidates, а не измеренная частота комбинации;
-- не называются solver targets или обязательной чистой стратегией.
-
-Одна каноническая коллекция spot ID питает вкладки Examples и Practice. Режим «Все ситуации» содержит 66 позиций на цикл: 11 учебных X/R и 55 повторов call/fold controls (`16,7%`). Это калибровочная учебная смесь, а не оценка реального распределения досок и рук. Динамический feedback сравнивает число выбранных X/R только с числом учебных X/R-кандидатов среди уже показанных раздач: ниже / ровно / выше. Поэтому случайный состав начала очереди не создаёт ложную оценку, а поле или solver не используются как target. После каждого цикла порядок снова перемешивается.
-
-Режим «Пропущенные X/R» намеренно oversample-ит 11 методических рейзов и добавляет два контрольных решения, поэтому пользовательский X/R rate с полем не сравнивается; его метрики — пропущенные и лишние check-raise. Название режима означает пропуск относительно учебного ответа, а не доказанный exact-board gap между League 1 и League 3.
-
-### 4.1. Почему Examples больше не показывают overall rate
-
-Overall X/R по лиге описывает весь диапазон BB на всех досках, а не KQ, T9s или сет в показанном примере. Рядом с одной рукой такой процент читается как условная частота, которой в текущих агрегатах нет, поэтому Examples оставляют только методическую классификацию руки.
-
-Спецификация совместного reverse-Hero extract лежит в `reverse-hero-category-league-extract.sql`. Перед публикацией category rate его parsed output обязан сохранить все opportunities и отдельный `cards_unknown`, не иметь дублей физических рук и точно восстановить canonical league totals `24 170 / 151 874`, `60 081 / 378 226`, `66 136 / 488 230`. Каждая опубликованная ячейка дополнительно должна содержать numerator, denominator, число игроков и coverage точных карт; backdoor-категории требуют exact suits, а не только `holecards_str`.
-
-### 4.2. Reverse-Hero preflight от 18 июля 2026
-
-Проверка закрылась fail-closed до raw-HH/category публикации. В первоначальном SQL одновременно стояли `preflop_raiser_count = 1` (рейз сделал отслеживаемый Hero) и `preflop_action = 'C'`; такое пересечение вернуло ноль строк. Контракт исправлен на подготовленный признак `is_one_preflop_action_before_player = 1`.
-
-На текущем monthly-rank bridge (`6 078` player-month строк, `2 200` игроков) исправленный mart preflight получил:
-
-| League | Current X/R / opportunities | Frozen control | Delta |
-| --- | ---: | ---: | ---: |
-| League 1 | 24 150 / 151 553 | 24 170 / 151 874 | −20 / −321 |
-| League 2 | 59 886 / 377 208 | 60 081 / 378 226 | −195 / −1 018 |
-| League 3 | 66 386 / 489 904 | 66 136 / 488 230 | +250 / +1 674 |
-
-Итого текущий снимок отличается на `+35 / +335`, но внутри league произошёл более крупный перенос. BigQuery time travel к снимку, использованному при подготовке урока, недоступен: readonly rank table была заменена. Поэтому exact category rates, browser artifact и feedback не публикуются; `data.js` остаётся в `pending_exact_extract`. Machine-readable provenance, job IDs, SHA rank bridge, thresholds и deltas сохранены в `reverse-hero-category-reconciliation.json`.
-
-### 4.3. Наблюдавшиеся HH-примеры League 1
-
-Для вкладки «Примеры» отдельно сохранён `league1-bb-xr-examples-q2-2026.json`: по одной физической раздаче на каждый из восьми взаимоисключающих типов флопа. Это не агрегат и не попытка восстановить частоту комбинации. В каждой строке независимо проверены exact карты Hero и флопа, линия `CO/BTN RFI → BB call → HU flop → BB check → c-bet → BB check-raise`, размеры в BB и ответ агрессора.
-
-League 1 здесь означает ранг `1–5` самого BB/check-raiser в точный момент раздачи (`exact_as_of_hand`), период — Q2 2026. В артефакте нет имён, сетевых user ID или исходных ID раздач: физическая рука связана с источником только SHA-256 hash. Интерфейс использует эти строки исключительно как наблюдавшиеся HH-примеры и не приписывает им рекомендацию, вероятность или target frequency.
-
-Этот независимый exact-as-of-hand snapshot не меняет статус reverse-Hero aggregate publication gate из раздела 4.2. Заблокированные category rates остаются заблокированными; наличие восьми проверенных единичных HH не доказывает корректность denominator, coverage или league totals для частот.
-
-## Ограничения
-
-- Все цифры описывают Q2 2026 и не являются causal proof или solver equilibrium.
-- Rank coverage около 95%; отсутствующие rank не восстанавливаются.
-- Players могут менять cohort между месяцами.
-- Exact board/combo frequency не заявлена.
-- Формула required fold игнорирует equity и будущие улицы.
-- Локальная практика хранит только счёт текущей сессии и не пишет trainer telemetry.
+Наблюдаемые частоты описывают поле и не являются solver target,
+causal proof или гарантией EV.

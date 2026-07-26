@@ -1,14 +1,15 @@
--- RFI field-action extraction, refreshed 2026-07-18.
+-- RFI field-action extraction, refreshed 2026-07-22.
 --
 -- This is a two-source read-only extraction:
 --   1. Run the BigQuery section and export its rows as the cohort-membership
 --      snapshot. It is the canonical definition of the four displayed cohorts
---      and the all-eligible League 3 R11-14 prior.
+--      used by the learner-facing comparison.
 --   2. Render each membership row as ('cohort', user_id), replace
 --      {{COHORT_MEMBERSHIP_TUPLES}}, replace {{UNIQUE_USER_IDS}} with the
 --      distinct numeric user ids, and run the ClickHouse section.
---   3. Split ClickHouse rows with cohort=l3_r11_14_eligible into the prior CSV;
---      the remaining l1/l2/l3/l3top rows form the four-cohort CSV.
+--   3. Export the ClickHouse result as one four-cohort CSV. The browser build
+--      publishes a stack/position state only when every one of the four
+--      cohorts has all 169 hand classes with N >= 50.
 --
 -- FFEV is read from the canonical FFLK last-100k period. Do not recreate it
 -- with AVG(), or with an ad-hoc tournament truncation. The source already
@@ -43,7 +44,7 @@ top_ranked AS (
     ROW_NUMBER() OVER (ORDER BY ffev DESC, user_id ASC) AS deterministic_rank,
     COUNT(*) OVER () AS eligible_players
   FROM eligible
-  WHERE current_rank BETWEEN 11 AND 14
+  WHERE current_league = 3
 ),
 memberships AS (
   SELECT
@@ -70,24 +71,13 @@ memberships AS (
   FROM top_ranked
   WHERE deterministic_rank <= CEIL(eligible_players * 0.25)
 
-  UNION ALL
-
-  SELECT
-    'l3prior' AS cohort,
-    user_id,
-    current_rank,
-    current_league,
-    ffev_hands,
-    ffev,
-    eligible_players AS cohort_selected_players
-  FROM top_ranked
 )
 SELECT *
 FROM memberships
 ORDER BY cohort, user_id;
 
 -- -------------------------------------------------------------------------
--- ClickHouse: observed unopened-pot actions, 7-9 handed, through 2026-07-16.
+-- ClickHouse: observed unopened-pot actions, exact 7-max, full stable history.
 -- Database: analytics
 -- -------------------------------------------------------------------------
 WITH members AS (
@@ -103,38 +93,106 @@ membership_counts AS (
   FROM members
   GROUP BY cohort
 ),
-dedup AS (
+candidate_ids AS (
+  -- Use the broad observed node only to find hand ids worth deduplicating.
+  -- The same predicates are repeated after argMax below, so a superseded
+  -- qualifying version can never survive when the latest row no longer
+  -- belongs to the learner-facing spot.
+  SELECT h.hand_player_id
+  FROM {{SOURCE_TABLE}} AS h
+  PREWHERE h.month_start_date >= toDate('{{WINDOW_START_MONTH}}')
+    AND h.month_start_date < toDate('{{WINDOW_END_MONTH_EXCLUSIVE}}')
+    AND h.user_id IN ({{UNIQUE_USER_IDS}})
+  WHERE h.played_at >= toDateTime('{{WINDOW_START_INCLUSIVE}} 00:00:00')
+    AND h.played_at < toDateTime('{{WINDOW_END_EXCLUSIVE}} 00:00:00')
+    AND h.hand_player_id IS NOT NULL
+    AND h.cnt_players = 7
+    AND toUInt8(coalesce(h.is_preflop_unopened, 0)) = 1
+    AND h.position IN (0, 1, 2, 3, 4, 9)
+    AND isNotNull(h.preflop_effective_stack_size_bb)
+    AND h.preflop_effective_stack_size_bb > 0
+    AND h.preflop_effective_stack_size_bb <= 200
+  GROUP BY h.hand_player_id
+),
+latest_versions AS (
   SELECT
-    network,
-    tourney_id,
-    hand_id,
-    hand_player_id,
-    argMax(user_id, version) AS uid,
-    argMax(played_at, version) AS played_ts,
-    argMax(cnt_players_lookup_position, version) AS cntp,
-    argMax(position, version) AS pos,
-    argMax(holecards_str, version) AS hand_class,
-    argMax(preflop_effective_stack_size_bb, version) AS stackbb,
-    argMax(is_preflop_unopened, version) AS unopened,
-    argMax(is_rfi, version) AS rfi,
-    argMax(is_preflop_allin, version) AS allin,
-    argMax(is_preflop_limp, version) AS limped,
-    argMax(preflop_action, version) AS preflop_actions
-  FROM analytics.int_tracker_hand_joined
-  PREWHERE month_start_date >= toDate('2025-10-01')
-    AND month_start_date < toDate('2026-08-01')
-  WHERE analytics.int_tracker_hand_joined.played_at >= toDateTime('2025-10-01 00:00:00')
-    AND analytics.int_tracker_hand_joined.played_at < toDateTime('2026-07-17 00:00:00')
-    AND user_id IN ({{UNIQUE_USER_IDS}})
-  GROUP BY network, tourney_id, hand_id, hand_player_id
+    argMax(tuple(
+      h.user_id,
+      h.played_at,
+      h.cnt_players,
+      h.cnt_players_lookup_position,
+      h.position,
+      {{HAND_CLASS_EXPRESSION}},
+      h.preflop_effective_stack_size_bb,
+      toUInt8(coalesce(h.is_preflop_unopened, 0)),
+      toUInt8(coalesce(h.is_rfi, 0)),
+      toUInt8(coalesce(h.is_preflop_allin, 0)),
+      toUInt8(coalesce(h.is_preflop_limp, 0)),
+      ifNull(h.preflop_action, ''),
+      h.preflop_raise_and_blind_made_amount_bb,
+      if(h.bb_amount > 0, coalesce(h.bet_bb_amount, 0) / h.bb_amount, 0)
+    ), tuple(
+      h.version,
+      ifNull(toString(h.user_id), ''),
+      ifNull(toString(h.played_at), ''),
+      ifNull(toString(h.cnt_players), ''),
+      ifNull(toString(h.cnt_players_lookup_position), ''),
+      ifNull(toString(h.position), ''),
+      toString(ifNull(h.network, '')),
+      toString(ifNull(h.hh_id, '')),
+      {{HAND_CLASS_EXPRESSION}},
+      ifNull(toString(h.preflop_effective_stack_size_bb), ''),
+      toString(toUInt8(coalesce(h.is_preflop_unopened, 0))),
+      toString(toUInt8(coalesce(h.is_rfi, 0))),
+      toString(toUInt8(coalesce(h.is_preflop_allin, 0))),
+      toString(toUInt8(coalesce(h.is_preflop_limp, 0))),
+      ifNull(h.preflop_action, ''),
+      ifNull(toString(h.preflop_raise_and_blind_made_amount_bb), ''),
+      if(
+        h.bb_amount > 0,
+        toString(coalesce(h.bet_bb_amount, 0) / h.bb_amount),
+        '0'
+      )
+    )) AS x
+  FROM {{SOURCE_TABLE}} AS h
+  INNER JOIN candidate_ids AS c USING (hand_player_id)
+  PREWHERE h.month_start_date >= toDate('{{WINDOW_START_MONTH}}')
+    AND month_start_date < toDate('{{WINDOW_END_MONTH_EXCLUSIVE}}')
+    AND h.user_id IN ({{UNIQUE_USER_IDS}})
+  WHERE h.played_at >= toDateTime('{{WINDOW_START_INCLUSIVE}} 00:00:00')
+    AND h.played_at < toDateTime('{{WINDOW_END_EXCLUSIVE}} 00:00:00')
+  GROUP BY h.hand_player_id
+),
+latest AS (
+  SELECT x
+  FROM latest_versions
+  WHERE x.3 = 7
+    AND x.8 = 1
+    AND x.5 IN (0, 1, 2, 3, 4, 9)
+    AND isNotNull(x.7)
+    AND x.7 > 0
+    AND x.7 <= 200
 ),
 classified AS (
   SELECT
     m.cohort,
-    d.*,
+    x.1 AS uid,
+    x.2 AS played_ts,
+    x.3 AS actual_players,
+    x.4 AS lookup_players,
+    x.5 AS pos,
+    x.6 AS hand_class,
+    x.7 AS stackbb,
+    x.8 AS unopened,
+    x.9 AS rfi,
+    x.10 AS allin,
+    x.11 AS limped,
+    x.12 AS preflop_actions,
+    x.13 AS raise_and_blind_bb,
+    x.14 AS posted_blind_bb,
     multiIf(
-      pos IN (5, 6, 7), 'EP',
-      pos IN (3, 4), 'MP',
+      pos = 4, 'EP',
+      pos = 3, 'MP',
       pos = 2, 'HJ',
       pos = 1, 'CO',
       pos = 0, 'BTN',
@@ -142,8 +200,8 @@ classified AS (
       ''
     ) AS position_group,
     multiIf(
-      pos IN (5, 6, 7), 1,
-      pos IN (3, 4), 2,
+      pos = 4, 1,
+      pos = 3, 2,
       pos = 2, 3,
       pos = 1, 4,
       pos = 0, 5,
@@ -172,45 +230,94 @@ classified AS (
       stackbb >= 6, 8,
       9
     ) AS stack_order
-  FROM dedup AS d
-  INNER JOIN members AS m ON d.uid = m.member_user_id
-  WHERE cntp BETWEEN 7 AND 9
-    AND unopened = 1
-    AND pos IN (0, 1, 2, 3, 4, 5, 6, 7, 9)
-    AND isNotNull(hand_class)
-    AND hand_class != ''
-    AND isNotNull(stackbb)
-    AND stackbb > 0
+  FROM latest
+  INNER JOIN members AS m ON x.1 = m.member_user_id
+),
+actions AS (
+  SELECT
+    *,
+    -- `is_preflop_allin` misses effective all-ins when Hero covers a shorter
+    -- opponent. The tracker amount includes Hero's posted blind, so subtract
+    -- that blind before comparing the first raise with the effective stack.
+    multiIf(
+      preflop_actions = 'R' AND (
+        allin = 1 OR (
+          isNotNull(raise_and_blind_bb)
+          AND raise_and_blind_bb - posted_blind_bb >= stackbb - 0.01
+        )
+      ), 'shove',
+      startsWith(preflop_actions, 'R'), 'raise',
+      limped = 1 OR startsWith(preflop_actions, 'C'), 'limp',
+      preflop_actions = 'F', 'fold',
+      'other'
+    ) AS action_class
+  FROM classified
 )
 SELECT
-  toString(toDate('2025-10-01')) AS window_start,
-  toString(toDate('2026-07-16')) AS window_end,
-  'cnt_players_lookup_position BETWEEN 7 AND 9' AS table_filter,
-  if(c.cohort = 'l3prior', 'l3_r11_14_eligible', c.cohort) AS cohort,
+  toString(toDate('{{WINDOW_START_INCLUSIVE}}')) AS window_start,
+  toString(toDate('{{WINDOW_THROUGH}}')) AS window_end,
+  'cnt_players = 7' AS table_filter,
+  toUInt8(7) AS table_size,
+  c.cohort AS cohort,
   any(mc.cohort_selected_players) AS cohort_selected_players,
-  position_group,
-  position_order,
-  stack_bucket,
-  stack_order,
-  hand_class,
+  c.position_group AS position_group,
+  c.position_order AS position_order,
+  c.pos AS position_code,
+  c.stack_bucket AS stack_bucket,
+  c.stack_order AS stack_order,
+  c.hand_class AS hand_class,
+  sum(count()) OVER state_window AS eligible_opportunities,
+  sum(if(c.hand_class != '', count(), 0)) OVER state_window AS known_card_opportunities,
+  sum(countIf(c.lookup_players != 7)) OVER state_window AS lookup_mismatch_opportunities,
+  toString(min(min(c.played_ts)) OVER state_window) AS first_observed_at,
+  toString(max(max(c.played_ts)) OVER state_window) AS last_observed_at,
   count() AS opportunities,
-  countIf(rfi = 1) AS raises_total,
-  countIf(rfi = 1 AND NOT(ifNull(allin, 0) = 1 AND ifNull(preflop_actions, '') = 'R')) AS regular_raise,
-  countIf(rfi = 1 AND ifNull(allin, 0) = 1 AND ifNull(preflop_actions, '') = 'R') AS open_shove,
-  countIf(limped = 1) AS limp,
-  count() - countIf(rfi = 1) - countIf(limped = 1) AS fold_other,
-  uniqExact(uid) AS players,
-  uniqExact(toStartOfMonth(played_ts)) AS months,
-  round(100.0 * countIf(rfi = 1) / count(), 3) AS raise_total_pct,
-  round(100.0 * countIf(rfi = 1 AND NOT(ifNull(allin, 0) = 1 AND ifNull(preflop_actions, '') = 'R')) / count(), 3) AS regular_raise_pct,
-  round(100.0 * countIf(rfi = 1 AND ifNull(allin, 0) = 1 AND ifNull(preflop_actions, '') = 'R') / count(), 3) AS open_shove_pct,
-  round(100.0 * countIf(limped = 1) / count(), 3) AS limp_pct,
-  round(100.0 * (count() - countIf(rfi = 1) - countIf(limped = 1)) / count(), 3) AS fold_pct,
-  toUInt8(count() < 30) AS very_low_sample,
+  countIf(action_class IN ('raise', 'shove')) AS raises_total,
+  countIf(action_class = 'raise') AS regular_raise,
+  countIf(action_class = 'shove') AS open_shove,
+  countIf(action_class = 'limp') AS limp,
+  countIf(action_class IN ('fold', 'other')) AS fold_other,
+  countIf(action_class = 'shove' AND allin = 1) AS shove_allin_flag,
+  countIf(
+    action_class = 'shove'
+    AND allin = 0
+    AND isNotNull(raise_and_blind_bb)
+    AND raise_and_blind_bb - posted_blind_bb >= stackbb - 0.01
+  ) AS shove_effective_amount_only,
+  countIf(
+    action_class = 'raise'
+    AND isNotNull(raise_and_blind_bb)
+    AND raise_and_blind_bb - posted_blind_bb BETWEEN 2.5 AND 3.5
+    AND stackbb > raise_and_blind_bb - posted_blind_bb + 0.01
+  ) AS regular_three_bb_open,
+  countIf(
+    action_class = 'shove'
+    AND allin = 0
+    AND isNotNull(raise_and_blind_bb)
+    AND raise_and_blind_bb - posted_blind_bb BETWEEN 2.5 AND 3.5
+    AND stackbb > raise_and_blind_bb - posted_blind_bb + 0.01
+  ) AS normal_three_bb_as_shove,
+  countIf(
+    preflop_actions != 'R'
+    AND startsWith(preflop_actions, 'R')
+    AND (
+      allin = 1 OR (
+        isNotNull(raise_and_blind_bb)
+        AND raise_and_blind_bb - posted_blind_bb >= stackbb - 0.01
+      )
+    )
+  ) AS non_exact_r_effective_allin,
+  round(100.0 * countIf(action_class IN ('raise', 'shove')) / count(), 3) AS raise_total_pct,
+  round(100.0 * countIf(action_class = 'raise') / count(), 3) AS regular_raise_pct,
+  round(100.0 * countIf(action_class = 'shove') / count(), 3) AS open_shove_pct,
+  round(100.0 * countIf(action_class = 'limp') / count(), 3) AS limp_pct,
+  round(100.0 * countIf(action_class IN ('fold', 'other')) / count(), 3) AS fold_pct,
+  toUInt8(count() < 50) AS below_exact_minimum,
   toUInt8(count() < 100) AS low_sample
-FROM classified AS c
+FROM actions AS c
 INNER JOIN membership_counts AS mc ON c.cohort = mc.cohort
-WHERE c.cohort != 'l3prior'
-  OR (stack_order >= 3 AND position_order <= 5)
-GROUP BY c.cohort, position_group, position_order, stack_bucket, stack_order, hand_class
+GROUP BY c.cohort, c.position_group, c.position_order, position_code, c.stack_bucket, c.stack_order, c.hand_class
+WINDOW state_window AS (
+  PARTITION BY c.cohort, c.position_group, c.position_order, position_code, c.stack_bucket, c.stack_order
+)
 ORDER BY c.cohort, stack_order, position_order, hand_class;

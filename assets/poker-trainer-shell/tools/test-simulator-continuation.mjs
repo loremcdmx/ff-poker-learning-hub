@@ -187,6 +187,29 @@ const invalidResult = api.validateContinuation(invalid);
 assert.equal(invalidResult.ok, false);
 assert(invalidResult.errors.some((error) => /unknown node "missing"/.test(error)));
 
+const nonShowdown = structuredClone(rootSpot);
+nonShowdown.continuation.nodes.showdown = {
+  id: "showdown",
+  terminal: true,
+  title: "BTN выбросил на чек-рейз",
+  question: "Раздача завершена",
+  table: {
+    street: "flop",
+    heroCards: ["Th", "9h"],
+    boardCards: ["Kc", "8h", "2s"],
+    seats: [
+      { label: "BB", state: "hero" },
+      { label: "BTN", state: "folded" }
+    ]
+  },
+  result: { winner: "Hero", showdown: false, summary: "Hero забирает банк без вскрытия." }
+};
+assert.deepEqual(Array.from(api.validateContinuation(nonShowdown).errors), [], "fold terminals stay on the real street and reveal no cards");
+const invalidFoldReveal = structuredClone(nonShowdown);
+invalidFoldReveal.continuation.nodes.showdown.table.seats[1].cards = ["Kd", "Qs"];
+invalidFoldReveal.continuation.nodes.showdown.table.seats[1].revealCardsAfterAnswer = true;
+assert.match(api.validateContinuation(invalidFoldReveal).errors.join("; "), /fold terminal must keep opponent cards hidden/);
+
 const session = api.createContinuationSession(rootSpot, { rootOptionKey: "checkraise" });
 assert.deepEqual(
   { nodeId: session.getState().nodeId, answered: session.getState().answered, finished: session.getState().finished },
@@ -247,5 +270,7 @@ assert.equal(host.listeners.click, undefined);
 
 assert.doesNotMatch(source, /data-practice-next/, "continuation never hijacks the legacy next-hand event");
 assert.doesNotMatch(source, /FFTrainerEvents|FFPlayerProgress|trainer_decision|trainer_session/, "controller owns no telemetry or progress persistence");
+assert.match(source, /showdown === false \? "Показать результат" : "Показать шоудаун"/, "fold branches never promise a showdown");
+assert.match(source, /Раздача завершена без шоудауна/, "fold result copy explicitly says that cards were not opened");
 
 console.log("Simulator continuation controller: ok");

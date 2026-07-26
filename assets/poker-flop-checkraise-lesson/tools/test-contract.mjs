@@ -7,7 +7,7 @@ import vm from "node:vm";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../../..");
-const [html, source, shared, sharedCss, continuationDataSource, practiceGeneratorSource, continuationControllerSource, sizeMatchedCsv, fieldMatrixSource, fieldMatrixCss, fieldMatrixCsv, observedLeagueOneJson] = await Promise.all([
+const [html, source, shared, sharedCss, continuationDataSource, practiceGeneratorSource, continuationControllerSource, fieldMatrixSource, fieldMatrixCss, matrixBuilderSource] = await Promise.all([
   readFile(path.join(root, "flop-checkraise-lesson.html"), "utf8"),
   readFile(path.join(root, "assets/poker-flop-checkraise-lesson/data.js"), "utf8"),
   readFile(path.join(root, "assets/poker-field-lesson/lesson.js"), "utf8"),
@@ -15,31 +15,114 @@ const [html, source, shared, sharedCss, continuationDataSource, practiceGenerato
   readFile(path.join(root, "assets/poker-flop-checkraise-lesson/continuations.js"), "utf8"),
   readFile(path.join(root, "assets/poker-flop-checkraise-lesson/practice-generator.js"), "utf8"),
   readFile(path.join(root, "assets/poker-trainer-shell/simulator-continuation.js"), "utf8"),
-  readFile(path.join(root, "assets/poker-flop-checkraise-lesson/research/size-matched-k-high-dry-folds.csv"), "utf8"),
   readFile(path.join(root, "assets/poker-flop-checkraise-lesson/field-matrix.js"), "utf8"),
   readFile(path.join(root, "assets/poker-flop-checkraise-lesson/field-matrix.css"), "utf8"),
-  readFile(path.join(root, "assets/poker-flop-checkraise-lesson/research/structure-league-field-matrix.csv"), "utf8"),
-  readFile(path.join(root, "assets/poker-flop-checkraise-lesson/research/league1-bb-xr-examples-q2-2026.json"), "utf8")
+  readFile(path.join(root, "assets/poker-flop-checkraise-lesson/research/build-structure-league-field-matrix.py"), "utf8")
 ]);
+
+const exactRows = [];
+for (const [cohortIndex, cohort] of ["league1", "league2", "league3", "novice"].entries()) {
+  for (const [positionIndex, position] of ["BTN", "CO"].entries()) {
+    for (const [depthIndex, depthBand] of ["20-30", "30-40", "40-70", "70+"].entries()) {
+      const opportunities = 100 + cohortIndex * 20 + positionIndex * 10 + depthIndex * 5;
+      const raises = 18 - cohortIndex + depthIndex;
+      const calls = 50 + cohortIndex * 3;
+      const other = 0;
+      const folds = opportunities - raises - calls - other;
+      exactRows.push({
+        node: "bb_response", cohort, position, depthBand,
+        opportunities, checksBack: 0, cbets: 0, facedRaises: 0,
+        folds, calls, raises, other, publishable: true
+      });
+      exactRows.push({
+        node: "cbet", cohort, position, depthBand,
+        opportunities, checksBack: 25, cbets: opportunities - 25, facedRaises: raises,
+        folds: 0, calls: 0, raises: 0, other: 0, publishable: true
+      });
+    }
+  }
+}
+const exactFixture = {
+  schemaVersion: 1,
+  meta: {
+    rankTiming: "exact_as_of_hand",
+    minimumDenominator: 50,
+    windowStartInclusive: "2023-09-01",
+    windowEndExclusive: "2026-07-22"
+  },
+  rows: exactRows
+};
+const sourceWithFixture = source.replace(
+  /\/\* FF_FULL_HISTORY_FIELD_START \*\/[\s\S]*?\/\* FF_FULL_HISTORY_FIELD_END \*\//,
+  `/* FF_FULL_HISTORY_FIELD_START */ ${JSON.stringify(exactFixture)} /* FF_FULL_HISTORY_FIELD_END */`
+);
+const sourceWithoutArtifact = source.replace(
+  /\/\* FF_FULL_HISTORY_FIELD_START \*\/[\s\S]*?\/\* FF_FULL_HISTORY_FIELD_END \*\//,
+  "/* FF_FULL_HISTORY_FIELD_START */ null /* FF_FULL_HISTORY_FIELD_END */"
+);
 
 const context = { window: {} };
 vm.runInNewContext(continuationDataSource, context, { filename: "poker-flop-checkraise-lesson/continuations.js" });
 vm.runInNewContext(practiceGeneratorSource, context, { filename: "poker-flop-checkraise-lesson/practice-generator.js" });
-vm.runInNewContext(source, context, { filename: "poker-flop-checkraise-lesson/data.js" });
+vm.runInNewContext(sourceWithFixture, context, { filename: "poker-flop-checkraise-lesson/data.js" });
 const data = context.window.FF_POKER_FIELD_LESSON_DATA;
-const observedLeagueOneArtifact = JSON.parse(observedLeagueOneJson);
+const emptyContext = { window: {} };
+vm.runInNewContext(continuationDataSource, emptyContext, { filename: "poker-flop-checkraise-lesson/continuations.js" });
+vm.runInNewContext(practiceGeneratorSource, emptyContext, { filename: "poker-flop-checkraise-lesson/practice-generator.js" });
+vm.runInNewContext(sourceWithoutArtifact, emptyContext, { filename: "poker-flop-checkraise-lesson/data.js" });
+assert(emptyContext.window.FF_POKER_FIELD_LESSON_DATA.cohorts.every((cohort) => cohort.actions.every((action) => action.pct === null)), "a missing exact artifact fails closed instead of displaying fake zero rates");
+const confidenceSource = await readFile(path.join(root, "assets/poker-kit/observed-frequency-confidence.js"), "utf8");
 
 assert.equal(data.schemaVersion, 1);
 assert.equal(data.key, "flop-checkraise");
+const introSeats = Array.from(data.intro.table.seats);
+const introSeat = (label) => introSeats.find((seat) => seat.label === label);
+const introStartingChips = introSeats.reduce((sum, seat) => sum + Number(seat.startingStackBb), 0);
+const introFlopChips = introSeats.reduce((sum, seat) => sum + Number(seat.stackBb), 0)
+  + Number.parseFloat(data.intro.table.pot);
+assert.equal(introStartingChips, 6 * 40, "the intro declares the real 40 BB hand-start stacks");
+assert(Math.abs(introFlopChips - introStartingChips) < 0.001, "preflop contributions move from stacks into the pot exactly once");
+assert.equal(introSeat("BB").stackBb, 36.8);
+assert.equal(introSeat("BTN").stackBb, 37.8);
+assert.equal(introSeat("SB").stackBb, 39.5);
+assert.equal(data.intro.table.heroStack, "36.8 BB");
 assert.equal(data.wisdom.length, 3);
 assert.equal(data.wisdom[1].rule, undefined, "the second wisdom slide has no extra rule callout");
 assert.equal(data.wisdom[2].rule, undefined, "the third wisdom slide has no extra rule callout");
-assert.equal(data.wisdom[2].title, "На низких лимитах фолдят больше");
-assert.match(data.wisdom[2].copy, /все телефонят/);
-assert.match(data.wisdom[2].copy, /League 3 фолдит 60,2%/);
+assert.equal(data.wisdom[2].title, "Оценивай весь узел");
+assert.match(data.wisdom[2].copy, /пас[а-я]* и колл[а-я]*/i);
+assert.equal(data.wisdom[2].visual, undefined, "the full-history wisdom does not claim unsupported board-level field evidence");
 const valueVisual = data.wisdom[1].visual;
 assert.equal(data.wisdom[1].title, "Рейзим не только блефы");
-assert.match(data.wisdom[1].copy, /велью-часть/);
+assert.match(data.wisdom[1].copy, /вэлью-часть/);
+assert.doesNotMatch(
+  shared,
+  /\.replace\(\/A-high|\.replace\(\/K-high|\.replace\(\/Вэлью|\.replace\(\/X\\\/R|\.replace\(\/top-pair|\.replace\(\/showdown/,
+  "shared renderer does not rewrite authored poker copy with regexes"
+);
+assert.equal(data.wisdom[1].visual.boardLabel, "Король-хай · сухая · K92r");
+assert.equal(data.examples.boardAtlas.structures[0].label, "Туз-хай · сухая");
+assert.equal(data.examples.boardAtlas.structures[1].label, "Король-хай · сухая");
+assert.equal(data.examples.boardAtlas.structures[4].label, "Спаренная / трипс");
+const learnerCopyFields = [];
+const technicalCopyKeys = new Set(["id", "key", "roleKey", "sourceSpotId", "sourceSpotIds", "actionKey", "tone", "categoryKey", "continuation"]);
+function collectLearnerCopy(value, key = "") {
+  if (technicalCopyKeys.has(key)) return;
+  if (typeof value === "string") learnerCopyFields.push(value);
+  else if (Array.isArray(value)) value.forEach((item) => collectLearnerCopy(item));
+  else if (value && typeof value === "object") Object.entries(value).forEach(([childKey, item]) => collectLearnerCopy(item, childKey));
+}
+collectLearnerCopy(data);
+assert.doesNotMatch(
+  learnerCopyFields.join("\n"),
+  /A-high|K-high|\btrips\b|\bdry\b|Велью|велью|X\/R|top-pair|showdown|check-raise|check-call|backdoor|straight|runner-runner|\bFold\b|\bCall\b|\bequity\b|\bmade hand\b|\bgive-up\b/i,
+  "learner-facing check-raise copy is authored once in consistent Russian"
+);
+assert.doesNotMatch(
+  [html, shared, practiceGeneratorSource].join("\n"),
+  /Велью|велью/,
+  "HTML, shared renderer and procedural feedback use one authored вэлью spelling"
+);
 assert.equal(valueVisual.type, "value-range");
 assert.deepEqual(Array.from(valueVisual.boardCards), ["Kc", "9d", "2h"]);
 assert.deepEqual(Array.from(valueVisual.groups, (group) => group.key), ["strong", "thin"]);
@@ -56,200 +139,66 @@ assert.equal(
 assert.match(valueVisual.note, /Кикеры Q, J и T.*бродвейных баррелей/i);
 assert.match(shared, /function wisdomValueRange\(item\)/, "the shared renderer supports the K92 value panel");
 assert.match(shared, /function wisdomValueCopy\(item\)/, "the shared renderer supports formatted K92 copy");
-assert.match(shared, /visual\.classList\.add\("has-value-range"\)/);
+assert.match(shared, /evidenceStatus === "methodology_only"/, "methodology-only examples are a first-class shared contract");
+assert.match(shared, /methodologyOnly = cleanText\(rawData\?\.status\) === "methodology_only"/, "methodology-only field payloads may omit unverified percentages");
 assert.match(sharedCss, /\.wisdom-value-range\s*\{/);
 assert.match(sharedCss, /\.wisdom-value-combo\s*\{/);
-assert.doesNotMatch(
-  shared,
-  /makeElement\("footer", "wisdom-board-folds-foot"\)/,
-  "the third wisdom slide does not render the technical HH footer"
-);
-assert.match(shared, /Порог выгодности чистого блефа/, "the breakeven label explains that the threshold is about profitability");
-assert.deepEqual(Array.from(data.cohorts, (cohort) => cohort.key), ["league1", "league2", "league3", "rank15_17"]);
-assert(data.cohorts.every((cohort) => cohort.display === "independent"));
-assert.equal(
-  JSON.stringify(Array.from(data.cohorts, (cohort) => Array.from(cohort.actions, (action) => Number(action.pct.toFixed(2))))),
-  JSON.stringify([[15.91, 44.69], [15.88, 48.38], [13.55, 54.85], [10.79, 54.84]]),
-  "published BB X/R and aggressor fold-vs-X/R rates stay exact"
-);
-assert.deepEqual(Array.from(data.cohorts[3].samples, (sample) => sample.value), [100372, 22434]);
-assert.match(data.meta.sampleNote, /разные|отдельно/i);
 
-const STRUCTURE_KEYS = [
-  "a_high_dry", "k_high_dry", "broadway", "low_connected",
-  "paired", "two_tone", "monotone", "other"
-];
-const LEAGUE_KEYS = ["league1", "league2", "league3"];
-const field = data.fieldMatrix;
-assert.equal(field.version, 1);
-assert.equal(field.role, "aggressor");
-assert.equal(field.rankRole, "preflop_aggressor");
-assert.deepEqual(Array.from(field.positions), ["CO", "BTN"]);
-assert.equal(field.canonicalNode, false);
+const field = data.fullHistory;
+assert.equal(data.status, "ready", "an injected exact artifact switches the field payload to ready");
+assert.equal(field.schemaVersion, 1);
 assert.deepEqual(
-  Object.fromEntries(Object.entries(field.reliability)),
-  { directionalMin: 50, solidMin: 200 },
-  "field matrix publishes the same sample-size contract as the c-bet cube"
-);
-assert.equal(field.sample.kind, "deterministic_hh_sample");
-assert.equal(field.sample.percent, 70);
-assert.equal(field.sample.analysisIncluded, true);
-assert.deepEqual(
-  [field.sample.compactRows, field.sample.parsedRows, field.sample.rankedRows, field.sample.coBtnRows, field.sample.positionParseErrors],
-  [2300854, 2297953, 2256311, 1267631, 21]
-);
-assert.match(field.definitions.cbet, /как часто CO\/BTN ставит c-bet в BB.*возможности/i);
-assert.match(field.definitions.foldVsXr, /фолды.*встреченные check-raise/i);
-assert.deepEqual(Array.from(field.foldViews, (view) => view.key), ["overall", "matched"]);
-assert.equal(field.defaultFoldView, "overall");
-assert.deepEqual(Array.from(field.leagues, (league) => league.key), LEAGUE_KEYS);
-assert.deepEqual(Array.from(field.rows, (row) => row.key), STRUCTURE_KEYS);
-assert.match(field.note, /разные знаменатели/i);
-assert.match(field.note, /каноническ/i);
-
-const expectedFieldTotals = {
-  league1: {
-    cbets: 150558, opportunities: 169252, folds: 10433, faced: 23009,
-    matchedFolds: 841, matchedFaced: 2085,
-    opportunityPlayers: 185, facedPlayers: 185, matchedPlayers: 173
-  },
-  league2: {
-    cbets: 409656, opportunities: 454300, folds: 28611, faced: 58987,
-    matchedFolds: 2928, matchedFaced: 6635,
-    opportunityPlayers: 554, facedPlayers: 549, matchedPlayers: 514
-  },
-  league3: {
-    cbets: 578228, opportunities: 644079, folds: 40808, faced: 74387,
-    matchedFolds: 4876, matchedFaced: 9161,
-    opportunityPlayers: 1276, facedPlayers: 1227, matchedPlayers: 982
+  Object.fromEntries(Object.entries(field.meta)),
+  {
+    rankTiming: "exact_as_of_hand",
+    minimumDenominator: 50,
+    windowStartInclusive: "2023-09-01",
+    windowEndExclusive: "2026-07-22"
   }
-};
-
-const fieldCells = new Set();
-for (const row of field.rows) {
-  assert.equal(Object.keys(row.values).length, 3, `${row.key} has three league cells`);
-  for (const leagueKey of LEAGUE_KEYS) {
-    const cell = row.values[leagueKey];
-    fieldCells.add(`${row.key}:${leagueKey}`);
-    const { made, opportunities } = cell.cbet;
-    assert(Number.isInteger(made) && Number.isInteger(opportunities));
-    assert(opportunities > 0 && made >= 0 && made <= opportunities);
-    for (const viewKey of ["overall", "matched"]) {
-      const { folds, faced } = cell.foldVsXr[viewKey];
-      assert(Number.isInteger(folds) && Number.isInteger(faced));
-      assert(faced > 0 && folds >= 0 && folds <= faced && faced <= made);
-    }
-    assert(cell.foldVsXr.matched.faced <= cell.foldVsXr.overall.faced);
-  }
+);
+assert.equal(field.rows.length, 64, "the fixture covers both exact nodes, four cohorts, two openers and four stack bands");
+const responseRows = field.rows.filter((row) => row.node === "bb_response");
+assert.equal(responseRows.length, 32);
+for (const row of responseRows) {
+  assert.equal(row.folds + row.calls + row.raises + row.other, row.opportunities);
+  assert.equal(row.publishable, row.opportunities >= 50);
 }
-assert.equal(fieldCells.size, 24);
-const thinMatchedCell = field.rows.find((row) => row.key === "low_connected").values.league1.foldVsXr.matched;
-const directionalMatchedCell = field.rows.find((row) => row.key === "broadway").values.league1.foldVsXr.matched;
-assert.deepEqual([thinMatchedCell.folds, thinMatchedCell.faced], [14, 38]);
-assert.deepEqual([directionalMatchedCell.folds, directionalMatchedCell.faced], [69, 144]);
+assert.deepEqual(Array.from(data.cohorts, (cohort) => cohort.key), ["league1", "league2", "league3", "novice"]);
+assert(data.cohorts.every((cohort) => cohort.display === "mix"));
+for (const cohort of data.cohorts) {
+  assert.deepEqual(Array.from(cohort.actions, (action) => action.key), ["fold", "call", "checkraise"]);
+  assert(Math.abs(cohort.actions.reduce((sum, action) => sum + action.pct, 0) - 100) < 1e-9);
+  assert(cohort.sample >= 50);
+}
+assert.match(data.meta.sampleNote, /сыгранные решения/i);
+assert.match(data.meta.sampleNote, /не solver-чарт/i);
+assert.match(data.meta.sampleNote, /N ≥ 50.*срезы скрываются/i);
+assert.match(emptyContext.window.FF_POKER_FIELD_LESSON_DATA.meta.sampleNote, /полнота истории ещё проверяется.*Проценты скрыты/i);
+assert.doesNotMatch(emptyContext.window.FF_POKER_FIELD_LESSON_DATA.meta.sampleNote, /hand_player_id|latest|manifest|candidate|raw-HH|N\s*[≥>]/i);
+assert.doesNotMatch(emptyContext.window.FF_POKER_FIELD_LESSON_DATA.meta.sourceLabel, /полная история/i);
+assert.doesNotMatch(source, /Q2 2026|2026-Q2|deterministic_hh_sample|pending_exact_extract|observedLeague1/);
+assert.doesNotMatch(source, /fieldMatrix\s*:/, "the sampled board matrix is absent from browser data");
+assert.match(fieldMatrixSource, /const source = lessonData\?\.fullHistory/);
+assert.match(fieldMatrixSource, /const methodologyOnly = lessonData\?\.status === "methodology_only" && !source/);
+assert.match(fieldMatrixSource, /function renderPending\(\)/);
 assert.match(
   fieldMatrixSource,
-  /function reliabilityFor\(denominator\)[\s\S]*denominator < directionalMin[\s\S]*"thin"[\s\S]*denominator < solidMin[\s\S]*"directional"/,
-  "matrix classifies thin and directional denominators"
+  /const ready = !methodologyOnly && matrixErrors\(source\)\.length === 0[\s\S]*fieldTab\.hidden = !ready[\s\S]*fieldLink\.hidden = !ready/,
+  "the exact full-history matrix exposes its tab and CTA only after the full runtime validation passes"
 );
-assert.match(
-  fieldMatrixSource,
-  /const value = percent\(rate\(numerator, denominator\)\)[\s\S]*kpi\.dataset\.reliability = reliability/,
-  "matrix keeps available values visible without learner-facing sample labels"
-);
-assert.match(fieldMatrixCss, /data-reliability="thin"[\s\S]*font-size:/, "thin values fit as copy instead of a percentage");
-
-for (const league of field.leagues) {
-  const totals = field.rows.reduce((sum, row) => {
-    const cell = row.values[league.key];
-    sum.cbets += cell.cbet.made;
-    sum.opportunities += cell.cbet.opportunities;
-    sum.folds += cell.foldVsXr.overall.folds;
-    sum.faced += cell.foldVsXr.overall.faced;
-    sum.matchedFolds += cell.foldVsXr.matched.folds;
-    sum.matchedFaced += cell.foldVsXr.matched.faced;
-    return sum;
-  }, { cbets: 0, opportunities: 0, folds: 0, faced: 0, matchedFolds: 0, matchedFaced: 0 });
-  const expected = expectedFieldTotals[league.key];
-  assert.deepEqual(totals, {
-    cbets: expected.cbets,
-    opportunities: expected.opportunities,
-    folds: expected.folds,
-    faced: expected.faced,
-    matchedFolds: expected.matchedFolds,
-    matchedFaced: expected.matchedFaced
-  });
-  assert.deepEqual(
-    [league.opportunityPlayers, league.facedPlayers, league.matchedPlayers],
-    [expected.opportunityPlayers, expected.facedPlayers, expected.matchedPlayers]
-  );
-}
-
-const fieldMatrixLines = fieldMatrixCsv.trim().split("\n");
-const fieldMatrixHeaders = fieldMatrixLines[0].split(",");
-const fieldMatrixArtifactRows = fieldMatrixLines.slice(1).map((line) => {
-  const values = line.split(",");
-  return Object.fromEntries(fieldMatrixHeaders.map((header, index) => [header, values[index]]));
-});
-assert.equal(fieldMatrixArtifactRows.length, 24);
-for (const artifact of fieldMatrixArtifactRows) {
-  const dataRow = field.rows.find((row) => row.key === artifact.structure);
-  const dataCell = dataRow.values[artifact.league];
-  assert.deepEqual(
-    [
-      dataCell.cbet.made,
-      dataCell.cbet.opportunities,
-      dataCell.foldVsXr.overall.folds,
-      dataCell.foldVsXr.overall.faced,
-      dataCell.foldVsXr.matched.folds,
-      dataCell.foldVsXr.matched.faced
-    ],
-    [
-      Number(artifact.cbet_made),
-      Number(artifact.cbet_opportunities),
-      Number(artifact.overall_folds),
-      Number(artifact.overall_faced_xr),
-      Number(artifact.matched_folds),
-      Number(artifact.matched_faced_xr)
-    ]
-  );
-}
-
-const foldVisual = data.wisdom[2].visual;
-assert.equal(foldVisual.type, "board-folds");
-assert.equal(foldVisual.sampleId, "strict-k-high-size-window-q2-2026");
-assert.equal(foldVisual.cohortRole, "aggressor");
-assert.equal(foldVisual.breakeven, 42.97, "the bluff threshold stays in the visual card after simplifying the lesson copy");
-assert.deepEqual(Array.from(foldVisual.boardCards), ["Kc", "8h", "2s"]);
-assert.equal(new Set(foldVisual.boardCards).size, 3);
-assert.match(foldVisual.boardScope, /представитель класса/i, "K82r stays representative rather than exact-board evidence");
-assert.match(foldVisual.sizing.cbet, /30–36%/);
-assert.match(foldVisual.sizing.checkraise, /95–105%/);
-assert.deepEqual(Array.from(foldVisual.rows, (row) => row.key), ["league1", "league2", "league3"]);
-assert.deepEqual(
-  Array.from(foldVisual.rows, (row) => [row.folds, row.faced, row.players]),
-  [[46, 93, 69], [110, 242, 178], [162, 269, 211]],
-  "size- and board-class-matched Q2 HH counts stay exact"
-);
-assert.deepEqual(
-  Array.from(foldVisual.rows, (row) => Number((row.folds / row.faced * 100).toFixed(2))),
-  [49.46, 45.45, 60.22]
-);
-const sizeMatchedRows = sizeMatchedCsv.trim().split("\n").slice(1).map((line) => line.split(","));
-assert.deepEqual(
-  sizeMatchedRows.map((row) => [row[2], Number(row[10]), Number(row[11]), Number(row[12])]),
-  [["league1", 46, 93, 69], ["league2", 110, 242, 178], ["league3", 162, 269, 211]],
-  "browser data stays aligned with the published aggregate artifact"
-);
-const fieldKHighLeague2 = field.rows.find((row) => row.key === "k_high_dry").values.league2.foldVsXr.matched;
-assert.equal(field.sample.id, "nearby-rvbb-structure-matrix-q2-2026");
-assert.notEqual(field.sample.id, foldVisual.sampleId, "the strict card and nearby structure matrix keep distinct sample contracts");
-assert.deepEqual(
-  [foldVisual.rows.find((row) => row.key === "league2").faced, fieldKHighLeague2.faced],
-  [242, 243],
-  "the one-hand denominator difference is explicit rather than silently conflated"
-);
-assert.match(field.foldViews.find((view) => view.key === "matched").note, /обзорный.*N не обязан совпадать/i);
+assert.match(fieldMatrixSource, /const COHORTS = \[[\s\S]*league1[\s\S]*league2[\s\S]*league3[\s\S]*novice/);
+assert.match(fieldMatrixSource, /folds \+ calls \+ raises \+ other !== opportunities/);
+assert.match(fieldMatrixSource, /row\.publishable !== \(opportunities >= 50\)/);
+assert.match(fieldMatrixSource, /const POSITIONS = \["BTN", "CO"\]/);
+assert.match(fieldMatrixSource, /const DEPTHS = \["20-30", "30-40", "40-70", "70\+"\]/);
+assert.doesNotMatch(fieldMatrixSource, /STRUCTURE_KEYS|foldViews|Q2 2026/);
+assert.match(fieldMatrixCss, /structure-response-bar[\s\S]*is-fold[\s\S]*is-call[\s\S]*is-raise/);
+assert.match(fieldMatrixCss, /example-observed\[hidden\]\s*\{\s*display:\s*none\s*!important/);
+assert.match(matrixBuilderSource, /LEAGUES = \("league1", "league2", "league3", "novice"\)/, "Q2 research cohorts stay disjoint through R18");
+assert.match(matrixBuilderSource, /"league3": "R11-14"[\s\S]*"novice": "R15-18"/);
+assert.match(matrixBuilderSource, /--size-matched-output[\s\S]*size_matched_k_high_rows/, "the size-matched card is derived in the same matrix pass");
+assert.match(matrixBuilderSource, /legacy residue-export helper is not a release source/i);
+assert.doesNotMatch(matrixBuilderSource, /EXPECTED_Q2_CONTROLS|--verify-q2-controls|2_300_854|2_256_311/, "stale sampled-Q2 counters cannot masquerade as a current release gate");
 
 assert.equal(data.practice.length, 23, "one canonical practice catalog feeds all modes");
 const byId = new Map(data.practice.map((spot) => [spot.id, spot]));
@@ -308,13 +257,19 @@ assert.match(byId.get("xr-22-set").title, /K92hh/, "the two-tone K-heart board i
 assert.doesNotMatch(data.intro.title, /как кандидат/i, "the intro title does not reveal the teaching answer");
 assert.doesNotMatch(shared, /formatCount\(folds\).*formatCount\(faced\)|pluralRu\(folds/, "field evidence no longer exposes raw fold counts");
 assert.match(byId.get("fold-j5-weak-backdoor").options.find((option) => option.key === "checkraise").feedback, /эксплойт.*оверфолд.*дисциплинированнее/i);
-assert.match(byId.get("fold-t8-backdoor-only").answer, /эксплойт.*gutshot.*один.*runner-runner/i);
+assert.match(byId.get("fold-t8-backdoor-only").answer, /эксплойт.*гатшот.*один.*раннер-раннер/i);
 assert.doesNotMatch(source, /Лишн(?:ий|их) (?:check-raise|рейз|X\/R)/i, "optimistic check-raises are not framed as automatic blunders");
 for (const requestedId of ["xr-jt-gutshot", "xr-qt-gutshot", "xr-qj-gutshot", "xr-k9-two-pair", "xr-k2-two-pair", "xr-99-set", "xr-22-set"]) {
   assert(byId.has(requestedId), `${requestedId} from the lesson brief is present`);
 }
 
 assert.equal(data.examples.tree, "bb_vs_late_rfi");
+assert.equal(data.examples.observedLeague1, undefined, "Examples no longer publish sampled observed hands as full-history evidence");
+const expectedObservedStructures = [
+  "a_high_dry", "k_high_dry", "broadway", "low_connected",
+  "paired", "two_tone", "monotone", "other"
+];
+if (false) {
 const observedLeagueOne = data.examples.observedLeague1;
 const observedSampleId = "league1-bb-xr-examples-q2-2026-v1";
 const expectedObservedStructures = [
@@ -389,6 +344,7 @@ assert.deepEqual(
   observedLeagueOneArtifact.hands,
   "browser data stays byte-for-field aligned with the independently saved exact-HH artifact"
 );
+}
 
 const boardAtlas = data.examples.boardAtlas;
 const expectedAtlasRoles = ["value", "semi_bluff", "check_call", "fold"];
@@ -419,7 +375,7 @@ const handClassFromCards = (cards) => {
 };
 assert(boardAtlas, "the Examples tab exposes the teaching board atlas");
 assert.equal(boardAtlas.sourceKind, "teaching");
-assert.match(boardAtlas.note, /учебная стратегия.*не HH поля/i, "the atlas is not presented as observed field play");
+assert.match(boardAtlas.note, /учебная стратегия.*не наблюдени[ея] поля/i, "the atlas is not presented as observed field play");
 assert.match(boardAtlas.scope, /BB против BTN.*40–60 BB.*25–33% банка/i, "the authored strategy has a concrete spot boundary");
 assert.deepEqual(
   Array.from(boardAtlas.structures, (structure) => structure.key),
@@ -486,7 +442,7 @@ for (const example of [...data.examples.value, ...data.examples.bluff]) {
   assert.deepEqual(Array.from(example.heroCards), Array.from(sourceSpot.table.heroCards));
   assert.deepEqual(Array.from(example.boardCards), Array.from(sourceSpot.table.boardCards));
   assert.equal(example.options, undefined, `${example.id} is explanatory, not a fake decision`);
-  assert.match(example.representativeNote, /общий X\/R.*не подставляется/i);
+  assert.match(example.representativeNote, /не приписывается общая полевая частота/i);
   assert.equal(example.playbook.action, "Чек-рейз до 5,5 BB");
   for (const key of ["baselineRole", "whyThisHand", "bestTurns", "slowdownTurns", "afterVillainContinues"]) {
     assert(example.playbook[key], `${example.id} has filled ${key}`);
@@ -507,19 +463,14 @@ for (const example of [...data.examples.value, ...data.examples.bluff]) {
     assert.deepEqual(Array.from(representative.heroCards), Array.from(representativeSpot.table.heroCards));
     assert.deepEqual(Array.from(representative.boardCards), Array.from(representativeSpot.table.boardCards));
   });
-  assert.equal(example.evidence.status, "pending_exact_extract");
-  assert.match(example.evidence.scope, /made-hand\/draw category/i);
+  assert.equal(example.evidence.status, "methodology_only");
+  assert.match(example.evidence.scope, /учебная категория руки.*полевая частота.*не приписывается/i);
   assert(example.evidence.categoryKey, `${example.id} has a stable category key`);
   assert(example.evidence.categoryLabel, `${example.id} has a user-facing category label`);
   for (const leagueKey of ["league1", "league2", "league3"]) {
-    const row = example.evidence[leagueKey];
-    assert.deepEqual(
-      [row.xraises, row.opportunities, row.players],
-      [null, null, null],
-      `${example.id}.${leagueKey} does not reuse the overall node rate`
-    );
-    assert.match(row.note, /reverse-Hero|тот же category denominator/i);
+    assert.equal(example.evidence[leagueKey], undefined, `${example.id}.${leagueKey} does not fabricate observed counts`);
   }
+  assert.equal(example.evidence.players, undefined, `${example.id} has no fabricated player count`);
 }
 assert.equal(new Set([...data.examples.value, ...data.examples.bluff].map((example) => example.evidence.categoryKey)).size, 5);
 assert.deepEqual(
@@ -530,18 +481,25 @@ assert.deepEqual(
     .sort(),
   "every authored X/R candidate appears once inside the five category cards"
 );
-assert.match(data.examples.lead, /восемь реальных раздач Лиги 1.*64 учебные руки.*пять подробных разборов/i);
-assert.match(data.examples.method, /восемь реально сыгранных X\/R.*учебная стратегия.*не HH поля.*не задаёт частоту или рекомендацию/i);
-assert.match(data.examples.bluff[0].contrast.copy, /один слабый backdoor.*эксплойт.*два пути усиления/i);
-assert.match(data.examples.bluff[1].contrast.copy, /один runner-runner.*эксплойт.*gutshot/i);
+assert.match(data.examples.lead, /64 учебные руки.*пять подробных разборов/i);
+assert.doesNotMatch(data.examples.lead, /реальн|наблюд/i);
+assert.match(data.examples.method, /учебная стратегия.*не наблюдавшиеся раздачи поля/i);
+assert.match(data.examples.bluff[0].contrast.copy, /один слабый бэкдор.*эксплойт.*два пути усиления/i);
+assert.match(data.examples.bluff[1].contrast.copy, /один раннер-раннер.*эксплойт.*гатшот/i);
 
 assert.match(html, /data-intro-table/);
 assert.match(html, /data-step-target="examples"/);
-assert.match(html, /data-examples-league-one/, "the Examples tab has a dedicated observed League 1 host");
-assert.match(shared, /observedLeague1/, "the shared lesson renderer reads the observed League 1 data contract");
-assert.match(shared, /data-examples-league-one/, "the shared lesson renderer mounts the observed League 1 cards separately");
+assert.match(html, /data-period-label>Источник не опубликован</, "pending static copy does not expose a target window as completed data");
+assert.match(html, /data-source-label/);
+assert.match(html, /data-sample-note/);
+assert.match(data.meta.sampleNote, /сыгранные решения.*не solver-чарт.*N ≥ 50.*скрываются/i);
+assert.match(html, /Полевые частоты пока скрыты/, "static field copy is neutral before injection");
+assert.match(html, /Проверяем источник полевых частот/, "the static loading state makes the source gate explicit");
+assert.doesNotMatch(html, /Полная история FF/);
+assert.match(html, /data-examples-league-one-scope>наблюдения поля загружаются</, "static example scope is neutral before reconciliation");
+assert.match(fieldMatrixSource, /const observed = document\.querySelector\("\.example-observed"\)[\s\S]*observed\.hidden = true/, "sampled observed-hand host is hidden by the exact field layer");
+assert.match(fieldMatrixSource, /function reconcileStaticCopy\(\)/, "exact field copy is reconciled on first paint and load");
 assert.match(html, /data-examples-atlas/, "the Examples tab has a dedicated teaching-atlas host");
-assert.match(html, /example-observed[\s\S]*data-examples-league-one[\s\S]*example-atlas[\s\S]*data-examples-atlas/, "observed HH precede the separately labeled teaching atlas");
 assert.match(shared, /function renderExampleAtlas\(host, atlasData\)/, "the shared renderer owns the compact teaching atlas");
 assert.match(shared, /source\.boardAtlas/, "the renderer consumes the teaching atlas through a separate data contract");
 assert.match(shared, /tabs\.setAttribute\("role", "tablist"\)/, "the board selector exposes tab semantics");
@@ -569,10 +527,13 @@ assert.match(html, /data-practice-continuation-external hidden/);
 assert.doesNotMatch(html, /data-practice-start/, "practice opens directly on the first playable hand");
 assert.doesNotMatch(html, /data-practice-xr-rate|data-practice-missed-xr|data-practice-extra-xr/, "technical X/R counters do not crowd the main loop");
 assert.doesNotMatch(html, /Функциональный snapshot|T♥9♥ до showdown|Оптимистичных X\/R/, "setup and methodological copy stay out of the playable screen");
-assert.doesNotMatch(html, /data-source-label|По базе FF|rank 1–5|Учебный атлас|Бесконечная практика/, "technical source and setup labels stay out of the visible lesson shell");
+assert.doesNotMatch(html, /По базе FF|rank 1–5|Учебный атлас|Бесконечная практика/, "technical setup labels stay out of the visible lesson shell");
 assert.match(shared, /console\.error\(`\[\$\{lessonKey \|\| "poker-field-lesson"\}\] data validation failed`/, "full validation detail goes to the console");
 assert.match(shared, /Данные урока не загрузились\. Обнови страницу или попробуй позже\./, "validation failures use neutral learner-facing copy");
 assert.doesNotMatch(shared, /Функциональный стол не загрузился|проверьте shared snapshot|проверьте формат table\/options/, "render failures do not expose implementation details");
+assert.match(shared, /const endedWithoutShowdown = result\.showdown === false/, "completion feedback distinguishes fold terminals from showdowns");
+assert.match(shared, /Без шоудауна · соперник выбросил/, "fold completion never claims that a showdown happened");
+assert.match(shared, /будущий ранаут и его рука не раскрываются/, "fold completion explains why no cards or future streets appear");
 const sharedCssHash = createHash("sha256")
   .update(sharedCss.replace(/\r\n/g, "\n").replace(/\r/g, "\n"))
   .digest("hex")
@@ -602,46 +563,55 @@ const fieldMatrixHash = createHash("sha256")
   .update(fieldMatrixSource.replace(/\r\n/g, "\n").replace(/\r/g, "\n"))
   .digest("hex")
   .slice(0, 12);
+const confidenceHash = createHash("sha256")
+  .update(confidenceSource.replace(/\r\n/g, "\n").replace(/\r/g, "\n"))
+  .digest("hex")
+  .slice(0, 12);
+const continuationControllerHash = createHash("sha256")
+  .update(continuationControllerSource.replace(/\r\n/g, "\n").replace(/\r/g, "\n"))
+  .digest("hex")
+  .slice(0, 12);
+const continuationDataHash = createHash("sha256")
+  .update(continuationDataSource.replace(/\r\n/g, "\n").replace(/\r/g, "\n"))
+  .digest("hex")
+  .slice(0, 12);
 assert.match(html, new RegExp(`field-matrix\\.css\\?v=${fieldMatrixCssHash}`));
 assert.match(html, new RegExp(`field-matrix\\.js\\?v=${fieldMatrixHash}`));
-assert.match(html, /simulator-continuation\.js\?v=20260716-full-hand-1/);
-assert.match(html, /poker-flop-checkraise-lesson\/continuations\.js\?v=e5a2e89fd1c0/);
+assert.match(html, new RegExp(`observed-frequency-confidence\\.js\\?v=${confidenceHash}`));
+assert.match(html, new RegExp(`simulator-continuation\\.js\\?v=${continuationControllerHash}`));
+assert.match(html, new RegExp(`poker-flop-checkraise-lesson/continuations\\.js\\?v=${continuationDataHash}`));
 assert.doesNotMatch(html, /data-cohort-cards/, "check-raise field tab is now structure-first rather than four aggregate cards");
 assert.ok(html.indexOf("simulator-snapshot.js") < html.indexOf("poker-flop-checkraise-lesson/data.js"));
 assert.ok(html.indexOf("simulator-practice.js") < html.indexOf("simulator-continuation.js"));
 assert.ok(html.indexOf("simulator-continuation.js") < html.indexOf("poker-flop-checkraise-lesson/continuations.js"));
 assert.ok(html.indexOf("poker-flop-checkraise-lesson/continuations.js") < html.indexOf("poker-flop-checkraise-lesson/data.js"));
 assert.ok(html.indexOf("poker-flop-checkraise-lesson/practice-generator.js") < html.indexOf("poker-flop-checkraise-lesson/data.js"));
+assert.ok(html.indexOf("observed-frequency-confidence.js") < html.indexOf("poker-flop-checkraise-lesson/field-matrix.js"));
 assert.ok(html.indexOf("poker-flop-checkraise-lesson/data.js") < html.indexOf("poker-flop-checkraise-lesson/field-matrix.js"));
 assert.ok(html.indexOf("poker-flop-checkraise-lesson/field-matrix.js") < html.indexOf("poker-field-lesson/lesson.js"));
-assert.match(fieldMatrixSource, /appendKpi\(metrics, "Нам ставят"/);
-assert.match(fieldMatrixSource, /CO\/BTN ставит после чека BB/);
-assert.match(fieldMatrixSource, /appendKpi\(metrics, "Нам ставят"/);
-assert.doesNotMatch(fieldMatrixSource, /appendKpi\(metrics, "C-bet"/);
-assert.match(fieldMatrixSource, /Пас на чек-рейз/);
-assert.match(fieldMatrixSource, /dataset\.foldView/);
-assert.doesNotMatch(fieldMatrixSource, /showSample|count\(numerator\)|count\(denominator\)/, "raw sample counters are not rendered inside KPI cells");
-assert.match(fieldMatrixSource, /const value = percent\(rate\(numerator, denominator\)\);/, "thin samples retain their actual percentage");
+assert.match(fieldMatrixSource, /function renderMix\(row, compact = false\)/);
+assert.match(fieldMatrixSource, /function renderSummaries\(\)/);
+assert.match(fieldMatrixSource, /function renderDifference\(\)/);
+assert.match(fieldMatrixSource, /function renderTable\(\)/);
+assert.match(fieldMatrixSource, /Сравниваем не сырую частоту одной кнопки, а весь ответ BB/);
+assert.match(fieldMatrixSource, /BB заколлировал опен CO\/BTN, чекнул и встретил c-bet/);
+for (const label of ["Пас", "Колл", "Чек-рейз"]) assert.match(fieldMatrixSource, new RegExp(`label: "${label}"`));
+assert.match(fieldMatrixSource, /observedConfidence\?\.rate\?\.\(numerator, denominator\)/, "matrix percentages use the shared exact-frequency gate");
 assert.doesNotMatch(fieldMatrixSource, /Мало данных|Ориентир по небольшой выборке/, "the learner UI has no sample-size substitute labels");
-assert.match(fieldMatrixSource, /console\.error\("\[flop-checkraise\] field matrix validation failed"/, "matrix validation detail goes to the console");
+assert.match(fieldMatrixSource, /console\.error\("\[flop-checkraise\] full-history field validation failed"/, "matrix validation detail goes to the console");
 assert.match(fieldMatrixSource, /Данные поля не загрузились[\s\S]*?Обнови страницу или попробуй позже\./, "matrix failures use neutral learner-facing copy");
-assert.doesNotMatch(fieldMatrixSource, /Как читать N:/, "the table no longer keeps an obsolete sample-size footer");
+assert.match(fieldMatrixSource, /Пока здесь намеренно нет процентов и сравнительных выводов/, "methodology-only field state contains no observed claims");
+const pendingMatrixSource = fieldMatrixSource.slice(fieldMatrixSource.indexOf("function renderPending()"), fieldMatrixSource.indexOf("function reconcileStaticCopy()"));
+assert.match(pendingMatrixSource, /полной проверки раздач и групп игроков/);
+assert.doesNotMatch(pendingMatrixSource, /hand_player_id|latest-version|N\s*[≥>]/i);
+assert.match(fieldMatrixCss, /structure-league-pending[\s\S]*min-height:\s*260px/, "pending field state is a deliberate panel, not an error stub");
 assert.match(fieldMatrixCss, /structure-league-table\s*\{[\s\S]*?min-width:\s*0;/, "the desktop matrix has no artificial horizontal floor");
-assert.match(fieldMatrixCss, /structure-league-table th,[\s\S]*?padding:\s*8px;/, "desktop matrix rows stay compact");
-assert.match(fieldMatrixCss, /thead th:first-child\s*\{\s*width:\s*20%;/, "the structure column yields space to all three leagues");
-assert.match(fieldMatrixCss, /thead th:not\(:first-child\)\s*\{\s*width:\s*26\.6667%;/, "the three league columns share the remaining width exactly");
-assert.match(fieldMatrixCss, /structure-league-table \.structure-league-cell-metrics\s*\{\s*gap:\s*6px;/, "desktop league KPIs use the compact table gap");
-assert.match(fieldMatrixCss, /--structure-league-accent:/, "each league pair receives its own restrained visual accent");
-assert.match(
-  fieldMatrixCss,
-  /structure-league-table thead th:not\(:first-child\)[\s\S]*?box-shadow:\s*inset 0 -2px 0 rgba\(var\(--structure-league-accent\), \.42\);/,
-  "league headers visibly cap their paired metric columns"
-);
-assert.match(
-  fieldMatrixCss,
-  /structure-league-table \.structure-league-cell-metrics[\s\S]*?border:\s*1px solid rgba\(var\(--structure-league-accent\), \.20\);[\s\S]*?box-shadow:/,
-  "both metrics sit inside one shared league frame"
-);
+assert.match(fieldMatrixCss, /structure-league-summary-grid\s*\{[\s\S]*grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\)/, "all four cohorts are visible together on desktop");
+assert.match(fieldMatrixCss, /thead th:first-child\s*\{\s*width:\s*13%;/, "stack leaves room for four cohort columns");
+assert.match(fieldMatrixCss, /thead th:not\(:first-child\)\s*\{\s*width:\s*21\.75%;/, "four cohort columns share the remaining width");
+assert.match(fieldMatrixCss, /structure-response-bar \.is-fold\s*\{\s*background:\s*#8da6c9;/, "fold has its own readable action color");
+assert.match(fieldMatrixCss, /structure-response-bar \.is-call\s*\{\s*background:\s*#56d3a8;/, "call has its own readable action color");
+assert.match(fieldMatrixCss, /structure-response-bar \.is-raise\s*\{\s*background:\s*#dd58aa;/, "check-raise has its own readable action color");
 assert.match(
   fieldMatrixCss,
   /wisdom-slide\.has-value-range-slide \.wisdom-value-copy-list\s*\{\s*display:\s*none;/,
@@ -654,10 +624,10 @@ for (const annotationClass of [
   "wisdom-value-combo-label",
   "wisdom-value-note"
 ]) {
-  assert.match(
+  assert.doesNotMatch(
     fieldMatrixCss,
-    new RegExp(`wisdom-slide\\.has-value-range-slide[\\s\\S]*?\\.${annotationClass}[\\s\\S]*?display:\\s*none;`),
-    `${annotationClass} stays hidden in the picture-only K92 range`
+    new RegExp(`wisdom-slide\\.has-value-range-slide \\.${annotationClass}\\s*\\{[^}]*display:\\s*none;`),
+    `${annotationClass} stays visible in the labelled K92 range`
   );
 }
 assert.match(
@@ -669,6 +639,11 @@ assert.match(
   fieldMatrixCss,
   /wisdom-value-group\.is-thin \.wisdom-value-combos\s*\{\s*grid-template-columns:\s*repeat\(3,/,
   "the three mixed Kx hands stay on one compact picture row"
+);
+assert.match(
+  fieldMatrixCss,
+  /@media \(max-width: 590px\)[\s\S]*?wisdom-value-group\.is-strong \.wisdom-value-combos\s*\{\s*grid-template-columns:\s*repeat\(3,/,
+  "the labelled strong-value range reflows instead of clipping on mobile"
 );
 assert.match(fieldMatrixCss, /structure-league-mobile-label/);
 assert.match(fieldMatrixCss, /@media \(max-width: 820px\)/);
@@ -763,34 +738,44 @@ vm.runInNewContext(fieldMatrixSource, fieldMatrixRuntime, { filename: "poker-flo
 const validateFieldMatrix = fieldMatrixRuntime.window.FFCheckraiseFieldMatrix.validate;
 assert.deepEqual(Array.from(validateFieldMatrix(field).errors), []);
 const invalidField = JSON.parse(JSON.stringify(field));
-invalidField.role = "checkraiser";
-invalidField.rows = invalidField.rows.filter((row) => row.key !== "monotone");
-invalidField.rows[0].values.league1.cbet.made = invalidField.rows[0].values.league1.cbet.opportunities + 1;
-invalidField.rows[1].values.league2.foldVsXr.overall.folds = invalidField.rows[1].values.league2.foldVsXr.overall.faced + 1;
-invalidField.rows[2].values.league3.foldVsXr.matched.faced = invalidField.rows[2].values.league3.foldVsXr.overall.faced + 1;
+invalidField.meta.rankTiming = "current_rank";
+invalidField.meta.windowEndExclusive = "2026-07-23";
+const invalidResponseRows = invalidField.rows.filter((row) => row.node === "bb_response");
+invalidResponseRows[0].folds += 1;
+invalidResponseRows[1].publishable = false;
+invalidField.rows = invalidField.rows.filter((row) => row.cohort !== "novice");
 const invalidFieldErrors = Array.from(validateFieldMatrix(invalidField).errors);
-assert(invalidFieldErrors.some((error) => /role должен быть aggressor/.test(error)));
-assert(invalidFieldErrors.some((error) => /восемь взаимоисключающих структур/.test(error)));
-assert(invalidFieldErrors.some((error) => /неверные c-bet counts/.test(error)));
-assert(invalidFieldErrors.some((error) => /неверные fold-vs-X\/R counts/.test(error)));
-assert(invalidFieldErrors.some((error) => /matched N больше overall N/.test(error)));
+assert(invalidFieldErrors.some((error) => /exact rank-at-hand/.test(error)));
+assert(invalidFieldErrors.some((error) => /нужно окно/.test(error)));
+assert(invalidFieldErrors.some((error) => /действия не сходятся/.test(error)));
+assert(invalidFieldErrors.some((error) => /нарушен N=50 gate/.test(error)));
+assert(invalidFieldErrors.some((error) => /нет novice/.test(error)));
 
 const rateFeedback = runtimeContext.window.FFPokerFieldLesson.practiceRateFeedbackFor;
 const decisionOutcome = runtimeContext.window.FFPokerFieldLesson.decisionOutcomeFor;
 const gutshotSession = context.window.FFFlopCheckraisePracticeGenerator.createSession({ seed: "diagnose-86s-k95" });
 let gutshotSpot = null;
-while (!gutshotSpot || gutshotSpot.practiceMeta.serial < 18) gutshotSpot = gutshotSession.next();
+for (let attempt = 0; attempt < 80 && gutshotSpot?.practiceMeta.archetype !== "thin-gutshot"; attempt += 1) {
+  gutshotSpot = gutshotSession.next();
+}
 assert.equal(gutshotSpot.practiceMeta.archetype, "thin-gutshot");
 assert.equal(
   decisionOutcome(gutshotSpot.options.find((option) => option.key === "checkraise"), gutshotSpot.options.find((option) => option.correct)),
   "alternative",
   "the 86s gutshot check-raise is accepted as a mix rather than graded as an error"
 );
-const kqJ72Session = context.window.FFFlopCheckraisePracticeGenerator.createSession({ seed: "kq-j72-btnshot-1653" });
+const generator = context.window.FFFlopCheckraisePracticeGenerator;
+assert.equal(
+  generator.isBlockerOvercardMix({ id: "call-strong-overcards" }, ["Kc", "Qs"], ["Js", "7d", "2h"]),
+  true,
+  "KQ on J72r remains a blocker-overcard mix regardless of shuffled bag order"
+);
+const kqJ72Session = generator.createSession({ seed: "kq-j72-btnshot-1653" });
 let kqJ72Spot = null;
-while (!kqJ72Spot || kqJ72Spot.practiceMeta.serial < 58) kqJ72Spot = kqJ72Session.next();
-assert.deepEqual(Array.from(kqJ72Spot.table.heroCards), ["Kc", "Qs"]);
-assert.deepEqual(Array.from(kqJ72Spot.table.boardCards), ["Js", "7d", "2h"]);
+for (let attempt = 0; attempt < 80 && kqJ72Spot?.practiceMeta.archetype !== "call-strong-overcards"; attempt += 1) {
+  kqJ72Spot = kqJ72Session.next();
+}
+assert.equal(kqJ72Spot.practiceMeta.archetype, "call-strong-overcards");
 assert.equal(
   decisionOutcome(kqJ72Spot.options.find((option) => option.key === "checkraise"), kqJ72Spot.options.find((option) => option.correct)),
   "alternative",
@@ -828,15 +813,13 @@ const incomplete = JSON.parse(JSON.stringify(data));
 incomplete.cohorts[0].actions[0].pct = null;
 incomplete.examples.value[0].tree = "rvcc";
 incomplete.examples.value[0].playbook.bestTurns = "";
+incomplete.examples.value[0].evidence.status = "ready";
 incomplete.practiceGenerator.global = "";
 incomplete.wisdom[1].visual.boardCards[1] = "Kc";
 incomplete.wisdom[1].visual.groups[1].hands.push({ label: "K9", cards: ["Kh", "9s"] });
 incomplete.wisdom[1].visual.groups[0].hands[0].cards = ["Kc", "9c"];
 incomplete.wisdom[1].visual.note = "";
-incomplete.wisdom[2].visual.boardCards[1] = "Kc";
-incomplete.wisdom[2].visual.sizing.checkraise = "";
-incomplete.wisdom[2].visual.rows = incomplete.wisdom[2].visual.rows.filter((row) => row.key !== "league2");
-incomplete.wisdom[2].visual.rows[0].folds = incomplete.wisdom[2].visual.rows[0].faced + 1;
+assert.deepEqual(Array.from(runtimeContext.window.FFPokerFieldLesson.validateData(data).errors), [], "methodology-only examples need no fabricated observed counts");
 const incompleteErrors = runtimeContext.window.FFPokerFieldLesson.validateData(incomplete).errors;
 assert(incompleteErrors.some((error) => /actions\[0\]: нет pct/.test(error)), "missing pct is rejected");
 assert(incompleteErrors.some((error) => /tree должен быть bb_vs_late_rfi/.test(error)), "wrong example tree is rejected");
@@ -846,8 +829,7 @@ assert(incompleteErrors.some((error) => /три уникальные валид�
 assert(incompleteErrors.some((error) => /рука K9 повторяется/.test(error)), "duplicate value hand is rejected");
 assert(incompleteErrors.some((error) => /две валидные карты без конфликта/.test(error)), "value example cannot reuse a board card");
 assert(incompleteErrors.some((error) => /нет note/.test(error)), "missing value-range explanation is rejected");
-assert(incompleteErrors.some((error) => /нет checkraise/.test(error)), "missing shared size scope is rejected");
-assert(incompleteErrors.some((error) => /нужны league1, league2, league3/.test(error)), "missing league row is rejected");
-assert(incompleteErrors.some((error) => /неверные folds\/faced/.test(error)), "folds above faced are rejected");
+assert(incompleteErrors.some((error) => /нет X\/R numerator или denominator/.test(error)), "ready evidence still requires exact counts");
+assert(incompleteErrors.some((error) => /нет числа игроков/.test(error)), "ready evidence still requires player support");
 
 console.log("flop check-raise lesson contract: ok");

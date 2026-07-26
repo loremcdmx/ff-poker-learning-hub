@@ -9,6 +9,16 @@
   var cfg = configRoot && configRoot.trainers[trainerKey];
   var trainer = data && data.trainers[trainerKey];
   if (!cfg || !trainer) throw new Error("PokerPreflopBenchmark data/config is required for " + trainerKey);
+  var readinessContract = root.PokerPreflopBenchmarkReadiness;
+  var readiness = readinessContract && typeof readinessContract.validateBenchmarkData === "function"
+    ? readinessContract.validateBenchmarkData(data, evData)
+    : { ready: false, reasons: ["shared readiness contract is missing"] };
+  root.PokerPreflopBenchmarkReadinessState = readiness;
+  var observedReady = readiness.ready === true;
+  var methodologyOnly = !observedReady;
+  var availableScreens = methodologyOnly
+    ? ["hand", "main", "wisdom"]
+    : ["hand", "main", "ranges", "field", "wisdom", "practice"];
 
   var RANKS = "AKQJT98765432".split("");
   var STACK_ORDER = trainerKey === "vs_raise_free"
@@ -35,14 +45,23 @@
     misses: 0,
     answered: false,
     choice: "",
-    courseReported: false,
+    lastReportedAttempts: 0,
     sessionId: "",
+    filterAdjustment: "",
   };
 
   function $(selector) { return document.querySelector(selector); }
   function $$(selector) { return Array.from(document.querySelectorAll(selector)); }
   function pct(value) { return Math.round(Number(value || 0)) + "%"; }
   function pp(value) { var n = Math.round(Number(value || 0)); return (n > 0 ? "+" : "") + n + " п.п."; }
+  function combinationWord(value) {
+    var number = Math.abs(Number(value || 0)) % 100;
+    var last = number % 10;
+    if (number > 10 && number < 20) return "комбинаций";
+    if (last === 1) return "комбинация";
+    if (last >= 2 && last <= 4) return "комбинации";
+    return "комбинаций";
+  }
   function signedBb(value, digits) {
     var number = Number(value || 0);
     var sign = number > 0 ? "+" : number < 0 ? "−" : "";
@@ -89,7 +108,14 @@
     return ["hero_position", "opener_position", "open_size", "stack_bucket"].every(function (key) { return a[key] === b[key]; });
   }
   function comparisonCohorts() { return cfg.comparisonCohorts || ["league1", "r15_18"]; }
-  function completeSlice(slice) { return Boolean(slice) && Object.keys(slice.cells || {}).length === 169; }
+  function completeSlice(slice) {
+    return Boolean(readinessContract && readinessContract.isCompleteFieldSlice && readinessContract.isCompleteFieldSlice(slice));
+  }
+  function materializeSlice(slice) {
+    return readinessContract && readinessContract.materializeFieldSlice
+      ? readinessContract.materializeFieldSlice(slice)
+      : null;
+  }
   function chartReadySlice(slice) {
     if (chartReadyCache.has(slice)) return chartReadyCache.get(slice);
     if (!completeSlice(slice)) { chartReadyCache.set(slice, false); return false; }
@@ -102,41 +128,84 @@
   function sliceMatches(slice, filters) {
     return FILTERS.every(function (def) { return cfg.hideFilters.includes(def.key) || slice[def.prop] === filters[def.key]; });
   }
-  function findSlice(cohort, filters) { return trainer.slices.find(function (slice) { return slice.cohort === cohort && chartReadySlice(slice) && sliceMatches(slice, filters || state.filters); }) || null; }
-  function availableValues(key) {
+  function findSlice(cohort, filters) {
+    var slice = trainer.slices.find(function (candidate) {
+      return candidate.cohort === cohort && chartReadySlice(candidate) && sliceMatches(candidate, filters || state.filters);
+    });
+    return slice ? materializeSlice(slice) : null;
+  }
+  function publishedLeagueSlices() {
+    return trainer.slices.filter(function (slice) { return slice.cohort === "league1" && chartReadySlice(slice); });
+  }
+  function orderedValues(key) {
     var def = FILTERS.find(function (item) { return item.key === key; });
-    var values = trainer.slices.filter(function (slice) { return slice.cohort === "league1" && chartReadySlice(slice); }).map(function (slice) { return slice[def.prop]; });
+    var values = publishedLeagueSlices().map(function (slice) { return slice[def.prop]; });
     return Array.from(new Set(values)).filter(Boolean).sort(function (a, b) {
       if (key === "stack") return STACK_ORDER.indexOf(a) - STACK_ORDER.indexOf(b);
       var order = ["EP", "MP", "HJ", "CO", "BTN", "SB", "2x", "2.5x", "3x", "other", "—"];
       return order.indexOf(a) - order.indexOf(b);
     });
   }
-  function reconcileFilters(requiredKey) {
-    if (findSlice("league1")) return;
-    var candidates = trainer.slices.filter(function (slice) {
-      return slice.cohort === "league1" && chartReadySlice(slice) && (!requiredKey || filterValue(slice, requiredKey) === state.filters[requiredKey]);
+  function upstreamDefinitions(key) {
+    var targetIndex = FILTERS.findIndex(function (def) { return def.key === key; });
+    return FILTERS.slice(0, targetIndex);
+  }
+  function sliceMatchesDefinitions(slice, definitions, filters) {
+    return definitions.every(function (def) { return filterValue(slice, def.key) === filters[def.key]; });
+  }
+  function valuesForFilter(key) {
+    var def = FILTERS.find(function (item) { return item.key === key; });
+    var upstream = upstreamDefinitions(key);
+    var eligible = new Set(publishedLeagueSlices().filter(function (slice) {
+      return sliceMatchesDefinitions(slice, upstream, state.filters);
+    }).map(function (slice) { return slice[def.prop]; }));
+    // This is a contextual catalog, not a Cartesian product. Every rendered
+    // choice is backed by a complete 169-hand chart for all comparison cohorts.
+    // Sparse tuples never become disabled or dead-end controls.
+    return orderedValues(key).filter(function (value) { return eligible.has(value); });
+  }
+  function filterLabel(key) {
+    var def = FILTERS.find(function (item) { return item.key === key; });
+    return def ? def.label.toLowerCase() : key;
+  }
+  function reconcileFilters(changedKey) {
+    var changedIndex = changedKey ? FILTERS.findIndex(function (def) { return def.key === changedKey; }) : -1;
+    var changed = [];
+    FILTERS.forEach(function (def, index) {
+      if (index <= changedIndex) return;
+      var upstream = FILTERS.slice(0, index);
+      var values = Array.from(new Set(publishedLeagueSlices().filter(function (slice) {
+        return sliceMatchesDefinitions(slice, upstream, state.filters);
+      }).map(function (slice) { return slice[def.prop]; }))).filter(Boolean);
+      if (values.includes(state.filters[def.key])) return;
+      var nextValue = values.includes(cfg.defaults[def.key]) ? cfg.defaults[def.key] : orderedValues(def.key).find(function (value) { return values.includes(value); });
+      if (!nextValue) return;
+      state.filters[def.key] = nextValue;
+      if (!cfg.hideFilters.includes(def.key)) changed.push(def.key);
     });
-    candidates.sort(function (a, b) {
-      var scoreA = FILTERS.reduce(function (sum, def) { return sum + (filterValue(a, def.key) === state.filters[def.key] ? 1 : 0); }, 0);
-      var scoreB = FILTERS.reduce(function (sum, def) { return sum + (filterValue(b, def.key) === state.filters[def.key] ? 1 : 0); }, 0);
-      return scoreB - scoreA;
-    });
-    var chosen = candidates[0] || trainer.slices.find(function (slice) { return slice.cohort === "league1" && chartReadySlice(slice); });
-    if (!chosen) return;
-    FILTERS.forEach(function (def) { state.filters[def.key] = chosen[def.prop]; });
+    if (!findSlice("league1")) {
+      var fallback = publishedLeagueSlices()[0];
+      if (fallback) FILTERS.forEach(function (def) { state.filters[def.key] = fallback[def.prop]; });
+    }
+    state.filterAdjustment = changedKey && changed.length
+      ? "После выбора автоматически обновлены: " + changed.map(filterLabel).join(", ") + "."
+      : "";
   }
 
   function renderFilters() {
     $$('[data-filter-host]').forEach(function (host) {
+      if (methodologyOnly) {
+        host.innerHTML = '<div class="benchmark-unavailable-copy"><strong>Фильтры временно отключены</strong><span>Они вернутся вместе с полным проверенным сравнением диапазонов.</span></div>';
+        return;
+      }
       host.innerHTML = FILTERS.filter(function (def) { return !cfg.hideFilters.includes(def.key); }).map(function (def) {
-        var buttons = availableValues(def.key).map(function (value) {
+        var buttons = valuesForFilter(def.key).map(function (value) {
           var active = state.filters[def.key] === value;
           var label = value === "other" ? "Другой" : def.key === "stack" ? displayStack(value) : value;
           return '<button class="ff-chart-filter' + (active ? ' is-active' : '') + '" type="button" data-filter="' + def.key + '" data-value="' + escapeHtml(value) + '" aria-pressed="' + String(active) + '">' + escapeHtml(label) + '</button>';
         }).join("");
         return '<div class="filter-row is-' + def.key + '-filter"><strong>' + def.label + '</strong><div class="ff-chart-filter-group">' + buttons + '</div></div>';
-      }).join("");
+      }).join("") + '<p class="benchmark-filter-status" aria-live="polite">' + escapeHtml(state.filterAdjustment) + '</p>';
     });
   }
 
@@ -152,7 +221,7 @@
     var bits = [];
     if (!cfg.hideFilters.includes("hero")) bits.push(filters.hero);
     if (!cfg.hideFilters.includes("opener")) bits.push("против " + filters.opener);
-    if (!cfg.hideFilters.includes("size")) bits.push(filters.size);
+    if (!cfg.hideFilters.includes("size")) bits.push(filters.size === "other" ? "Другой сайзинг" : filters.size);
     bits.push(displayStack(filters.stack) + " BB");
     return bits.join(" · ");
   }
@@ -227,6 +296,14 @@
     var slice = findSlice("league1");
     var novice = findSlice("r15_18");
     var host = $("#benchmarkRange");
+    if (methodologyOnly) {
+      $("#chartContext").textContent = "Методика";
+      $("#chartSummary").textContent = "Числовой чарт временно отключён";
+      host.innerHTML = '<div class="benchmark-unavailable-copy"><strong>Старые проценты сняты с публикации</strong><span>Чарт появится только после полной проверки всех рук и сравниваемых групп.</span></div>';
+      $("#benchmarkHandDetail").innerHTML = "<p>Пока используй принципы из разделов «Главное» и «Мудрости» — без запоминания неподтверждённых частот.</p>";
+      $$('[data-action-legend]').forEach(function (node) { node.innerHTML = ""; });
+      return;
+    }
     if (!slice) {
       host.innerHTML = "";
       $("#chartSummary").textContent = "Нет подтверждённого среза";
@@ -276,11 +353,20 @@
     if (!slice) return "";
     var titleMetric = trainerKey === "sb_unopened" ? "VPIP " + pct(vpip(slice.rates)) : "Продолжение " + pct(100 - slice.rates.fold);
     var metricDelta = benchmarkSlice ? (trainerKey === "sb_unopened" ? vpip(slice.rates) - vpip(benchmarkSlice.rates) : continueRate(slice.rates) - continueRate(benchmarkSlice.rates)) : 0;
-    var badge = cohort === "league1" ? "Ориентир" : cohort === "leagues2_3" ? "Переход" : "Новички";
+    var badge = cohort === "league1" ? "Ориентир" : cohort === "leagues2_3" ? "Переход" : "Ранги 15–18";
     var delta = benchmarkSlice ? '<small class="cohort-metric-delta">' + pp(metricDelta) + ' к первой лиге</small>' : '<small class="cohort-metric-delta">База сравнения</small>';
     return '<article class="cohort-card cohort-' + cohort + (cohort === "league1" ? ' is-benchmark' : '') + '"><div class="cohort-card-head"><div><p class="eyebrow">' + escapeHtml(configRoot.shared.cohorts[cohort]) + '</p><h3>' + titleMetric + '</h3>' + delta + '</div><span>' + badge + '</span></div><p>' + contextLabel(state.filters) + '</p><div class="ff-range-grid benchmark-range-grid comparison-range-grid" role="grid" aria-label="Диапазон ' + escapeHtml(configRoot.shared.cohorts[cohort]) + ' · ' + escapeHtml(contextLabel(state.filters)) + '">' + rangeCellsMarkup(slice, false, benchmarkSlice) + '</div><div class="cohort-stats">' + cfg.actions.map(function (action) { return '<div><span>' + actionLabel(action) + '</span><strong>' + pct(slice.rates[action]) + '</strong>' + (benchmarkSlice ? '<small>' + pp(slice.rates[action] - benchmarkSlice.rates[action]) + '</small>' : '<small>база</small>') + '</div>'; }).join("") + '</div></article>';
   }
   function renderComparison() {
+    if (methodologyOnly) {
+      var disabledGrid = $("#comparisonGrid");
+      disabledGrid.classList.remove("is-three-cohort");
+      disabledGrid.innerHTML = '<div class="benchmark-unavailable-copy"><strong>Сравнение диапазонов временно отключено</strong><span>Ни одна частичная группа и ни один неполный временной шард здесь не показываются.</span></div>';
+      var disabledHost = $("#comparisonGap");
+      disabledHost.classList.remove("is-three-cohort");
+      disabledHost.textContent = "Вернём сравнение только после единой проверки первой лиги, 2–3 лиг и рангов 15–18.";
+      return;
+    }
     var cohorts = comparisonCohorts();
     var slices = Object.fromEntries(cohorts.map(function (cohort) { return [cohort, findSlice(cohort)]; }));
     var league = slices.league1;
@@ -288,7 +374,7 @@
     var differences = cohorts.filter(function (cohort) { return cohort !== "league1"; }).map(function (cohort) {
       return { cohort: cohort, count: differingHandCount(league, slices[cohort]) };
     });
-    var rangeKey = !missing ? '<div class="comparison-range-key"><div class="ff-chart-legend">' + legendMarkup() + '</div><small><i aria-hidden="true"></i><span>Жёлтая рамка — другое основное действие</span>' + differences.map(function (item) { return '<b>' + escapeHtml(configRoot.shared.cohorts[item.cohort].split(" · ")[0]) + ': ' + item.count + ' рук</b>'; }).join("") + '</small></div>' : '';
+    var rangeKey = !missing ? '<div class="comparison-range-key"><div class="ff-chart-legend">' + legendMarkup() + '</div><small><i aria-hidden="true"></i><span>Жёлтая рамка — другое основное действие</span>' + differences.map(function (item) { return '<b>' + escapeHtml(configRoot.shared.cohorts[item.cohort].split(" · ")[0]) + ': ' + item.count + ' ' + combinationWord(item.count) + '</b>'; }).join("") + '</small></div>' : '';
     var grid = $("#comparisonGrid");
     grid.classList.toggle("is-three-cohort", cohorts.length === 3);
     grid.innerHTML = rangeKey + cohorts.map(function (cohort) { return cohortCard(cohort, slices[cohort], cohort === "league1" ? null : league); }).join("");
@@ -305,6 +391,9 @@
   }
 
   function currentInsights() {
+    if (methodologyOnly) return (cfg.methodologyInsights || []).map(function (item) {
+      return Object.assign({ value: "Принцип", methodology: true, metricLabel: "Методика" }, item);
+    });
     var league = findSlice("league1"), novice = findSlice("r15_18");
     if (!league || !novice) return [
       { kicker: "Ситуация", title: "Выбери соседнюю настройку", value: "—", copy: "Здесь сравнение слишком шумное, чтобы превращать его в правило.", rule: "Сдвинь стек или позицию на один шаг и вернись к этой границе позже.", metricLabel: "Что делать", bars: [] },
@@ -314,15 +403,14 @@
     var deltas = cfg.actions.map(function (action) { return { action: action, delta: novice.rates[action] - league.rates[action] }; }).sort(function (a, b) { return Math.abs(b.delta) - Math.abs(a.delta); });
     if (trainerKey === "sb_unopened") {
       var noviceVpip = vpip(novice.rates), leagueVpip = vpip(league.rates);
-      var shortLeague = findSlice("league1", Object.assign({}, state.filters, { stack: "8-10" }));
-      var shortNovice = findSlice("r15_18", Object.assign({}, state.filters, { stack: "8-10" }));
       var jamOnset = STACK_ORDER.find(function (stack) { var row = findSlice("league1", Object.assign({}, state.filters, { stack: stack })); return row && row.rates.jam >= 15; }) || state.filters.stack;
-      var onsetLeague = findSlice("league1", Object.assign({}, state.filters, { stack: jamOnset })) || league;
-      var onsetNovice = findSlice("r15_18", Object.assign({}, state.filters, { stack: jamOnset })) || novice;
+      var selectedJamTitle = league.rates.jam >= 15 ? "Пуш — отдельная ветка на " : "Пуш ещё не основная ветка на ";
+      var selectedJamCopy = "На выбранном стеке первая лига пушит " + pct(league.rates.jam) + " рук против " + pct(novice.rates.jam) + " у рангов 15–18.";
+      if (state.filters.stack !== jamOnset) selectedJamCopy += " Первый слой от 15% в лестнице появляется на " + displayStack(jamOnset) + " BB.";
       return [
-        { kicker: "Ширина входа", title: "Не сужай SB до обычной позиции", value: "VPIP " + pct(leagueVpip), copy: "Первая лига входит в банк с " + pct(leagueVpip) + " рук, а ранги 15–18 — с " + pct(noviceVpip) + ". Главная потеря начинается ещё до выбора сайзинга.", rule: "Когда все выбросили до SB, сначала спроси не «входить ли», а «комплит, рейз или пуш».", metricLabel: "Как часто входят в банк", bars: [{ label: "Первая лига", value: leagueVpip, action: "call" }, { label: "Ранги 15–18", value: noviceVpip, action: "fold" }] },
-        { kicker: "Разделение диапазона", title: "Комплит сохраняет широкую середину", value: pct(league.rates.call) + " / " + pct(league.rates.raise), copy: "На стеке " + displayStack(state.filters.stack) + " BB первая лига делит вход: комплит " + pct(league.rates.call) + ", рейз " + pct(league.rates.raise) + ", пуш " + pct(league.rates.jam) + ".", rule: "Не превращай весь широкий диапазон в один рейз: средняя часть сохраняет дешёвый вход через комплит.", metricLabel: "Комплит и рейз первой лиги", rangeSlice: league, rangeStack: state.filters.stack },
-        { kicker: "Падение стека", title: "С " + displayStack(jamOnset) + " BB появляется слой пушей", value: pct(onsetLeague.rates.jam), copy: shortLeague && shortNovice ? "На " + displayStack(jamOnset) + " BB первая лига уже пушит " + pct(onsetLeague.rates.jam) + " рук против " + pct(onsetNovice.rates.jam) + " у рангов 15–18. К 8–10 BB слой вырастает до " + pct(shortLeague.rates.jam) + " против " + pct(shortNovice.rates.jam) + "." : "Оранжевый слой на лестнице ниже показывает, как часть рейзов превращается в пуши.", rule: cfg.actionRules.jam, hideGridRule: true, metricLabel: "Опен-пуш на " + displayStack(jamOnset) + " BB", pushComparison: { league: onsetLeague, novice: onsetNovice, stack: jamOnset } },
+        { kicker: "Ширина входа", title: "Не сужай SB до обычной позиции", value: "VPIP " + pct(leagueVpip), copy: "Первая лига входит в банк с " + pct(leagueVpip) + " рук, а ранги 15–18 — с " + pct(noviceVpip) + ". Разница появляется уже в выборе входить или пасовать.", rule: "Когда все выбросили до SB, сначала спроси не «входить ли», а «комплит, рейз или пуш».", metricLabel: "Как часто входят в банк", bars: [{ label: "Первая лига", value: leagueVpip, action: "call" }, { label: "Ранги 15–18", value: noviceVpip, action: "fold" }] },
+        { kicker: "Разделение диапазона", title: "Не своди широкий VPIP к одной кнопке", value: pct(league.rates.call) + " / " + pct(league.rates.raise), copy: "На стеке " + displayStack(state.filters.stack) + " BB первая лига делит вход: комплит " + pct(league.rates.call) + ", рейз " + pct(league.rates.raise) + ", пуш " + pct(league.rates.jam) + ".", rule: "Читай цвет каждой руки на чарте: комплит, рейз и прямой пуш занимают разные части одного широкого диапазона.", metricLabel: "Комплит и рейз первой лиги", rangeSlice: league, rangeStack: state.filters.stack },
+        { kicker: "Падение стека", title: selectedJamTitle + displayStack(state.filters.stack) + " BB", value: pct(league.rates.jam), copy: selectedJamCopy, rule: cfg.actionRules.jam, hideGridRule: true, metricLabel: "Опен-пуш на " + displayStack(state.filters.stack) + " BB", pushComparison: { league: league, novice: novice, stack: state.filters.stack } },
       ];
     }
     if (
@@ -332,11 +420,18 @@
       state.filters.stack === "18-25"
     ) {
       var exactEv = evData && evData.spots && evData.spots["SB|BTN|2x|18-25"];
-      var leagueActions = exactEv && exactEv.league1.actions || league.rates;
-      var noviceActions = exactEv && exactEv.r15_18.actions || novice.rates;
-      var qjsSwap = exactEv && exactEv.jamToCallSwaps && exactEv.jamToCallSwaps.QJs;
-      var qjsLeague = qjsSwap && qjsSwap.league1 || league.cells.QJs || { call: 0, jam: 0 };
-      var qjsNovice = qjsSwap && qjsSwap.r15_18 || novice.cells.QJs || { call: 0, jam: 0 };
+      // Action frequencies and hand mixes always come from the same generated
+      // 169-hand cube as the Charts screen. The EV artifact supplies only the
+      // outcome metric, so a second extraction window cannot silently rewrite
+      // the lesson's ranges.
+      var leagueActions = league.rates;
+      var noviceActions = novice.rates;
+      var qjsLeague = league.cells.QJs || { call: 0, jam: 0 };
+      var qjsNovice = novice.cells.QJs || { call: 0, jam: 0 };
+      var evSensitivity = cfg.observedOutcomeSensitivity || {};
+      var evGapRange = Number.isFinite(Number(evSensitivity.gapMinBb100)) && Number.isFinite(Number(evSensitivity.gapMaxBb100))
+        ? Number(evSensitivity.gapMinBb100).toFixed(1).replace(".", ",") + "–" + Number(evSensitivity.gapMaxBb100).toFixed(1).replace(".", ",") + " BB"
+        : "оценка меняется вместе с окном данных";
       return [
         {
           kicker: "Форма защиты",
@@ -355,13 +450,13 @@
         },
         {
           kicker: "Цена спота",
-          title: "Та же ширина — другой винрейт",
-          value: exactEv ? "−" + Math.abs(exactEv.gapBb100).toFixed(1).replace(".", ",") + " BB" : "—",
+          title: "Разрыв наблюдается, но причина не доказана",
+          value: exactEv ? evGapRange : "—",
           copy: exactEv
-            ? "На 100 таких ситуаций первая лига получает " + signedBb(exactEv.league1.spotEvBb100, 1) + ", а ранги 15–18 — " + signedBb(exactEv.r15_18.spotEvBb100, 1) + ". Разница — " + Math.abs(exactEv.gapBb100).toFixed(1).replace(".", ",") + " BB."
+            ? "В едином окне на 100 таких ситуаций первая лига получает " + signedBb(exactEv.league1.spotEvBb100, 1) + ", а ранги 15–18 — " + signedBb(exactEv.r15_18.spotEvBb100, 1) + "; текущая разница — " + Math.abs(exactEv.gapBb100).toFixed(1).replace(".", ",") + " BB. На разных допустимых отрезках оценка разрыва менялась в диапазоне " + evGapRange + ". Это описательная связь групп, а не доказательство, что весь разрыв вызван лишними коллами."
             : "Для этого спота нужен подтверждённый срез результата.",
-          rule: "Одинаковая ширина защиты не делает диапазоны одинаковыми: оценивай, какими действиями собраны эти 26%.",
-          valueNote: "Столько ранги 15–18 недобирают относительно первой лиги на 100 повторений этого спота.",
+          rule: "Одинаковая ширина защиты не делает диапазоны одинаковыми, но сравнение когорт само по себе не устанавливает причину разницы результата.",
+          valueNote: exactEv ? (evSensitivity.note || "Диапазон чувствительности оценки, а не точный эффект одной ошибки.") : "Для результата нужен подтверждённый срез.",
           metricLabel: "Результат на 100 таких спотов",
           metrics: exactEv ? [
             { label: "Первая лига", value: signedBb(exactEv.league1.spotEvBb100, 1), tone: "positive" },
@@ -386,10 +481,8 @@
     var largest = deltas[0];
     var continueLeague = continueRate(league.rates), continueNovice = continueRate(novice.rates);
     var shortFilters = Object.assign({}, state.filters, { stack: trainerKey === "vs_raise_free" ? "20" : "18-25" });
-    var shortLeague = findSlice("league1", shortFilters) || league;
-    var shortNovice = findSlice("r15_18", shortFilters) || novice;
-    var shortStack = shortLeague.stack_bucket;
-    var jamGap = shortNovice.rates.jam - shortLeague.rates.jam;
+    var shortLeague = findSlice("league1", shortFilters);
+    var shortNovice = findSlice("r15_18", shortFilters);
     var mainInsight = { kicker: "Главный перекос", title: "«" + actionLabel(largest.action) + "» уезжает сильнее всего", value: pp(largest.delta), copy: "В этом споте ранги 15–18 выбирают «" + actionLabel(largest.action).toLowerCase() + "» в " + pct(novice.rates[largest.action]) + " случаев, первая лига — в " + pct(league.rates[largest.action]) + ".", rule: cfg.actionRules[largest.action], metricLabel: actionLabel(largest.action) + " в выбранном споте", bars: [{ label: "Первая лига", value: league.rates[largest.action], action: largest.action }, { label: "Ранги 15–18", value: novice.rates[largest.action], action: largest.action }] };
     if (trainerKey === "vs_raise_free") {
       mainInsight.kicker = "Архитектура диапазона";
@@ -407,24 +500,48 @@
     if (trainerKey !== "vs_raise_free") laterInsights.push(
       { kicker: "Первый фильтр", title: "Сначала реши: продолжать ли вообще", value: pct(continueLeague), copy: "Первая лига продолжает " + pct(continueLeague) + " рук, ранги 15–18 — " + pct(continueNovice) + ". Только после этого дели продолжение на колл, 3-бет и пуш.", rule: "Не начинай с любимой кнопки. Сначала отдели весь диапазон продолжения от паса.", metricLabel: "Все продолжения", bars: [{ label: "Первая лига", value: continueLeague, action: "call" }, { label: "Ранги 15–18", value: continueNovice, action: "call" }] }
     );
+    if (!shortLeague || !shortNovice) {
+      laterInsights.push({
+        kicker: "Короткий стек",
+        title: "Нет подтверждённого short-stack чарта",
+        value: "—",
+        copy: "Для " + contextLabel(shortFilters) + " нет двух полных матриц с достаточной выборкой. Глубокие матрицы здесь не подставляем.",
+        rule: "Перейди в «Чарты»: там видны только реально доступные сочетания позиции, сайза и стека.",
+        metricLabel: "Проверка источника",
+        bars: [],
+      });
+      return [mainInsight].concat(laterInsights);
+    }
+    var shortStack = shortLeague.stack_bucket;
+    var jamGap = shortNovice.rates.jam - shortLeague.rates.jam;
     var shortInsight = { kicker: "Короткий стек", title: trainerKey === "vs_raise_sb" ? "Не отдавай короткий стек коллам" : "Часть коллов должна стать пушами", value: pct(shortLeague.rates.jam), copy: "На " + displayStack(shortStack) + " BB первая лига пушит " + pct(shortLeague.rates.jam) + " рук, ранги 15–18 — " + pct(shortNovice.rates.jam) + ". Разница — " + Math.abs(Math.round(jamGap)) + " п.п.", rule: cfg.actionRules.jam, metricLabel: "Прямой пуш на " + displayStack(shortStack) + " BB", bars: [{ label: "Первая лига", value: shortLeague.rates.jam, action: "jam" }, { label: "Ранги 15–18", value: shortNovice.rates.jam, action: "jam" }] };
     if (trainerKey === "vs_raise_free") {
-      shortInsight.kicker = "Короткий стек";
       shortInsight.title = "Пуш появляется как отдельная ветка";
-      shortInsight.copy = "На " + displayStack(shortStack) + " BB первая лига и ранги 15–18 уже по-разному делят диапазон между коллом, 3-бетом и пушем. Сравни две матрицы целиком, а не одну полосу поверх другой.";
+      shortInsight.copy = "На " + displayStack(shortStack) + " BB первая лига и ранги 15–18 по-разному делят диапазон между коллом, 3-бетом и пушем. Сравни две матрицы целиком, а не одну полосу поверх другой.";
       shortInsight.rule = "На коротком стеке смотри, какие конкретные руки переходят в пуш, а не только на общий процент.";
-      shortInsight.strategyComparison = {
-        league: shortLeague,
-        novice: shortNovice,
-        context: contextLabel(shortFilters),
-        title: "Какие руки становятся пушем",
-      };
     }
+    if (Math.abs(jamGap) < 2) {
+      shortInsight.title = "На этом стеке пуши почти совпадают";
+      shortInsight.value = pp(jamGap);
+      shortInsight.copy = "На " + displayStack(shortStack) + " BB первая лига пушит " + pct(shortLeague.rates.jam) + " рук, ранги 15–18 — " + pct(shortNovice.rates.jam) + ". Здесь отличие нужно искать в колле и обычном 3-бете, а не придумывать его в пушах.";
+      shortInsight.rule = "Если пуши совпали, сравни полный диапазон: какие руки одна группа коллирует, а другая переводит в обычный 3-бет.";
+      shortInsight.metricLabel = "Разница в прямых пушах на " + displayStack(shortStack) + " BB";
+    }
+    if (trainerKey === "vs_raise_free") shortInsight.strategyComparison = {
+      league: shortLeague,
+      novice: shortNovice,
+      context: contextLabel(shortFilters),
+      title: "Какие руки становятся пушем",
+    };
     laterInsights.push(shortInsight);
     return [mainInsight].concat(laterInsights);
   }
 
   function wisdomProofMarkup(item) {
+    if (item.methodology) {
+      var methodologyRule = item.rule ? '<small>' + escapeHtml(item.rule) + '</small>' : '';
+      return '<div class="proof-card wisdom-rule-card benchmark-methodology-proof"><span>Методика</span><strong>Без неподтверждённых процентов</strong>' + methodologyRule + '</div>';
+    }
     if (item.strategyComparison) return strategyComparisonMarkup(item.strategyComparison);
     if (item.pushComparison) {
       var comparison = item.pushComparison;
@@ -450,7 +567,8 @@
     var insights = currentInsights();
     var host = $("#wisdomSlides");
     host.innerHTML = insights.map(function (item, index) {
-      return '<article class="slide' + (index === state.slide ? ' active' : '') + (item.rangeSlice || item.pushComparison || item.strategyComparison ? ' has-range-chart' : '') + '" role="group" aria-roledescription="слайд" aria-label="' + (index + 1) + ' из ' + insights.length + '"><span class="slide-number" aria-hidden="true">0' + (index + 1) + '</span><div class="slide-copy"><p class="eyebrow">' + item.kicker + '</p><h2>' + item.title + '</h2><p>' + item.copy + '</p><strong class="slide-rule">' + escapeHtml(item.rule) + '</strong></div><div class="slide-proof">' + wisdomProofMarkup(item) + '</div></article>';
+      var rule = item.rule ? '<strong class="slide-rule">' + escapeHtml(item.rule) + '</strong>' : '';
+      return '<article class="slide' + (index === state.slide ? ' active' : '') + (item.rangeSlice || item.pushComparison || item.strategyComparison ? ' has-range-chart' : '') + '" role="group" aria-roledescription="слайд" aria-label="' + (index + 1) + ' из ' + insights.length + '"><span class="slide-number" aria-hidden="true">0' + (index + 1) + '</span><div class="slide-copy"><p class="eyebrow">' + item.kicker + '</p><h2>' + item.title + '</h2><p>' + item.copy + '</p>' + rule + '</div><div class="slide-proof">' + wisdomProofMarkup(item) + '</div></article>';
     }).join("");
     var dots = $("#wisdomDots");
     dots.innerHTML = insights.map(function (_, index) { return '<button type="button" class="' + (index === state.slide ? 'is-active' : '') + '" data-slide="' + index + '" aria-label="Мысль ' + (index + 1) + '"></button>'; }).join("");
@@ -466,6 +584,10 @@
       var rule = item.hideGridRule ? "" : '<div class="insight-rule"><strong>За столом</strong><span>' + escapeHtml(item.rule) + '</span></div>';
       return '<article class="panel insight-card"><span>0' + (index + 1) + ' · ' + item.kicker + '</span><h3>' + item.title + '</h3><strong class="insight-number">' + item.value + '</strong><p>' + item.copy + '</p>' + rule + '</article>';
     }).join("");
+    if (methodologyOnly) {
+      $("#stackStory").innerHTML = '<div class="stack-story-head"><div><p class="eyebrow">Числовая лестница</p><h2>Стеки и частоты временно скрыты</h2></div><p>Мы не смешиваем неполные периоды и не публикуем прежние проценты. Методика выше остаётся доступной без числовых утверждений.</p></div>';
+      return;
+    }
     var ladder = STACK_ORDER.map(function (stack) {
       var filters = Object.assign({}, state.filters, { stack: stack });
       var slice = findSlice("league1", filters), novice = findSlice("r15_18", filters);
@@ -483,11 +605,32 @@
   }
 
   function renderAllDataViews() {
+    if (methodologyOnly) {
+      renderWisdomCarousel();
+      renderInsights();
+      return;
+    }
     renderFilters(); renderChart(); renderComparison(); renderWisdomCarousel(); renderInsights();
-    $$('[data-source-note]').forEach(function (node) { node.textContent = configRoot.shared.learnerSourceLabel; });
+    $$('[data-source-note]').forEach(function (node) {
+      node.textContent = methodologyOnly ? "Числовые сравнения временно отключены" : configRoot.shared.learnerSourceLabel;
+    });
+  }
+
+  function enforceAvailability() {
+    document.body.dataset.fieldAvailability = observedReady ? "ready" : "methodology_only";
+    if (!methodologyOnly) return;
+    $$('[data-screen="ranges"], [data-screen="field"], [data-screen="practice"]').forEach(function (node) { node.remove(); });
+    $$('[data-go="ranges"], [data-go="field"], [data-go="practice"]').forEach(function (node) { node.remove(); });
+    var handTab = $('.step-tabs [data-go="hand"]');
+    var mainTab = $('.step-tabs [data-go="main"]');
+    var wisdomTab = $('.step-tabs [data-go="wisdom"]');
+    if (handTab) handTab.textContent = "1. Об уроке";
+    if (mainTab) mainTab.textContent = "2. Главное";
+    if (wisdomTab) wisdomTab.textContent = "3. Мудрости";
   }
 
   function go(screen) {
+    if (!availableScreens.includes(screen)) screen = "main";
     state.screen = screen;
     $$(".screen").forEach(function (section) { var active = section.dataset.screen === screen; section.classList.toggle("active", active); section.classList.toggle("is-active", active); });
     $$(".step-tabs [data-go]").forEach(function (tab) { var active = tab.dataset.go === screen; tab.classList.toggle("active", active); tab.setAttribute("aria-selected", String(active)); if (state.introAnswered) tab.disabled = false; });
@@ -502,15 +645,17 @@
   function seatName(position) { return position === "EP" ? "UTG" : position === "MP" ? "LJ" : position; }
   function spotFor(item, prefix) {
     var hero = seatName(item.filters.hero), opener = seatName(item.filters.opener);
-    var stack = Number(String(item.filters.stack).split("-")[0].replace("<", "")) || 20;
-    if (item.filters.stack === "70+") stack = 80;
-    if (item.filters.stack === "40-70") stack = 50;
-    if (item.filters.stack === "25-40") stack = 32;
-    if (item.filters.stack === "18-25") stack = 21;
+    var stack = configRoot.shared && typeof configRoot.shared.representativeStackBb === "function"
+      ? configRoot.shared.representativeStackBb(trainerKey, item.filters.stack, data.source)
+      : Number(item.filters.stack);
+    if (!Number.isFinite(stack)) stack = Number(item.filters.stack) || 20;
     var unopened = trainerKey === "sb_unopened";
     var openAmounts = { "2x": 2, "2.5x": 2.5, "3x": 3 };
     var openAmount = unopened ? 0 : openAmounts[item.filters.size];
+    var anteBb = 1;
     if (!unopened && !openAmount) throw new Error("Unsupported preflop open size: " + item.filters.size);
+    if (!configRoot.shared || typeof configRoot.shared.preflopPotBb !== "function") throw new Error("Shared preflop pot model is required");
+    var potBb = configRoot.shared.preflopPotBb(openAmount, anteBb, opener);
     var tableOrder = ["UTG", "LJ", "HJ", "CO", "BTN", "SB", "BB"];
     var actionLine = [];
     if (unopened) actionLine = ["UTG fold", "LJ fold", "HJ fold", "CO fold", "BTN fold"];
@@ -525,8 +670,8 @@
     }
     var options = cfg.actions.map(function (action) {
       var label = actionLabel(action);
-      if (action === "raise") label += unopened ? " 3 BB" : " " + Math.max(6, Math.round(openAmount * 3)) + " BB";
-      return { key: action, label: label, correct: action === item.expected };
+      if (action === "raise" && !unopened) label += " " + Math.max(6, Math.round(openAmount * 3)) + " BB";
+      return { key: action, label: label, correct: action === item.expected, acceptableMix: action !== item.expected && Number(item.league && item.league[action] || 0) >= 30 };
     });
     return {
       id: prefix + "-" + item.hand + "-" + item.filters.hero + "-" + item.filters.stack,
@@ -539,13 +684,14 @@
         heroPosition: hero,
         heroStack: stack + " BB",
         effectiveStack: stack + " BB",
-        pot: unopened ? "2.5 BB" : (openAmount + 1.5) + " BB",
-        anteBb: 1,
+        pot: potBb + " BB",
+        anteBb: anteBb,
+        anteMode: "table",
         heroCards: cardCodes(item.hand),
         boardCards: [],
         street: "preflop",
         actionLine: actionLine,
-        historyLine: unopened ? "BB ante 1 BB · все до SB выбросили" : item.filters.opener + " открыл " + String(openAmount).replace(".", ",") + " BB · без коллеров",
+        historyLine: unopened ? "Анте стола 1 BB · все до SB выбросили" : "Анте стола 1 BB · " + item.filters.opener + " открыл " + String(openAmount).replace(".", ",") + " BB · без коллеров",
         toCall: unopened ? .5 : Math.max(0, openAmount - (hero === "SB" ? .5 : 0)),
         currentBet: unopened ? 1 : openAmount,
         dealerPosition: "BTN",
@@ -559,18 +705,26 @@
   }
 
   function practiceSpots() {
+    if (methodologyOnly) return [];
     var candidates = [];
     trainer.slices.filter(function (slice) {
       return slice.cohort === "league1" && (trainerKey === "sb_unopened" || slice.hero_position !== slice.opener_position);
     }).forEach(function (slice) {
       var novice = trainer.slices.find(function (row) { return row.cohort === "r15_18" && row.hero_position === slice.hero_position && row.opener_position === slice.opener_position && row.open_size === slice.open_size && row.stack_bucket === slice.stack_bucket; });
       if (!novice) return;
-      Object.keys(slice.cells).forEach(function (hand) {
-        if (!novice.cells[hand]) return;
-        var d = dominant(slice.cells[hand]);
-        var fieldGap = cfg.actions.reduce(function (sum, action) { return sum + Math.abs(slice.cells[hand][action] - novice.cells[hand][action]); }, 0) / 2;
+      var leagueMaterialized = materializeSlice(slice);
+      var noviceMaterialized = materializeSlice(novice);
+      if (!leagueMaterialized || !noviceMaterialized) return;
+      var handMinimum = Number(data.source && data.source.handMinimum || readinessContract.MIN_HAND_OPPORTUNITIES || 50);
+      readinessContract.HAND_CLASSES.forEach(function (hand) {
+        if (Number(leagueMaterialized.cellOpportunities[hand] || 0) < handMinimum || Number(noviceMaterialized.cellOpportunities[hand] || 0) < handMinimum) return;
+        var leagueRates = leagueMaterialized.cells[hand];
+        var noviceRates = noviceMaterialized.cells[hand];
+        if (!leagueRates || !noviceRates) return;
+        var d = dominant(leagueRates);
+        var fieldGap = cfg.actions.reduce(function (sum, action) { return sum + Math.abs(leagueRates[action] - noviceRates[action]); }, 0) / 2;
         if (!isClearPlan(d) || fieldGap < 8) return;
-        candidates.push({ hand: hand, expected: d.key, league: slice.cells[hand], novice: novice.cells[hand], confidence: d.lead, fieldGap: fieldGap, filters: { hero: slice.hero_position, opener: slice.opener_position, size: slice.open_size, stack: slice.stack_bucket } });
+        candidates.push({ hand: hand, expected: d.key, league: leagueRates, novice: noviceRates, confidence: d.lead, fieldGap: fieldGap, filters: { hero: slice.hero_position, opener: slice.opener_position, size: slice.open_size, stack: slice.stack_bucket } });
       });
     });
     var groups = {};
@@ -606,6 +760,14 @@
   function setupIntro() {
     $("#introTitle").textContent = cfg.introTitle;
     $("#introLead").textContent = cfg.introLead;
+    if (methodologyOnly) {
+      state.introAnswered = true;
+      $("#introTableHost").innerHTML = '<div class="benchmark-unavailable-copy benchmark-intro-unavailable"><strong>Раздачи с процентами временно отключены</strong><span>Мы сняли прежний ориентир, пока полный срез не пройдёт единый контроль качества.</span></div>';
+      $("#introCoach").innerHTML = '<div class="answer-card"><span class="answer-lamp"></span><div><strong>Методика доступна</strong><small>Открой три принципа без неподтверждённых чисел.</small></div><button class="btn primary" id="openMain" type="button">Открыть методику →</button></div>';
+      $$(".step-tabs button").forEach(function (tab) { tab.disabled = false; });
+      $("#openMain").onclick = function () { go("main"); };
+      return;
+    }
     state.introSpot = introItem();
     if (!state.introSpot) { $("#introCoach").innerHTML = '<div class="answer-card is-wrong"><span class="answer-lamp"></span><div><strong>Эта настройка пока недоступна</strong><small>Выбери соседнюю позицию или стек.</small></div></div>'; return; }
     renderDecision($("#introTableHost"), state.introSpot, "", "intro");
@@ -613,10 +775,12 @@
   function answerIntro(choice) {
     if (state.introAnswered || !state.introSpot) return;
     state.introAnswered = true;
-    var correct = choice === state.introSpot.expected;
+    var exact = choice === state.introSpot.expected;
+    var acceptableMix = !exact && Number(state.introSpot.league && state.introSpot.league[choice] || 0) >= 30;
+    var correct = exact || acceptableMix;
     renderDecision($("#introTableHost"), state.introSpot, choice, "intro");
     var coach = $("#introCoach");
-    coach.innerHTML = '<div class="answer-card ' + (correct ? 'is-correct' : 'is-wrong') + '"><span class="answer-lamp"></span><div><strong>' + (correct ? 'Совпало с ориентиром: ' : 'Ориентир первой лиги: ') + actionLabel(state.introSpot.expected) + '</strong><small>' + escapeHtml(cfg.actionRules[state.introSpot.expected]) + '</small></div><button class="btn primary" id="openMain" type="button">Понять почему →</button></div>';
+    coach.innerHTML = '<div class="answer-card ' + (correct ? 'is-correct' : 'is-wrong') + '"><span class="answer-lamp"></span><div><strong>' + (exact ? 'Совпало с ориентиром: ' : acceptableMix ? 'Допустимый микс: ' : 'Ориентир первой лиги: ') + actionLabel(exact ? state.introSpot.expected : choice) + '</strong><small>' + escapeHtml(acceptableMix ? "Эта линия набирает не меньше 30% в выбранном срезе; основная линия указана на столе." : cfg.actionRules[state.introSpot.expected]) + '</small></div><button class="btn primary" id="openMain" type="button">Понять почему →</button></div>';
     $$(".step-tabs button").forEach(function (tab) { tab.disabled = false; });
     $("#openMain").onclick = function () { go("main"); };
   }
@@ -625,8 +789,11 @@
   }
   function practiceAdvice(item) {
     var gap = Number(item.novice[item.expected] || 0) - Number(item.league[item.expected] || 0);
-    var direction = gap > 0 ? "чаще" : "реже";
-    var comparison = Math.abs(gap) >= 3 ? " Ранги 15–18 выбирают эту линию на " + Math.abs(Math.round(gap)) + " п.п. " + direction + "." : " В этом споте обе группы близки по частоте этой линии.";
+    var comparison = Math.abs(gap) < 3
+      ? " В этом споте обе группы близки по частоте этой линии."
+      : gap > 0
+        ? " На этой руке ранги 15–18 выбирают ту же линию на " + Math.abs(Math.round(gap)) + " п.п. чаще; разница между группами не в этой кнопке."
+        : " Ранги 15–18 выбирают эту линию на " + Math.abs(Math.round(gap)) + " п.п. реже.";
     return cfg.actionRules[item.expected] + comparison;
   }
 
@@ -643,7 +810,8 @@
     $("#practiceCoach").innerHTML = '<p class="eyebrow">' + contextLabel(item.filters) + '</p><h2>' + item.hand + ': твоё решение?</h2><p>Выбери действие под столом. После ответа получишь правило и увидишь, где расходятся две группы.</p>';
   }
   function startPractice() {
-    state.queue = practiceSpots(); state.index = 0; state.handNo = 1; state.score = 0; state.misses = 0; state.courseReported = false; state.sessionId = trainerKey + "-" + Date.now().toString(36);
+    if (methodologyOnly) return;
+    state.queue = practiceSpots(); state.index = 0; state.handNo = 1; state.score = 0; state.misses = 0; state.lastReportedAttempts = 0; state.sessionId = trainerKey + "-" + Date.now().toString(36);
     $("#practiceLaunch").hidden = true; $("#practiceShell").hidden = false;
     document.body.classList.add("practice-is-running");
     renderPracticeSpot();
@@ -653,23 +821,25 @@
   }
   function reportProgress() {
     var attempts = state.score + state.misses;
-    if (state.courseReported || attempts < 25 || !root.FFPlayerProgress || typeof root.FFPlayerProgress.setResult !== "function") return;
+    if (attempts < 25 || attempts === state.lastReportedAttempts || !root.FFPlayerProgress || typeof root.FFPlayerProgress.setResult !== "function") return;
     var score = Math.round(state.score / attempts * 100);
     try {
       root.FFPlayerProgress.setResult(cfg.resultKey, { attempts: attempts, correct: state.score, score: score, bestScore: score, status: score >= 80 ? "passed" : "repeat" }, { session: { id: state.sessionId, type: "lesson", mode: "msp-benchmark", total: attempts, correct: state.score, accuracy: score }, metadata: { trainer: trainerKey, source: "msp-rank-at-hand" } });
-      state.courseReported = true;
+      state.lastReportedAttempts = attempts;
     } catch (error) {}
   }
   function answerPractice(choice) {
     if (state.answered || !state.queue.length) return;
     var item = state.queue[state.index]; state.answered = true; state.choice = choice;
-    var correct = choice === item.expected;
+    var exact = choice === item.expected;
+    var acceptableMix = !exact && Number(item.league && item.league[choice] || 0) >= 30;
+    var correct = exact || acceptableMix;
     if (correct) state.score += 1; else state.misses += 1;
     renderDecision($("#practiceTable"), item, choice, "practice");
     $("#score").textContent = state.score; $("#misses").textContent = state.misses;
     var feedback = $("#practiceFeedback"); feedback.hidden = false;
-    feedback.innerHTML = '<div class="answer-card ' + (correct ? 'is-correct' : 'is-wrong') + '"><span class="answer-lamp"></span><div><strong>' + (correct ? 'Совпало с ориентиром: ' : 'Ориентир первой лиги: ') + actionLabel(item.expected) + '</strong><small>' + (correct ? 'Это самая частая линия первой лиги в этом подтверждённом срезе.' : 'Сравни свой выбор с частотами обеих групп ниже.') + '</small></div><button class="btn primary" id="nextPractice" type="button">Следующая рука →</button></div>';
-    $("#practiceCoach").innerHTML = '<p class="eyebrow">' + (correct ? 'Совпало' : 'Разбор') + '</p><h2>' + item.hand + ' · ' + actionLabel(item.expected) + '</h2><p>' + escapeHtml(practiceAdvice(item)) + '</p><div class="feedback-compare">' + feedbackCohort("Первая лига", item.league, item.expected, true) + feedbackCohort("Ранги 15–18", item.novice, item.expected, false) + '</div>';
+    feedback.innerHTML = '<div class="answer-card ' + (correct ? 'is-correct' : 'is-wrong') + '"><span class="answer-lamp"></span><div><strong>' + (exact ? 'Совпало с ориентиром: ' : acceptableMix ? 'Допустимый микс: ' : 'Ориентир первой лиги: ') + actionLabel(exact ? item.expected : choice) + '</strong><small>' + (exact ? 'Это самая частая линия первой лиги в этом подтверждённом срезе.' : acceptableMix ? 'Эта линия набирает не меньше 30%; основная линия первой лиги показана ниже.' : 'Сравни свой выбор с частотами обеих групп ниже.') + '</small></div><button class="btn primary" id="nextPractice" type="button">Следующая рука →</button></div>';
+    $("#practiceCoach").innerHTML = '<p class="eyebrow">' + (exact ? 'Совпало' : acceptableMix ? 'Допустимый микс' : 'Разбор') + '</p><h2>' + item.hand + ' · ' + actionLabel(item.expected) + '</h2><p>' + escapeHtml(practiceAdvice(item)) + '</p><div class="feedback-compare">' + feedbackCohort("Первая лига", item.league, item.expected, true) + feedbackCohort("Ранги 15–18", item.novice, item.expected, false) + '</div>';
     reportProgress();
     $("#nextPractice").onclick = nextPractice;
   }
@@ -684,7 +854,7 @@
       var goButton = event.target.closest("[data-go]");
       if (goButton && !goButton.disabled) { go(goButton.dataset.go); return; }
       var filter = event.target.closest("[data-filter]");
-      if (filter) { state.filters[filter.dataset.filter] = filter.dataset.value; reconcileFilters(filter.dataset.filter); state.selectedHand = ""; state.slide = 0; renderAllDataViews(); return; }
+      if (filter && !filter.disabled) { state.filters[filter.dataset.filter] = filter.dataset.value; reconcileFilters(filter.dataset.filter); state.selectedHand = ""; state.slide = 0; renderAllDataViews(); return; }
       var hand = event.target.closest("#benchmarkRange [data-hand]");
       if (hand) { state.selectedHand = hand.dataset.hand; renderChart(); return; }
       var introAction = event.target.closest("#introTableHost [data-option-key]");
@@ -696,25 +866,30 @@
     });
     $("#wisdomPrev").onclick = function () { state.slide = Math.max(0, state.slide - 1); renderWisdomCarousel(); };
     $("#wisdomNext").onclick = function () { state.slide = Math.min(currentInsights().length - 1, state.slide + 1); renderWisdomCarousel(); };
-    $("#startPractice").onclick = startPractice;
-    $("#stopPractice").onclick = stopPractice;
+    var practiceStart = $("#startPractice");
+    var practiceStop = $("#stopPractice");
+    if (practiceStart) practiceStart.onclick = startPractice;
+    if (practiceStop) practiceStop.onclick = stopPractice;
     var carousel = $("#wisdomCarousel"), startX = 0, startY = 0;
     carousel.addEventListener("pointerdown", function (event) { if (!event.target.closest("button")) { startX = event.clientX; startY = event.clientY; } });
     carousel.addEventListener("pointerup", function (event) { var dx = event.clientX - startX, dy = event.clientY - startY; if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.2) { state.slide = Math.max(0, Math.min(2, state.slide + (dx < 0 ? 1 : -1))); renderWisdomCarousel(); } });
   }
 
-  $("#chartTitle").textContent = cfg.chartTitle;
-  $("#chartCopy").textContent = cfg.chartCopy;
-  $("#wisdomTitle").textContent = cfg.wisdomTitle;
-  $("#wisdomLead").textContent = cfg.wisdomLead;
-  $("#practiceTitle").textContent = cfg.practiceTitle;
-  $("#practiceCopy").textContent = cfg.practiceCopy;
+  enforceAvailability();
+  if (!methodologyOnly) {
+    $("#chartTitle").textContent = cfg.chartTitle;
+    $("#chartCopy").textContent = cfg.chartCopy;
+    $("#practiceTitle").textContent = cfg.practiceTitle;
+    $("#practiceCopy").textContent = cfg.practiceCopy;
+  }
+  $("#wisdomTitle").textContent = methodologyOnly ? cfg.methodologyTitle : cfg.wisdomTitle;
+  $("#wisdomLead").textContent = methodologyOnly ? cfg.methodologyLead : cfg.wisdomLead;
   reconcileFilters();
   renderAllDataViews();
   setupIntro();
   bind();
   try {
     var saved = JSON.parse(localStorage.getItem(cfg.progressKey) || "null");
-    if (saved && saved.unlocked) { state.introAnswered = true; $$(".step-tabs button").forEach(function (tab) { tab.disabled = false; }); if (["hand", "main", "ranges", "field", "wisdom", "practice"].includes(saved.screen)) go(saved.screen); }
+    if (saved && saved.unlocked) { state.introAnswered = true; $$(".step-tabs button").forEach(function (tab) { tab.disabled = false; }); if (availableScreens.includes(saved.screen)) go(saved.screen); }
   } catch (error) {}
 })();

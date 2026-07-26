@@ -1,16 +1,23 @@
 /*
-  Full-history MSP source for the SB-unopened 169-hand matrices.
+  LEGACY DIAGNOSTIC ONLY: full-history MSP source for the SB-unopened
+  169-hand matrices.
+
+  Publication no longer consumes a separate SB override. The canonical
+  source is msp-preflop-action-cube.sql, merged across the complete frozen
+  window and bound to one source manifest for all three trainers. A
+  provenance-ready build deliberately rejects --sb-unopened so an old or
+  partial export cannot replace one trainer behind the manifest's back.
 
   Frozen window: [2023-09-01, 2026-07-22).
   Cohorts use rank at the exact hand time. Only real players and 7-9max tables
   are included. The published export has all 169 hand classes above the
-  30-action threshold in both cohorts for every one of the ten stack buckets.
+  50-action threshold in every compared cohort for any published stack bucket.
 
   Build the rank bridge with the BigQuery section, replace
   {{RANK_INTERVAL_ROWS}} in the ClickHouse section with those tuples, and pass
   the full CSV export to:
 
-    node build-field-data.mjs <main-cube.csv> --sb-unopened <full-history.csv>
+    # Diagnostic only; do not pass this CSV to a provenance-ready build.
 */
 
 -- 1. BigQuery: rank-at-hand intervals clipped to the full stable window.
@@ -56,7 +63,10 @@ latest AS (
     toUInt8(coalesce(h.is_preflop_allin, 0)),
     h.preflop_effective_stack_size_bb,
     h.preflop_raise_and_blind_made_amount_bb,
-    if(h.bb_amount > 0, coalesce(h.bet_bb_amount, 0) / h.bb_amount, 0)
+    if(h.bb_amount > 0, coalesce(h.bet_bb_amount, 0) / h.bb_amount, 0),
+    h.cnt_players_lookup_position,
+    h.position,
+    toUInt8(coalesce(h.is_preflop_unopened, 0))
   ), tuple(h.version, h.hand_player_id)) AS x
   FROM analytics.int_tracker_hand_joined AS h
   INNER JOIN rank_intervals AS r ON h.user_id = r.member_user_id
@@ -67,12 +77,16 @@ latest AS (
     AND h.month_start_date < toDate('2026-08-01')
     AND h.played_at >= toDateTime('2023-09-01 00:00:00')
     AND h.played_at < toDateTime('2026-07-22 00:00:00')
-    AND h.cnt_players_lookup_position BETWEEN 7 AND 9
-    AND h.position = 9
-    AND coalesce(h.is_preflop_unopened, 0) = 1
-    AND h.preflop_effective_stack_size_bb > 0
-    AND h.preflop_effective_stack_size_bb <= 200
-  GROUP BY h.network, h.tourney_id, h.hand_id, h.user_id
+  GROUP BY h.hand_player_id
+),
+filtered AS (
+  SELECT x
+  FROM latest
+  WHERE x.10 BETWEEN 7 AND 9
+    AND x.11 = 9
+    AND x.12 = 1
+    AND x.7 > 0
+    AND x.7 <= 200
 ),
 classified AS (
   SELECT
@@ -108,7 +122,7 @@ classified AS (
       x.5 = 'F', 'fold',
       'other'
     ) AS action_class
-  FROM latest
+  FROM filtered
 )
 SELECT
   trainer, cohort, hero_position, opener_position, open_size, stack_bucket,

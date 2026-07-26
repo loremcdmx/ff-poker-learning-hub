@@ -30,6 +30,7 @@ assert.doesNotMatch(lessonCss, /\.bet-marker--\d/);
 assert.doesNotMatch(lessonCss, /hero-felt-bet[^\{]*\{[^}]*transform/);
 
 const firstTable = renderer.buildTable(content.firstSpot, {});
+assert.equal(firstTable.pot, 4.5, "2x BB-defense spot includes both blinds, the BB ante and the opener contribution");
 assert.equal(firstTable.__heroBet, 1);
 assert.equal(firstTable.seats.find((seat) => seat.isHero).stack, 38, "BB stack reflects both the live blind and the one-BB ante");
 const firstTableUnanswered = renderer.renderTable(content.firstSpot, { answered: false, selectedKey: "" });
@@ -39,6 +40,7 @@ assert.doesNotMatch(firstTableUnanswered, />Верно<|>Ошибка</, "fresh 
 
 const decimalSpot = content.practiceSpots.find((spot) => spot.id === "qq-mp-25");
 const decimalTable = renderer.buildTable(decimalSpot, { answered: true, selectedKey: "raise" });
+assert.equal(decimalTable.pot, 5, "2.5x BB-defense spot uses the same full contribution model");
 assert.equal(decimalTable.__heroBet, 1, "2.5 BB must not split into a phantom BB action");
 assert.equal(decimalTable.seats.find((seat) => seat.isHero).stack, 38, "BB stack stays net of blind and ante at every open size");
 assert.equal(decimalTable.seats.find((seat) => seat.position === "MP").committedStreet, 2.5);

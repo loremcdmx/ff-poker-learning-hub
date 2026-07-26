@@ -51,7 +51,6 @@
       '    <span class="lob-badge" data-lob="backend">бэкенд: …</span>',
       '  </div>',
       '  <p class="lob-sub">Игроки садятся только за столы, открытые админом. Кэш и турниры играются на фантики аккаунта; создание столов вынесено в отдельную админ-панель.</p>',
-      '  <p class="lob-warning" data-lob="warning" hidden>⚠ Текущий backend эфемерный — стол живёт только в этом dev/process. На проде нужен durable backend: GitHub fallback или Redis.</p>',
       '  <div class="lob-grid">',
       '    <section class="lob-card">',
       '      <h3>Аккаунт</h3>',
@@ -94,7 +93,6 @@
 
     const $ = (key) => lobby.querySelector(`[data-lob="${key}"]`);
     const backendBadge = $("backend");
-    const warning = $("warning");
     const roomsList = $("rooms");
     const roomsEmpty = $("rooms-empty");
     const accountName = $("account-name");
@@ -375,7 +373,6 @@
         const data = await client.listRooms();
         lastLobbyData = data;
         backendBadge.innerHTML = "бэкенд: <b>" + escapeHtml(data.backend) + "</b>" + (data.durable ? "" : " (эфемерно)");
-        warning.hidden = Boolean(data.durable);
         renderAccount(data);
         renderRooms(data.rooms || [], data);
       } catch (err) {

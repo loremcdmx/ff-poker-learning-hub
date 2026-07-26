@@ -14,7 +14,8 @@ const files = [
   "hero_bustouts.json",
   "cleanup_waterfall.json"
 ];
-const bundle = Object.fromEntries(files.map((name) => [name.replace(".json", ""), JSON.parse(readFileSync(join(root, name), "utf8"))]));
+const datasetKey = (name) => name.replace(/\.json$/, "").replaceAll("-", "_");
+const bundle = Object.fromEntries(files.map((name) => [datasetKey(name), JSON.parse(readFileSync(join(root, name), "utf8"))]));
 const source = `(function(){"use strict";window.PokerRestealBundle=Object.freeze(${JSON.stringify(bundle)});})();\n`;
 writeFileSync(join(root, "browser-bundle.js"), source);
 console.log(`PASS resteal browser bundle: ${files.length} datasets, ${Buffer.byteLength(source)} bytes`);

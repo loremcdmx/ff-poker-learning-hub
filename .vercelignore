@@ -1,0 +1,12 @@
+# Build-time sources and QA evidence are not learner assets.
+assets/**/tools/**
+assets/**/research/**
+
+# Quarantined observed-data artifacts stay outside the deployment package.
+assets/poker-resteal-lesson/data/resteal-rank-hand-cube.csv
+assets/poker-resteal-lesson/data/resteal-rank-diagnostics.json
+assets/poker-resteal-lesson/data/resteal-rank-source-metadata.json
+assets/poker-resteal-lesson/data/resteal-rank-README.md
+assets/poker-vs-3bet-defense-lesson/data/vs3bet-field-diagnostics.json
+assets/poker-vs-3bet-defense-lesson/data/vs3bet-version-drift-audit.json
+assets/poker-bb-call-defense-lesson/data/ff-bb-call-realization.json

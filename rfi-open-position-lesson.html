@@ -19,10 +19,11 @@
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
   <link rel="stylesheet" href="assets/poker-bb-call-defense-lesson/base.css?v=20260715-ffstart-handoff-v16">
-  <link rel="stylesheet" href="assets/poker-rfi-open-lesson/lesson.css?v=b16ab8fe3543">
+  <link rel="stylesheet" href="assets/poker-rfi-open-lesson/lesson.css?v=87f00a04861f">
   <link rel="stylesheet" href="assets/ffstart-course/media-player.css?v=20260715-ffstart-v20">
   <link rel="stylesheet" href="assets/poker-kit/lesson-header.css?v=9641ee805ef9">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
+  <script src="assets/poker-kit/observed-frequency-confidence.js?v=d4d5d6e4129f"></script>
   <script defer src="assets/poker-kit/lesson-header.js?v=1b28bacb3505"></script>
 </head>
 <body class="rfi-open-lesson" data-lesson-id="rfi-open-position">
@@ -57,18 +58,18 @@
       <div class="wisdom" id="wisdom" role="region" aria-roledescription="карусель" tabindex="0" aria-label="Три главных правила опен-рейза">
         <article class="slide active" role="group" aria-roledescription="слайд" aria-label="1 из 3: Игроки за спиной" data-story-label="Игроки за спиной" style="--slide-accent:#ffdf51">
           <span class="slide-number" aria-hidden="true">01</span>
-          <div class="slide-copy"><p class="eyebrow">Игроки за спиной</p><h2>Меньше игроков — шире опен</h2><p>На твой рейз в ранней позиции должны выкинуть 6 человек. На BTN остаются только 2 блайнда: поэтому банк чаще забирается сразу, а 3-бет прилетает реже.</p><strong class="slide-rule">Меньше соперников за спиной — меньше шансов, что кто-то проснётся с сильной рукой.</strong></div>
-          <div class="slide-visual field-proof" role="group" aria-label="Данные базы FF: фолд-эквити и частота полученного 3-бета после обычного опена без олл-ина по числу игроков за спиной">
+          <div class="slide-copy"><p class="eyebrow">Игроки за спиной</p><h2>Меньше игроков — шире опен</h2><p>На твой рейз в ранней позиции могут ответить 6 человек. На BTN остаются только 2 блайнда: поэтому опен чаще забирает банк без флопа, а ререйз прилетает реже.</p><strong class="slide-rule">Меньше соперников за спиной — меньше шансов, что кто-то проснётся с сильной рукой.</strong></div>
+          <div class="slide-visual field-proof" role="group" aria-label="Данные базы FF: частота, с которой обычный опен без олл-ина забрал банк без флопа, и частота полученного ререйза по числу игроков за спиной">
             <div class="field-proof-head"><span>По базе FF</span><small>7-max · Лига 3 · 30 BB+</small></div>
             <table class="field-pressure-table" aria-label="Результат обычного опена без олл-ина от шести до одного игрока за спиной">
-              <thead><tr><th scope="col">Позиция</th><th scope="col">За спиной</th><th scope="col" class="is-fold"><span>Все пас</span><small>фолд-эквити</small></th><th scope="col" class="is-threebet"><span>Получили</span><small>3-бет</small></th></tr></thead>
+              <thead><tr><th scope="col">Позиция</th><th scope="col">За спиной</th><th scope="col" class="is-fold"><span>Забрал</span><small>без флопа</small></th><th scope="col" class="is-threebet"><span>Получил</span><small>ререйз</small></th></tr></thead>
               <tbody>
-                <tr data-position="EP" data-players-behind="6"><th scope="row">EP</th><td class="players-behind"><strong>6</strong><small>игроков</small></td><td class="metric is-fold" style="--rate:12.6%"><strong>12,6%</strong></td><td class="metric is-threebet" style="--rate:31%"><strong>31,0%</strong></td></tr>
-                <tr data-position="MP" data-players-behind="5"><th scope="row">MP</th><td class="players-behind"><strong>5</strong><small>игроков</small></td><td class="metric is-fold" style="--rate:13.8%"><strong>13,8%</strong></td><td class="metric is-threebet" style="--rate:29.1%"><strong>29,1%</strong></td></tr>
-                <tr data-position="HJ" data-players-behind="4"><th scope="row">HJ</th><td class="players-behind"><strong>4</strong><small>игрока</small></td><td class="metric is-fold" style="--rate:15.5%"><strong>15,5%</strong></td><td class="metric is-threebet" style="--rate:27.4%"><strong>27,4%</strong></td></tr>
-                <tr data-position="CO" data-players-behind="3"><th scope="row">CO</th><td class="players-behind"><strong>3</strong><small>игрока</small></td><td class="metric is-fold" style="--rate:17.9%"><strong>17,9%</strong></td><td class="metric is-threebet" style="--rate:25.6%"><strong>25,6%</strong></td></tr>
-                <tr class="is-late" data-position="BTN" data-players-behind="2"><th scope="row">BTN</th><td class="players-behind"><strong>2</strong><small>блайнда</small></td><td class="metric is-fold" style="--rate:21.8%"><strong>21,8%</strong></td><td class="metric is-threebet" style="--rate:22.6%"><strong>22,6%</strong></td></tr>
-                <tr class="is-late" data-position="SB" data-players-behind="1"><th scope="row">SB</th><td class="players-behind"><strong>1</strong><small>блайнд</small></td><td class="metric is-fold" style="--rate:45.6%"><strong>45,6%</strong></td><td class="metric is-threebet" style="--rate:11.9%"><strong>11,9%</strong></td></tr>
+                <tr data-position="EP" data-players-behind="6"><th scope="row">EP</th><td class="players-behind"><strong>6</strong><small>игроков</small></td><td class="metric is-fold" style="--rate:10.1%"><strong>10,1%</strong></td><td class="metric is-threebet" style="--rate:34.3%"><strong>34,3%</strong></td></tr>
+                <tr data-position="MP" data-players-behind="5"><th scope="row">MP</th><td class="players-behind"><strong>5</strong><small>игроков</small></td><td class="metric is-fold" style="--rate:11.9%"><strong>11,9%</strong></td><td class="metric is-threebet" style="--rate:31.7%"><strong>31,7%</strong></td></tr>
+                <tr data-position="HJ" data-players-behind="4"><th scope="row">HJ</th><td class="players-behind"><strong>4</strong><small>игрока</small></td><td class="metric is-fold" style="--rate:13.9%"><strong>13,9%</strong></td><td class="metric is-threebet" style="--rate:29.4%"><strong>29,4%</strong></td></tr>
+                <tr data-position="CO" data-players-behind="3"><th scope="row">CO</th><td class="players-behind"><strong>3</strong><small>игрока</small></td><td class="metric is-fold" style="--rate:16.7%"><strong>16,7%</strong></td><td class="metric is-threebet" style="--rate:27.0%"><strong>27,0%</strong></td></tr>
+                <tr class="is-late" data-position="BTN" data-players-behind="2"><th scope="row">BTN</th><td class="players-behind"><strong>2</strong><small>блайнда</small></td><td class="metric is-fold" style="--rate:21.1%"><strong>21,1%</strong></td><td class="metric is-threebet" style="--rate:23.4%"><strong>23,4%</strong></td></tr>
+                <tr class="is-late" data-position="SB" data-players-behind="1"><th scope="row">SB</th><td class="players-behind"><strong>1</strong><small>блайнд</small></td><td class="metric is-fold" style="--rate:45.6%"><strong>45,6%</strong></td><td class="metric is-threebet" style="--rate:11.8%"><strong>11,8%</strong></td></tr>
               </tbody>
             </table>
             <div class="probability-proof">
@@ -80,15 +81,8 @@
         </article>
         <article class="slide" role="group" aria-roledescription="слайд" aria-label="2 из 3: Лестница диапазонов" data-story-label="Лестница диапазонов" style="--slide-accent:#ffdf51">
           <span class="slide-number" aria-hidden="true">02</span>
-          <div class="slide-copy"><p class="eyebrow">Учебная лестница</p><h2>Расширяй один чарт — не учи пять заново</h2><p>Каждая следующая позиция добавляет руки к уже знакомой форме. Самый заметный скачок начинается в CO и продолжается на BTN.</p><strong class="slide-rule">20% → 24% → 32% → 48% → 66%</strong></div>
-          <div class="slide-visual range-stair" role="img" aria-label="Диапазоны растут от 20 процентов в EP до 66 процентов на BTN">
-            <div><span>EP</span><i><em style="--range:20%"></em></i><b>20%</b></div>
-            <div><span>MP</span><i><em style="--range:24%"></em></i><b>24%</b></div>
-            <div><span>HJ</span><i><em style="--range:32%"></em></i><b>32%</b></div>
-            <div class="is-jump"><span>CO</span><i><em style="--range:48%"></em></i><b>48%</b></div>
-            <div class="is-jump"><span>BTN</span><i><em style="--range:66%"></em></i><b>66%</b></div>
-            <small>CO и BTN — место главного расширения</small>
-          </div>
+          <div class="slide-copy"><p class="eyebrow" id="rangeStairEyebrow">Учебная лестница</p><h2>Расширяй одно ядро — не учи пять заново</h2><p>Заливка страницы 7 задаёт бинарное учебное ядро. Подписанные в PDF проценты показываем отдельно и не выдаём за размер этой заливки.</p><strong class="slide-rule" id="rangeStairRule">Учебное ядро по позициям</strong></div>
+          <div class="slide-visual range-stair" id="rangeStair" role="img" aria-label="Учебное бинарное ядро и подписи страницы 7 по позициям"></div>
         </article>
         <article class="slide" role="group" aria-roledescription="слайд" aria-label="3 из 3: разномастная граница" data-story-label="Разномастная граница" style="--slide-accent:#f58a94">
           <span class="slide-number" aria-hidden="true">03</span>
@@ -109,10 +103,10 @@
     </section>
 
     <section class="screen" data-screen="ranges">
-      <div class="deep-heading reference-heading"><div><p class="eyebrow">Наши рекомендации</p><h2>Чарты первого входа</h2></div><p>Сначала выбери стек, затем позицию.</p></div>
+      <div class="deep-heading reference-heading"><div><p class="eyebrow">Базовая стратегия · страница 7</p><h2 id="rangeHeading">Учебное бинарное ядро</h2></div><p>Ядро повторяет двухцветную заливку источника. Частоты поля для стеков ниже смотри на следующей вкладке.</p></div>
       <div class="range-layout" id="rangeLayout">
-        <article class="panel range-card"><div class="stack-groups" id="stackTabs" aria-label="Стек"></div><div class="position-tabs" id="positionTabs"></div><div class="range-meta"><div><p class="eyebrow" id="rangeSeat">EP · ранняя · 70+ BB</p><h2 id="rangeTitle">Открываем 20%</h2></div><p id="rangeHint"></p></div><div class="matrix-key" id="rangeMatrixKey"><span class="key-open"><i></i>Рейз</span><span class="key-fold"><i></i>Пас</span></div><div class="matrix" id="rangeMatrix" aria-label="Матрица рекомендованных действий"></div></article>
-	        <aside class="panel memory" id="rangeMemory"><p class="eyebrow">Проверка памяти</p><h2>Посмотри 10 секунд — нарисуй чарт сам</h2><p>Выбери позицию, запомни границу и восстанови чарт.</p><div class="memory-example" aria-hidden="true"><span>Пас</span><i>→</i><span class="open">Рейз</span></div><button class="primary" id="startRecall">Запомнить чарт EP за 10 секунд</button><div class="recall" id="recall" hidden></div><div id="recallResult" aria-live="polite"></div></aside>
+        <article class="panel range-card"><div class="stack-groups" id="stackTabs" aria-label="Стек"></div><div class="position-tabs" id="positionTabs"></div><div class="range-meta"><div><p class="eyebrow" id="rangeSeat">Загружаем позицию</p><h2 id="rangeTitle">Учебное ядро</h2><p class="range-source-target" id="rangeSourceTarget">Подпись страницы 7</p></div><p id="rangeHint"></p></div><div class="matrix-key" id="rangeMatrixKey"><span class="key-open"><i></i>Рейз</span><span class="key-fold"><i></i>Пас</span></div><div class="matrix" id="rangeMatrix" aria-label="Матрица рекомендованных действий"></div></article>
+		        <aside class="panel memory" id="rangeMemory"><p class="eyebrow">Проверка памяти</p><h2>Посмотри 10 секунд — нарисуй чарт сам</h2><p>Выбери позицию, запомни границу и восстанови чарт.</p><div class="memory-example" aria-hidden="true"><span>Пас</span><i>→</i><span class="open">Рейз</span></div><button class="primary" id="startRecall">Запомнить выбранный чарт за 10 секунд</button><div class="recall" id="recall" hidden></div><div id="recallResult" aria-live="polite"></div></aside>
       </div>
     </section>
 
@@ -123,9 +117,10 @@
         <div class="stack-groups field-stack-groups" id="fieldStackTabs" aria-label="Стек"></div>
         <div class="position-tabs field-position-tabs" id="fieldPositionTabs" aria-label="Позиция"></div>
         <div class="field-summary">
-          <div><p class="eyebrow" id="fieldCohortLabel">Лига 3 · top 25%</p><h2 id="fieldTitle">12–15 BB · CO</h2><p id="fieldSubtitle">Играют 27,4% рук</p></div>
+          <div><p class="eyebrow" id="fieldCohortLabel">Полевые данные</p><h2 id="fieldTitle">Проверяем полный срез</h2><p id="fieldSubtitle">Частоты появятся после проверки источника.</p></div>
           <div class="field-action-total" id="fieldActionTotal"></div>
         </div>
+        <div class="field-publication-status" id="fieldPublicationStatus" role="status" hidden><strong>Полный срез ещё проходит проверку</strong><span>До завершения сверки здесь скрыты все частоты и матрицы. Старые и частичные выгрузки не используются.</span></div>
         <div class="field-action-bar" id="fieldActionBar" aria-hidden="true"></div>
         <div class="field-action-legend" id="fieldActionLegend"></div>
         <div class="field-matrix-scroll"><div class="matrix field-matrix" id="fieldRangeMatrix" aria-label="Наблюдаемые действия по стартовым рукам"></div></div>
@@ -189,7 +184,7 @@
       </div>
     </section>
   </main>
-  <footer class="lesson-footer"><a href="/">← Все тренажёры</a><a href="/bb-call-defense-lesson">Следующий урок: защита BB →</a></footer>
-	  <script src="assets/poker-kit/decks/deck-library.js?v=b03058b680c1"></script><script src="assets/poker-kit/chips/chip-library.js?v=eab58b025e92"></script><script src="assets/poker-simulator/simulator-random.js?v=7231b8091c3c"></script><script src="assets/poker-simulator/simulator-board-render.js?v=cb215df9f7dd"></script><script src="assets/poker-simulator/simulator-seat-slots.js?v=d7ddfd732333"></script><script src="assets/poker-simulator/simulator-seat-renderer.js?v=c5dd4f6c2a15"></script><script src="assets/poker-simulator/simulator-table-renderer.js?v=37282f928111"></script><script src="assets/poker-trainer-shell/simulator-snapshot.js?v=45c27b16421b"></script><script src="assets/poker-simulator/embed.js?v=d3bdd7d52145"></script><script src="assets/poker-trainer-shell/simulator-practice.js?v=591b8e2f6784"></script><script src="assets/poker-progress/progress.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-rfi-open-lesson/data.js?v=cb3e050ac2ee"></script><script src="assets/poker-rfi-open-lesson/field-action-data.js?v=bbf62b024c24"></script><script src="assets/poker-rfi-open-lesson/stack-data.js?v=6159528b5316"></script><script src="assets/poker-rfi-open-lesson/recall.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-rfi-open-lesson/deal.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-rfi-open-lesson/practice-stats.js?v=8264ad18789d"></script><script src="assets/poker-rfi-open-lesson/lesson.js?v=db08b749c9ab"></script><script src="assets/ffstart-course/media-player.js?v=20260715-ffstart-v20"></script><script src="assets/ffstart-course/legacy-media.js?v=20260716-bb-direct-video-v2"></script>
+  <footer class="lesson-footer"><a href="/">← Все тренажёры</a><a href="/sb-unopened-lesson">Следующий урок: SB без опена →</a></footer>
+	  <script src="assets/poker-kit/decks/deck-library.js?v=b03058b680c1"></script><script src="assets/poker-kit/chips/chip-library.js?v=eab58b025e92"></script><script src="assets/poker-simulator/simulator-random.js?v=7231b8091c3c"></script><script src="assets/poker-simulator/simulator-board-render.js?v=cb215df9f7dd"></script><script src="assets/poker-simulator/simulator-seat-slots.js?v=d7ddfd732333"></script><script src="assets/poker-simulator/simulator-seat-renderer.js?v=c5dd4f6c2a15"></script><script src="assets/poker-simulator/simulator-table-renderer.js?v=37282f928111"></script><script src="assets/poker-trainer-shell/simulator-snapshot.js?v=3606de843e50"></script><script src="assets/poker-simulator/embed.js?v=d3bdd7d52145"></script><script src="assets/poker-trainer-shell/simulator-practice.js?v=591b8e2f6784"></script><script src="assets/poker-progress/progress.js?v=63993336739b"></script><script src="assets/poker-rfi-open-lesson/data.js?v=08ebee04d142"></script><script src="assets/poker-rfi-open-lesson/field-action-data.js?v=445631a7851b"></script><script src="assets/poker-rfi-open-lesson/stack-data.js?v=69074a4d6d77"></script><script src="assets/poker-rfi-open-lesson/recall.js?v=c9ce101b8d12"></script><script src="assets/poker-rfi-open-lesson/deal.js?v=20260715-ffstart-handoff-v16"></script><script src="assets/poker-rfi-open-lesson/practice-stats.js?v=8264ad18789d"></script><script src="assets/poker-rfi-open-lesson/lesson.js?v=59ae34b8f62c"></script><script src="assets/ffstart-course/media-player.js?v=20260715-ffstart-v20"></script><script src="assets/ffstart-course/legacy-media.js?v=20260716-bb-direct-video-v2"></script>
 </body>
 </html>

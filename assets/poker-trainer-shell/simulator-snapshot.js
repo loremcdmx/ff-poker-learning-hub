@@ -482,11 +482,57 @@
     return [...heroRows, ...nonHeroRows];
   }
 
+  function preflopBbAnte(sourceTable) {
+    if (streetLabel(sourceTable.street, asArray(sourceTable.boardCards)) !== "preflop") return 0;
+    return Math.max(0, toBbNumber(sourceTable.anteBb, 0));
+  }
+
+  function preflopPotBb({ anteBb = 0, contributions = [] } = {}) {
+    const committed = new Map([["SB", 0.5], ["BB", 1]]);
+    asArray(contributions).forEach((entry) => {
+      const position = normalizeSeatKey(entry?.position);
+      const amountBb = Number(entry?.amountBb);
+      if (!position || !Number.isFinite(amountBb) || amountBb < 0) {
+        throw new Error("Invalid preflop contribution");
+      }
+      committed.set(position, Math.max(Number(committed.get(position) || 0), amountBb));
+    });
+    const total = Math.max(0, Number(anteBb) || 0)
+      + [...committed.values()].reduce((sum, amount) => sum + amount, 0);
+    return Math.round((total + Number.EPSILON) * 1000) / 1000;
+  }
+
+  function seatAnteContribution(sourceTable, row, seatCount, anteBb) {
+    if (!(anteBb > 0)) return 0;
+    if (sourceTable.anteMode === "table") return anteBb / Math.max(1, seatCount);
+    return normalizeSeatKey(row.label) === "BB" ? anteBb : 0;
+  }
+
+  function stackAlreadyIncludesAnte(sourceTable, row, stack, anteContribution) {
+    if (!(anteContribution > 0)) return false;
+    if (row.sourceSeat?.anteAlreadyDeducted === true) return true;
+    if (row.sourceSeat?.anteAlreadyDeducted === false) return false;
+
+    // Older lesson snapshots pre-deducted the BB ante because the shared
+    // renderer did not understand it. Keep those snapshots stable while new
+    // snapshots can provide the natural starting stack and let us post it.
+    const startingStack = toBbNumber(
+      row.sourceSeat?.startingStackBb
+        ?? row.sourceSeat?.startingStack
+        ?? sourceTable.startingStackBb
+        ?? sourceTable.effectiveStack,
+      Number.NaN
+    );
+    return Number.isFinite(startingStack)
+      && Math.abs((startingStack - stack) - anteContribution) < 0.001;
+  }
+
   function normalizeSeats(sourceTable, actions, potBb) {
     const sourceSeats = asArray(sourceTable.seats).length ? asArray(sourceTable.seats) : defaultSeats(sourceTable.heroPosition || "Hero");
     const heroPosition = cleanLine(sourceTable.heroPosition || sourceSeats.find((seat) => seat?.state === "hero")?.label || "Hero");
     const heroKey = normalizeSeatKey(heroPosition);
     const actionBySeat = latestActionBySeat(actions);
+    const bbAnte = preflopBbAnte(sourceTable);
     // The top bet on the current street (the raise). A "call" action carries no
     // amount of its own — a caller simply matches this — so callers commit it too.
     const streetTopBet = asArray(actions).reduce((max, action) => Math.max(max, Number(action?.amountBb) || 0), 0);
@@ -518,6 +564,10 @@
       const stack = row.isHero
         ? toBbNumber(sourceTable.heroStack, 40)
         : toBbNumber(row.sourceSeat?.stackBb ?? row.sourceSeat?.stack ?? sourceTable.effectiveStack ?? sourceTable.heroStack, 40);
+      const anteContribution = seatAnteContribution(sourceTable, row, sourceRows.length, bbAnte);
+      const postedAnte = !stackAlreadyIncludesAnte(sourceTable, row, stack, anteContribution)
+        ? anteContribution
+        : 0;
       const point = seatPointFor(row.label, row.sourceSeat, row.index, heroPosition);
       const latestFold = /пас|fold/i.test(latest?.label || "");
       seatIdByKey.set(key, id);
@@ -530,7 +580,7 @@
         id,
         name: row.isHero ? "Hero" : row.label,
         position: row.label,
-        stack: Math.max(0, hasVisibleStack ? explicitVisibleStack : stack - committed),
+        stack: Math.max(0, hasVisibleStack ? explicitVisibleStack : stack - committed - postedAnte),
         isHero: row.isHero,
         isBot: !row.isHero,
         // The hero is the decision-maker (to act), never folded — some packs
@@ -542,6 +592,7 @@
         cards: row.isHero ? asArray(sourceTable.heroCards).map(normalizeCardCode).filter(Boolean) : opponentCards,
         revealCardsAfterAnswer,
         committedStreet: committed,
+        postedAnte,
         // Preserve an explicitly classified training opponent (fish / regular /
         // pro) so the shared seat renderer can apply the same box palette as the
         // full simulator. Older lesson spots stay blue via the standard fallback.
@@ -783,8 +834,10 @@
         && cleanLine(action.seat)
         && normalizeSeatKey(action.seat) !== heroKey)
       .slice(-4);
-    const summary = table.__state?.finished || table.street === "showdown"
+    const summary = table.street === "showdown"
       ? "Карты открыты"
+      : table.__state?.finished
+        ? "Раздача завершена"
       : table.toCall
         ? `К коллу ${amountDisplay(table.toCall)}`
         : table.currentBet
@@ -811,7 +864,7 @@
     const sourceTable = spot?.table || {};
     const board = asArray(sourceTable.boardCards).map(normalizeCardCode).filter(Boolean);
     const street = streetLabel(sourceTable.street || sourceTable.potLabel, board);
-    const pot = toBbNumber(sourceTable.pot, 0);
+    const sourcePot = toBbNumber(sourceTable.pot, 0);
     const sourceSeats = asArray(sourceTable.seats).length ? asArray(sourceTable.seats) : defaultSeats(sourceTable.heroPosition || "Hero");
     const hasExplicitActions = asArray(sourceTable.actionLine).length
       || asArray(sourceTable.actions).length
@@ -819,8 +872,19 @@
     const concept = !asArray(sourceTable.heroCards).length;
     const actions = concept && !hasExplicitActions
       ? []
-      : normalizeActionRows(sourceTable, sourceSeats, street, pot);
-    const normalized = normalizeSeats(sourceTable, actions, pot);
+      : normalizeActionRows(sourceTable, sourceSeats, street, sourcePot);
+    const normalized = normalizeSeats(sourceTable, actions, sourcePot);
+    // Postflop lesson nodes often author the pot at the start of the decision
+    // and list the facing bet separately. Mark those nodes explicitly so the
+    // learner sees the real current pot while the source can keep using the
+    // street-start pot for bet-size teaching and continuation math.
+    const currentStreetContributions = normalized.seats.reduce(
+      (total, seat) => total + Math.max(0, Number(seat.committedStreet) || 0),
+      0
+    );
+    const pot = sourceTable.potBeforeAction === true
+      ? sourcePot + currentStreetContributions
+      : sourcePot;
     const table = {
       id: 1,
       status: "playing",
@@ -887,6 +951,7 @@
   root.FFTrainerSimulatorSnapshot = {
     version: VERSION,
     renderTable,
-    buildTable
+    buildTable,
+    preflopPotBb
   };
 })();

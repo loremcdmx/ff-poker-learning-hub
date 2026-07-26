@@ -1,104 +1,126 @@
-# RFI field-action snapshot
+# RFI field-action data
 
-`../field-action-data.js` is a generated, browser-ready snapshot. It contains
-observed first-in actions for four FF cohorts and the empirical-Bayes short-stack
-recommendations shown on the RFI lesson page.
+## Current publication status: ready
 
-## Analysis boundary
+The exact 7-max field cube is publishable for the closed UTC window
+`[2023-09-01, 2026-07-26)`. The browser payload contains:
 
-- Window: 2025-10-01 through 2026-07-16 inclusive (`played_at < 2026-07-17`).
-- Tables: 7–9 handed only (`cnt_players_lookup_position BETWEEN 7 AND 9`).
-- Opportunity: unopened pot, known hole cards, positive effective stack.
-- Actions: fold/other, regular open, open-shove, limp.
-- Top cohort: active real League 3 players at ranks 11–14, at least 30,000
-  hands for FFEV, top 25% by weighted last-100k-hands FFEV.
-- Canonical FFEV source: `mcp__fflk_player_evs_by_period`,
-  `period_type='last_100k_hands'`, metric `ev_2_weighted`. The current eligible
-  population is 651 players; deterministic `FFEV DESC, user_id ASC` ranking
-  selects 163 and has cutoff 10.0502716757261.
-  The older 650-player prior export omitted one otherwise eligible member;
-  651 is the count reproduced directly from the canonical source.
-- Recommendations use the top-quartile action rate for width and all eligible
-  League 3 rank 11–14 players as the hand-level prior. They describe observed
-  field play; they are not a solver or causal strategy estimate.
-- Privacy boundary: the browser payload contains no player identifiers. For
-  hand-level cells with N < 30 it publishes no exact N, raw action rates,
-  player count, or month count. The UI now shows a clearly marked Dirichlet-
-  smoothed estimate instead of a false zero: 60 equivalent prior hands, using
-  all eligible L3 R11–14 as the top-25 prior where that slice is available
-  (pooled leagues otherwise), and a leave-one-league-out pool for league tabs.
-  Stack/position aggregates and empirical-Bayes recommendations are still
-  computed from the complete read-only slice.
+- 36,504 exact source rows: 4 cohorts × 9 raw stack buckets × 6 positions ×
+  169 canonical hands;
+- 30 public `stack × position` states and 120 cohort charts;
+- 169/169 observed hands in every chart with `N >= 50`;
+- no smoothing, priors, interpolation, neighbouring-state substitution,
+  disabled selectors or model-filled values.
 
-Why this is necessary: a suited class represents four physical combinations,
-an offsuit class twelve. A flat `N < 30` publication rule therefore suppressed
-suited cells roughly three times more often. The exact raw `<6 BB / BTN /
-L3 top-25%` slice contains, for example, Q7s 23/24 first-in actions and T6s
-13/27; rendering every suppressed cell as zero made the suited sector look
-artificially empty. The raw rows and privacy boundary stay unchanged; only the
-public fallback is estimated and visibly labelled.
+The published source CSV SHA-256 is
+`12271ff6005957d0fe58fd24066195dfc90e04544228af207e4ce3296daeed3b`.
+It reconciles 65,334,010 known-card opportunities out of 74,722,772 eligible
+opportunities (`87.435206%`). The generated browser payload SHA-256 is
+`445631a7851b4eb771e5c47a4969a1cb5f6abcb8bf243f32c36146a727e845ef`.
 
-The exported CSV snapshots are analytics inputs and are not checked into the
-learning-site repository. Before rebuilding, export the same slices and verify:
+## Why there are five public stack bands
 
-| input | rows | SHA-256 |
-| --- | ---: | --- |
-| canonical cohort memberships | 2,438 | `f7afe0cf1e3aec65b1f8333bf32305a2de114f33080fb32102d69b0085b9c3bd` |
-| four cohorts | 36,504 | `a1b76b93a180a4f4a4f487c9717d048b61b6d52dd437ce769ee485bca572f65e` |
-| eligible L3 R11–14 short-stack prior | 5,915 | `e712cde7184aa8e5a66da059e8df0cda958000fdf73cea4351f0734001a6afc5` |
+The raw source retains nine non-overlapping buckets:
 
-The generated file also records these hashes, usable counts, low-sample cell
-counts, cohort rules, smoothing method, and the known-card coverage boundary.
-The exact two-source extraction lives in `q_ff_rfi_field_actions.sql`. This
-snapshot came from BigQuery job `mcp_bq_71b6007a9c4c4e51b81e0aa3ae3945ea`
-and ClickHouse job `mcp_ch_job_fd30df587eca46a4b0fb5d118e68a691`.
+`70+`, `30–70`, `20–30`, `15–20`, `12–15`, `10–12`, `8–10`, `6–8`, `<6`.
 
-## Rebuild
+The public selector exposes:
 
-The four cohort switches intentionally point to the same multi-cohort export;
-the builder filters its `cohort` column. Replace `/path/to/...` with the two
-verified exports:
+`70+`, `30–70`, `20–30`, `15–20`, `<15`.
+
+`<15` is exact integer addition of the five raw buckets below 15 BB before any
+rate is calculated. It is not a weighted estimate or a copied neighbouring
+chart. Keeping separate `10–15` and `<10` selectors left two late-position
+states below the required 169/169 cells at `N >= 50`; inventing their missing
+frequencies or lowering the gate is not permitted.
+
+The minimum cell count in the strictest cohort (`l3top`) is:
+
+| Stack | EP | MP | HJ | CO | BTN | SB |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 70+ | 1819 | 1343 | 927 | 589 | 330 | 112 |
+| 30–70 | 1961 | 1507 | 1123 | 777 | 467 | 203 |
+| 20–30 | 575 | 453 | 340 | 257 | 184 | 91 |
+| 15–20 | 276 | 214 | 150 | 112 | 81 | 55 |
+| <15 | 410 | 323 | 241 | 173 | 131 | 106 |
+
+## Publication contract
+
+An observed RFI payload is published only when all of these conditions hold:
+
+- the table is actual `cnt_players = 7`;
+- the position map is `4→EP, 3→MP, 2→HJ, 1→CO, 0→BTN, 9→SB`;
+- actions come from exact integer counters;
+- effective open-push is a direct all-in or a first raise that exhausts the
+  effective stack under the parser contract;
+- all 5 × 6 public states exist in every frozen cohort and every chart contains
+  all 169 hands with `N >= 50`;
+- raw-to-public aggregation preserves every action counter exactly;
+- known-card coverage and the EP→MP→HJ→CO→BTN→SB opportunity ladder reconcile;
+- membership, rendered SQL, result files, receipts and merge manifests are
+  bound by real execution IDs and SHA-256 hashes.
+
+Failure of any condition rejects the entire publication before the target is
+written.
+
+## Source and supplement evidence
+
+The structured and missing-card recovery layers are bound to:
+
+| Role | Template SHA-256 |
+| --- | --- |
+| canonical structured cube | `9e06fa18c5889fd12e00cab250af6dc17ad1d543f4ef67a4cbf65351c6093cde` |
+| missing-card recovery | `56a80f377f72dfb1f52e42b9157509419ed1c04dd30dfc1045503051e2540533` |
+| Coin/Party publication supplement | `0b6acbf4de9db67c4c69751ee7d465fa01bfbcfe06253eae7c9a5342d5507959` |
+
+The CoinPoker/PartyPoker supplement uses eight immutable user shards. Their
+ClickHouse jobs are:
+
+- CoinPoker:
+  `mcp_ch_job_c3e99be74bfe4a58899c127bf7788671`,
+  `mcp_ch_job_a33728d567894179adca67b5e8a5bcb3`,
+  `mcp_ch_job_ee654e01fec1471790d6e34b2caf1c15`,
+  `mcp_ch_job_8870a5aba6134e63a005e72771c0eb57`;
+- PartyPoker:
+  `mcp_ch_job_aaf3243f703a4f5f873083b62ee759cb`,
+  `mcp_ch_job_14238c749c9c4c1c915b801461fa2fbe`,
+  `mcp_ch_job_0b0d39e1b59a440fbbf89ed4b573b892`,
+  `mcp_ch_job_7fb8505f397445a9a54c095beb6aaba3`.
+
+Zero-row shards remain in the manifest: they prove the partition was executed
+and empty rather than silently omitted. The supplement adds 5,108 exact
+opportunities: 1,253 regular raises, 137 open shoves, 86 limps and 3,632 folds.
+It contains zero normal 2.5–3.5 BB opens misclassified as shoves.
+
+Raw hand histories, membership exports and player identifiers stay outside the
+repository and deploy tree. Only aggregate counters and safe provenance are
+published.
+
+## Rebuild and verification
+
+The publication builder requires private source, action metadata, membership
+and membership receipt inputs:
 
 ```sh
 node assets/poker-rfi-open-lesson/tools/build-field-action-data.mjs \
-  --l3top=/path/to/rfi-action-cube-4cohorts-7to9max.csv \
-  --l3=/path/to/rfi-action-cube-4cohorts-7to9max.csv \
-  --l2=/path/to/rfi-action-cube-4cohorts-7to9max.csv \
-  --l1=/path/to/rfi-action-cube-4cohorts-7to9max.csv \
-  --l3prior=/path/to/rfi-l3-r11-14-eligible-short-stack-prior-7to9max.csv \
-  --version=2026-07-18 \
-  --period-from=2025-10-01 \
-  --period-to=2026-07-16 \
-  --period-label='1 октября 2025 — 16 июля 2026' \
-  --known-cards-pct=87.926 \
-  --source-rows=36504 \
-  --source-sha256=a1b76b93a180a4f4a4f487c9717d048b61b6d52dd437ce769ee485bca572f65e \
-  --l3top-usable=5438662 \
-  --l3top-cells-lt30=1192 \
-  --l3top-cells-lt100=3932 \
-  --prior-sha256=e712cde7184aa8e5a66da059e8df0cda958000fdf73cea4351f0734001a6afc5 \
-  --prior-usable=7405082 \
-  --l3top-observed=161 \
-  --l3-observed=945 \
-  --l2-observed=471 \
-  --l1-observed=165 \
-  --membership-rows=2438 \
-  --membership-sha256=f7afe0cf1e3aec65b1f8333bf32305a2de114f33080fb32102d69b0085b9c3bd \
-  --cohort-job-id=mcp_bq_71b6007a9c4c4e51b81e0aa3ae3945ea \
-  --action-job-id=mcp_ch_job_fd30df587eca46a4b0fb5d118e68a691 \
-  --top25-eligible=651 \
-  --top25-selected=163 \
-  --top25-min-ffev=10.0502716757261 \
-  --out=assets/poker-rfi-open-lesson/field-action-data.js
+  --source=/private/tmp/final-source.csv \
+  --action-metadata=/private/tmp/final-source.meta.json \
+  --membership=/private/tmp/cohort-membership.csv \
+  --membership-receipt=/private/tmp/cohort-membership.receipt.json \
+  --out=assets/poker-rfi-open-lesson/field-action-data.js \
+  --diagnostics=assets/poker-rfi-open-lesson/tools/field-action-coverage.json
 ```
 
-Then run the RFI contract, position-statistics test, and the repository release
-gate before publishing.
-
-The raw cube and generated fallback have focused quality gates:
+Focused release checks:
 
 ```sh
-node assets/poker-rfi-open-lesson/tools/audit-field-action-source.mjs \
-  /path/to/rfi-action-cube-4cohorts-7to9max.csv
+node assets/poker-rfi-open-lesson/tools/test-field-action-builder.mjs
+node assets/poker-rfi-open-lesson/tools/test-stack-recovery-publication.mjs
+node assets/poker-rfi-open-lesson/tools/test-current-raw-hh-supplement.mjs
+node assets/poker-rfi-open-lesson/tools/test-recovery-cohort-replacement.mjs
 node assets/poker-rfi-open-lesson/tools/test-field-action-quality.mjs
+node assets/poker-rfi-open-lesson/tools/test-contract.mjs
+node scripts/check-release-data-readiness.mjs
 ```
+
+The release-data gate must report `READY` for all six required data surfaces.

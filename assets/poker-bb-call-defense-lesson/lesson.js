@@ -19,14 +19,10 @@
     equityData: null,
     equityLoading: null,
     equityError: "",
-    ffRealizationData: null,
-    ffRealizationLoading: null,
-    ffRealizationError: "",
-    realizationStackKey: "40_70",
     leagueStackKey: "40_70",
     leaguePosition: "BTN",
     leagueSizeKey: "2_0",
-    leagueCohort: "league3",
+    leagueCohort: "league2",
     leagueDefenseData: null,
     leagueDefenseLoading: null,
     leagueDefenseError: "",
@@ -157,29 +153,6 @@
       throw error;
     });
     return state.equityLoading;
-  }
-
-  function ensureFfRealizationData() {
-    if (state.ffRealizationData) return Promise.resolve(state.ffRealizationData);
-    if (state.ffRealizationLoading) return state.ffRealizationLoading;
-    var config = Content.ffRealizationModel;
-    state.ffRealizationLoading = fetch(config.file + "?v=" + config.version).then(function (response) {
-      if (!response.ok) throw new Error("FF realization: HTTP " + String(response.status));
-      return response.json();
-    }).then(function (payload) {
-      if (!payload || !payload.rows || !payload.meta) throw new Error("FF realization: invalid payload");
-      state.ffRealizationData = payload;
-      state.ffRealizationLoading = null;
-      state.ffRealizationError = "";
-      renderRealization();
-      return payload;
-    }).catch(function (error) {
-      state.ffRealizationLoading = null;
-      state.ffRealizationError = error && error.message ? error.message : "Срез FF не загрузился";
-      renderRealization();
-      throw error;
-    });
-    return state.ffRealizationLoading;
   }
 
   function ensureLeagueDefenseData() {
@@ -352,7 +325,7 @@
         '<div class="spot-facts">' +
           '<div class="spot-fact is-price"><i>18%</i><div><b>Дешёвая цена</b><small>добавить 1 BB в итоговый банк 5,5 BB</small></div></div>' +
           '<div class="spot-fact is-position"><i>BTN</i><div><b>Широкий рейзер</b><small>с батона открывают заметно больше рук</small></div></div>' +
-          '<div class="spot-fact is-hand"><i>K4</i><div><b>Некрасивая, но зелёная</b><small>K4o — чистый колл в базовом чарте</small></div></div>' +
+          '<div class="spot-fact is-hand"><i>K4</i><div><b>Проверь границу</b><small>ответ зависит от позиции, сайза и клетки чарта</small></div></div>' +
         '</div>' +
         '<p class="coach-nudge">Нажми «Пас», «Колл» или «3-бет» под столом.</p>';
       return;
@@ -601,7 +574,6 @@
 
   function leagueCohortItems() {
     return [
-      { key: "league3", label: "3 лига" },
       { key: "league2", label: "2 лига" },
       { key: "league1", label: "1 лига" }
     ];
@@ -730,8 +702,9 @@
     var noviceAggregate = payload.aggregates[leagueAggregateKey("novice")];
     renderLeagueRangeCard(noviceRoot, "novice", noviceAggregate);
     renderLeagueRangeCard(leagueRoot, state.leagueCohort, noviceAggregate);
-    var selectedAggregate = payload.aggregates[leagueAggregateKey(state.leagueCohort)];
-    source.textContent = 'Реальные раздачи FF · ' + leagueStackLabel() + ' · ' + state.leaguePosition + ' · ' + Content.sizes[state.leagueSizeKey].label + '.';
+    source.textContent = 'Реальные раздачи FF · непересекающиеся ранги 15–18 и ' +
+      payload.meta.cohorts[state.leagueCohort].detail.replace("ранги ", "") + ' · ' +
+      leagueStackLabel() + ' · ' + state.leaguePosition + ' · ' + Content.sizes[state.leagueSizeKey].label + '.';
   }
 
   function makeSegmented(root, items, selected, onSelect, options) {
@@ -745,7 +718,6 @@
       leaguePositionTabs: "leagueDefenseComparison",
       leagueSizeTabs: "leagueDefenseComparison",
       leagueTabs: "selectedLeagueDefenseChart",
-      realizationStackTabs: "realizationDetail",
       memorySizeTabs: "memoryChart",
       memoryPositionTabs: "memoryChart"
     };
@@ -886,48 +858,7 @@
     renderRangeMatrix();
   }
 
-  function ffRealizationKey() {
-    return [state.realizationStackKey, state.sizeKey, state.position, state.selectedHand].join(":");
-  }
-
-  function renderFfRealization(model, position, size) {
-    var config = Content.ffRealizationModel;
-    var stack = stackLabel(state.realizationStackKey);
-    if (!state.ffRealizationData) {
-      return '<section class="ff-realization-card is-pending"><div><span class="ff-realization-kicker">Реальные раздачи FF · ' + stack + '</span><strong>' +
-        (state.ffRealizationError ? "Сравнение недоступно" : "Загружаем сыгранные коллы…") +
-        '</strong></div></section>';
-    }
-
-    var payload = state.ffRealizationData;
-    var record = payload.rows[ffRealizationKey()];
-    var minDisplay = Number(payload.meta.minDisplayN || config.minDisplayN);
-    var minReliable = Number(payload.meta.minReliableN || config.minReliableN);
-    if (!record || !record.n) {
-      return '<section class="ff-realization-card is-low-sample"><div class="ff-realization-head"><div><span class="ff-realization-kicker">Реальные раздачи FF · ' + stack + '</span><strong>Нет отдельного среза</strong></div></div>' +
-        '<p>Для ' + state.selectedHand + ' в этом споте пока нет сыгранных коллов.</p></section>';
-    }
-
-    var eqrPct = model.rawEquityPct > 0 ? record.meanRealizedEquityPct / model.rawEquityPct * 100 : 0;
-    var reliable = record.n >= minReliable;
-
-    return '<section class="ff-realization-card ' + (reliable ? "is-reliable" : "is-preliminary") + '">' +
-      '<div class="ff-realization-head"><div><span class="ff-realization-kicker">Реальные раздачи FF · ' + stack + '</span><strong>' +
-        "Реализация в сыгранных коллах" +
-        '</strong></div><b>' + fmt(eqrPct, 1) + "%</b></div>" +
-      '<p class="ff-realization-lead">В сыгранных коллах ' + state.selectedHand + ' реализовала примерно <strong>' + fmt(eqrPct, 1) + '%</strong> своего эквити.</p>' +
-      '<div class="ff-realization-meter" aria-label="Реализация эквити в базе FF ' + fmt(eqrPct, 1) + '%"><i style="width:' + String(clampPercent(eqrPct)) + '%"></i></div>' +
-      '<div class="ff-realization-stats"><span><small>Вместо паса</small><b>' + fmtSigned(record.meanEvVsFoldBb, 2) + ' BB</b></span><span><small>Качество данных</small><b>' + (reliable ? 'Высокое' : 'Среднее') + '</b></span></div></section>';
-  }
-
   function renderRealization() {
-    var stackTabs = $("#realizationStackTabs");
-    if (stackTabs) {
-      makeSegmented(stackTabs, leagueStackItems(), state.realizationStackKey, function (key) {
-        state.realizationStackKey = key;
-        renderRealization();
-      });
-    }
     var cell = Content.rangeCellFor(state.sizeKey, state.position, state.selectedHand);
     var size = Content.sizes[state.sizeKey];
     var position = Content.positions[state.position];
@@ -948,12 +879,13 @@
     $("#realizationRatio").textContent = fmt(minimum, 1) + "%";
     $("#realizationDetail").innerHTML = '<div class="realization-copy">' +
         '<h4>Нужно реализовать минимум ' + fmt(minimum, 1) + '% эквити</h4>' +
+        '<p>Это модельный порог безубыточности колла, а не наблюдаемая прибыль конкретной руки.</p>' +
       '</div>' +
       '<div class="realization-metric-stack"><div class="realization-bars deep-realization-bars">' +
         '<div><span>Эквити</span><i><b style="width:' + String(clampPercent(model.rawEquityPct)) + '%"></b></i><strong>' + fmt(model.rawEquityPct, 1) + '%</strong></div>' +
         '<div class="is-price"><span>Цена колла</span><i><b style="width:' + String(clampPercent(size.potOddsPct)) + '%"></b></i><strong>' + fmt(size.potOddsPct, 1) + '%</strong></div>' +
         '<div class="is-required"><span>Нужно реализовать</span><i><b style="width:' + String(clampPercent(minimum)) + '%"></b></i><strong>' + fmt(minimum, 1) + '%</strong></div>' +
-      '</div>' + renderFfRealization(model, position, size) + '</div>';
+      '</div></div>';
   }
 
   function renderDeep() {
@@ -961,13 +893,13 @@
     renderRange();
     renderRealization();
     if (state.step === "deep" && !state.equityData && !state.equityLoading) ensureEquityData().catch(function () {});
-    if (state.step === "deep" && !state.ffRealizationData && !state.ffRealizationLoading) ensureFfRealizationData().catch(function () {});
   }
 
   var MEMORY_SPLITS = {
     R: { raise: 100, call: 100 },
     B: { raise: 50, call: 100 },
     C: { raise: 0, call: 100 },
+    M: { raise: 0, call: 50 },
     F: { raise: 0, call: 0 }
   };
 
@@ -987,7 +919,7 @@
   }
 
   function memoryCounts() {
-    var counts = { R: 0, B: 0, C: 0, F: 169 };
+    var counts = { R: 0, B: 0, C: 0, M: 0, F: 169 };
     Object.keys(state.memoryDraft).forEach(function (hand) {
       var code = Recall.normalizeState(state.memoryDraft[hand]);
       if (code === "F") return;
@@ -1269,9 +1201,9 @@
       root.innerHTML = '<p class="eyebrow">Проверка памяти</p>' +
         '<h3 id="memoryCoachTitle">Посмотри 10 секунд — нарисуй чарт сам</h3>' +
         '<p>Выбери диапазон сверху, запомни границы колла, 3-бета и паса. Затем восстанови все 169 клеток.</p>' +
-        '<div class="memory-example" aria-hidden="true"><span class="is-fold">Пас</span><span class="is-call">Колл</span><span class="is-mix">Микс 50/50</span><span class="is-raise">3-бет</span></div>' +
+        '<div class="memory-example" aria-hidden="true"><span class="is-fold">Пас</span><span class="is-call-fold">Колл / пас</span><span class="is-call">Колл</span><span class="is-mix">3-бет / колл</span><span class="is-raise">3-бет</span></div>' +
         '<button class="btn primary memory-start" type="button" data-memory-action="start">Запомнить ' + scenario + ' за 10 секунд</button>' +
-        '<small class="memory-source-note">Колл / пас считаем пасом. Микс 3-бет / колл сохраняем с весом 50/50.</small>';
+        '<small class="memory-source-note">Оба типа микса сохраняются с исходным весом 50/50.</small>';
       return;
     }
     if (state.memoryPhase === "watching") {
@@ -1288,9 +1220,9 @@
         '<h3 id="memoryCoachTitle">Восстанови все действия</h3>' +
         '<p>Кисть работает кликом и непрерывным проведением. Пас одновременно служит ластиком.</p>' +
         '<div class="memory-tools" role="toolbar" aria-label="Кисти для диапазона">' +
-          memoryToolMarkup("C", "Колл") + memoryToolMarkup("B", "Микс 3-бет / колл") + memoryToolMarkup("R", "3-бет") + memoryToolMarkup("F", "Стереть / пас") +
+          memoryToolMarkup("M", "Микс колл / пас") + memoryToolMarkup("C", "Колл") + memoryToolMarkup("B", "Микс 3-бет / колл") + memoryToolMarkup("R", "3-бет") + memoryToolMarkup("F", "Стереть / пас") +
         '</div>' +
-        '<p class="memory-status">3-бет: ' + String(counts.R) + ' · Микс: ' + String(counts.B) + ' · Колл: ' + String(counts.C) + ' · Пас: ' + String(counts.F) + '</p>' +
+        '<p class="memory-status">3-бет: ' + String(counts.R) + ' · 3-бет/колл: ' + String(counts.B) + ' · Колл: ' + String(counts.C) + ' · Колл/пас: ' + String(counts.M) + ' · Пас: ' + String(counts.F) + '</p>' +
         '<div class="memory-actions"><button class="btn primary" type="button" data-memory-action="check">Проверить чарт</button><button class="btn secondary" type="button" data-memory-action="clear">Очистить</button></div>';
       return;
     }

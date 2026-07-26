@@ -63,7 +63,8 @@ for (const page of lessonPages) {
   assert.match(nav, /role="tablist"/, `${page} exposes the steps as a tablist`);
   assert.match(nav, /aria-label="Шаги урока"/, `${page} labels the step rail`);
   const tabs = [...nav.matchAll(/<button\b[^>]*class="[^"]*\bstep-tab\b[^"]*"[^>]*>/g)].map((match) => match[0]);
-  assert(tabs.length >= 4 && tabs.length <= 7, `${page} exposes 4–7 lesson steps`);
+  const minimumTabs = /<body\b[^>]*class="[^"]*\bpreflop-benchmark-lesson\b/.test(html) ? 3 : 4;
+  assert(tabs.length >= minimumTabs && tabs.length <= 7, `${page} exposes ${minimumTabs}–7 lesson steps`);
   assert.equal(tabs.filter((tab) => tab.includes('aria-selected="true"')).length, 1, `${page} starts with one selected step`);
   for (const tab of tabs) {
     assert.match(tab, /type="button"/, `${page} step is an explicit button`);

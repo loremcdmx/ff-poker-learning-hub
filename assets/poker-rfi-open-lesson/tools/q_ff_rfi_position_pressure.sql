@@ -19,6 +19,8 @@ WITH dedup AS (
     argMax(is_preflop_allin, version) AS allin,
     argMax(preflop_action, version) AS preflop_actions,
     argMax(is_preflop_face_3bet, version) AS faced_3bet,
+    argMax(is_preflop_face_4bet, version) AS faced_4bet,
+    argMax(cnt_flop_players, version) AS flop_players,
     argMax(is_saw_flop, version) AS saw_flop
   FROM analytics.int_tracker_hand_joined
   PREWHERE month_start_date >= toDate('2026-01-01')
@@ -51,10 +53,39 @@ SELECT
   countIf(rfi = 1) AS rfi_including_shoves,
   countIf(direct_open_shove) AS excluded_open_shoves,
   countIf(regular_open) AS regular_opens,
-  countIf(regular_open AND ifNull(faced_3bet, 0) != 1 AND ifNull(saw_flop, 0) != 1) AS everyone_folded,
-  round(100.0 * everyone_folded / regular_opens, 4) AS everyone_folded_pct,
-  countIf(regular_open AND faced_3bet = 1) AS faced_3bet_count,
-  round(100.0 * faced_3bet_count / regular_opens, 4) AS faced_3bet_pct,
+  -- Strict fold-through: the opener made no second preflop action and the hand ended before a flop.
+  countIf(
+    regular_open
+    AND preflop_actions = 'R'
+    AND ifNull(flop_players, 0) = 0
+  ) AS fold_through_count,
+  round(100.0 * fold_through_count / regular_opens, 4) AS fold_through_pct,
+  -- For an RFI opener, either tracker flag means that another player reraised the open.
+  countIf(
+    regular_open
+    AND (ifNull(faced_3bet, 0) = 1 OR ifNull(faced_4bet, 0) = 1)
+  ) AS reraised_count,
+  round(100.0 * reraised_count / regular_opens, 4) AS reraised_pct,
+  -- Diagnostics retained for exact reconciliation with the previously published proxy.
+  countIf(
+    regular_open
+    AND ifNull(faced_3bet, 0) != 1
+    AND ifNull(saw_flop, 0) != 1
+  ) AS old_proxy_count,
+  round(100.0 * old_proxy_count / regular_opens, 4) AS old_proxy_pct,
+  countIf(
+    regular_open
+    AND ifNull(faced_3bet, 0) != 1
+    AND ifNull(saw_flop, 0) != 1
+    AND NOT(preflop_actions = 'R' AND ifNull(flop_players, 0) = 0)
+  ) AS old_proxy_false_positive_count,
+  countIf(
+    regular_open
+    AND ifNull(faced_3bet, 0) != 1
+    AND ifNull(saw_flop, 0) != 1
+    AND preflop_actions = 'RF'
+    AND ifNull(faced_4bet, 0) = 1
+  ) AS old_proxy_rf_face4_count,
   countIf(cntp_position != 7) AS position_lookup_mismatch,
   min(played_ts) AS first_hand,
   max(played_ts) AS last_hand

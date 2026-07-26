@@ -1,6 +1,8 @@
 (function(root){"use strict";
 var STATES=["fold","open"];
-	function frequencyState(value){return Number(value||0)>75?"open":"fold"}
+	var rangeThreshold=Number(root.PokerRfiData&&root.PokerRfiData.rangeThreshold);
+	if(!Number.isFinite(rangeThreshold))throw new Error("PokerRfiData.rangeThreshold is required");
+		function frequencyState(value){return Number(value||0)>rangeThreshold?"open":"fold"}
 	function nextState(value){var index=STATES.indexOf(value);return STATES[(index+1+STATES.length)%STATES.length]}
 	function reviewState(chosen,expected){chosen=chosen==="open"?"open":"fold";expected=expected==="open"?"open":"fold";if(chosen==="open")return expected==="open"?"hit":"false-open";return expected==="open"?"missed-open":"correct-fold"}
 	function combinationCount(hand){return String(hand||"").length===2?6:String(hand||"").slice(-1)==="s"?4:12}

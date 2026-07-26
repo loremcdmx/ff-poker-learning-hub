@@ -29,13 +29,17 @@
     const configuredHandLogEndpoint = String(options.handLogEndpoint || "").trim();
     const nowIso = typeof options.nowIso === "function" ? options.nowIso : () => new Date().toISOString();
     const handSyncOutboxKey = String(options.handSyncOutboxKey || "ff.poker.table-simulator.hand-sync-outbox.v1");
-    const handSyncOutboxLimit = Math.max(20, Number(options.handSyncOutboxLimit || 1200));
+    const handSyncOutboxLimit = Math.max(1, Math.min(200, Number(options.handSyncOutboxLimit || 60)));
+    const handSyncOutboxMaxBytes = Math.max(16_384, Math.min(2_000_000, Number(options.handSyncOutboxMaxBytes || 512_000)));
+    const handSyncMaxAttempts = Math.max(1, Math.min(12, Number(options.handSyncMaxAttempts || 5)));
     const handSyncFlushBatchSize = Math.max(1, Number(options.handSyncFlushBatchSize || 12));
     const handSyncRetryDelayMs = Math.max(1000, Number(options.handSyncRetryDelayMs || 8000));
+    const handSyncNotConfiguredStatuses = new Set([404, 405]);
     let handSyncMemoryOutbox = [];
     let handSyncUseMemoryOnly = false;
     let handSyncFlushPromise = null;
     let handSyncFlushTimer = 0;
+    let handSyncDisabledReason = "";
 
     function state() {
       return getState() || {};
@@ -350,6 +354,11 @@
         : "");
     }
 
+    function handSyncTransportEnabled() {
+      return windowRef.FF_STATIC_LEARNING_HUB !== true
+        && windowRef.FF_SIMULATOR_HAND_SYNC_ENABLED === true;
+    }
+
     function handSyncPayload(entry) {
       const profile = activeSimulatorProfile();
       if (!profile?.loggedIn || !profile?.id || profile.id === "guest") return null;
@@ -377,19 +386,46 @@
       return String(payload?.id || hand.id || `${hand.sessionId || "session"}:${hand.handNo || 0}:${hand.tableId || 0}`);
     }
 
+    function handSyncSerializedBytes(items) {
+      try {
+        // localStorage stores UTF-16 strings. Counting two bytes per code unit is
+        // deliberately conservative and keeps the outbox below its real quota.
+        return JSON.stringify(items || []).length * 2;
+      } catch {
+        return Number.POSITIVE_INFINITY;
+      }
+    }
+
+    function trimHandSyncOutbox(items) {
+      const clean = (Array.isArray(items) ? items : [])
+        .filter((item) => item && typeof item === "object" && item.payload)
+        .filter((item) => Number(item.attempts || 0) < handSyncMaxAttempts)
+        .filter((item) => !handSyncNotConfiguredStatuses.has(Number(item.statusCode || 0)))
+        .slice(-handSyncOutboxLimit);
+      while (clean.length && handSyncSerializedBytes(clean) > handSyncOutboxMaxBytes) clean.shift();
+      return clean;
+    }
+
     function readHandSyncOutbox() {
       const storage = handSyncStorage();
       if (!storage) return handSyncMemoryOutbox.slice();
       try {
         const parsed = JSON.parse(storage.getItem(handSyncOutboxKey) || "[]");
-        return Array.isArray(parsed) ? parsed.filter((item) => item && typeof item === "object") : [];
+        const source = Array.isArray(parsed) ? parsed : [];
+        const clean = trimHandSyncOutbox(source);
+        if (clean.length !== source.length || handSyncSerializedBytes(source) > handSyncOutboxMaxBytes) {
+          if (clean.length) storage.setItem(handSyncOutboxKey, JSON.stringify(clean));
+          else storage.removeItem(handSyncOutboxKey);
+        }
+        handSyncMemoryOutbox = clean;
+        return clean;
       } catch {
         return [];
       }
     }
 
     function writeHandSyncOutbox(items) {
-      const clean = (Array.isArray(items) ? items : []).filter((item) => item && typeof item === "object").slice(-handSyncOutboxLimit);
+      const clean = trimHandSyncOutbox(items);
       handSyncMemoryOutbox = clean;
       const storage = handSyncStorage();
       if (!storage) return true;
@@ -407,6 +443,7 @@
     }
 
     function queueHandSyncPayload(payload) {
+      if (!handSyncTransportEnabled() || handSyncDisabledReason || !handLogBackendEndpoint()) return false;
       const id = handSyncItemId(payload);
       if (!id) return false;
       const queuedAt = nowIso();
@@ -421,7 +458,12 @@
           payload
         }
       ];
-      return writeHandSyncOutbox(next);
+      const clean = trimHandSyncOutbox(next);
+      if (!clean.some((item) => String(item.id || "") === id)) {
+        writeHandSyncOutbox(clean);
+        return false;
+      }
+      return writeHandSyncOutbox(clean);
     }
 
     function updateHandSyncOutboxItem(id, patch) {
@@ -436,11 +478,31 @@
     }
 
     function scheduleHandSyncFlush(delayMs = handSyncRetryDelayMs) {
-      if (handSyncFlushTimer || typeof windowRef.setTimeout !== "function") return;
+      if (handSyncDisabledReason || handSyncFlushTimer || typeof windowRef.setTimeout !== "function") return;
       handSyncFlushTimer = windowRef.setTimeout(() => {
         handSyncFlushTimer = 0;
         flushHandSyncOutbox();
       }, delayMs);
+    }
+
+    function cancelHandSyncFlush() {
+      if (handSyncFlushTimer && typeof windowRef.clearTimeout === "function") {
+        windowRef.clearTimeout(handSyncFlushTimer);
+      }
+      handSyncFlushTimer = 0;
+    }
+
+    function disableHandSync(reason = "not_configured") {
+      handSyncDisabledReason = String(reason || "not_configured");
+      cancelHandSyncFlush();
+      writeHandSyncOutbox([]);
+      return handSyncDisabledReason;
+    }
+
+    function isPermanentHandSyncError(error) {
+      const status = Number(error?.statusCode || 0);
+      if (handSyncNotConfiguredStatuses.has(status)) return true;
+      return status >= 400 && status < 500 && ![408, 409, 425, 429].includes(status);
     }
 
     async function postHandSyncBody(endpoint, payload) {
@@ -482,6 +544,13 @@
     function flushHandSyncOutbox() {
       if (state().settings?.demoMode) return Promise.resolve({ ok: true, sent: 0, pending: 0, suppressed: true });
       if (handSyncFlushPromise) return handSyncFlushPromise;
+      if (!handSyncTransportEnabled()) {
+        writeHandSyncOutbox([]);
+        return Promise.resolve({ ok: true, sent: 0, pending: 0, suppressed: true, reason: "network_disabled" });
+      }
+      if (handSyncDisabledReason) {
+        return Promise.resolve({ ok: false, sent: 0, pending: 0, suppressed: true, reason: handSyncDisabledReason });
+      }
       const endpoint = handLogBackendEndpoint();
       if (!endpoint || typeof windowRef.fetch !== "function") return Promise.resolve({ ok: false, sent: 0, pending: readHandSyncOutbox().length });
       handSyncFlushPromise = (async () => {
@@ -514,19 +583,37 @@
             group.forEach((item) => removeHandSyncOutboxItem(String(item.id)));
             sent += group.length;
           } catch (error) {
-            group.forEach((item) => updateHandSyncOutboxItem(String(item.id), {
-              attempts: Number(item.attempts || 0) + 1,
-              lastAttemptAt: nowIso(),
-              status: "pending",
-              statusCode: Number(error?.statusCode || 0),
-              lastError: String(error?.message || "hand_sync_failed").slice(0, 160)
-            }));
+            const statusCode = Number(error?.statusCode || 0);
+            const notConfigured = handSyncNotConfiguredStatuses.has(statusCode);
+            const permanent = isPermanentHandSyncError(error);
+            group.forEach((item) => {
+              const attempts = Number(item.attempts || 0) + 1;
+              if (permanent || attempts >= handSyncMaxAttempts) {
+                removeHandSyncOutboxItem(String(item.id));
+                return;
+              }
+              updateHandSyncOutboxItem(String(item.id), {
+                attempts,
+                lastAttemptAt: nowIso(),
+                status: "pending",
+                statusCode,
+                lastError: String(error?.message || "hand_sync_failed").slice(0, 160)
+              });
+            });
+            if (notConfigured) disableHandSync(`http_${statusCode}`);
             break;
           }
         }
         const pending = readHandSyncOutbox().length;
         if (pending) scheduleHandSyncFlush();
-        return { ok: pending === 0, sent, pending };
+        else cancelHandSyncFlush();
+        return {
+          ok: pending === 0 && !handSyncDisabledReason,
+          sent,
+          pending,
+          suppressed: Boolean(handSyncDisabledReason),
+          reason: handSyncDisabledReason || undefined
+        };
       })().catch((error) => {
         if (windowRef.console && typeof windowRef.console.warn === "function") {
           windowRef.console.warn("Hand log backend sync failed.", error);
@@ -539,7 +626,7 @@
     }
 
     function trySendHandLogToBackend(entry) {
-      if (state().settings?.demoMode) return false;
+      if (state().settings?.demoMode || !handSyncTransportEnabled() || handSyncDisabledReason) return false;
       const payload = handSyncPayload(entry);
       if (!payload) return false;
       if (!queueHandSyncPayload(payload)) return false;
@@ -646,7 +733,8 @@
         if (!windowRef.document || windowRef.document.visibilityState === "hidden") flushHandSyncOutbox();
       });
     }
-    if (readHandSyncOutbox().length) deferWork(() => flushHandSyncOutbox());
+    if (!handSyncTransportEnabled()) writeHandSyncOutbox([]);
+    else if (readHandSyncOutbox().length) deferWork(() => flushHandSyncOutbox());
 
     return {
       settingsLogSnapshot,

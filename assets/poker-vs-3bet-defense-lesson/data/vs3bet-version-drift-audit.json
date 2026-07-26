@@ -1,0 +1,13 @@
+{
+  "version": "vs3bet-version-drift-audit-20260722-v1",
+  "status": "quarantined",
+  "source": "analytics.int_tracker_hand_joined",
+  "auditedWindowStartInclusive": "2023-09-01T00:00:00Z",
+  "auditedWindowEndExclusive": "2024-03-01T00:00:00Z",
+  "queryJobId": "mcp_ch_job_415a829303b24475a580291ebe47eed6",
+  "queryTemplateSha256": "b4f69bf7be5ac472463e9876971013f6cf78944d4cc28217307e90b7b694c7f0",
+  "resultCsvSha256": "a930ddf673bc749f8f016e400635768f4806aa923c998e1406227ab4d6a92803",
+  "qualifyingHandPlayers": 3790266,
+  "staleAfterLatestVersion": 1,
+  "resolution": "The candidate cube query was changed from predicate-first argMax to candidate-restricted latest-first argMax. This audit remains diagnostic evidence only: no cube is published until all full-window shards and rank intervals carry complete execution identity and pass the release gate."
+}

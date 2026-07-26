@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
   <link rel="stylesheet" href="assets/poker-bb-call-defense-lesson/base.css?v=20260716-practice-scroll-v18">
-  <link rel="stylesheet" href="assets/poker-bb-call-defense-lesson/lesson.css?v=4a04ca3d3769">
+  <link rel="stylesheet" href="assets/poker-bb-call-defense-lesson/lesson.css?v=4ee77e970600">
   <link rel="stylesheet" href="assets/ffstart-course/media-player.css?v=20260715-ffstart-v20">
   <link rel="stylesheet" href="assets/poker-kit/lesson-header.css?v=9641ee805ef9">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
@@ -72,13 +72,13 @@
             <span class="intro-seat is-folded intro-mp"><b>MP</b><small>Пас</small></span>
             <span class="intro-seat is-folded intro-hj"><b>HJ</b><small>Пас</small></span>
             <span class="intro-seat is-folded intro-co"><b>CO</b><small>Пас</small></span>
-            <span class="intro-seat intro-btn"><b>BTN</b><small>Стек 60 BB</small><i class="intro-dealer-host" id="introDealerButton"></i></span>
+            <span class="intro-seat intro-btn"><b>BTN</b><small>Стек 58 BB</small><i class="intro-dealer-host" id="introDealerButton"></i></span>
             <span class="intro-seat is-folded intro-sb"><b>SB</b><small>Пас</small></span>
             <span class="intro-chip-marker intro-btn-bet"><span id="introBtnChips"></span><strong>Рейз 2 BB</strong></span>
             <span class="intro-pot"><span id="introPotChips"></span><strong>Банк 4,5 BB</strong></span>
             <span class="intro-chip-marker intro-bb-jam intro-bb-call"><span id="introCallChips"></span><strong>Колл 1 BB</strong></span>
             <span class="intro-hero-cards" id="introHeroCards"></span>
-            <span class="intro-seat intro-bb"><b>BB · Ты</b><small>Стек 60 BB</small></span>
+            <span class="intro-seat intro-bb"><b>BB · Ты</b><small>Стек 58 BB</small></span>
           </div>
         </div>
       </article>
@@ -145,12 +145,12 @@
                 <div class="wisdom-copy-block" id="sizeDefenseDefaultCopy">
                   <p class="eyebrow">Защита BB против BTN</p>
                   <h3>Чем крупнее опен, тем уже защита</h3>
-                  <p>Защита — это колл плюс 3-бет. Против BTN она сужается с 88,2% на минрейз до 27,0% против 3 BB.</p>
+                  <p>Защита — это колл плюс 3-бет. Против BTN она сужается с 91,0% на минрейз до 27,0% против 3 BB.</p>
                 </div>
                 <aside class="size-defense-preview" id="sizeDefensePreview" aria-label="Разбор выбранного процента защиты" aria-live="polite" hidden></aside>
               </div>
               <div class="size-ladder" aria-label="Защита BB против BTN по размерам рейза: колл плюс 3-бет">
-                <div><span>Опен BTN 2 BB</span><strong>+1 BB</strong><b>88,2%</b></div>
+                  <div><span>Опен BTN 2 BB</span><strong>+1 BB</strong><b>91,0%</b></div>
                 <div><span>Опен BTN 2,5 BB</span><strong>+1,5 BB</strong><button class="size-defense-trigger" type="button" data-size-preview="2_5" aria-controls="sizeDefensePreview" aria-describedby="sizeDefenseHint" aria-expanded="false">53,8%<small>чарт</small></button></div>
                 <div><span>Опен BTN 3 BB</span><strong>+2 BB</strong><button class="size-defense-trigger" type="button" data-size-preview="3_0" aria-controls="sizeDefensePreview" aria-describedby="sizeDefenseHint" aria-expanded="false">27,0%<small>чарт</small></button></div>
                 <p class="size-ladder-hint" id="sizeDefenseHint">Наведи на 53,8% или 27,0% — увидишь матрицу и объяснение границы.</p>
@@ -186,7 +186,7 @@
                   </div>
                 </div>
                 <p class="shape-source">Реальные раздачи FF · 3-я лига · 40–70 BB</p>
-                <small class="shape-method">Сравниваем руки с одинаковыми рангами: меняется только наличие общей масти.</small>
+                <small class="shape-method">Сравниваем руки с одинаковыми рангами среди уже сыгранных коллов; это описание выборки, а не рекомендация коллировать каждую руку.</small>
               </div>
             </article>
 
@@ -281,7 +281,7 @@
         <div class="league-defense-head">
           <div>
             <p class="eyebrow">Как играют в FF</p>
-            <h2 id="leagueDefenseTitle">Кто лучше защищает BB — лучше повышается по ABI</h2>
+            <h2 id="leagueDefenseTitle">Как различается защита BB между уровнями</h2>
           </div>
         </div>
 
@@ -297,7 +297,7 @@
           <article class="league-range-card is-league" id="selectedLeagueDefenseChart" aria-label="Чарт выбранной лиги"></article>
         </div>
 
-        <p class="league-defense-source" id="leagueDefenseSource">Реальные раздачи FF. Сравни одинаковый спот у новичков и выбранной лиги.</p>
+        <p class="league-defense-source" id="leagueDefenseSource">Реальные раздачи FF. Сравниваем непересекающиеся ранговые группы.</p>
       </article>
     </section>
 
@@ -322,6 +322,10 @@
           <div><span>Сайз рейзера</span><div class="segmented-control" id="rangeSizeTabs" role="tablist" aria-label="Сайз для матрицы"></div></div>
           <div><span>Позиция рейзера</span><div class="segmented-control" id="positionTabs" role="tablist" aria-label="Позиция рейзера"></div></div>
         </div>
+        <aside class="range-provenance-note" role="note">
+          <strong>Граница первоисточника</strong>
+          <span>Матрицы 2, 2,5 и 3 BB перенесены из методички как отдельные готовые чарты. В источнике не указано, что у них одинаковы стек, анте и турнирный контекст, поэтому сравнивай руки внутри выбранной матрицы и не объясняй разницу между сайзингами только ценой колла.</span>
+        </aside>
         <div class="range-workspace">
           <div class="range-source-card">
             <div class="range-source-head"><strong id="rangeScenarioTitle">BTN · 2 BB</strong><span id="rangeOpenerWidth">Диапазон рейзера 52%</span></div>
@@ -329,18 +333,15 @@
             <div class="range-matrix-scroll">
               <div class="bb-range-matrix" id="rangeChart" role="grid" aria-label="Кликабельная матрица защиты большого блайнда" aria-describedby="rangeMatrixHelp"></div>
             </div>
-            <p class="range-matrix-help" id="rangeMatrixHelp">Нажми на руку — ниже обновятся её эквити и минимальная нужная реализация. Стрелки двигают выбор по чарту.</p>
+            <p class="range-matrix-help" id="rangeMatrixHelp">Нажми на руку — ниже обновятся её модельное эквити и порог безубыточности колла. Стрелки двигают выбор по чарту.</p>
           </div>
         </div>
       </section>
 
       <section class="panel realization-lab" aria-labelledby="realizationTitle">
         <div class="lab-heading">
-          <div><p class="eyebrow">Шаг 3 · выбранная рука</p><h3 id="realizationTitle">Эквити и нужная реализация</h3></div>
+          <div><p class="eyebrow">Шаг 3 · выбранная рука</p><h3 id="realizationTitle">Эквити и модельный порог колла</h3></div>
           <strong class="realization-ratio" id="realizationRatio">—</strong>
-        </div>
-        <div class="range-controls realization-stack-controls">
-          <div><span>Эффективный стек</span><div class="segmented-control" id="realizationStackTabs" role="tablist" aria-label="Стек для реализации колла"></div></div>
         </div>
         <div class="realization-detail" id="realizationDetail" aria-live="polite"></div>
       </section>
@@ -362,7 +363,7 @@
           <div class="practice-legend"><span><i class="legend-call"></i>Колл</span><span><i class="legend-raise"></i>3-бет</span><span><i class="legend-fold"></i>Пас</span></div>
         </article>
         <article class="panel practice-launch">
-          <div><strong>Практика без лимита</strong><span>Играй сколько хочется; остановиться всегда можно кнопкой «К уроку».</span></div>
+          <div><strong>Практика без лимита</strong><span>Играй сколько хочется; остановиться всегда можно кнопкой «Закончить».</span></div>
           <button class="btn primary" type="button" id="startPracticeSession">Попробовать</button>
         </article>
       </div>
@@ -420,7 +421,7 @@
         </aside>
       </div>
     </section>
-    <footer class="lesson-footer"><a href="/">← Все тренажёры</a><a href="/resteal-lesson">Следующий урок: рестил →</a></footer>
+    <footer class="lesson-footer"><a href="/">← Все тренажёры</a><a href="/vs-one-raiser-positions-lesson">Следующий урок: против одного рейзера →</a></footer>
   </main>
 
   <script defer src="assets/poker-kit/decks/deck-library.js?v=b03058b680c1"></script>
@@ -429,15 +430,15 @@
   <script defer src="assets/poker-simulator/simulator-seat-slots.js?v=d7ddfd732333"></script>
   <script defer src="assets/poker-simulator/simulator-seat-renderer.js?v=c5dd4f6c2a15"></script>
   <script defer src="assets/poker-simulator/simulator-table-renderer.js?v=37282f928111"></script>
-  <script defer src="assets/poker-trainer-shell/simulator-snapshot.js?v=45c27b16421b"></script>
+  <script defer src="assets/poker-trainer-shell/simulator-snapshot.js?v=3606de843e50"></script>
   <script defer src="assets/poker-simulator/embed.js?v=d3bdd7d52145"></script>
   <script defer src="assets/poker-trainer-shell/simulator-practice.js?v=591b8e2f6784"></script>
   <script defer src="assets/poker-bb-call-defense-lesson/engine.js?v=20260715-ffstart-handoff-v16"></script>
   <script defer src="assets/poker-bb-call-defense-lesson/range-data.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-bb-call-defense-lesson/data.js?v=d805eb9f1169"></script>
-  <script defer src="assets/poker-bb-call-defense-lesson/recall.js?v=20260716-memory-review-v20"></script>
-  <script defer src="assets/poker-progress/progress.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-bb-call-defense-lesson/lesson.js?v=3b3bd0ad2c1e"></script>
+  <script defer src="assets/poker-bb-call-defense-lesson/data.js?v=302329af7dcc"></script>
+  <script defer src="assets/poker-bb-call-defense-lesson/recall.js?v=b3022e4d8807"></script>
+  <script defer src="assets/poker-progress/progress.js?v=63993336739b"></script>
+  <script defer src="assets/poker-bb-call-defense-lesson/lesson.js?v=de8ed6fbe138"></script>
   <script defer src="assets/ffstart-course/media-player.js?v=20260716-native-metadata-v22"></script>
   <script defer src="assets/ffstart-course/legacy-media.js?v=20260716-bb-direct-video-v2"></script>
 </body>

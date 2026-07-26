@@ -1,15 +1,17 @@
 (function (root) {
   "use strict";
 
-  var STATES = ["F", "C", "B", "R"];
+  var STATES = ["F", "M", "C", "B", "R"];
   var META = {
     F: { label: "пас", shortLabel: "Пас" },
+    M: { label: "микс колл / пас 50/50", shortLabel: "Колл / пас" },
     C: { label: "колл", shortLabel: "Колл" },
     B: { label: "микс 3-бет / колл 50/50", shortLabel: "Микс 50/50" },
     R: { label: "3-бет", shortLabel: "3-бет" }
   };
   var ACTION_WEIGHTS = {
     F: { fold: 1, call: 0, raise: 0 },
+    M: { fold: 0.5, call: 0.5, raise: 0 },
     C: { fold: 0, call: 1, raise: 0 },
     B: { fold: 0, call: 0.5, raise: 0.5 },
     R: { fold: 0, call: 0, raise: 1 }
@@ -37,8 +39,8 @@
     var chosenCode = normalizeState(chosen);
     var expectedCode = normalizeState(expected);
     if (chosenCode === expectedCode) return "";
-    if (chosenCode === "F" && expectedCode !== "F") return "missed";
-    if (chosenCode !== "F" && expectedCode === "F") return "extra";
+    if (ACTION_WEIGHTS[chosenCode].fold > ACTION_WEIGHTS[expectedCode].fold) return "missed";
+    if (ACTION_WEIGHTS[chosenCode].fold < ACTION_WEIGHTS[expectedCode].fold) return "extra";
     return "action";
   }
 

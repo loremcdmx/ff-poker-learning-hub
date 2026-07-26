@@ -4,14 +4,80 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 const toolDirectory = path.dirname(fileURLToPath(import.meta.url));
 const dataDirectory = path.resolve(toolDirectory, '../data');
-const csvPath = path.join(dataDirectory, 'resteal-rank-hand-cube.csv');
+const require = createRequire(import.meta.url);
+const confidence = require(path.resolve(toolDirectory, '../../poker-kit/observed-frequency-confidence.js'));
+const options = parseArguments(process.argv.slice(2));
+const checkOnly = options.check === true;
+if (!checkOnly && (!options.input || !options.metadata)) {
+  throw new Error('A write build requires --input=/path/cube.csv and --metadata=/path/source-metadata.json');
+}
+const csvPath = path.resolve(options.input || path.join(dataDirectory, 'resteal-rank-hand-cube.csv'));
+const sourceMetadataPath = path.resolve(options.metadata || path.join(dataDirectory, 'resteal-rank-source-metadata.json'));
+const queryTemplatePath = path.join(toolDirectory, 'resteal-rank-cube.sql');
 const dataPath = path.join(dataDirectory, 'resteal-rank-data.js');
 const diagnosticsPath = path.join(dataDirectory, 'resteal-rank-diagnostics.json');
-const checkOnly = process.argv.includes('--check');
+const sourceMetadata = JSON.parse(fs.readFileSync(sourceMetadataPath, 'utf8'));
+const exactCellMinimum = confidence.MIN_EXACT_DENOMINATOR;
+assert.equal(typeof sourceMetadata.version, 'string', 'source metadata version is required');
+const payloadVersion = sourceMetadata.version.replace(/-v\d+$/, '-v4');
+assert.match(payloadVersion, /-v4$/, 'public preset schema must use the v4 payload version');
+assert.equal(sourceMetadata.windowStartInclusive, '2023-09-01T00:00:00Z', 'unexpected source window start');
+assert.equal(sourceMetadata.windowEndExclusive, '2026-07-22T00:00:00Z', 'unexpected source window end');
+const handCubeProvenance = sourceMetadata.provenance?.handCube || {};
+assert(
+  ['immutable-user-id', 'contiguous-time'].includes(handCubeProvenance.shardStrategy),
+  `unsupported hand-cube shard strategy ${handCubeProvenance.shardStrategy}`,
+);
+assert((handCubeProvenance.queryJobIds?.length || 0) > 1, 'multiple successful source shards are required');
+const sourceShards = handCubeProvenance.shards || [];
+assert.equal(sourceShards.length, sourceMetadata.provenance.handCube.queryJobIds.length, 'every successful job needs one shard provenance record');
+assert.equal(new Set(sourceMetadata.provenance.handCube.queryJobIds).size, sourceShards.length, 'successful query job ids must be unique');
+assert.deepEqual(
+  [...sourceMetadata.provenance.handCube.queryJobIds].sort(),
+  sourceShards.map((shard) => shard.queryJobId).sort(),
+  'successful query job ids must match shard provenance exactly',
+);
+for (const shard of sourceShards) {
+  assert.equal(shard.rankMin, 1, `rank shard must start at rank 1 for ${shard.name}`);
+  assert.equal(shard.rankMax, 18, `rank shard must include rank 18 for ${shard.name}`);
+  assert(shard.windowStartInclusive >= sourceMetadata.windowStartInclusive, `source shard starts before the product window for ${shard.name}`);
+  assert(shard.windowEndExclusive <= sourceMetadata.windowEndExclusive, `source shard ends after the product window for ${shard.name}`);
+  assert(shard.windowStartInclusive < shard.windowEndExclusive, `source shard has an empty window for ${shard.name}`);
+  assert.match(shard.renderedSqlSha256, /^[a-f0-9]{64}$/, `missing rendered SQL hash for ${shard.name}`);
+  assert.equal(
+    shard.executionMode,
+    executionMode(shard.queryJobId, shard.renderedSqlSha256),
+    `execution mode does not match the source ref for ${shard.name}`,
+  );
+  assert.match(shard.exportSha256, /^[a-f0-9]{64}$/, `missing export hash for ${shard.name}`);
+  assert(Number.isSafeInteger(shard.exportRows) && shard.exportRows > 0, `bad exported row count for ${shard.name}`);
+  assert(Number.isSafeInteger(shard.rankIntervals) && shard.rankIntervals > 0, `bad rank-interval count for ${shard.name}`);
+  assert(Number.isSafeInteger(shard.rankUsers) && shard.rankUsers > 0, `bad rank-user count for ${shard.name}`);
+  assert.match(shard.userShard?.userIdsSha256 || '', /^[a-f0-9]{64}$/, `missing user-id-set hash for ${shard.name}`);
+  assert(Number.isSafeInteger(shard.userShard?.index) && shard.userShard.index >= 0, `bad user-shard index for ${shard.name}`);
+  assert(Number.isSafeInteger(shard.userShard?.count) && shard.userShard.count > 0, `bad user-shard count for ${shard.name}`);
+  assert(Number.isSafeInteger(shard.userShard?.eligibleUsers) && shard.userShard.eligibleUsers >= shard.rankUsers, `bad eligible-user count for ${shard.name}`);
+  assert.match(shard.privateSql, /^\/private\/tmp\//, `rendered SQL must remain an explicit private input for ${shard.name}`);
+  assert.match(shard.privateCsv, /^\/private\/tmp\//, `raw export must remain an explicit private input for ${shard.name}`);
+}
+validateSourceShards(handCubeProvenance.shardStrategy, sourceShards, sourceMetadata);
+const failedJobIds = new Set((sourceMetadata.provenance.handCube.failedAttempts || []).map((attempt) => attempt.queryJobId));
+for (const queryJobId of sourceMetadata.provenance.handCube.queryJobIds) {
+  assert(!failedJobIds.has(queryJobId), `failed ClickHouse attempt cannot be used as successful provenance: ${queryJobId}`);
+}
+assert.match(sourceMetadata.provenance.rankIntervals.sha256, /^[a-f0-9]{64}$/, 'rank bridge export hash is required');
+assert.match(sourceMetadata.provenance.rankIntervals.privateCsv, /^\/private\/tmp\//, 'rank bridge raw export must remain an explicit private input');
+assert.equal(sourceMetadata.provenance.handCube.classifier, 'effective-shove-v1', 'effective-shove classifier identity is required');
+assert.equal(
+  sourceMetadata.provenance.handCube.templateSha256,
+  sha256(fs.readFileSync(queryTemplatePath)),
+  'source metadata query-template hash does not match resteal-rank-cube.sql',
+);
 
 const expectedColumns = [
   'cohort',
@@ -20,7 +86,6 @@ const expectedColumns = [
   'depth_band',
   'holecards_str',
   'opportunities',
-  'unique_players',
   'folds',
   'calls',
   'small3bets',
@@ -31,9 +96,51 @@ const expectedColumns = [
 ];
 const cohortOrder = ['novice', 'league3', 'league2', 'league1'];
 const positionOrder = ['CO', 'BTN'];
-const sizeOrder = ['2.0', '2.5', '3.0'];
+const sourceSizeOrder = ['2.0', '2.5', '3.0'];
 const sourceDepthOrder = ['25-30', '30-35', '35-40'];
 const depthOrder = ['25-40', ...sourceDepthOrder];
+const scenarioOrder = [
+  '2.0|25-30',
+  '2.0|30-35',
+  '2.0|35-40',
+  '2.0|25-40',
+  '2.5-3.0|25-40',
+];
+const scenarioDefinitions = {
+  '2.0|25-30': {
+    size: '2.0',
+    depth: '25-30',
+    label: '2 BB · 25–30 BB',
+    sourceSlices: [{ size: '2.0', depth: '25-30' }],
+  },
+  '2.0|30-35': {
+    size: '2.0',
+    depth: '30-35',
+    label: '2 BB · 30–35 BB',
+    sourceSlices: [{ size: '2.0', depth: '30-35' }],
+  },
+  '2.0|35-40': {
+    size: '2.0',
+    depth: '35-40',
+    label: '2 BB · 35–40 BB',
+    sourceSlices: [{ size: '2.0', depth: '35-40' }],
+  },
+  '2.0|25-40': {
+    size: '2.0',
+    depth: '25-40',
+    label: '2 BB · 25–40 BB',
+    sourceSlices: [{ size: '2.0', depth: '25-40' }],
+  },
+  '2.5-3.0|25-40': {
+    size: '2.5-3.0',
+    depth: '25-40',
+    label: '2,5–3 BB · 25–40 BB',
+    sourceSlices: [
+      { size: '2.5', depth: '25-40' },
+      { size: '3.0', depth: '25-40' },
+    ],
+  },
+};
 const ranks = 'AKQJT98765432'.split('');
 const handOrder = ranks.flatMap((_, row) => ranks.map((__, column) => {
   if (row === column) return `${ranks[row]}${ranks[column]}`;
@@ -42,22 +149,19 @@ const handOrder = ranks.flatMap((_, row) => ranks.map((__, column) => {
 }));
 const handIndex = new Map(handOrder.map((hand, index) => [hand, index]));
 const missingHand = '__MISSING__';
-const windowStart = '2026-01-01T00:00:00Z';
-const windowEnd = '2026-07-14T00:00:00Z';
-const abi = {
-  novice: { abiUsd: 2.69, abiPlayers: 1116, abiEntries: 628787, loadUsd: 1688908.48 },
-  league3: { abiUsd: 6.8, abiPlayers: 996, abiEntries: 1192027, loadUsd: 8100772.62 },
-  league2: { abiUsd: 16.44, abiPlayers: 667, abiEntries: 1082595, loadUsd: 17802650.86 },
-  league1: { abiUsd: 42.57, abiPlayers: 216, abiEntries: 366677, loadUsd: 15610022.86 },
-};
+const windowStart = sourceMetadata.windowStartInclusive;
+const windowEnd = sourceMetadata.windowEndExclusive;
+const abi = sourceMetadata.abi.cohorts;
 const cohortMeta = {
-  novice: { label: 'Ранги 15–17', ranks: [15, 16, 17] },
-  league3: { label: '3 лига', ranks: [11, 12, 13, 14] },
-  league2: { label: '2 лига', ranks: [6, 7, 8, 9, 10] },
-  league1: { label: '1 лига', ranks: [1, 2, 3, 4, 5] },
+  novice: { label: 'Ранги 15–18', ranks: [15, 16, 17, 18] },
+  league3: { label: 'Лига 3', ranks: [11, 12, 13, 14] },
+  league2: { label: 'Лига 2', ranks: [6, 7, 8, 9, 10] },
+  league1: { label: 'Первая лига', ranks: [1, 2, 3, 4, 5] },
 };
 
 const csvBuffer = fs.readFileSync(csvPath);
+const csvSha256 = sha256(csvBuffer);
+assert.equal(sourceMetadata.provenance.handCube.sha256, csvSha256, 'source metadata hand-cube hash does not match the explicit CSV input');
 const csvText = csvBuffer.toString('utf8').trimEnd();
 const [headerLine, ...csvLines] = csvText.split(/\r?\n/);
 assert.deepEqual(headerLine.split(','), expectedColumns, 'unexpected CSV columns');
@@ -78,7 +182,7 @@ for (const [index, row] of rows.entries()) {
   const rowNumber = index + 2;
   assert(cohortOrder.includes(row.cohort), `bad cohort on row ${rowNumber}`);
   assert(positionOrder.includes(row.opener_position), `bad position on row ${rowNumber}`);
-  assert(sizeOrder.includes(row.open_size_bb), `bad size on row ${rowNumber}`);
+  assert(sourceSizeOrder.includes(row.open_size_bb), `bad size on row ${rowNumber}`);
   assert(sourceDepthOrder.includes(row.depth_band), `bad depth on row ${rowNumber}`);
   assert(row.holecards_str === missingHand || handIndex.has(row.holecards_str), `bad hand on row ${rowNumber}`);
 
@@ -94,8 +198,6 @@ for (const [index, row] of rows.entries()) {
     jams: integer(row.jams, 'jams', rowNumber),
     other: integer(row.other, 'other', rowNumber),
   };
-  const players = integer(row.unique_players, 'unique_players', rowNumber);
-  assert(players <= counts.opportunities, `players exceed opportunities on row ${rowNumber}`);
   assert.equal(
     counts.folds + counts.calls + counts.small3bets + counts.jams + counts.other,
     counts.opportunities,
@@ -125,7 +227,7 @@ for (const [index, row] of rows.entries()) {
 
 for (const cohort of cohortOrder) {
   for (const position of positionOrder) {
-    for (const size of sizeOrder) {
+    for (const size of sourceSizeOrder) {
       const pooled = charts[cohort][position][size]['25-40'];
       for (const depth of sourceDepthOrder) addChart(pooled, charts[cohort][position][size][depth]);
     }
@@ -133,8 +235,31 @@ for (const cohort of cohortOrder) {
 }
 
 validateCharts(charts);
+assert.deepEqual(
+  [rows.length, globalTotals.opportunities, globalTotals.folds, globalTotals.calls, globalTotals.small3bets, globalTotals.jams, sourceMetadata.expected.other],
+  [sourceMetadata.expected.csvRows, sourceMetadata.expected.opportunities, sourceMetadata.expected.folds, sourceMetadata.expected.calls, sourceMetadata.expected.small3bets, sourceMetadata.expected.jams, 0],
+  'source metadata totals do not reconcile with the explicit CSV input',
+);
 
-const defaultSlice = { position: 'BTN', size: '2.0', depth: '25-40' };
+const presetCharts = buildPresetCharts(charts);
+const presetCoverage = buildPresetCoverage(presetCharts);
+const presetOrder = positionOrder.flatMap((position) => scenarioOrder.map((scenario) => presetKey(position, scenario)));
+assert.deepEqual(
+  presetCoverage.map((item) => item.key),
+  presetOrder,
+  'preset coverage order must be stable',
+);
+for (const coverage of presetCoverage) {
+  assert(
+    cohortOrder.every((cohort) => coverage.cohorts[cohort].cellsAtExactMinimum === handOrder.length),
+    `preset ${coverage.key} is below the exact N threshold`,
+  );
+}
+assert.equal(presetOrder.length, 10, 'the learner catalog must contain exactly ten complete presets');
+
+const defaultSlice = { position: 'BTN', scenario: '2.0|25-40', size: '2.0', depth: '25-40' };
+const defaultKey = presetKey(defaultSlice.position, defaultSlice.scenario);
+assert(presetOrder.includes(defaultKey), `default preset ${defaultKey} is not publishable`);
 const defaultDepthOpportunities = Object.fromEntries(sourceDepthOrder.map((depth) => [depth, sum(
   cohortOrder.map((cohort) => charts[cohort][defaultSlice.position][defaultSlice.size][depth].totals.opportunities),
 )]));
@@ -187,9 +312,9 @@ const correlation = {
 };
 
 const payload = {
-  version: 'resteal-rank-cube-20260719-r15-r17-v2',
+  version: payloadVersion,
   meta: {
-    generatedOn: '2026-07-19',
+    generatedOn: sourceMetadata.generatedOn,
     source: 'analytics.int_tracker_hand_joined',
     rankSource: 'analytics_mcp_readonly.mcp__check_rank_history',
     abiSource: 'analytics_mcp_readonly.mcp__fulltplayers',
@@ -199,12 +324,15 @@ const payload = {
     cohortOrder,
     cohorts: cohortMeta,
     positionOrder,
-    sizeOrder,
-    depthOrder,
+    sourceSizeOrder,
     sourceDepthOrder,
+    scenarioOrder,
+    scenarios: scenarioDefinitions,
+    presetOrder,
     handOrder,
     missingHolecardsKey: missingHand,
-    sampleThresholds: { unavailableBelow: 5, lowConfidenceBelow: 20, strongAtLeast: 50 },
+    sampleThresholds: { exactCellMinimum },
+    comparisonStateContract: 'The learner sees exactly ten source-backed presets. Every preset contains all 169 known-card cells in every one of the four compared cohorts at or above the shared exact denominator minimum.',
     filters: {
       heroPosition: 'BB',
       facing: 'Exactly one preflop raiser (val_preflop_action_facing=4)',
@@ -213,42 +341,37 @@ const payload = {
       tablePlayers: [3, 9],
       effectiveStackBb: [25, 40],
       openerPositions: positionOrder,
-      openSizesBb: sizeOrder.map(Number),
+      openSizesBb: sourceSizeOrder.map(Number),
       openSizeToleranceBb: 0.05,
     },
     actionContract: {
-      jam: "preflop_action='R' AND is_preflop_allin=1",
-      small3bet: "preflop_action starts with R except exact direct jam; RC/RR remain here even if the later line reached all-in",
+      jam: "preflop_action='R' AND (is_preflop_allin=1 OR raise_and_blind_made_amount_bb - posted_blind_bb >= effective_stack_bb - 0.01)",
+      small3bet: "preflop_action starts with R except a direct/effective-stack shove; RC/RR remain here even if the later line reached all-in",
       call: 'preflop_action starts with C',
       fold: "preflop_action='F'",
     },
     aggregation: 'All percentages must be calculated from integer counts. Pooling sums counts, never percentages.',
-    uniquePlayers: 'CSV unique_players is cell-level and non-additive; it is intentionally omitted from pooled frontend totals.',
-    provenance: {
-      rankIntervals: { rows: 6426, users: 2463, queryJobId: 'mcp_bq_job_622f9d4c42de4a148d69d45c96326c7f', sha256: '488da5b060b13e953214596fdadf12c4554a0426b72a709c62a4ee3d7a965989' },
-      handCube: {
-        rows: rows.length,
-        queryJobIds: [
-          'mcp_ch_job_b73456e9ce2a46ba927d810de6b02ef9',
-          'mcp_ch_job_b44f5cada3124108b2c366cf329d3b8a',
-        ],
-        sha256: sha256(csvBuffer),
-        cohortExports: {
-          noviceLeague3Sha256: '090ccd473966907215f0db0eed65ac0393a6b735620c48078f6c776aef83ce90',
-          league2League1Sha256: '48a8c7f464835578b2ab5590b96b6bdcf0239cc5115d3e2a64b67d2a7db0aad5',
-        },
-      },
-      abi: { queryJobId: 'mcp_bq_f55a264b18c7433786fb236095c26ab3' },
-    },
+    sourceGrain: 'The checked-in cube carries only additive integer action counters; disjoint time windows or immutable user partitions merge without approximating distinct-player counts.',
+    provenance: publicProvenance(sourceMetadata.provenance, rows.length, csvSha256),
   },
   summaries,
   correlation,
-  charts,
+  charts: publishPresetCharts(presetCharts),
 };
 
-const diagnostics = buildDiagnostics(payload, rows.length, globalTotals, firstHandAt, lastHandAt);
+const diagnostics = buildDiagnostics(payload, charts, presetCoverage, rows.length, globalTotals, firstHandAt, lastHandAt);
 const dataText = `window.PokerRestealRankData=${JSON.stringify(payload)};\n`;
 const diagnosticsText = `${JSON.stringify(diagnostics, null, 2)}\n`;
+for (const forbidden of [
+  "/private/tmp/",
+  "privateSql",
+  "privateCsv",
+  "privateJson",
+  "failedAttempts",
+  "strict is_preflop_allin-only classifier rejected",
+]) {
+  assert(!dataText.includes(forbidden), `public resteal payload leaks private build evidence: ${forbidden}`);
+}
 
 if (checkOnly) {
   assert.equal(fs.readFileSync(dataPath, 'utf8'), dataText, 'resteal-rank-data.js is stale');
@@ -263,11 +386,62 @@ if (checkOnly) {
 function precreateCharts() {
   return Object.fromEntries(cohortOrder.map((cohort) => [cohort,
     Object.fromEntries(positionOrder.map((position) => [position,
-      Object.fromEntries(sizeOrder.map((size) => [size,
+      Object.fromEntries(sourceSizeOrder.map((size) => [size,
         Object.fromEntries(depthOrder.map((depth) => [depth, emptyChart()])),
       ])),
     ])),
   ]));
+}
+
+function publicProvenance(provenance, rows, cubeSha256) {
+  const rankIntervals = provenance.rankIntervals || {};
+  const handCube = provenance.handCube || {};
+  const abiSource = provenance.abi || {};
+  return {
+    rankIntervals: {
+      sourceRows: rankIntervals.sourceRows,
+      usableRows: rankIntervals.usableRows,
+      excludedZeroLength: rankIntervals.excludedZeroLength,
+      users: rankIntervals.users,
+      queryJobId: rankIntervals.queryJobId,
+      sha256: rankIntervals.sha256,
+    },
+    handCube: {
+      classifier: handCube.classifier,
+      shardStrategy: handCube.shardStrategy,
+      mergeSchema: handCube.mergeSchema,
+      templateSha256: handCube.templateSha256,
+      rows,
+      sha256: cubeSha256,
+      queryJobIds: [...handCube.queryJobIds],
+      shards: handCube.shards.map((shard) => ({
+        name: shard.name,
+        rankMin: shard.rankMin,
+        rankMax: shard.rankMax,
+        windowStartInclusive: shard.windowStartInclusive,
+        windowEndExclusive: shard.windowEndExclusive,
+        queryJobId: shard.queryJobId,
+        executionMode: shard.executionMode,
+        renderedSqlSha256: shard.renderedSqlSha256,
+        exportSha256: shard.exportSha256,
+        exportRows: shard.exportRows,
+        rankIntervals: shard.rankIntervals,
+        rankUsers: shard.rankUsers,
+        userShard: {
+          index: shard.userShard.index,
+          count: shard.userShard.count,
+          eligibleUsers: shard.userShard.eligibleUsers,
+          userIdsSha256: shard.userShard.userIdsSha256,
+        },
+      })),
+    },
+    abi: {
+      queryJobId: abiSource.queryJobId,
+      formula: abiSource.formula,
+      querySha256: abiSource.querySha256,
+      sha256: abiSource.sha256,
+    },
+  };
 }
 
 function emptyChart() {
@@ -310,7 +484,7 @@ function addChart(target, source) {
 }
 
 function validateCharts(tree) {
-  for (const cohort of cohortOrder) for (const position of positionOrder) for (const size of sizeOrder) for (const depth of depthOrder) {
+  for (const cohort of cohortOrder) for (const position of positionOrder) for (const size of sourceSizeOrder) for (const depth of depthOrder) {
     const chart = tree[cohort][position][size][depth];
     const knownFromCells = sum(chart.cells.map((cell) => cell[0]));
     assert.equal(chart.cells.length, 169, `bad cell count for ${cohort}/${position}/${size}/${depth}`);
@@ -325,10 +499,10 @@ function validateCharts(tree) {
   }
 }
 
-function buildDiagnostics(data, csvRows, sourceTotals, first, last) {
+function buildDiagnostics(data, sourceCharts, presetCoverage, csvRows, sourceTotals, first, last) {
   const chartCoverage = [];
-  for (const cohort of cohortOrder) for (const position of positionOrder) for (const size of sizeOrder) for (const depth of depthOrder) {
-    const chart = data.charts[cohort][position][size][depth];
+  for (const cohort of cohortOrder) for (const position of positionOrder) for (const size of sourceSizeOrder) for (const depth of depthOrder) {
+    const chart = sourceCharts[cohort][position][size][depth];
     const sampleSizes = chart.cells.map((cell) => cell[0]);
     chartCoverage.push({
       cohort, position, size, depth,
@@ -347,8 +521,11 @@ function buildDiagnostics(data, csvRows, sourceTotals, first, last) {
     csvRows,
     csvSha256: data.meta.provenance.handCube.sha256,
     duplicateRows: csvRows - rowKeys.size,
-    sourceChartsExpected: cohortOrder.length * positionOrder.length * sizeOrder.length * sourceDepthOrder.length,
-    frontendChartsExpected: cohortOrder.length * positionOrder.length * sizeOrder.length * depthOrder.length,
+    sourceChartsExpected: cohortOrder.length * positionOrder.length * sourceSizeOrder.length * sourceDepthOrder.length,
+    frontendChartsExpected: presetOrder.length * cohortOrder.length,
+    exactCellMinimum,
+    presetOrder,
+    presetCoverage,
     firstHandAt: first,
     lastHandAt: last,
     global: {
@@ -387,6 +564,11 @@ function sum(values) { return values.reduce((total, value) => total + value, 0);
 function round(value, places) { const factor = 10 ** places; return Math.round(value * factor) / factor; }
 function pct(numerator, denominator) { return denominator ? round(100 * numerator / denominator, 3) : null; }
 function sha256(value) { return crypto.createHash('sha256').update(value).digest('hex'); }
+function executionMode(sourceRef, querySha256) {
+  if (sourceRef === `sync:${querySha256}`) return 'sync';
+  assert.match(sourceRef || '', /^mcp_ch_job_[a-f0-9]+$/, 'source shard has no honest ClickHouse execution id');
+  return 'async';
+}
 
 function pearson(xs, ys) {
   assert.equal(xs.length, ys.length);
@@ -396,4 +578,107 @@ function pearson(xs, ys) {
   const xDenominator = Math.sqrt(sum(xs.map((x) => (x - xMean) ** 2)));
   const yDenominator = Math.sqrt(sum(ys.map((y) => (y - yMean) ** 2)));
   return numerator / (xDenominator * yDenominator);
+}
+
+function parseArguments(items) {
+  const parsed = {};
+  for (const item of items) {
+    if (item === '--check') parsed.check = true;
+    else {
+      const match = item.match(/^--([^=]+)=(.*)$/);
+      if (!match) throw new Error(`Expected --check or --key=value, got ${item}`);
+      parsed[match[1]] = match[2];
+    }
+  }
+  return parsed;
+}
+
+function presetKey(position, scenario) {
+  return [position, scenario].join('|');
+}
+
+function validateImmutableUserShards(shards) {
+  const declaredCounts = new Set(shards.map((shard) => shard.userShard.count));
+  assert.equal(declaredCounts.size, 1, 'all user shards must declare the same partition count');
+  const count = [...declaredCounts][0];
+  assert.equal(shards.length, count, 'every immutable user-id partition must be present exactly once');
+  assert.deepEqual(
+    shards.map((shard) => shard.userShard.index).sort((left, right) => left - right),
+    Array.from({ length: count }, (_, index) => index),
+    `user-shard indices must cover 0..${count - 1}`,
+  );
+  const eligibleCounts = new Set(shards.map((shard) => shard.userShard.eligibleUsers));
+  assert.equal(eligibleCounts.size, 1, 'user shards disagree on the eligible population');
+  const eligibleUsers = [...eligibleCounts][0];
+  assert.equal(shards.reduce((total, shard) => total + shard.rankUsers, 0), eligibleUsers, 'user-shard sizes do not reconcile to the eligible population');
+  assert.equal(new Set(shards.map((shard) => shard.userShard.userIdsSha256)).size, count, 'user-id-set hashes must be unique');
+}
+
+function validateSourceShards(strategy, shards, metadata) {
+  if (strategy === 'immutable-user-id') {
+    for (const shard of shards) {
+      assert.equal(shard.windowStartInclusive, metadata.windowStartInclusive, `user shard must cover the full source window for ${shard.name}`);
+      assert.equal(shard.windowEndExclusive, metadata.windowEndExclusive, `user shard must cover the full source window for ${shard.name}`);
+    }
+    validateImmutableUserShards(shards);
+    return;
+  }
+
+  const ordered = [...shards].sort((left, right) => left.windowStartInclusive.localeCompare(right.windowStartInclusive));
+  assert.equal(ordered[0].windowStartInclusive, metadata.windowStartInclusive, 'time shards do not start at the product window boundary');
+  assert.equal(ordered.at(-1).windowEndExclusive, metadata.windowEndExclusive, 'time shards do not end at the product window boundary');
+  for (const shard of ordered) {
+    assert.equal(shard.userShard.index, 0, `time shard must include the full user population for ${shard.name}`);
+    assert.equal(shard.userShard.count, 1, `time and user sharding cannot be mixed for ${shard.name}`);
+    assert.equal(shard.rankUsers, shard.userShard.eligibleUsers, `time shard must include every eligible rank user for ${shard.name}`);
+  }
+  for (let index = 1; index < ordered.length; index += 1) {
+    assert.equal(ordered[index - 1].windowEndExclusive, ordered[index].windowStartInclusive, 'time shards must be contiguous and non-overlapping');
+  }
+}
+
+function buildPresetCharts(sourceTree) {
+  return Object.fromEntries(cohortOrder.map((cohort) => [cohort,
+    Object.fromEntries(positionOrder.flatMap((position) => scenarioOrder.map((scenario) => {
+      const preset = scenarioDefinitions[scenario];
+      const chart = emptyChart();
+      for (const source of preset.sourceSlices) {
+        addChart(chart, sourceTree[cohort][position][source.size][source.depth]);
+      }
+      return [presetKey(position, scenario), chart];
+    }))),
+  ]));
+}
+
+function buildPresetCoverage(tree) {
+  const coverage = [];
+  for (const position of positionOrder) for (const scenario of scenarioOrder) {
+    const key = presetKey(position, scenario);
+    const definition = scenarioDefinitions[scenario];
+    const cohorts = Object.fromEntries(cohortOrder.map((cohort) => {
+      const samples = tree[cohort][key].cells.map((cell) => cell[0]);
+      return [cohort, {
+        cellsAtExactMinimum: samples.filter((sample) => sample >= exactCellMinimum).length,
+        minN: Math.min(...samples),
+        missingCells: samples.filter((sample) => sample === 0).length,
+      }];
+    }));
+    coverage.push({
+      key,
+      position,
+      scenario,
+      size: definition.size,
+      depth: definition.depth,
+      sourceSlices: definition.sourceSlices,
+      cohorts,
+    });
+  }
+  return coverage;
+}
+
+function publishPresetCharts(tree) {
+  return Object.fromEntries(cohortOrder.map((cohort) => [
+    cohort,
+    Object.fromEntries(presetOrder.map((key) => [key, tree[cohort][key]])),
+  ]));
 }

@@ -1,13 +1,18 @@
 (function () {
   "use strict";
 
+  const rawFieldData = window.FF_VS3BET_FIELD_DATA;
+  const fieldData = window.FFVs3BetFieldDataReadiness?.ready ? rawFieldData : null;
+  const preflopPotBb = window.FFTrainerSimulatorSnapshot?.preflopPotBb;
+  if (typeof preflopPotBb !== "function") throw new Error("Shared preflop chip model is required");
+
   const seats = (heroPosition, stackBb) => ["UTG", "HJ", "CO", "BTN", "SB", "BB"].map((label) => ({
     label,
     state: label === heroPosition ? "hero" : /SB|BB/.test(label) ? "blind" : "waiting",
     stackBb
   }));
 
-  const spot = ({ id, title, hand, cards, heroPosition, stack, pot, toCall, currentBet, actionLine, historyLine, question, answer, correct, options }) => ({
+  const spot = ({ id, title, hand, cards, heroPosition, villainPosition, stack, openTo, toCall, currentBet, actionLine, historyLine, question, answer, correct, options }) => ({
     id,
     title,
     hand,
@@ -19,7 +24,13 @@
       heroPosition,
       heroStack: `${stack} BB`,
       effectiveStack: `${stack} BB`,
-      pot: `${pot} BB`,
+      pot: `${preflopPotBb({
+        anteBb: 1,
+        contributions: [
+          { position: heroPosition, amountBb: openTo },
+          { position: villainPosition, amountBb: currentBet }
+        ]
+      })} BB`,
       anteBb: 1,
       heroCards: cards,
       boardCards: [],
@@ -39,8 +50,9 @@
     hand: "98s",
     cards: ["9c", "8c"],
     heroPosition: "CO",
+    villainPosition: "BTN",
     stack: 40,
-    pot: 1,
+    openTo: 2.2,
     toCall: 4.8,
     currentBet: 7,
     actionLine: ["UTG fold", "HJ fold", "CO open 2.2 BB", "BTN raise to 7 BB", "SB fold", "BB fold"],
@@ -59,7 +71,7 @@
   const fallbackPractice = [
     spot({
       id: "practice-aa-hj-vs-co", title: "Натсовая часть", hand: "AA", cards: ["As", "Ad"], heroPosition: "HJ", stack: 50,
-      pot: 1, toCall: 5.3, currentBet: 7.5,
+      villainPosition: "CO", openTo: 2.2, toCall: 5.3, currentBet: 7.5,
       actionLine: ["UTG fold", "HJ open 2.2 BB", "CO raise to 7.5 BB", "BTN fold", "SB fold", "BB fold"],
       historyLine: "HJ открыл · CO 3-бет 3,4x",
       question: "HJ открыл AA и получил 3-бет CO. Что делает верх диапазона защиты?",
@@ -74,7 +86,7 @@
     }),
     spot({
       id: "practice-76s-hj-vs-bb", title: "Большой сайз без позиции", hand: "76s", cards: ["7s", "6s"], heroPosition: "HJ", stack: 30,
-      pot: 1, toCall: 7.8, currentBet: 10,
+      villainPosition: "BB", openTo: 2.2, toCall: 7.8, currentBet: 10,
       actionLine: ["UTG fold", "HJ open 2.2 BB", "CO fold", "BTN fold", "SB fold", "BB raise to 10 BB"],
       historyLine: "HJ открыл · BB 3-бет 4,5x · 30 BB",
       question: "HJ открыл 76s, BB сделал крупный 3-бет, эффективный стек 30 BB. Что важнее красивой одномастности?",
@@ -89,7 +101,7 @@
     }),
     spot({
       id: "practice-aqs-btn-vs-sb", title: "Позиция сохраняет колл", hand: "AQs", cards: ["Ah", "Qh"], heroPosition: "BTN", stack: 60,
-      pot: 1, toCall: 6, currentBet: 8,
+      villainPosition: "SB", openTo: 2, toCall: 6, currentBet: 8,
       actionLine: ["UTG fold", "HJ fold", "CO fold", "BTN open 2 BB", "SB raise to 8 BB", "BB fold"],
       historyLine: "BTN открыл · SB 3-бет 4x · 60 BB",
       question: "BTN открыл AQs, SB сделал 3-бет до 8 BB. Какая линия сохраняет позицию и глубину?",
@@ -363,7 +375,13 @@
         heroPosition,
         heroStack: `${stackBb} BB`,
         effectiveStack: `${stackBb} BB`,
-        pot: "1 BB",
+        pot: `${preflopPotBb({
+          anteBb: 1,
+          contributions: [
+            { position: heroPosition, amountBb: openTo },
+            { position: villainPosition, amountBb: threeBetTo }
+          ]
+        })} BB`,
         anteBb: 1,
         heroCards,
         boardCards: [],
@@ -391,98 +409,110 @@
     key: "filtered",
     label: rangeModel ? "Вся сетка" : "Базовые примеры",
     description: rangeModel ? "Выбери позицию, IP/OOP, стек и размер 3-бета." : "Резервный набор без загруженной матрицы.",
-    reference: rangeModel ? "Правильные ответы следуют слою «Методичка»; слои лиг нужны для сравнения ошибок." : "",
+    reference: rangeModel
+      ? fieldData
+        ? "Правильные ответы следуют слою «Методичка»; полевые слои показывают только проверенные отличия."
+        : "Правильные ответы следуют учебной матрице; непроверенное сравнение групп скрыто."
+      : "",
     spotIds: practice.map((item) => item.id)
   }];
 
+  const fieldCohortOrder = (fieldData?.meta?.cohortOrder || []).slice().reverse();
+  const cohortInsights = {
+    league1: "Сильнейшая группа реже сдаёт опен и чаще отвечает агрессией.",
+    league2: "Средняя группа сохраняет больше коллов, но уже чаще уходит в пас.",
+    league3: "В младшей лиге часть агрессивных продолжений превращается в пас.",
+    novice: "Новички чаще теряют агрессивную ветку защиты и оставляют больше фолдов."
+  };
+
+  function observedCohort(key) {
+    const meta = fieldData.meta.cohorts[key];
+    const summary = fieldData.summaries[key];
+    const ranks = meta.ranks.filter(Number.isFinite);
+    return {
+      key,
+      label: `${meta.label} · R${Math.min(...ranks)}–${Math.max(...ranks)}`,
+      subtitle: "наблюдаемая игра поля",
+      sample: summary.opportunities,
+      insight: cohortInsights[key],
+      actions: [
+        { key: "fold", label: "Пас", pct: summary.foldPct, tone: "fold" },
+        { key: "call", label: "Колл", pct: summary.callPct, tone: "call" },
+        { key: "fourbet", label: "4-бет", pct: summary.fourbetPct, tone: "4bet" },
+        { key: "jam", label: "4-бет пуш", pct: summary.jamPct, tone: "jam" }
+      ]
+    };
+  }
+
+  const observedCohorts = fieldCohortOrder.map(observedCohort);
+  const aggressionPct = (key) => {
+    const summary = fieldData?.summaries?.[key];
+    return summary ? summary.fourbetPct + summary.jamPct : 0;
+  };
+  const aggressionGap = fieldData
+    ? `${aggressionPct("league1").toLocaleString("ru-RU", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} → ${aggressionPct("league3").toLocaleString("ru-RU", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
+    : "";
+
   window.FF_POKER_FIELD_LESSON_DATA = {
     schemaVersion: 1,
+    status: fieldData ? "ready" : "methodology_only",
     key: "vs-3bet-defense",
     meta: {
       title: "Защита против 3-бета",
       kicker: "Префлоп · Hero уже открылся",
-      lead: "Не смешивай любой face-3bet с нужным узлом дерева: здесь Hero сначала открыл банк, затем выбирает пас, колл или 4-бет.",
+      lead: "Ты уже открыл банк и получил первый 3-бет без сквиза. Теперь выбери между пасом, коллом, 4-бетом и прямым пушем.",
       scope: [
         "Hero уже сделал первый опен-рейз в неоткрытом банке",
         "после опена Hero получил первый 3-бет",
-        "годовой агрегат: fold, call и 4-bet; calls восстановлены как N − folds − 4-bets",
-        "hand-level матрица: только one-on-one без сквиза; fold, call, 4-bet и прямой 4-bet-пуш взяты из действий",
-        "в агрегате ранг фиксируется на начало месяца; в матрице — точно на момент раздачи",
+        "один учебный узел: опен Hero, затем первый 3-бет без сквиза",
+        "пас, колл, 4-бет и прямой 4-бет-пуш разбираются как разные ветки",
+        "сравнение лиг показывается только после полной сверки всех периодов",
         "полевые частоты описывают сыгранные решения и не являются solver-чартом"
       ],
-      sourceLabel: "FFLK tracker · monthly aggregate + strict hand-level cube",
-      period: "агрегат: авг. 2025 — июль 2026 · матрица: янв. — 16 июл. 2026",
-      sampleNote: "Годовой агрегат содержит 6 557 996 ranked opportunities с rank-at-month-start; один игрок может перейти между группами. Строгая матрица содержит 5 051 115 решений после собственного RFI, исключает сквизы и назначает ранг на played_at; известные карты покрывают 87,0%. R15–17 в агрегате на 99,0% состоит из R15. Готовые FF-материалы дают 59 defense-задач из 208 общего pack, но только на 58 BB и линии 2→8 BB, поэтому практика здесь добавляет другие сайзы и стеки. Частоты описательные, не solver-optimal."
+      sourceLabel: fieldData ? "FF · проверенные решения по раздачам" : "Методичка FF · полевые частоты скрыты",
+      period: fieldData ? `${fieldData.meta.windowStartInclusive.slice(0, 10)} — ${fieldData.meta.windowEndExclusive.slice(0, 10)}` : "Без неподтверждённых процентов",
+      sampleNote: fieldData
+        ? "Один опен, первый 3-бет, без сквизов. Частоты описывают наблюдаемую игру поля, а не оптимальную стратегию."
+        : "Старые полевые частоты скрыты. До полной сверки доступны только учебная матрица и практика по методичке.",
+      cohortOrder: fieldCohortOrder,
+      observedDataStatus: fieldData ? "ready" : "unavailable"
     },
     intro,
     wisdom: [
       {
         eyebrow: "Сначала узел дерева",
-        title: "Защищай свой опен, а не любой face-3bet",
-        copy: "В широкой метрике face-3bet смешиваются сквизы, лимпы и другие линии. Для hand-level матрицы оставлен только one-on-one узел Hero RFI → соперник 3-bet → решение Hero.",
+        title: "Защищай свой опен, а не любую похожую раздачу",
+        copy: "Сквизы, лимпы и чужие опены требуют других диапазонов. Здесь один точный узел: Hero открылся, один соперник сделал первый 3-бет, остальные не вошли в банк.",
         rule: "До карт назови: кто открылся, кто 3-бетил и кто ещё остался в раздаче.",
-        stat: { value: "5,05 млн", label: "non-squeeze решений · 20 BB+ · янв—16 июл" }
+        stat: { value: "1 на 1", label: "первый 3-бет после собственного опена · без сквизов" }
       },
       {
         eyebrow: "Цена продолжения",
         title: "Позиция и сайз двигают границу вместе",
         copy: "Маленький позиционный 3-бет оставляет больше коллов. Большой 3-бет из блайндов требует дороже платить и быстрее снижает SPR.",
         rule: "Сначала цена и позиция, потом красота конкретной руки.",
-        stat: { value: "87,0%", label: "решений строгого среза с известной рукой" }
+        stat: { value: "IP / OOP", label: "позиция меняет цену и реализацию эквити" }
       },
       {
         eyebrow: "Стек выбирает форму",
         title: "30 BB и 60 BB — разные деревья",
         copy: "На 60 BB колл сохраняет пространство постфлоп. Около 30 BB крупный 4-бет часто уже коммитит стек, поэтому пограничные руки быстрее уходят в пас.",
         rule: "Если 4-бет съедает треть стека, заранее знай план против олл-ина.",
-        stat: { value: "16,0 → 11,6%", label: "4-бет + пуш: League 1 → 3 · строгий срез" }
+        stat: fieldData
+          ? { value: aggressionGap, label: "4-бет + пуш: Лига 1 → Лига 3" }
+          : { value: "20–30 / 31–50 / 51–80 / 80+", label: "четыре отдельные ветки эффективного стека" }
       }
     ],
-    cohorts: [
-      {
-        key: "league1", label: "League 1 · R1–5", subtitle: "сильнейшая группа", sample: 1017333, players: 222,
-        insight: "Чаще всех 4-бетит и реже сдаёт опен; доля коллов при этом почти такая же, как в других лигах.",
-        actions: [
-          { key: "fold", label: "Fold", pct: 53.82, tone: "fold" },
-          { key: "call", label: "Call", pct: 29.88, tone: "call" },
-          { key: "fourbet", label: "4-bet", pct: 16.30, tone: "4bet" }
-        ]
-      },
-      {
-        key: "league2", label: "League 2 · R6–10", subtitle: "средняя группа", sample: 2469549, players: 631,
-        insight: "Промежуточный профиль: примерно тот же call, но часть 4-бетов уже превращается в фолд.",
-        actions: [
-          { key: "fold", label: "Fold", pct: 56.18, tone: "fold" },
-          { key: "call", label: "Call", pct: 29.00, tone: "call" },
-          { key: "fourbet", label: "4-bet", pct: 14.82, tone: "4bet" }
-        ]
-      },
-      {
-        key: "league3", label: "League 3 · R11–17", subtitle: "широкая младшая группа", sample: 3071114, players: 1381,
-        insight: "Главный разрыв с League 1 — не колл, а около 4,8 п.п. недостающих 4-бетов и 6,1 п.п. дополнительных фолдов.",
-        actions: [
-          { key: "fold", label: "Fold", pct: 59.96, tone: "fold" },
-          { key: "call", label: "Call", pct: 28.49, tone: "call" },
-          { key: "fourbet", label: "4-bet", pct: 11.55, tone: "4bet" }
-        ]
-      },
-      {
-        key: "rank15_17", label: "Ранги 15–17", subtitle: "подсрез League 3 · 99% R15", sample: 861445, players: 953,
-        insight: "Полезный стартовый срез, но не сравнение трёх равных рангов: почти весь N даёт R15, а R16/17 появились только в неполном июле.",
-        actions: [
-          { key: "fold", label: "Fold", pct: 59.39, tone: "fold" },
-          { key: "call", label: "Call", pct: 30.14, tone: "call" },
-          { key: "fourbet", label: "4-bet", pct: 10.47, tone: "4bet" }
-        ]
-      }
-    ],
+    cohorts: observedCohorts,
     practice,
     practiceModes,
     rangeModel: {
       schemaVersion: rangeModel?.schemaVersion || 0,
       status: rangeModel ? "ready" : "fallback",
       practiceSpots: practice.length,
-      sourceBoundary: "Точные позиции из методички; IP/OOP, стек, сайз и hand-level слои лиг — прозрачные учебные адаптации."
+      sourceBoundary: fieldData
+        ? "Позиции взяты из методички; полевые сравнения показываются только для полностью проверенных срезов."
+        : "Позиции взяты из методички; сравнение групп скрыто до полной сверки истории."
     }
   };
 })();

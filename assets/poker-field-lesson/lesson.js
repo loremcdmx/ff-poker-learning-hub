@@ -82,13 +82,32 @@
   const body = documentRoot.body;
   const lessonKey = body.dataset.lessonKey || "field-lesson";
   const rawData = root.FF_POKER_FIELD_LESSON_DATA;
-  const COHORT_ORDER = ["league1", "league2", "league3", "rank15_17"];
+  const FIELD_DATA_UNAVAILABLE = cleanText(rawData?.meta?.observedDataStatus) === "unavailable";
+  const COHORT_ORDER = asArray(rawData?.meta?.cohortOrder).length
+    ? asArray(rawData.meta.cohortOrder)
+    : FIELD_DATA_UNAVAILABLE ? [] : ["league1", "league2", "league3", "rank15_17"];
   const pageSteps = Array.from(documentRoot.querySelectorAll("[data-step-target]"))
+    .filter((tab) => !tab.hidden)
     .map((tab) => cleanText(tab?.dataset?.stepTarget))
     .filter(Boolean);
   const STEP_ORDER = pageSteps.length ? pageSteps : ["deal", "wisdom", "field", "practice"];
   const STORAGE_KEY = `ff-learning-hub:field-lesson:${lessonKey}:v1`;
   const actionToneFallbacks = ["is-accent", "is-positive", "is-warning", "is-neutral"];
+  const COURSE_PROGRESS = Object.freeze({
+    "flop-checkraise": Object.freeze({
+      skillKey: "ff_learning_flop_checkraise",
+      targetHands: 25,
+      passScore: 80,
+      mode: "flop-checkraise"
+    }),
+    "vs-3bet-defense": Object.freeze({
+      skillKey: "ff_learning_vs_3bet_defense",
+      targetHands: 25,
+      passScore: 80,
+      mode: "vs-3bet-defense"
+    })
+  });
+  const lessonProgress = COURSE_PROGRESS[lessonKey] || null;
 
   const state = {
     step: "deal",
@@ -106,6 +125,8 @@
     practiceContinuationActive: false,
     practiceContinuationIntroduced: false,
     practiceStarted: false,
+    courseReported: false,
+    courseSessionId: "",
     stats: { hands: 0, correct: 0, mistakes: 0, checkraises: 0, expectedXr: 0, missedXr: 0, extraXr: 0 }
   };
 
@@ -139,22 +160,11 @@
     const label = cleanText(value) || "Тип флопа";
     if (lessonKey !== "flop-checkraise") return label;
     if (CHECKRAISE_STRUCTURE_LABELS[cleanText(key)]) return CHECKRAISE_STRUCTURE_LABELS[cleanText(key)];
-    return label
-      .replace(/A-high/gi, "Туз-хай")
-      .replace(/K-high/gi, "Король-хай")
-      .replace(/\brainbow\b/gi, "разных мастей")
-      .replace(/\btrips\b/gi, "трипс")
-      .replace(/\bdry\b/gi, "сухая");
+    return label;
   }
 
   function learnerCheckraiseLabel(value) {
-    const label = cleanText(value);
-    if (lessonKey !== "flop-checkraise") return label;
-    return label
-      .replace(/Вэлью/gi, "Велью")
-      .replace(/X\/R/gi, "чек-рейз")
-      .replace(/top-pair/gi, "топ-пара")
-      .replace(/showdown/gi, "вскрытие");
+    return cleanText(value);
   }
 
   function numberOrNull(value) {
@@ -230,11 +240,12 @@
     const label = `cohorts[${index}]`;
     const errors = [];
     const actions = asArray(source.actions);
+    const methodologyOnly = cleanText(rawData?.status) === "methodology_only";
     if (!cleanText(source.key)) errors.push(`${label}: нет key`);
     if (!actions.length) errors.push(`${label}: actions пуст`);
     actions.forEach((action, actionIndex) => {
       const pct = numberOrNull(action?.pct);
-      if (pct === null) errors.push(`${label}.actions[${actionIndex}]: нет pct`);
+      if (pct === null && !methodologyOnly) errors.push(`${label}.actions[${actionIndex}]: нет pct`);
       else if (pct < 0 || pct > 100) errors.push(`${label}.actions[${actionIndex}]: pct вне 0..100`);
     });
     const samples = asArray(source.samples);
@@ -362,21 +373,23 @@
     if (!cleanText(evidence.categoryKey)) errors.push(`${label}: нет categoryKey`);
     if (!cleanText(evidence.categoryLabel)) errors.push(`${label}: нет categoryLabel`);
     const evidenceStatus = cleanText(evidence.status) || "ready";
-    if (!["ready", "pending_exact_extract"].includes(evidenceStatus)) {
+    if (!["ready", "methodology_only"].includes(evidenceStatus)) {
       errors.push(`${label}: неизвестный evidence status`);
+    }
+    if (evidenceStatus === "methodology_only") {
+      ["league1", "league2", "league3"].forEach((cohortKey) => {
+        const cohort = asObject(evidence[cohortKey]);
+        if ([cohort.xraises, cohort.opportunities, cohort.players].some((value) => numberOrNull(value) !== null)) {
+          errors.push(`${label}.${cohortKey}: methodology-only пример не должен содержать observed counts`);
+        }
+      });
+      return errors;
     }
     ["league1", "league2", "league3"].forEach((cohortKey) => {
       const cohort = asObject(evidence[cohortKey]);
       const made = numberOrNull(cohort.xraises);
       const cases = numberOrNull(cohort.opportunities);
       const players = numberOrNull(cohort.players);
-      if (evidenceStatus === "pending_exact_extract") {
-        if ([made, cases, players].some((value) => value !== null)) {
-          errors.push(`${label}.${cohortKey}: pending-категория не должна содержать выдуманные counts`);
-        }
-        if (!cleanText(cohort.note)) errors.push(`${label}.${cohortKey}: нет причины отсутствия среза`);
-        return;
-      }
       if (made === null || cases === null || cases <= 0) errors.push(`${label}.${cohortKey}: нет X/R numerator или denominator`);
       else if (made < 0 || made > cases) errors.push(`${label}.${cohortKey}: X/R count вне denominator`);
       if (players === null || players <= 0) errors.push(`${label}.${cohortKey}: нет числа игроков`);
@@ -480,7 +493,7 @@
     const scope = $("[data-scope-list]");
     if (scope) {
       scope.replaceChildren();
-      asArray(meta.scope).slice(0, 5).forEach((item, index) => {
+      asArray(meta.scope).forEach((item, index) => {
         const li = makeElement("li", "scope-item");
         li.append(makeElement("span", "scope-number", String(index + 1)), makeElement("p", "", item));
         scope.append(li);
@@ -737,7 +750,7 @@
     if (cleanText(config.type) !== "value-range") return null;
     const card = makeElement("section", "wisdom-value-range");
     card.setAttribute("role", "group");
-    card.setAttribute("aria-label", "Велью чек-рейз на разноцветном флопе K92");
+    card.setAttribute("aria-label", "Вэлью-чек-рейз на разноцветном флопе K92");
 
     const head = makeElement("header", "wisdom-value-range-head");
     const board = makeElement("div", "wisdom-value-board");
@@ -749,7 +762,7 @@
     const rangeTitle = makeElement("div", "wisdom-value-range-title");
     rangeTitle.append(
       makeElement("span", "", "Состав чек-рейза"),
-      makeElement("strong", "", "Велью + микс")
+      makeElement("strong", "", "Вэлью + микс")
     );
     head.append(board, rangeTitle);
 
@@ -1014,30 +1027,12 @@
       title.append(makeElement("p", "eyebrow", cohort.subtitle || "Срез поля"), makeElement("h3", "", cohort.label || cohort.key));
       header.append(number, title);
       card.append(header, renderActionMix(cohort, definitions));
-      const evidence = makeElement("dl", "cohort-evidence");
-      const splitSamples = asArray(cohort.samples).filter((item) => numberOrNull(item?.value) !== null);
-      if (splitSamples.length) {
-        splitSamples.forEach((item) => {
-          const sample = makeElement("div", "");
-          sample.append(makeElement("dt", "", item.label || "Наблюдений"), makeElement("dd", "", formatCount(item.value)));
-          evidence.append(sample);
-        });
-      } else {
-        const sample = makeElement("div", "");
-        sample.append(makeElement("dt", "", "Наблюдений"), makeElement("dd", "", formatCount(cohort.sample)));
-        evidence.append(sample);
-      }
-      if (numberOrNull(cohort.players) !== null) {
-        const players = makeElement("div", "");
-        players.append(makeElement("dt", "", "Игроков"), makeElement("dd", "", formatCount(cohort.players)));
-        evidence.append(players);
-      }
-      card.append(evidence, makeElement("p", "cohort-insight", cohort.insight || "Интерпретация появится после проверки данных."));
+      card.append(makeElement("p", "cohort-insight", cohort.insight || "Интерпретация появится после проверки данных."));
       cards.append(card);
     });
 
     const headerRow = makeElement("tr", "");
-    ["Группа", ...definitions.map((definition) => definition.label), "N", "Вывод"].forEach((label) => {
+    ["Группа", ...definitions.map((definition) => definition.label), "Вывод"].forEach((label) => {
       const cell = makeElement("th", "", label);
       cell.scope = "col";
       headerRow.append(cell);
@@ -1056,21 +1051,17 @@
         cell.dataset.label = definition.label;
         row.append(cell);
       });
-      const splitSamples = asArray(cohort.samples).filter((item) => numberOrNull(item?.value) !== null);
-      const sampleText = splitSamples.length
-        ? splitSamples.map((item) => `${cleanText(item.label)} ${formatCount(item.value)}`).join(" · ")
-        : formatCount(cohort.sample);
-      const sample = makeElement("td", "field-sample", sampleText);
-      sample.dataset.label = "N";
       const insight = makeElement("td", "field-insight", cohort.insight || "—");
       insight.dataset.label = "Вывод";
-      row.append(sample, insight);
+      row.append(insight);
       bodyHost.append(row);
     });
 
     if (!cohorts.length || !definitions.length) {
       const row = makeElement("tr", "");
-      const cell = makeElement("td", "field-empty", "Сводка поля появится после подключения агрегированных данных.");
+      const cell = makeElement("td", "field-empty", FIELD_DATA_UNAVAILABLE
+        ? "Сравнение групп временно скрыто: показываем его только после полной сверки всех периодов."
+        : "Сводка поля появится после подключения агрегированных данных.");
       cell.colSpan = 8;
       row.append(cell);
       bodyHost.append(row);
@@ -1856,15 +1847,22 @@
       completeLabel: "Следующая ситуация",
       onComplete(payload) {
         const result = payload?.result || {};
+        const endedWithoutShowdown = result.showdown === false;
         feedbackShell(
           coach,
           hasContinuationUi ? "is-correct" : "is-neutral",
-          continuationUi.completeEyebrow || "Шоудаун · диапазон стал конкретным",
-          continuationUi.completeTitle || "Флоп уже оценён",
-          continuationUi.completeCopy
-            || (hasContinuationUi
-              ? result.summary || "Теперь видна вся учебная линия и конкретная рука соперника."
-              : "Итог раздачи показан на столе. Он не добавляет и не снимает баллы за первое решение.")
+          endedWithoutShowdown
+            ? "Без шоудауна · соперник выбросил"
+            : continuationUi.completeEyebrow || "Шоудаун · диапазон стал конкретным",
+          endedWithoutShowdown
+            ? "Раздача закончилась"
+            : continuationUi.completeTitle || "Флоп уже оценён",
+          endedWithoutShowdown
+            ? result.summary || "Соперник выбросил карты: будущий ранаут и его рука не раскрываются."
+            : continuationUi.completeCopy
+              || (hasContinuationUi
+                ? result.summary || "Теперь видна вся учебная линия и конкретная рука соперника."
+                : "Итог раздачи показан на столе. Он не добавляет и не снимает баллы за первое решение.")
         );
       },
       onExit() {
@@ -1895,6 +1893,44 @@
       });
     } catch (error) {
       console.warn("Practice extension failed", error);
+    }
+  }
+
+  function reportPracticeProgress() {
+    const config = lessonProgress;
+    const attempts = state.stats.hands;
+    const api = root.FFPlayerProgress;
+    if (
+      !config
+      || state.courseReported
+      || attempts < config.targetHands
+      || !api
+      || typeof api.setResult !== "function"
+    ) return false;
+    const correct = state.stats.correct;
+    const score = Math.round((correct / attempts) * 100);
+    try {
+      api.setResult(config.skillKey, {
+        attempts,
+        correct,
+        score,
+        bestScore: score,
+        status: score >= config.passScore ? "passed" : "repeat"
+      }, {
+        session: {
+          id: state.courseSessionId,
+          type: "lesson",
+          mode: config.mode,
+          total: attempts,
+          correct,
+          accuracy: score
+        },
+        metadata: { lesson: config.mode, source: "standalone-course-practice" }
+      });
+      state.courseReported = true;
+      return true;
+    } catch (error) {
+      return false;
     }
   }
 
@@ -1935,6 +1971,8 @@
     state.practiceAnswered = false;
     destroyPracticeContinuation();
     state.practiceStarted = true;
+    state.courseReported = false;
+    state.courseSessionId = `${lessonKey}-${Date.now().toString(36)}`;
     state.stats = { hands: 0, correct: 0, mistakes: 0, checkraises: 0, expectedXr: 0, missedXr: 0, extraXr: 0 };
     const setup = $("[data-practice-setup]");
     const run = $("[data-practice-run]");
@@ -1962,6 +2000,7 @@
     if (expected?.key === "checkraise") state.stats.expectedXr += 1;
     if (expected?.key === "checkraise" && key !== "checkraise") state.stats.missedXr += 1;
     if (expected?.key !== "checkraise" && key === "checkraise" && chosen?.acceptableMix !== true) state.stats.extraXr += 1;
+    reportPracticeProgress();
     renderPracticeSpot();
     root.requestAnimationFrame(() => {
       const continuation = $("[data-practice-continuation-external]");

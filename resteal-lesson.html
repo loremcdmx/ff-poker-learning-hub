@@ -18,8 +18,8 @@
   <link rel="stylesheet" href="assets/poker-trainer-shell/shell.css?v=8311f2a34fe9">
   <link rel="stylesheet" href="assets/poker-kit/trainer-ui-sanitizer.css?v=2757a3bc8810">
   <link rel="stylesheet" href="assets/4k-scale.css">
-  <link rel="stylesheet" href="assets/poker-resteal-lesson/lesson.css?v=44fb92e80f3e">
-  <link rel="stylesheet" href="assets/poker-resteal-lesson/rank-comparison.css?v=ab72ead3a368">
+  <link rel="stylesheet" href="assets/poker-resteal-lesson/lesson.css?v=f2adb3c472de">
+  <link rel="stylesheet" href="assets/poker-resteal-lesson/rank-comparison.css?v=495913d94515">
   <link rel="stylesheet" href="assets/poker-kit/lesson-header.css?v=9641ee805ef9">
   <script defer src="assets/poker-kit/suit-text.js?v=8b7151ad3ec6"></script>
   <script defer src="assets/poker-kit/lesson-header.js?v=1b28bacb3505"></script>
@@ -218,15 +218,15 @@
     <section class="screen data-screen" id="dataScreen" role="tabpanel" data-step="data" aria-labelledby="data-title">
       <div class="section-heading data-heading">
         <div><p class="eyebrow">Как играют в FF</p><h2 id="data-title">Кто и как рестилит с BB</h2></div>
-        <p>Выбери позицию опен-рейзера, сайз и эффективный стек. Сводка покажет все четыре уровня, а матрицы — какие именно руки доходили до прямого олл-ина.</p>
+        <p>Выбери позицию опен-рейзера и один из пяти проверенных сценариев. Каждый сценарий содержит все 169 рук во всех четырёх группах.</p>
       </div>
 
       <article class="panel rank-evidence-slide" id="rankEvidenceSlide" aria-label="Рестил-пуши по лигам FunFarm">
         <div class="rank-evidence-head">
           <div class="rank-evidence-copy">
             <p class="eyebrow">Данные FF · ранг на момент раздачи</p>
-            <h3>Игроки более высоких лиг пушат чаще</h3>
-            <p>Слева — фиксированная база рангов 15–17. Справа выбери лигу и сравни тот же спот на одинаковой позиции, сайзе и глубине.</p>
+            <h3>Как меняется рестил между уровнями</h3>
+            <p>Слева — фиксированная база рангов 15–18. Справа — та же ситуация у выбранной лиги. Каждый показанный пресет уже прошёл проверку полного исторического среза.</p>
           </div>
           <div class="rank-growth-strip" id="rankGrowthStrip" aria-label="ABI и частота рестил-пушей по уровню FF"></div>
         </div>
@@ -237,12 +237,8 @@
             <div class="rank-segments" id="rankPositionTabs" role="tablist" aria-label="Позиция опен-рейзера"></div>
           </fieldset>
           <fieldset>
-            <legend>Сайз опена</legend>
-            <div class="rank-segments" id="rankSizeTabs" role="tablist" aria-label="Размер опена"></div>
-          </fieldset>
-          <fieldset>
-            <legend>Эффективный стек</legend>
-            <div class="rank-segments" id="rankDepthTabs" role="tablist" aria-label="Глубина эффективного стека"></div>
+            <legend>Готовый сценарий</legend>
+            <div class="rank-segments" id="rankScenarioTabs" role="tablist" aria-label="Сайз опена и эффективный стек"></div>
           </fieldset>
         </div>
 
@@ -251,16 +247,16 @@
         <div class="rank-evidence-compare">
           <section class="rank-chart is-novice" aria-labelledby="rankNoviceTitle">
             <div class="rank-chart-head">
-              <div><span>База сравнения</span><h4 id="rankNoviceTitle">Ранги 15–17</h4></div>
+              <div><span>База сравнения</span><h4 id="rankNoviceTitle">Ранги 15–18</h4></div>
               <div class="rank-chart-stats" id="rankNoviceStats"></div>
             </div>
-            <div class="rank-action-bar" id="rankNoviceActionBar" aria-label="Распределение действий игроков рангов 15–17"></div>
-            <div class="rank-matrix" id="rankNoviceMatrix" role="grid" aria-label="Рестил-пуши игроков рангов 15–17"></div>
+            <div class="rank-action-bar" id="rankNoviceActionBar" aria-label="Распределение действий игроков рангов 15–18"></div>
+            <div class="rank-matrix" id="rankNoviceMatrix" role="grid" aria-label="Рестил-пуши игроков рангов 15–18"></div>
           </section>
 
           <section class="rank-chart is-league" aria-labelledby="rankLeagueTitle">
             <div class="rank-chart-head">
-              <div><span>Справа · выбери уровень</span><h4 id="rankLeagueTitle">3 лига</h4></div>
+              <div><span>Справа · выбери уровень</span><h4 id="rankLeagueTitle">Лига 3</h4></div>
               <div class="rank-chart-stats" id="rankLeagueStats"></div>
             </div>
             <div class="rank-league-tabs" id="rankLeagueTabs" role="tablist" aria-label="Лига для сравнения"></div>
@@ -269,16 +265,13 @@
           </section>
         </div>
 
-        <div class="rank-frequency-legend" aria-label="Шкала частоты и качества выборки">
+        <div class="rank-frequency-legend" aria-label="Шкала частоты пуша">
           <strong>Частота пуша</strong>
           <span><i class="is-rate-0"></i>0%</span>
           <span><i class="is-rate-1"></i>5%</span>
           <span><i class="is-rate-2"></i>15%</span>
           <span><i class="is-rate-3"></i>30%</span>
           <span><i class="is-rate-4"></i>50%+</span>
-          <span class="is-thin-sample"><i></i>N 5–19</span>
-          <span class="is-estimated-sample"><i></i>≈ оценка · N 1–4</span>
-          <span class="is-no-sample"><i></i>нет данных · N 0</span>
         </div>
         <div class="rank-hand-readout" id="rankHandReadout" aria-live="polite"></div>
         <p class="rank-evidence-source" id="rankEvidenceSource"></p>
@@ -314,6 +307,7 @@
         </aside>
         <article class="panel matrix-panel">
           <div class="matrix-status" id="matrixStatus" role="status">Загружаем матрицу рук…</div>
+          <div class="model-boundary-note" id="modelBoundaryNote" role="note" hidden></div>
           <div class="matrix-scroll" tabindex="0"><div class="matrix is-loading" id="handMatrix" aria-label="Матрица стартовых рук 13 на 13"></div></div>
           <div class="legend"><span><i class="good"></i>уверенный плюс</span><span><i class="thin"></i>тонкий плюс</span><span><i class="bad"></i>пас</span></div>
         </article>
@@ -431,15 +425,16 @@
   <script defer src="assets/poker-simulator/simulator-seat-slots.js?v=d7ddfd732333"></script>
   <script defer src="assets/poker-simulator/simulator-seat-renderer.js?v=c5dd4f6c2a15"></script>
   <script defer src="assets/poker-simulator/simulator-table-renderer.js?v=37282f928111"></script>
-  <script defer src="assets/poker-trainer-shell/simulator-snapshot.js?v=45c27b16421b"></script>
+  <script defer src="assets/poker-trainer-shell/simulator-snapshot.js?v=3606de843e50"></script>
   <script defer src="assets/poker-simulator/embed.js?v=d3bdd7d52145"></script>
   <script defer src="assets/poker-trainer-shell/simulator-practice.js?v=591b8e2f6784"></script>
-  <script defer src="assets/poker-resteal-lesson/data/browser-bundle.js?v=d83e065bf574"></script>
+  <script defer src="assets/poker-resteal-lesson/data/browser-bundle.js?v=ee7ef7e4568e"></script>
   <script defer src="assets/poker-resteal-lesson/data.js?v=20260713-2"></script>
-  <script defer src="assets/poker-resteal-lesson/data/resteal-rank-data.js?v=8c6917362286"></script>
+  <script defer src="assets/poker-resteal-lesson/data/resteal-rank-data.js?v=e66e96c0faf1"></script>
   <script defer src="assets/poker-resteal-lesson/engine.js?v=b2b87c4f94e4"></script>
-  <script defer src="assets/poker-resteal-lesson/rank-comparison.js?v=6b9fea074d49"></script>
-  <script defer src="assets/poker-progress/progress.js?v=20260715-ffstart-handoff-v16"></script>
-  <script defer src="assets/poker-resteal-lesson/lesson.js?v=304ffd7970f3"></script>
+  <script defer src="assets/poker-kit/observed-frequency-confidence.js?v=d4d5d6e4129f"></script>
+  <script defer src="assets/poker-resteal-lesson/rank-comparison.js?v=2f1aeb6ab8ca"></script>
+  <script defer src="assets/poker-progress/progress.js?v=63993336739b"></script>
+  <script defer src="assets/poker-resteal-lesson/lesson.js?v=0f0f77c92fe8"></script>
 </body>
 </html>

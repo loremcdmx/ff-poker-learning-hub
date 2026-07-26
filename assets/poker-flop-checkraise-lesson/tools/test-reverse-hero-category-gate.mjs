@@ -35,7 +35,17 @@ assert.match(sql, /is_one_preflop_action_before_player\s*=\s*1/);
 assert.doesNotMatch(sql, /AND\s+h\.preflop_raiser_count\s*=\s*1/);
 assert.match(sql, /publish neither the[\s\S]*category rates nor an apparently close approximation/i);
 
-assert.match(dataSource, /status:\s*"pending_exact_extract"/);
+assert.match(dataSource, /status:\s*FULL_HISTORY_FIELD \? "ready" : "methodology_only"/);
+const fullHistoryMatch = dataSource.match(
+  /\/\* FF_FULL_HISTORY_FIELD_START \*\/\s*([\s\S]*?)\s*\/\* FF_FULL_HISTORY_FIELD_END \*\//
+);
+assert(fullHistoryMatch, "checked-in full-history marker exists");
+if (fullHistoryMatch[1].trim() !== "null") {
+  const fullHistory = JSON.parse(fullHistoryMatch[1]);
+  assert.equal(fullHistory.meta.rankTiming, "exact_as_of_hand");
+  assert.match(fullHistory.meta.artifactSha256, /^[a-f0-9]{64}$/);
+}
+assert.match(dataSource, /const categoryEvidence = \([\s\S]*?status:\s*"methodology_only"/, "blocked reverse-Hero card-category evidence remains explicitly methodology-only");
 assert.doesNotMatch(dataSource, /status:\s*"published_exact_extract"/);
 
 console.log("reverse-Hero category publication gate: blocked safely");

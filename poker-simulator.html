@@ -32,7 +32,7 @@
   <link rel="stylesheet" href="assets/poker-simulator/simulator-polish.css?v=aeada3f22e44">
   <link rel="stylesheet" href="assets/poker-simulator/simulator-identity.css?v=7b75c0708510">
   <link rel="stylesheet" href="assets/poker-simulator/simulator-cbet-embed.css?v=20260716-cbet-rvbb">
-  <script defer src="assets/poker-simulator/simulator-practice-packs.js?v=b3cd4d2a2773"></script>
+  <script defer src="assets/poker-simulator/simulator-practice-packs.js?v=9827f47cc14d"></script>
   <script defer src="assets/poker-kit/decks/deck-library.js?v=b03058b680c1"></script>
   <script defer src="assets/poker-kit/chips/chip-library.js"></script>
   <script defer src="assets/poker-kit/simulator/bot-strategy-profile.js?v=6388b0e93c2b"></script>
@@ -46,21 +46,21 @@
   <script defer src="assets/poker-kit/simulator/engine-showdown.js?v=4469d0f13f5f"></script>
   <script defer src="assets/poker-kit/simulator/engine-postflop-policy.js?v=b0c15c58572f"></script>
   <script defer src="assets/poker-kit/simulator/simulator-engine.js?v=20260714-practice-api"></script>
-  <script defer src="assets/poker-progress/progress.js?v=20260713-2"></script>
+  <script defer src="assets/poker-progress/progress.js?v=63993336739b"></script>
   <script defer src="assets/poker-simulator/simulator-timings.js?v=e6528afb294e"></script>
   <script defer src="assets/poker-simulator/simulator-timing-config.js?v=4d4ff450327d"></script>
   <script defer src="assets/poker-simulator/simulator-random.js?v=7231b8091c3c"></script>
   <script defer src="assets/poker-simulator/simulator-state.js?v=f330f3cff0e9"></script>
   <script defer src="assets/poker-simulator/simulator-leaderboard.js?v=b8a5de21c942"></script>
   <script defer src="assets/poker-simulator/simulator-session-lock.js?v=603a351bfe09"></script>
-  <script defer src="assets/poker-simulator/simulator-session-leaderboard.js?v=8a845b24fc50"></script>
+  <script defer src="assets/poker-simulator/simulator-session-leaderboard.js?v=dcba0064e297"></script>
   <script defer src="assets/poker-simulator/simulator-session-totals.js?v=e512ed73a754"></script>
-  <script defer src="assets/poker-simulator/simulator-session-archive.js?v=ded5d21a245e"></script>
+  <script defer src="assets/poker-simulator/simulator-session-archive.js?v=850eba685ba8"></script>
   <script defer src="assets/poker-simulator/simulator-session-persistence.js?v=3a5c4fa3b5ad"></script>
   <script defer src="assets/poker-simulator/simulator-session-store.js?v=007325de8479"></script>
   <script defer src="assets/poker-simulator/simulator-session-graph.js?v=ba8904b2b618"></script>
   <script defer src="assets/poker-simulator/simulator-hand-log.js?v=c236fa2797c5"></script>
-  <script defer src="assets/poker-simulator/simulator-hand-completion.js?v=4bd845050965"></script>
+  <script defer src="assets/poker-simulator/simulator-hand-completion.js?v=25c1b21ac588"></script>
   <script defer src="assets/poker-simulator/simulator-session-metrics.js?v=067a749ce690"></script>
   <script defer src="assets/poker-simulator/simulator-session-metrics-bridge.js?v=42c72d364022"></script>
   <script defer src="assets/poker-simulator/simulator-session-export.js?v=d26cea4e6ad3"></script>
@@ -92,7 +92,7 @@
   <script defer src="assets/poker-simulator/simulator-start-runtime.js?v=2b35639aacfe"></script>
   <script defer src="assets/poker-simulator/simulator-settings.js?v=20260716-cbet-rvbb"></script>
   <script defer src="assets/poker-simulator/simulator-boot.js?v=8a67c4e9b53f"></script>
-  <script defer src="assets/poker-simulator/simulator-table-lifecycle.js?v=126fca8921a6"></script>
+  <script defer src="assets/poker-simulator/simulator-table-lifecycle.js?v=8eb7be83bd3f"></script>
   <script defer src="assets/poker-simulator/simulator-replay.js?v=bfa5f1e2ab7c"></script>
   <script defer src="assets/poker-simulator/simulator-replay-history.js?v=ef5bfa0844e7"></script>
   <script defer src="assets/poker-simulator/simulator-history-bridge.js?v=4145d23ca553"></script>
@@ -115,7 +115,7 @@
   <script defer src="assets/poker-simulator/simulator-action-runtime-composition.js?v=73ff6284a87f"></script>
   <script defer src="assets/poker-simulator/simulator-bot-lab.js?v=8450b06c364c"></script>
   <script defer src="assets/poker-simulator/simulator-bot-lab-runtime.js?v=ed38124567b7"></script>
-  <script defer src="assets/poker-simulator/simulator-analytics-ui.js?v=ace30a0ff51e"></script>
+  <script defer src="assets/poker-simulator/simulator-analytics-ui.js?v=dd9905e95aed"></script>
   <script defer src="assets/poker-simulator/simulator-visual-timers.js?v=f7498d798a66"></script>
   <script defer src="assets/poker-simulator/simulator-visual-primer.js?v=8de9e6a91e4c"></script>
   <script defer src="assets/poker-simulator/simulator-action-reveal.js?v=a01b25cb0587"></script>
@@ -160,7 +160,7 @@
   <script defer src="assets/poker-simulator/simulator-app-composition.js?v=91785886a3bf"></script>
   <script defer src="assets/poker-simulator/simulator-dependencies.js?v=e404662459bd"></script>
   <!-- Deferred online/server multiplayer runtime is loaded by simulator-feature-loader.js. -->
-  <script defer src="assets/poker-simulator/simulator-feature-loader.js?v=20260714-practice-api"></script>
+  <script defer src="assets/poker-simulator/simulator-feature-loader.js?v=cca363922db2"></script>
   <!-- Start-screen login gate (own account system via FFPlayerProgress); inert in server/embed/framed/automation. -->
   <script defer src="assets/poker-simulator/simulator-identity.js?v=cb22160e2502"></script>
   <script defer src="assets/poker-simulator/simulator.js?v=b6c1640a6cb0"></script>
@@ -260,11 +260,11 @@
       <!-- Online lobby: a start-screen sub-tab. Persistent overlay (NOT inside the
            re-rendered #table-grid), shown only on the idle start screen. Wired by
            simulator-feature-loader.js + simulator-online-lobby.js; inert in server mode (?room=). -->
-      <div class="sim-start-tabs" id="sim-start-tabs" role="tablist" aria-label="Режим игры">
+      <div class="sim-start-tabs" id="sim-start-tabs" role="tablist" aria-label="Режим игры" aria-hidden="true" hidden>
         <button type="button" class="sim-start-tab is-active" data-start-view="single" role="tab" aria-selected="true">🎮 Одиночная игра</button>
         <button type="button" class="sim-start-tab" data-start-view="online" role="tab" aria-selected="false">🌐 Онлайн лобби</button>
       </div>
-      <section class="online-lobby" id="online-lobby" aria-label="Онлайн лобби"></section>
+      <section class="online-lobby" id="online-lobby" aria-label="Онлайн лобби" aria-hidden="true" hidden></section>
     </section>
   </main>
 

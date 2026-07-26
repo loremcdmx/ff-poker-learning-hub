@@ -11,8 +11,8 @@ const routes = [
 ].filter((route) => !process.env.SMOKE_ROUTE || route === process.env.SMOKE_ROUTE);
 const minimumStackSteps = {
   "/vs-one-raiser-positions-lesson": 8,
-  "/vs-one-raiser-sb-lesson": 7,
-  "/sb-unopened-lesson": 10,
+  "/vs-one-raiser-sb-lesson": 6,
+  "/sb-unopened-lesson": 9,
 };
 const viewports = [
   { name: "desktop", width: 1440, height: 900 },
@@ -23,7 +23,7 @@ const viewports = [
   { name: "reported", width: 969, height: 907 },
   { name: "split-edge", width: 921, height: 900 },
   { name: "stacked-edge", width: 920, height: 900 },
-  { name: "mobile", width: 390, height: 844 },
+  { name: "mobile", width: 375, height: 844 },
 ].filter((viewport) => !process.env.SMOKE_VIEWPORT || viewport.name === process.env.SMOKE_VIEWPORT);
 const browser = await chromium.launch({ headless: true });
 const results = [];
@@ -78,6 +78,33 @@ try {
       page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
       page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
       await page.goto(`${base}${route}`, { waitUntil: "load" });
+      const methodologyOnly = await page.evaluate(() => window.PokerPreflopBenchmarkData?.source?.availability === "methodology_only");
+      if (methodologyOnly) {
+        await page.waitForSelector("#introTableHost .benchmark-intro-unavailable");
+        await captureState(page, route, viewport, "methodology-only");
+        assert.equal(errors.length, 0, `${route} methodology-only page has no console errors at ${viewport.name}: ${errors.join(" | ")}`);
+        assert.equal(await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth)), 0, `${route} methodology-only page has no horizontal overflow at ${viewport.name}`);
+        assert.equal(await page.locator(".step-tabs button").count(), 3, `${route} exposes only intro, main, and neutral wisdom at ${viewport.name}`);
+        assert.equal(await page.locator(".step-tabs button:disabled").count(), 0, `${route} keeps the methodology sections reachable at ${viewport.name}`);
+        assert.equal(await page.locator('[data-screen="ranges"], [data-screen="field"], [data-screen="practice"]').count(), 0, `${route} omits all data-derived screens at ${viewport.name}`);
+        assert.equal(await page.locator('[data-go="ranges"], [data-go="field"], [data-go="practice"]').count(), 0, `${route} omits chart, comparison, and practice CTAs at ${viewport.name}`);
+        assert.equal(await page.locator("#introTableHost [data-option-key]").count(), 0, `${route} does not expose decisions without a complete source`);
+        assert((await page.locator("#introTableHost").innerText()).includes("Раздачи с процентами временно отключены"), `${route} explains the disabled deal`);
+        await page.getByRole("tab", { name: "2. Главное" }).click();
+        await captureState(page, route, viewport, "methodology-main");
+        assert.equal(await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth)), 0, `${route} methodology main has no horizontal overflow at ${viewport.name}`);
+        assert.equal(await page.locator("#wisdomSlides .slide").count(), 3, `${route} keeps three methodology rules`);
+        assert.equal((await page.locator("#wisdomSlides").innerText()).includes("%"), false, `${route} methodology rules contain no observed percentages`);
+        await page.getByRole("tab", { name: "3. Мудрости" }).click();
+        await captureState(page, route, viewport, "methodology-wisdom");
+        assert.equal(await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth)), 0, `${route} methodology wisdom has no horizontal overflow at ${viewport.name}`);
+        assert.equal(await page.locator("#insightGrid .insight-card").count(), 3, `${route} exposes three neutral methodology cards at ${viewport.name}`);
+        const bodyText = await page.locator("body").innerText();
+        assert.equal(/(Первая лига|первой лиги|Ранги 15–18|ранги 15–18|2–3 лиги|точные срезы MSP|реальные данные MSP)/.test(bodyText), false, `${route} carries no cohort or observed-data promise at ${viewport.name}`);
+        results.push({ route, viewport: viewport.name, mode: "methodology_only", overflowX: 0, errors: [] });
+        await page.close();
+        continue;
+      }
       await page.waitForSelector("#introTableHost [data-trainer-simulator-actions]");
       await captureState(page, route, viewport, "deal");
       const introGeometry = await page.evaluate(() => {
@@ -98,11 +125,11 @@ try {
         const status = rect("#introTableHost .action-status");
         const card = rect("#introTableHost .seat.is-hero .poker-deck-card");
         const tableCard = rect(".table-card");
-        const tableShell = rect("#introTableHost .table-shell");
         const introPanel = rect(".benchmark-intro");
         const introCopy = rect(".benchmark-intro .intro-copy");
         const introVisual = rect(".benchmark-intro .intro-table-visual");
         const actionBar = rect("#introTableHost .action-bar");
+        const tableShell = rect("#introTableHost .table-shell");
         const betAmounts = [...document.querySelectorAll("#introTableHost .bet-marker-amount")]
           .filter((node) => getComputedStyle(node).display !== "none" && node.getBoundingClientRect().width > 0)
           .map((node) => {
@@ -153,6 +180,7 @@ try {
               && amount.backgroundColor !== "rgba(0, 0, 0, 0)"),
           betAmountsInsideTable: betAmounts.every((amount) => contains(tableCard, amount)),
           potTextHasContrast: Boolean(potTextStyle && potTextStyle.backgroundColor !== "rgba(0, 0, 0, 0)"),
+          potText: potTextNode?.textContent?.replace(/\s+/g, " ").trim() || "",
           aggressorPositionIsDistinct: Boolean(!aggressorPositionNode || (ordinaryPositionNode
             && getComputedStyle(aggressorPositionNode).backgroundColor !== getComputedStyle(ordinaryPositionNode).backgroundColor)),
           heroPositionIsDistinct: Boolean(heroPositionNode && ordinaryPositionNode
@@ -164,10 +192,10 @@ try {
           maxSeatHeight: Math.max(...seatPanels.map((seat) => seat.height)),
           maxSeatWidth: Math.max(...seatPanels.map((seat) => seat.width)),
           introPanelHeight: introPanel?.height || 0,
-          tableCardHeight: tableCard?.height || 0,
-          tablePlaneHeight: tableShell?.height || 0,
           introIsSplit: Boolean(introCopy && introVisual && introCopy.right <= introVisual.left + 1),
           introUnusedBottom: introPanel && tableCard ? introPanel.bottom - tableCard.bottom : 0,
+          tableCardHeight: tableCard?.height || 0,
+          tablePlaneHeight: tableShell?.height || 0,
           tableCardContainsActions: contains(tableCard, actionBar),
           tableCardContainsSeats: seatPanels.every((seat) => contains(tableCard, seat)),
           tableCardContainsVisuals: tableVisuals.every((visual) => contains(tableCard, visual)),
@@ -186,6 +214,8 @@ try {
       assert.equal(introGeometry.betAmountsReadable, true, `${route} renders every live bet as a readable contrast pill at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
       assert.equal(introGeometry.betAmountsInsideTable, true, `${route} keeps every live bet label inside the table at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
       assert.equal(introGeometry.potTextHasContrast, true, `${route} renders the pot on a contrast pill at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
+      const expectedIntroPot = route === "/sb-unopened-lesson" ? "2,5 BB" : "4,5 BB";
+      assert(introGeometry.potText.includes(expectedIntroPot), `${route} renders the live BB-ante pot ${expectedIntroPot} at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
       assert.equal(introGeometry.aggressorPositionIsDistinct, true, `${route} highlights the raiser position at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
       assert.equal(introGeometry.heroPositionIsDistinct, true, `${route} highlights Hero's position at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
       assert.equal(introGeometry.controlsInsideHost, true, `${route} keeps the action dock inside the reserved table gutter at ${viewport.name}`);
@@ -255,7 +285,7 @@ try {
         if (viewport.name === "reported") await page.screenshot({ path: "/private/tmp/vs-one-raiser-positions-wisdom-strategy-reported.png", fullPage: true });
         await page.locator("#wisdomNext").click();
         assert.equal(await page.locator("#wisdomCounter").innerText(), "2 из 2", "free-position carousel renumbers the short-stack slide as the second and final thought");
-        assert((await page.locator("#wisdomSlides .slide.active").innerText()).includes("Пуш появляется как отдельная ветка"), "free-position carousel moves directly from the range chart to the short-stack lesson");
+        assert((await page.locator("#wisdomSlides .slide.active").innerText()).includes("Часть коллов должна стать пушами"), "free-position carousel moves directly from the range chart to the short-stack lesson");
         assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-strategy-grid > *").count(), 338, "free-position short-stack wisdom renders both complete strategy ranges");
         assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-strategy-grid .is-unavailable").count(), 0, "free-position short-stack wisdom has no missing cohort comparisons");
         assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-strategy-card .ff-chart-legend > span").count(), 4, "free-position short-stack wisdom keeps semantic action colors");
@@ -301,8 +331,9 @@ try {
         assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-push-compare-grid .is-unavailable").count(), 0, "SB push wisdom has no missing cohort comparisons");
         assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-push-band").count(), 338, "SB push wisdom shows both cohorts in every hand cell");
         assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-push-cohorts > span").count(), 2, "SB push wisdom directly labels both cohort colors");
+        assert((await page.locator("#wisdomSlides .slide.active").innerText()).includes("25–40 BB"), "SB push wisdom follows the selected stack instead of freezing the onset stack");
         const pushComparisonText = await page.locator("#wisdomSlides .slide.active .wisdom-push-cohorts").innerText();
-        assert(pushComparisonText.includes("Первая лига") && pushComparisonText.includes("Ранги 15–18") && pushComparisonText.includes("16%") && pushComparisonText.includes("10%"), "SB push wisdom keeps the exact onset-stack totals beside the chart");
+        assert(pushComparisonText.includes("Первая лига") && pushComparisonText.includes("Ранги 15–18") && pushComparisonText.includes("1%") && pushComparisonText.includes("2%"), "SB push wisdom keeps the selected-stack totals beside the chart");
         const pushComparisonGeometry = await page.locator("#wisdomSlides .slide.active .wisdom-push-card").evaluate((card) => {
           const outer = card.getBoundingClientRect();
           const grid = card.querySelector(".wisdom-push-compare-grid")?.getBoundingClientRect();
@@ -320,10 +351,10 @@ try {
       if (route === "/vs-one-raiser-sb-lesson") {
         const mainWisdom = await page.locator("#wisdomSlides").textContent();
         assert(mainWisdom.includes("Те же 26%, но колл съедает пуш"), "SB default wisdom emphasizes action shape rather than equal continuation");
-        assert(mainWisdom.includes("+9 п.п."), "SB default wisdom quantifies the call-for-jam substitution");
+        assert(mainWisdom.includes("+8 п.п."), "SB default wisdom quantifies the call-for-jam substitution from the chart cube");
         assert(mainWisdom.includes("Та же ширина — другой винрейт"), "SB default wisdom names the outcome difference");
-        assert(mainWisdom.includes("−9,8 BB"), "SB default wisdom exposes the exact-spot outcome gap");
-        assert(mainWisdom.includes("QJs · 91%"), "SB default wisdom freezes the clearest recent hand-class swap");
+        assert(mainWisdom.includes("−6,2 BB"), "SB default wisdom exposes the full-window exact-spot outcome gap");
+        assert(mainWisdom.includes("QJs · 86%"), "SB default wisdom freezes the clearest chart-cube hand-class swap");
         assert(mainWisdom.includes("QJs") && mainWisdom.includes("QTs") && mainWisdom.includes("KTs") && mainWisdom.includes("55") && mainWisdom.includes("JTs"), "SB default wisdom names the clearest jam-to-call swaps");
       }
       assert(!/MSP|ранг на момент|N≥|наблюдаем|выборк|солвер|эталон|малонаблюдаем/i.test(await page.locator('[data-screen="main"]').innerText()), `${route} main lesson hides technical language`);
@@ -332,13 +363,32 @@ try {
       assert.equal(await page.locator("#benchmarkRange > *").count(), 169, `${route} has a 13x13 matrix`);
       assert.equal(await page.locator("#benchmarkRange [data-hand]").count(), 169, `${route} default chart has 169/169 observed hand cells`);
       assert.equal(await page.locator("#benchmarkRange .is-unavailable").count(), 0, `${route} default chart has no missing hand cells`);
-      assert.equal(await page.locator('[data-screen="ranges"] [data-source-note]').innerText(), "По игре первой лиги", `${route} has one short chart source label`);
+      assert.equal(await page.locator('[data-screen="ranges"] [data-source-note]').innerText(), "Первая лига · ранг в момент раздачи", `${route} has one short chart source label with explicit cohort semantics`);
+      if (viewport.name === "mobile") {
+        const mobileChartGeometry = await page.locator(".benchmark-range-scroll").evaluate((scroller) => {
+          const cell = scroller.querySelector(".ff-range-cell");
+          const cellBox = cell?.getBoundingClientRect();
+          return {
+            clientWidth: scroller.clientWidth,
+            scrollWidth: scroller.scrollWidth,
+            cellWidth: cellBox?.width || 0,
+            cellHeight: cellBox?.height || 0,
+            cellFontSize: Number.parseFloat(cell ? getComputedStyle(cell).fontSize : "0"),
+            pageOverflowX: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
+          };
+        });
+        assert(mobileChartGeometry.scrollWidth > mobileChartGeometry.clientWidth, `${route} mobile chart uses an inner horizontal scroller: ${JSON.stringify(mobileChartGeometry)}`);
+        assert(mobileChartGeometry.cellWidth >= 42 && mobileChartGeometry.cellHeight >= 42, `${route} mobile chart keeps readable touch-sized cells: ${JSON.stringify(mobileChartGeometry)}`);
+        assert(mobileChartGeometry.cellFontSize >= 9, `${route} mobile chart keeps hand labels readable: ${JSON.stringify(mobileChartGeometry)}`);
+        assert.equal(mobileChartGeometry.pageOverflowX, 0, `${route} mobile chart does not create page overflow`);
+      }
       const filterRows = await page.locator('[data-screen="ranges"] .filter-row').evaluateAll((rows) => rows.map((row) => {
         const filters = [...row.querySelectorAll(".ff-chart-filter")];
         const active = filters.filter((filter) => filter.classList.contains("is-active"));
         const activeStyle = active[0] ? getComputedStyle(active[0]) : null;
         return {
           activeCount: active.length,
+          activeDisabled: Boolean(active[0]?.disabled),
           activeText: active[0]?.textContent.trim() || "",
           activePressed: active[0]?.getAttribute("aria-pressed") || "",
           activeColor: activeStyle?.color || "",
@@ -346,14 +396,31 @@ try {
           activeBackground: activeStyle?.backgroundImage || "",
           activeShadow: activeStyle?.boxShadow || "",
           activeFits: Boolean(active[0] && active[0].scrollWidth <= active[0].clientWidth + 1),
+          unavailableCount: filters.filter((filter) => filter.disabled).length,
           groupOverflow: Math.max(0, row.querySelector(".ff-chart-filter-group")?.scrollWidth - row.querySelector(".ff-chart-filter-group")?.clientWidth || 0),
         };
       }));
       assert(filterRows.every((row) => row.activeCount === 1 && row.activePressed === "true"), `${route} keeps exactly one selected option in every filter row at ${viewport.name}: ${JSON.stringify(filterRows)}`);
+      assert(filterRows.every((row) => !row.activeDisabled && row.unavailableCount === 0), `${route} contextual catalog renders no disabled selector states at ${viewport.name}: ${JSON.stringify(filterRows)}`);
       assert(filterRows.every((row) => row.activeColor === "rgb(23, 18, 11)" && row.activeFontWeight >= 900), `${route} renders every selected filter with a bold dark label at ${viewport.name}: ${JSON.stringify(filterRows)}`);
       assert(filterRows.every((row) => row.activeBackground !== "none" && row.activeShadow !== "none"), `${route} gives every selected filter a distinct yellow surface and focus ring at ${viewport.name}: ${JSON.stringify(filterRows)}`);
       assert(filterRows.every((row) => row.activeFits), `${route} keeps every selected filter label fully visible at ${viewport.name}: ${JSON.stringify(filterRows)}`);
       if (route === "/vs-one-raiser-positions-lesson") {
+        const impossibleSamePosition = page.locator('[data-screen="ranges"] [data-filter="opener"][data-value="CO"]');
+        assert.equal(await impossibleSamePosition.count(), 0, `free-position chart omits the impossible same-position tuple instead of rendering a disabled control at ${viewport.name}`);
+        await page.locator('[data-screen="ranges"] [data-filter="hero"][data-value="MP"]').click();
+        assert.equal(await page.locator('[data-screen="ranges"] [data-filter="opener"].is-active').innerText(), "EP", `free-position chart cascades to the only legal opener after Hero moves to MP at ${viewport.name}`);
+        assert((await page.locator('[data-screen="ranges"] .benchmark-filter-status').innerText()).includes("опенер"), `free-position chart explicitly announces its dependent-filter transition at ${viewport.name}`);
+        assert.equal(await page.locator('#benchmarkRange [data-hand]').count(), 169, `free-position chart remains on a complete comparison after a cascading transition at ${viewport.name}`);
+        await page.locator('[data-screen="ranges"] [data-filter="stack"][data-value="20"]').click();
+        await page.getByRole("tab", { name: "2. Главное" }).click();
+        await page.locator("#wisdomNext").click();
+        const equalPushWisdom = await page.locator("#wisdomSlides .slide.active").innerText();
+        assert(equalPushWisdom.includes("На этом стеке пуши почти совпадают") && equalPushWisdom.includes("не придумывать его в пушах"), `free-position wisdom does not invent a shove leak for the equal 4%/4% MP-vs-EP spot at ${viewport.name}`);
+        await page.getByRole("tab", { name: "3. Чарты" }).click();
+        await page.locator('[data-screen="ranges"] [data-filter="hero"][data-value="CO"]').click();
+        await page.locator('[data-screen="ranges"] [data-filter="opener"][data-value="HJ"]').click();
+        await page.locator('[data-screen="ranges"] [data-filter="stack"][data-value="30"]').click();
         assert.equal(await page.locator('[data-screen="ranges"] [data-filter="size"][data-value="other"]').count(), 0, `free-position sizing never exposes the mixed other bucket at ${viewport.name}`);
         assert.equal(await page.locator('[data-screen="ranges"] [data-filter="stack"].is-active').innerText(), "28–32", `free-position default exposes the actual fine-stack window instead of an exact-looking 30 BB at ${viewport.name}`);
         for (const stack of ["20", "25", "30", "35", "40"]) {
@@ -393,7 +460,7 @@ try {
         await page.locator('[data-screen="field"] [data-filter="stack"][data-value="12-15"]').click();
       }
       await captureState(page, route, viewport, "comparison");
-      const expectedComparisonCohorts = route === "/vs-one-raiser-positions-lesson" ? 3 : 2;
+      const expectedComparisonCohorts = 3;
       assert.equal(await page.locator("#comparisonGrid .cohort-card").count(), expectedComparisonCohorts, `${route} renders every required comparison cohort`);
       assert.equal(await page.locator("#comparisonGrid .comparison-range-grid").count(), expectedComparisonCohorts, `${route} shows one full range chart for each cohort`);
       assert.equal(await page.locator("#comparisonGrid .comparison-range-grid > *").count(), 169 * expectedComparisonCohorts, `${route} comparison renders every full 13x13 chart`);
@@ -415,7 +482,7 @@ try {
       if (route === "/vs-one-raiser-positions-lesson") {
         assert.equal(await page.locator("#comparisonGrid").getAttribute("class"), "comparison-grid is-three-cohort", "free-position comparison uses the three-cohort layout");
         const comparisonText = (await page.locator("#comparisonGrid").innerText()).toLowerCase();
-        assert(comparisonText.includes("первая лига") && comparisonText.includes("2–3 лиги") && comparisonText.includes("новички"), "free-position comparison directly labels all three cohorts");
+        assert(comparisonText.includes("первая лига") && comparisonText.includes("2–3 лиги") && comparisonText.includes("ранги 15–18"), "free-position comparison directly labels all three cohorts without mislabeling the rank cohort");
         assert.equal(await page.locator("#comparisonGrid .comparison-range-grid .is-unavailable").count(), 0, `free-position comparison has 507/507 source-backed hand cells at ${viewport.name}`);
         assert((await page.locator("#comparisonGrid .cohort-leagues2_3 .is-cohort-difference").count()) > 0, `free-position comparison outlines ranks 6-14 hand-plan changes at ${viewport.name}`);
         assert((await page.locator("#comparisonGrid .cohort-r15_18 .is-cohort-difference").count()) > 0, `free-position comparison outlines novice hand-plan changes at ${viewport.name}`);
@@ -425,8 +492,10 @@ try {
       }
       if (route === "/sb-unopened-lesson") {
         assert((await page.locator("#comparisonGrid .is-cohort-difference").count()) > 0, `SB unopened comparison outlines hands whose main action changes at ${viewport.name}`);
+        assert.equal(await page.locator("#comparisonGrid").getAttribute("class"), "comparison-grid is-three-cohort", "SB unopened comparison uses the three-cohort layout");
+        assert((await page.locator("#comparisonGrid").innerText()).toLowerCase().includes("2–3 лиги · ранги 6–14"), "SB unopened shows the loaded middle cohort");
         const comparisonKey = await page.locator("#comparisonGrid .comparison-range-key").innerText();
-        assert(comparisonKey.includes("Жёлтая рамка") && /Новички:\s*\d+\s*рук/.test(comparisonKey), "SB unopened comparison directly explains and counts the outlined differences");
+        assert(comparisonKey.includes("Жёлтая рамка") && /Ранги 15–18:\s*\d+\s*комбинаци(?:я|и|й)/.test(comparisonKey), "SB unopened comparison directly explains and counts the outlined differences with correct Russian pluralization");
         if (viewport.name === "reported") await page.screenshot({ path: "/private/tmp/sb-unopened-comparison-ranges-reported.png", fullPage: true });
         if (viewport.name === "mobile") await page.screenshot({ path: "/private/tmp/sb-unopened-comparison-ranges-mobile.png", fullPage: true });
       }
@@ -444,7 +513,7 @@ try {
       }
       if (route === "/vs-one-raiser-sb-lesson") {
         const wisdomText = await page.locator("#insightGrid").innerText();
-        assert(wisdomText.includes("Та же ширина — другой винрейт") && wisdomText.includes("−9,8 BB"), "SB wisdom grid exposes the exact-spot outcome gap");
+        assert(wisdomText.includes("Та же ширина — другой винрейт") && wisdomText.includes("−6,2 BB"), "SB wisdom grid exposes the full-window exact-spot outcome gap");
         if (viewport.name === "comment") {
           await page.waitForTimeout(450);
           await page.screenshot({ path: "/private/tmp/vs-one-raiser-sb-wisdom-comment.png", fullPage: false });
@@ -482,8 +551,23 @@ try {
       }
       await page.getByRole("tab", { name: "6. Практика" }).click();
       await captureState(page, route, viewport, "practice-landing");
+      if (route === "/sb-unopened-lesson" && viewport.name === "desktop") {
+        await page.evaluate(() => {
+          window.__preflopProgressCalls = [];
+          window.FFPlayerProgress = {
+            setResult(key, result) {
+              window.__preflopProgressCalls.push({ key, attempts: result.attempts });
+            },
+          };
+        });
+      }
       await page.getByRole("button", { name: "Запустить", exact: true }).click();
       await page.waitForSelector("#practiceTable [data-trainer-simulator-actions]");
+      if (route === "/sb-unopened-lesson") {
+        const unopenedPracticeText = await page.locator("#practiceTable").textContent();
+        assert(unopenedPracticeText.includes("Анте стола 1 BB"), `SB unopened practice labels the observed table ante truthfully at ${viewport.name}`);
+        assert(!/Рейз\s+3\s+BB/i.test(unopenedPracticeText), `SB unopened practice does not invent an unsupported raise size at ${viewport.name}`);
+      }
       if (route === "/vs-one-raiser-positions-lesson") {
         const practiceRaiser = await page.locator("#practiceTable").evaluate((host) => {
           const hero = host.querySelector(".seat.is-hero");
@@ -506,6 +590,26 @@ try {
       await page.locator("#practiceTable [data-option-key]").first().click();
       assert.equal(await page.locator("#practiceFeedback:not([hidden])").count(), 1, `${route} practice returns cohort feedback`);
       assert.equal(await page.locator("#practiceCoach .feedback-cohort").count(), 2, `${route} practice shows both comparison groups`);
+      if (route === "/sb-unopened-lesson" && viewport.name === "desktop") {
+        let observedMix = await page.locator('#practiceTable [data-answer-state="alternative"]').count();
+        if (observedMix) assert((await page.locator("#practiceFeedback").innerText()).includes("Допустимый микс"), "soft-graded practice labels the accepted alternative");
+        for (let answered = 1; answered < 26; answered += 1) {
+          await page.getByRole("button", { name: "Следующая рука →" }).click();
+          const actions = page.locator("#practiceTable [data-option-key]");
+          await actions.nth(answered % await actions.count()).click();
+          const mixed = await page.locator('#practiceTable [data-answer-state="alternative"]').count();
+          if (mixed) {
+            observedMix += mixed;
+            assert((await page.locator("#practiceFeedback").innerText()).includes("Допустимый микс"), "every accepted 30% alternative is explained as a mix");
+          }
+        }
+        assert(observedMix > 0, "the 26-hand deterministic action cycle exercises at least one accepted mix");
+        assert.deepEqual(
+          await page.evaluate(() => window.__preflopProgressCalls.map((row) => row.attempts)),
+          [25, 26],
+          "course progress updates at attempt 25 and every later attempt",
+        );
+      }
       const geometry = await page.evaluate(() => ({
         overflowX: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
         actionBottom: document.querySelector("#practiceTable [data-trainer-simulator-actions]")?.getBoundingClientRect().bottom || 0,

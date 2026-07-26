@@ -25,6 +25,32 @@
     { id: "fold-disconnected", family: "fold", builder: buildDisconnected, label: "Несвязанный воздух", reason: "Нет пары, готового дро или полезной связности — дисциплинированный пас сохраняет качество рейзов." },
     { id: "xr-oesd", family: "checkraise", builder: buildOesd, label: "Двустороннее стрит-дро", reason: "OESD имеет понятный план после колла и превращает фолд-эквити в дополнительную прибыль." }
   ]);
+  const ARCHETYPE_WEIGHTS = Object.freeze({
+    "fold-air": 5,
+    "fold-weak-backdoor": 4,
+    "fold-disconnected": 4
+  });
+  const PRACTICE_BAG = Object.freeze(ARCHETYPES.flatMap((archetype) => {
+    const weight = ARCHETYPE_WEIGHTS[archetype.id] || (archetype.family === "call" ? 3 : 1);
+    return Array.from({ length: weight }, () => archetype);
+  }));
+  const VILLAIN_OPEN_RANGES = Object.freeze({
+    CO: new Set((
+      "22 33 44 55 66 77 88 99 TT JJ QQ KK AA " +
+      "A2s A3s A4s A5s A6s A7s A8s A9s ATs AJs AQs AKs " +
+      "K8s K9s KTs KJs KQs Q9s QTs QJs J9s JTs T8s T9s 98s 97s 87s 76s 65s 54s " +
+      "A8o A9o ATo AJo AQo AKo KTo KJo KQo QTo QJo JTo"
+    ).split(" ")),
+    BTN: new Set((
+      "22 33 44 55 66 77 88 99 TT JJ QQ KK AA " +
+      "A2s A3s A4s A5s A6s A7s A8s A9s ATs AJs AQs AKs " +
+      "K2s K3s K4s K5s K6s K7s K8s K9s KTs KJs KQs " +
+      "Q5s Q6s Q7s Q8s Q9s QTs QJs J7s J8s J9s JTs " +
+      "T7s T8s T9s 96s 97s 98s 86s 87s 75s 76s 65s 54s 43s " +
+      "A2o A3o A4o A5o A6o A7o A8o A9o ATo AJo AQo AKo " +
+      "K8o K9o KTo KJo KQo Q9o QTo QJo J9o JTo T9o"
+    ).split(" "))
+  });
 
   const READS = Object.freeze([
     {
@@ -466,11 +492,41 @@
     return RANKS.flatMap((rank) => SUITS.map((suit) => card(rank, suit)));
   }
 
-  function seats(stack, villain, revealCards = []) {
+  function startingHandClass(cards) {
+    if (!Array.isArray(cards) || cards.length !== 2 || cards.some((value) => !CARD_RE.test(value))) return "";
+    const ordered = cards.slice().sort((left, right) => rankValue(right[0]) - rankValue(left[0]));
+    if (ordered[0][0] === ordered[1][0]) return `${ordered[0][0]}${ordered[1][0]}`;
+    return `${ordered[0][0]}${ordered[1][0]}${ordered[0][1] === ordered[1][1] ? "s" : "o"}`;
+  }
+
+  function villainCanOpen(position, cards) {
+    return VILLAIN_OPEN_RANGES[position]?.has(startingHandClass(cards)) === true;
+  }
+
+  function drawVillainCards(rng, deck, position) {
+    const candidates = [];
+    for (let left = 0; left < deck.length - 1; left += 1) {
+      for (let right = left + 1; right < deck.length; right += 1) {
+        const cards = [deck[left], deck[right]];
+        if (villainCanOpen(position, cards)) candidates.push(cards);
+      }
+    }
+    if (!candidates.length) throw new Error(`No legal ${position} opening hand remains in the deck`);
+    return pick(rng, candidates);
+  }
+
+  function seats(heroStack, villain, revealCards = [], villainStack = heroStack, startingStack = heroStack) {
     return SEATS.map((label) => ({
       label,
       state: label === "BB" ? "hero" : label === villain ? "waiting" : "folded",
-      stackBb: stack,
+      stackBb: label === "BB"
+        ? heroStack
+        : label === villain
+          ? villainStack
+          : label === "SB"
+            ? startingStack - 0.5
+            : startingStack,
+      startingStackBb: startingStack,
       ...(label === villain && revealCards.length === 2
         ? { cards: revealCards.slice(), revealCardsAfterAnswer: true }
         : {})
@@ -478,8 +534,10 @@
   }
 
   function tableSnapshot(context, street, boardCards, pot, stack, actionLine, historyLine, revealCards = []) {
+    const hasHandStart = Number.isFinite(Number(context.startingStack));
+    const startingStack = hasHandStart ? Number(context.startingStack) : Number(context.stack);
     return {
-      seats: seats(stack, context.villain, revealCards),
+      seats: seats(stack, context.villain, revealCards, stack + (hasHandStart ? 1 : 0), startingStack),
       heroPosition: "BB",
       heroStack: `${formatBb(stack)} BB`,
       effectiveStack: `${formatBb(stack)} BB`,
@@ -501,7 +559,14 @@
     return cards.map((value) => `${value[0]}${symbols[value[1]]}`).join(" ");
   }
 
-  function terminalNode(id, context, title, summary, winner, pot, stack, actionLine) {
+  function terminalNode(id, context, title, summary, winner, pot, stack, actionLine, options = {}) {
+    const showdown = options.showdown !== false;
+    const street = showdown ? "showdown" : (options.street || "river");
+    const boardCards = Array.isArray(options.boardCards)
+      ? options.boardCards.slice()
+      : (showdown
+        ? [...context.boardCards, context.turnCard, context.riverCard]
+        : context.boardCards.slice());
     return {
       id,
       title,
@@ -509,18 +574,19 @@
       question: title,
       table: tableSnapshot(
         context,
-        "showdown",
-        [...context.boardCards, context.turnCard, context.riverCard],
+        street,
+        boardCards,
         pot,
         stack,
         actionLine,
         "Учебная линия от флопа до завершения",
-        context.villainCards
+        showdown ? context.villainCards : []
       ),
       result: {
         winner,
         title,
-        summary
+        summary,
+        showdown
       }
     };
   }
@@ -545,6 +611,7 @@
       ["BB check", `${context.villain} bet ${formatBb(bet)} BB`],
       historyLine
     );
+    table.potBeforeAction = true;
     table.toCall = bet;
     table.currentBet = bet;
     return { id, title, question, table, options };
@@ -564,10 +631,17 @@
   }
 
   function buildContinuation(context, rng) {
-    const deck = shuffle(rng, fullDeck().filter((value) => ![...context.heroCards, ...context.boardCards].includes(value)));
-    context.villainCards = deck.slice(0, 2);
-    context.turnCard = deck[2];
-    context.riverCard = deck[3];
+    const blockedCards = [...context.heroCards, ...context.boardCards];
+    const availableDeck = fullDeck().filter((value) => !blockedCards.includes(value));
+    const authoredVillainCards = Array.isArray(context.villainCards) ? context.villainCards.slice() : [];
+    context.villainCards = authoredVillainCards.length === 2
+      && authoredVillainCards.every((value) => availableDeck.includes(value))
+      && villainCanOpen(context.villain, authoredVillainCards)
+      ? authoredVillainCards
+      : drawVillainCards(rng, availableDeck, context.villain);
+    const deck = shuffle(rng, availableDeck.filter((value) => !context.villainCards.includes(value)));
+    context.turnCard = deck[0];
+    context.riverCard = deck[1];
 
     const fullBoard = [...context.boardCards, context.turnCard, context.riverCard];
     const heroEvaluation = evaluateBest([...context.heroCards, ...fullBoard]);
@@ -576,17 +650,14 @@
     const showdownWinner = comparison > 0 ? "Hero" : comparison < 0 ? context.villain : "Ничья";
     const showdownSummary = `Hero ${showCards(context.heroCards)} — ${heroEvaluation.label}; ${context.villain} ${showCards(context.villainCards)} — ${villainEvaluation.label}. ${showdownWinner === "Ничья" ? "Банк делится." : `Банк забирает ${showdownWinner}.`} Оценка флопа от результата не меняется.`;
 
-    const potAfterFold = rounded(context.pot + context.bet);
     const potAfterCall = rounded(context.pot + context.bet * 2);
     const potAfterRaise = rounded(context.pot + context.raiseTo * 2);
-    const potAfterRaiseFold = rounded(context.pot + context.bet + context.raiseTo);
     const stackAfterCall = Math.max(0, rounded(context.stack - context.bet));
     const stackAfterRaise = Math.max(0, rounded(context.stack - context.raiseTo));
     const callLead = Math.min(stackAfterCall, rounded(potAfterCall * 0.5));
     const potAfterCallLead = rounded(potAfterCall + callLead * 2);
     const stackAfterCallLead = Math.max(0, rounded(stackAfterCall - callLead));
     const villainTurnBet = Math.min(stackAfterCall, rounded(potAfterCall * 0.6));
-    const potAfterVillainTurnBet = rounded(potAfterCall + villainTurnBet);
     const potAfterVillainTurnBetCall = rounded(potAfterCall + villainTurnBet * 2);
     const stackAfterVillainTurnBetCall = Math.max(0, rounded(stackAfterCall - villainTurnBet));
     const villainRiverBet = Math.min(stackAfterCall, rounded(potAfterCall * 0.65));
@@ -631,19 +702,21 @@
         "Пас — раздача закончилась",
         `${context.villain} забрал банк на флопе. Дальнейшие карты не влияют на решение Hero.`,
         context.villain,
-        potAfterFold,
+        context.pot,
         context.stack,
-        ["BB fold", `${context.villain} wins`]
+        ["BB fold", `${context.villain} wins`],
+        { showdown: false, street: "flop", boardCards: context.boardCards }
       ),
       "end-after-xr-fold": terminalNode(
         "end-after-xr-fold",
         context,
         `${context.villain} выбросил на чек-рейз`,
         "Забрали банк без шоудауна — именно ради этого блефовая часть рейза существует.",
-        "Без шоудауна",
-        potAfterRaiseFold,
-        stackAfterRaise,
-        [`BB check-raise to ${formatBb(context.raiseTo)} BB`, `${context.villain} fold`]
+        "Hero",
+        potAfterCall,
+        stackAfterCall,
+        [`BB check-raise to ${formatBb(context.raiseTo)} BB`, `${context.villain} fold`],
+        { showdown: false, street: "flop", boardCards: context.boardCards }
       ),
       "turn-after-call": decisionNode(
         "turn-after-call",
@@ -726,7 +799,7 @@
         `${context.villain} добирает ривер`,
         "Как ответить на ривер-бет?",
         [
-          { key: "fold", label: "Пас", correct: !heroContinuesRiver, feedback: "Слабая пара не обязана оплачивать велью-бет.", next: "end-after-river-bet-fold" },
+          { key: "fold", label: "Пас", correct: !heroContinuesRiver, feedback: "Слабая пара не обязана оплачивать вэлью-бет.", next: "end-after-river-bet-fold" },
           { key: "call", label: `Колл ${formatBb(villainRiverBet)} BB`, correct: heroContinuesRiver, feedback: "Сильная готовая рука может вскрывать ривер-бет.", next: "showdown-call-check-villain-bet-call" }
         ],
         `Flop call · Turn check-check · River BB check · ${context.villain} bet ${formatBb(villainRiverBet)} BB`
@@ -752,7 +825,7 @@
             key: "bet",
             label: `Поставить ${formatBb(callTurnBetRiverLead)} BB`,
             correct: false,
-            feedback: "Донк на ривере требует ясной велью-цели или сильных блокеров.",
+            feedback: "Донк на ривере требует ясной вэлью-цели или сильных блокеров.",
             next: "showdown-call-turn-bet-river-lead"
           }
         ],
@@ -871,9 +944,10 @@
         "Пас на тёрне",
         `${context.villain} забрал банк вторым баррелем. Оценка флопа от результата не меняется.`,
         context.villain,
-        potAfterVillainTurnBet,
+        potAfterCall,
         stackAfterCall,
-        ["Turn BB check", `${context.villain} bet ${formatBb(villainTurnBet)} BB`, "BB fold"]
+        ["Turn BB check", `${context.villain} bet ${formatBb(villainTurnBet)} BB`, "BB fold"],
+        { showdown: false, street: "turn", boardCards: turnBoard }
       ),
       "end-after-river-bet-fold": terminalNode(
         "end-after-river-bet-fold",
@@ -881,9 +955,10 @@
         "Пас на ривере",
         `${context.villain} забрал банк ривер-бетом. Оценка флопа от результата не меняется.`,
         context.villain,
-        rounded(potAfterCall + villainRiverBet),
+        potAfterCall,
         stackAfterCall,
-        ["Turn check-check", "River BB check", `${context.villain} bet ${formatBb(villainRiverBet)} BB`, "BB fold"]
+        ["Turn check-check", "River BB check", `${context.villain} bet ${formatBb(villainRiverBet)} BB`, "BB fold"],
+        { showdown: false, street: "river", boardCards: fullBoard }
       ),
       "end-after-river-bet-after-turn-bet-fold": terminalNode(
         "end-after-river-bet-after-turn-bet-fold",
@@ -891,13 +966,14 @@
         "Пас на третий баррель",
         `${context.villain} забрал банк ставками на тёрне и ривере. Оценка флопа от результата не меняется.`,
         context.villain,
-        rounded(potAfterVillainTurnBetCall + villainRiverBetAfterTurnCall),
+        potAfterVillainTurnBetCall,
         stackAfterVillainTurnBetCall,
         [
           `Turn ${context.villain} bet ${formatBb(villainTurnBet)} BB · BB call`,
           `River BB check · ${context.villain} bet ${formatBb(villainRiverBetAfterTurnCall)} BB`,
           "BB fold"
-        ]
+        ],
+        { showdown: false, street: "river", boardCards: fullBoard }
       ),
       "showdown-call-check-check": makeShowdown(
         "showdown-call-check-check",
@@ -1062,10 +1138,11 @@
     const villain = pick(rng, ["CO", "BTN"]);
     const stack = pick(rng, [25, 30, 35, 40, 50, 60]);
     const open = pick(rng, [2, 2.2, 2.5]);
-    const pot = rounded(open * 2 + 1.1);
+    const flopStack = rounded(stack - open - 1);
+    const pot = rounded(open * 2 + 1.5);
     const fraction = pick(rng, [0.25, 0.33, 0.4, 0.5]);
     const bet = Math.max(1, rounded(pot * fraction));
-    const raiseTo = Math.min(stack, rounded(Math.max(bet * 3, bet + 3)));
+    const raiseTo = Math.min(flopStack, rounded(Math.max(bet * 3, bet + 3)));
     const foldRead = { ...pick(rng, READS) };
     const baselineAction = archetype.family;
     const xrMix = archetype.xrMix === true || isBlockerOvercardMix(archetype, heroCards, boardCards);
@@ -1084,7 +1161,8 @@
       heroCards,
       boardCards,
       villain,
-      stack,
+      stack: flopStack,
+      startingStack: stack,
       pot,
       bet,
       raiseTo,
@@ -1137,14 +1215,16 @@
         reason: archetype.reason,
         foldRead,
         xrGrade: archetype.family === "checkraise" ? "clear" : xrMix ? "mix" : "control",
+        villainHandClass: startingHandClass(context.villainCards),
         runoutCards: [...context.villainCards, context.turnCard, context.riverCard]
       },
       table: {
-        seats: seats(stack, villain),
+        seats: seats(flopStack, villain, [], flopStack + 1, stack),
         heroPosition: "BB",
-        heroStack: `${formatBb(stack)} BB`,
+        heroStack: `${formatBb(flopStack)} BB`,
         effectiveStack: `${formatBb(stack)} BB`,
         pot: `${formatBb(pot)} BB`,
+        potBeforeAction: true,
         anteBb: 1,
         heroCards: heroCards.slice(),
         boardCards: boardCards.slice(),
@@ -1188,7 +1268,7 @@
     const seenVisible = new Set();
 
     function refillBag() {
-      bag = shuffle(rng, ARCHETYPES);
+      bag = shuffle(rng, PRACTICE_BAG);
       if (recentFamilies.length >= 2 && recentFamilies.at(-1) === recentFamilies.at(-2)) {
         const blocked = recentFamilies.at(-1);
         const swapIndex = bag.findIndex((item) => item.family !== blocked);
@@ -1267,6 +1347,9 @@
     validateSpot,
     isStrongTwoOvercards,
     isTopPairOrBetter,
+    isBlockerOvercardMix,
+    startingHandClass,
+    villainCanOpen,
     evaluateBest,
     compareEvaluations
   });

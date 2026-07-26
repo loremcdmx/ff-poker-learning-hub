@@ -1,29 +1,49 @@
 -- MSP source for the three preflop benchmark trainers.
 -- Frozen window: [2023-09-01, 2026-07-22). Cohorts are attached at the exact
 -- time of each hand, never by current rank.
--- Public output shows only integer action rates. Hand cells below 30 classified
--- actions and whole slices below 100 classified actions are omitted by the
--- builder; no interpolation or strategic model fills them.
+-- Learner visuals show integer action rates; the generated payload also keeps
+-- each hand's exact denominator for the publication audit. Hand cells below
+-- 50 classified actions and whole slices below 100 classified actions are
+-- omitted by the builder; no interpolation or strategic model fills them.
 
--- 1. BigQuery: rank-at-hand bridge, clipped to the analysis window.
-SELECT
-  h.user_id,
-  h.rang,
-  FORMAT_TIMESTAMP('%F %T', GREATEST(h.rang_start_at, TIMESTAMP '2023-09-01 00:00:00+00'), 'UTC') AS rank_start_at,
-  FORMAT_TIMESTAMP('%F %T', LEAST(COALESCE(h.rang_end_at, TIMESTAMP '2026-07-22 00:00:00+00'), TIMESTAMP '2026-07-22 00:00:00+00'), 'UTC') AS rank_end_at
-FROM `analytics_mcp_readonly.mcp__check_rank_history` AS h
-JOIN `analytics_mcp_readonly.mcp__check_users` AS u USING (user_id)
-WHERE h.rang BETWEEN 1 AND 18
-  AND h.rang_start_at < TIMESTAMP '2026-07-22 00:00:00+00'
-  AND COALESCE(h.rang_end_at, TIMESTAMP '2026-07-22 00:00:00+00') > TIMESTAMP '2023-09-01 00:00:00+00'
-  AND u.is_real_player IS TRUE;
-
--- 2. ClickHouse: replace the placeholder with tuples from query 1.
+-- Rank bridge: run tools/msp-preflop-rank-bridge.sql once and reuse that
+-- exact full-rank CSV + metadata for this action cube and the EV source.
+-- ClickHouse: replace the placeholder with tuples from the shared bridge.
 WITH rank_intervals AS (
   SELECT member_user_id, rang, valid_from, valid_to FROM values(
     'member_user_id Int32, rang Int32, valid_from DateTime, valid_to DateTime',
     {{RANK_INTERVAL_ROWS}}
   )
+),
+candidate_ids AS (
+  -- This pass only narrows the immutable set of hand ids that can belong to
+  -- one of the three trainer nodes. Every predicate is repeated after argMax,
+  -- so an older qualifying tracker version cannot survive when its latest
+  -- version no longer belongs to the spot.
+  SELECT h.hand_player_id
+  FROM analytics.int_tracker_hand_joined AS h
+  PREWHERE h.user_id IN ({{RANK_USER_IDS}})
+    AND h.month_start_date >= toDate('{{WINDOW_MONTH_START}}')
+    AND h.month_start_date < toDate('{{WINDOW_MONTH_END_EXCLUSIVE}}')
+  WHERE h.played_at >= toDateTime('{{WINDOW_START}}')
+    AND h.played_at < toDateTime('{{WINDOW_END_EXCLUSIVE}}')
+    AND h.hand_player_id IS NOT NULL
+    AND h.cnt_players_lookup_position BETWEEN 7 AND 9
+    AND h.position IN (0,1,2,3,4,9)
+    AND h.preflop_effective_stack_size_bb > 0
+    AND h.preflop_effective_stack_size_bb <= 200
+    AND ((h.val_preflop_action_facing = 4
+      AND toUInt8(coalesce(h.cnt_preflop_face_limpers, 0)) = 0
+      AND h.preflop_aggressor_position BETWEEN 0 AND 7
+      AND (
+        h.position = 9
+        OR (h.position BETWEEN 0 AND 4 AND h.preflop_aggressor_position > h.position)
+      ))
+      OR (
+        toUInt8(coalesce(h.is_preflop_unopened, 0)) = 1
+        AND h.position = 9
+      ))
+  GROUP BY h.hand_player_id
 ),
 latest AS (
   SELECT argMax(tuple(
@@ -40,22 +60,28 @@ latest AS (
     if(h.bb_amount > 0, coalesce(h.bet_bb_amount, 0) / h.bb_amount, 0)
   ), tuple(h.version, h.hand_player_id)) AS x
   FROM analytics.int_tracker_hand_joined AS h
+  INNER JOIN candidate_ids AS c USING (hand_player_id)
   INNER JOIN rank_intervals AS r ON h.user_id = r.member_user_id
+  PREWHERE h.user_id IN ({{RANK_USER_IDS}})
+    AND h.month_start_date >= toDate('{{WINDOW_MONTH_START}}')
+    AND h.month_start_date < toDate('{{WINDOW_MONTH_END_EXCLUSIVE}}')
   WHERE h.played_at >= r.valid_from AND h.played_at < r.valid_to
-    AND h.month_start_date >= toDate('2023-09-01')
-    AND h.month_start_date < toDate('2026-08-01')
-    AND h.played_at >= toDateTime('2023-09-01 00:00:00')
-    AND h.played_at < toDateTime('2026-07-22 00:00:00')
-    AND h.cnt_players_lookup_position BETWEEN 7 AND 9
-    AND h.position IN (0,1,2,3,4,9)
-    AND h.preflop_effective_stack_size_bb > 0
-    AND h.preflop_effective_stack_size_bb <= 200
-    AND ((h.val_preflop_action_facing = 4
-      AND coalesce(h.cnt_preflop_face_limpers, 0) = 0
-      AND h.preflop_aggressor_position BETWEEN 0 AND 7
-      AND (h.position = 9 OR (h.position BETWEEN 0 AND 4 AND h.preflop_aggressor_position > h.position)))
-      OR (coalesce(h.is_preflop_unopened, 0) = 1 AND h.position = 9))
-  GROUP BY h.network, h.tourney_id, h.hand_id, h.user_id
+    AND h.played_at >= toDateTime('{{WINDOW_START}}')
+    AND h.played_at < toDateTime('{{WINDOW_END_EXCLUSIVE}}')
+  GROUP BY h.hand_player_id
+),
+filtered AS (
+  SELECT x
+  FROM latest
+  WHERE x.4 BETWEEN 7 AND 9
+    AND x.5 IN (0,1,2,3,4,9)
+    AND x.8 > 0
+    AND x.8 <= 200
+    AND ((x.13 = 4
+      AND x.12 = 0
+      AND x.6 BETWEEN 0 AND 7
+      AND (x.5 = 9 OR (x.5 BETWEEN 0 AND 4 AND x.6 > x.5)))
+      OR (x.14 = 1 AND x.5 = 9))
 ),
 classified AS (
   SELECT
@@ -103,7 +129,7 @@ classified AS (
       x.10 = 'F', 'fold',
       'other'
     ) AS action_class
-  FROM latest
+  FROM filtered
 )
 SELECT trainer, cohort, hero_position, opener_position, open_size, stack_bucket,
   hand_class, count() AS opportunities,
@@ -112,10 +138,10 @@ SELECT trainer, cohort, hero_position, opener_position, open_size, stack_bucket,
   countIf(action_class='raise') AS raises,
   countIf(action_class='jam') AS jams,
   countIf(action_class='other') AS other,
-  uniqExact(user_id) AS players,
-  uniqExact(toStartOfMonth(played_at)) AS months,
   min(played_at) AS first_hand_at,
   max(played_at) AS last_hand_at
 FROM classified
+WHERE hand_class != '__MISSING__'
+  AND (trainer = 'sb_unopened' OR open_size IN ('2x', '2.5x', '3x'))
 GROUP BY trainer, cohort, hero_position, opener_position, open_size, stack_bucket, hand_class
 ORDER BY trainer, cohort, hero_position, opener_position, open_size, stack_bucket, hand_class;

@@ -487,6 +487,24 @@ p { margin-bottom: 13px; color: var(--muted); line-height: 1.55; }
 .matrix-panel { min-width: 0; padding: 10px; }
 .matrix-status { margin: 0 0 7px; color: var(--muted); font-size: 11px; text-align: center; }
 .matrix-status.is-ready { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.model-boundary-note {
+  display: grid;
+  gap: 3px;
+  width: min(100%, 520px);
+  margin: 0 auto 9px;
+  padding: 9px 11px;
+  border: 1px solid rgba(255, 198, 74, .48);
+  border-left: 4px solid #ffc64a;
+  border-radius: 9px;
+  color: rgba(255, 244, 213, .9);
+  background: rgba(255, 180, 45, .1);
+  font-size: 11px;
+  line-height: 1.42;
+  text-wrap: pretty;
+}
+.model-boundary-note[hidden] { display: none; }
+.model-boundary-note strong { color: #ffe37a; font-size: 12px; }
+.model-boundary-note span { display: block; }
 .matrix-scroll { width: min(100%, 520px); max-width: 100%; margin: 0 auto; overflow: auto; overscroll-behavior-inline: contain; }
 .matrix {
   display: grid;

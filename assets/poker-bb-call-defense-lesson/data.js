@@ -2,6 +2,8 @@
   "use strict";
 
   var RangeData = window.PokerBbCallRangeData;
+  var preflopPotBb = window.FFTrainerSimulatorSnapshot && window.FFTrainerSimulatorSnapshot.preflopPotBb;
+  if (typeof preflopPotBb !== "function") throw new Error("Shared preflop chip model is required");
 
   var positions = {
     EP: { label: "EP", tableSeat: "UTG", openerPct: 17 },
@@ -78,10 +80,8 @@
     var sourceCode = scenario[coordinates.row * 13 + coordinates.column];
     var sourceSplit = RangeData.codes[sourceCode];
     if (!sourceSplit) throw new Error("Unknown range action code: " + sourceCode);
-    // Keep the generated extraction intact, but simplify partial call/fold
-    // weights for the lesson: every such boundary hand is a pure fold.
-    var code = sourceSplit.raisePct === 0 && sourceSplit.callPct > 0 && sourceSplit.callPct < 100 ? "F" : sourceCode;
-    var split = RangeData.codes[code];
+    var code = sourceCode;
+    var split = sourceSplit;
     return Object.freeze({
       hand: matrixHandAt(coordinates.row, coordinates.column),
       row: coordinates.row,
@@ -124,8 +124,8 @@
       return {
         label: label,
         state: label === "BB" ? "hero" : /SB|BB/.test(label) ? "blind" : "waiting",
-        // The shared renderer subtracts current-street bets itself. Only the
-        // BB ante is outside that ledger and must be reflected up front.
+        // The shared renderer subtracts current-street bets itself. The BB ante
+        // sits outside that ledger, so reflect it in the starting stack here.
         stackBb: label === "BB" ? stack - 1 : stack
       };
     });
@@ -194,9 +194,10 @@
         heroPosition: "BB",
         heroStack: String((config.stack || 40) - 1) + " BB",
         effectiveStack: String(config.stack || 40) + " BB",
-        // Current-street bets remain in front of seats; only the BB ante is in
-        // the center so the visual total is not counted twice.
-        pot: "1 BB",
+        pot: String(preflopPotBb({
+          anteBb: 1,
+          contributions: [{ position: positions[openPosition].tableSeat, amountBb: size.openSize }]
+        })) + " BB",
         anteBb: 1,
         heroCards: config.cards,
         boardCards: [],
@@ -270,12 +271,6 @@
       dataRoot: "assets/poker-resteal-lesson/data/",
       files: Object.freeze(["equity169.json", "rank_vs_random169.json"]),
       version: "showdown-equity-20260711-v2"
-    }),
-    ffRealizationModel: Object.freeze({
-      file: "assets/poker-bb-call-defense-lesson/data/ff-bb-call-realization.json",
-      version: "ff-bb-call-realization-20260717-stack-bands-v2",
-      minDisplayN: 500,
-      minReliableN: 2000
     }),
     leagueDefenseModel: Object.freeze({
       file: "assets/poker-bb-call-defense-lesson/data/ff-bb-defense-ranks.json",

@@ -181,7 +181,11 @@
           ? previousTournamentHandNo + 1
           : 1
         : 0;
-      const carryoverTable = !carriesStacks || settings().trainingMode || heroBusted(carrySourceTable) || activePackUsesScriptedStreet ? null : carrySourceTable;
+      // Review mode changes only the cadence (manual next hand + feedback). It
+      // must not silently turn an MTT into a sequence of fresh-stack tables:
+      // the tournament hand/level counter already advances from carrySourceTable,
+      // so stacks and the surviving lineup must advance from the same source.
+      const carryoverTable = !carriesStacks || heroBusted(carrySourceTable) || activePackUsesScriptedStreet ? null : carrySourceTable;
       if (carryoverTable && settings().lobbyEvents !== false && typeof engine.tickLobbyForHand === "function") {
         engine.tickLobbyForHand(carryoverTable);
       }

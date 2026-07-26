@@ -5,7 +5,10 @@
   const documentRoot = document;
   const model = root.FF_VS3BET_RANGE_MODEL;
   const lessonData = root.FF_POKER_FIELD_LESSON_DATA;
-  const fieldData = root.FF_VS3BET_FIELD_DATA;
+  const rawFieldData = root.FF_VS3BET_FIELD_DATA;
+  const fieldData = root.FFVs3BetFieldDataReadiness?.ready ? rawFieldData : null;
+  const observedConfidence = root.FFObservedFrequencyConfidence;
+  const enabledComparisonKeys = new Set(fieldData?.meta?.enabledComparisonKeys || []);
   const rfiData = root.PokerRfiData;
   const targetOverviewHost = documentRoot.querySelector("[data-vs3-target-overview]");
   const explorerHost = documentRoot.querySelector("[data-vs3-range-explorer]");
@@ -39,13 +42,7 @@
       "80+": "80+ BB"
     },
     size: { "2.5": "2,5x", "3": "3x", "4": "4x" },
-    cohort: {
-      reference: "Наша стратегия",
-      league1: "Лига 1",
-      league2: "Лига 2",
-      league3: "Лига 3",
-      novice: "Новички"
-    }
+    cohort: { reference: "Наша стратегия" }
   };
 
   const FILTER_META = {
@@ -56,12 +53,24 @@
     cohort: { label: "Сравнить с", preferred: "reference" }
   };
 
-  const FIELD_COHORTS = Object.freeze([
-    { key: "league1", label: "Лига 1", ranks: "R1–5" },
-    { key: "league2", label: "Лига 2", ranks: "R6–10" },
-    { key: "league3", label: "Лига 3", ranks: "R11–14" },
-    { key: "novice", label: "Новички", ranks: "R15–18" }
-  ]);
+  const FIELD_SIZE_BUCKETS = Object.freeze({
+    "2.5": "<6",
+    "3": "6-8",
+    "4": "8-10"
+  });
+
+  const FIELD_COHORTS = Object.freeze((fieldData?.meta?.cohortOrder || [])
+    .slice()
+    .reverse()
+    .map((key) => {
+      const source = fieldData?.meta?.cohorts?.[key] || {};
+      const ranks = Array.isArray(source.ranks) ? source.ranks.filter(Number.isFinite) : [];
+      return {
+        key,
+        label: source.label || key,
+        ranks: ranks.length ? `R${Math.min(...ranks)}–${Math.max(...ranks)}` : ""
+      };
+    }));
 
   function clean(value) {
     return String(value ?? "").replace(/\s+/g, " ").trim();
@@ -95,7 +104,11 @@
       const object = row && typeof row === "object" ? row : {};
       const rawValue = object.value ?? object.key ?? object.id ?? row;
       const key = clean(rawValue);
-      const label = clean(LABELS[labelGroup]?.[key] || object.label || object.name || key);
+      const authoredLabel = labelGroup === "cohort" && key === "reference"
+        ? LABELS.cohort.reference
+        : object.label || object.name || LABELS[labelGroup]?.[key] || key;
+      const subtitle = labelGroup === "cohort" && key !== "reference" ? clean(object.subtitle) : "";
+      const label = [clean(authoredLabel), subtitle].filter(Boolean).join(" · ");
       return { key, value: rawValue, label };
     }).filter((row) => row.key);
   }
@@ -311,15 +324,15 @@
       const controls = element("div", "vs3-filter-options");
       controls.setAttribute("role", "group");
       controls.setAttribute("aria-labelledby", label.id);
-      filterOptions[key].forEach((option) => {
+      const availableOptions = key === "relation"
+        ? filterOptions[key].filter((option) => relationAllowed(option.key))
+        : filterOptions[key];
+      availableOptions.forEach((option) => {
         const button = element("button", "vs3-filter-button", option.label);
         button.type = "button";
         button.dataset.vs3Filter = key;
         button.dataset.vs3FilterValue = option.key;
         button.setAttribute("aria-pressed", String(state[key] === option.key));
-        const unavailable = key === "relation" && !relationAllowed(option.key);
-        button.disabled = unavailable;
-        if (unavailable) button.setAttribute("aria-disabled", "true");
         controls.append(button);
       });
       group.append(label, controls);
@@ -629,22 +642,42 @@
   }
 
   function fieldSizeBucket() {
-    return state.size;
+    return FIELD_SIZE_BUCKETS[state.size] || "all";
+  }
+
+  function fieldComparisonKeyFor(bucket) {
+    return [state.position, state.relation, state.stack, bucket].join("|");
+  }
+
+  function resolvedFieldSizeBucket() {
+    const exactBucket = fieldSizeBucket();
+    if (enabledComparisonKeys.has(fieldComparisonKeyFor(exactBucket))) return exactBucket;
+    if (enabledComparisonKeys.has(fieldComparisonKeyFor("all"))) return "all";
+    return exactBucket;
   }
 
   function fieldSizeLabel() {
-    const bucket = fieldSizeBucket();
-    return bucket === "2.5" ? "2,5x" : `${bucket}x`;
+    const bucket = resolvedFieldSizeBucket();
+    if (bucket === "all") return "все размеры 3-бета";
+    return bucket === "<6" ? "до 6 BB" : `${bucket.replace("-", "–")} BB`;
   }
 
   function fieldHandIndex(hand = state.hand) {
     return asArray(fieldData?.meta?.hands).findIndex((candidate) => clean(candidate) === clean(hand));
   }
 
+  function fieldComparisonKey() {
+    return fieldComparisonKeyFor(resolvedFieldSizeBucket());
+  }
+
+  function fieldComparisonReady() {
+    return Boolean(fieldData && enabledComparisonKeys.has(fieldComparisonKey()));
+  }
+
   function measuredFieldRow(cohort) {
-    const bucket = fieldSizeBucket();
+    const bucket = resolvedFieldSizeBucket();
     const key = [cohort.key, state.position, state.relation, state.stack, bucket].join("|");
-    const chart = fieldData?.charts?.[key];
+    const chart = enabledComparisonKeys.has(fieldComparisonKey()) ? fieldData?.charts?.[key] : null;
     const handIndex = fieldHandIndex();
     const exact = handIndex >= 0 ? chart?.cells?.[handIndex] : null;
     let mix = normalizeMix(null);
@@ -652,10 +685,10 @@
     let confidence = "missing";
     let n = 0;
 
-    if (Array.isArray(exact) && number(exact[0]) > 0) {
+    if (Array.isArray(exact) && observedConfidence?.canRenderExact?.(exact[0]) === true) {
       [n] = exact;
       mix = normalizeMix({ fold: exact[1], call: exact[2], fourbet: exact[3], jam: exact[4] });
-      confidence = n >= number(fieldData?.meta?.sampleThresholds?.strongAtLeast || 200) ? "strong" : "exact";
+      confidence = n >= number(fieldData?.meta?.samplePolicy?.strongAtLeast || 200) ? "strong" : "exact";
     }
 
     return { ...cohort, key, mix, sample, confidence, n, measured: true };
@@ -750,6 +783,26 @@
     const host = documentRoot.querySelector("[data-vs3-hand-comparison]");
     if (!host) return;
     host.replaceChildren();
+    if (!fieldData) {
+      host.replaceChildren(
+        element("strong", "vs3-data-unavailable-title", "Полевое сравнение на полной сверке"),
+        element("p", "vs3-data-unavailable", "Учебный чарт остаётся доступным, но старые частоты лиг и неполные периоды не показываются.")
+      );
+      delete host.dataset.vs3ComparisonSignature;
+      return;
+    }
+    if (!fieldComparisonReady()) {
+      host.replaceChildren(
+        element("strong", "vs3-data-unavailable-title", "Для этого фильтра полевой срез не опубликован"),
+        element(
+          "p",
+          "vs3-data-unavailable",
+          `${scenarioTitle()}. Учебный чарт остаётся доступным, но соседний стек или размер 3-бета сюда не подставляется.`
+        )
+      );
+      delete host.dataset.vs3ComparisonSignature;
+      return;
+    }
     const head = element("header", "vs3-comparison-head");
     const copy = element("div", "");
     const rows = comparisonRows();
@@ -781,7 +834,9 @@
     const copy = element(
       "p",
       "",
-      "Сначала запомни нашу стратегию, затем проверь конкретную руку. Под чартом показано, как её играет поле FF."
+      fieldComparisonReady()
+        ? "Сначала запомни нашу стратегию, затем проверь конкретную руку. Под чартом показано, как её играет поле FF."
+        : "Сначала запомни учебную стратегию. Сравнение с полем показывается только для точно опубликованного фильтра."
     );
     const button = element("button", "field-button is-primary", "Тренировать этот фильтр");
     button.type = "button";
@@ -812,7 +867,9 @@
     const note = element("p", "vs3-model-note");
     note.append(
       element("strong", "", "Важно: "),
-      documentRoot.createTextNode("в чарте — наша рекомендация; ниже — решения поля для выбранной руки.")
+      documentRoot.createTextNode(fieldComparisonReady()
+        ? "в чарте — наша рекомендация; ниже — решения поля для выбранной руки."
+        : "в чарте — учебная рекомендация; полевое сравнение доступно только для точно опубликованного фильтра.")
     );
     head.append(title, note);
 
@@ -964,11 +1021,15 @@
 
   function renderLeaks() {
     if (!leaksHost) return;
+    if (!fieldData) {
+      leaksHost.replaceChildren(element("article", "panel vs3-loading vs3-data-unavailable", "Сравнение ошибок временно скрыто. Неполные срезы не превращаем в советы."));
+      return;
+    }
     if (root.FFVs3BetFieldErrorExplorer?.refresh) {
       root.FFVs3BetFieldErrorExplorer.refresh();
       return;
     }
-    if (root.FF_VS3BET_FIELD_DATA) {
+    if (fieldData) {
       leaksHost.replaceChildren(element("article", "panel vs3-loading", "Собираем частые ошибки по рукам…"));
       return;
     }
@@ -1034,16 +1095,15 @@
     const controls = element("div", "vs3-filter-options");
     controls.setAttribute("role", "group");
     controls.setAttribute("aria-label", label);
-    const rows = [{ key: "", label: anyLabel }, ...filterOptions[key]];
+    const rows = [{ key: "", label: anyLabel }, ...filterOptions[key]].filter((option) => (
+      key !== "position" || practicePositionAllowed(option.key)
+    ));
     rows.forEach((option) => {
       const button = element("button", "vs3-filter-button", option.label);
       button.type = "button";
       button.dataset.vs3PracticeFilter = key;
       button.dataset.vs3PracticeFilterValue = option.key;
       button.setAttribute("aria-pressed", String(practiceState[key] === option.key));
-      const unavailable = key === "position" && !practicePositionAllowed(option.key);
-      button.disabled = unavailable;
-      if (unavailable) button.setAttribute("aria-disabled", "true");
       controls.append(button);
     });
     group.append(title, controls);

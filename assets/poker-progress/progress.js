@@ -11,11 +11,13 @@
   const TRAINER_EVENTS_SCHEMA = "ff-trainer-event-v1";
   const TRAINER_EVENTS_STORAGE_KEY = "ff-trainer-events-v1";
   const TRAINER_EVENTS_ARCHIVE_LIMIT = 200;
+  const TRAINER_EVENTS_ARCHIVE_MAX_BYTES = 512_000;
   const TRAINER_EVENTS_BATCH_LIMIT = 25;
   const TRAINER_EVENTS_MAX_ATTEMPTS = 5;
   const TRAINER_EVENTS_STALE_SENDING_MS = 30_000;
   const TRAINER_EVENT_CLIENT_SESSION_ID = `client_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
   let trainerEventAutoFlushTimer = 0;
+  let trainerEventTransportDisabledReason = "";
   const VALID_STATUSES = new Set(["locked", "open", "in_progress", "passed", "repeat"]);
   const authState = {
     loaded: false,
@@ -560,7 +562,6 @@
 
   function trimTrainerEventArchive(events) {
     const list = Array.isArray(events) ? events.filter(Boolean) : [];
-    if (list.length <= TRAINER_EVENTS_ARCHIVE_LIMIT) return list;
     const pending = list.filter(trainerEventNeedsDelivery);
     const terminal = list.filter((event) => !trainerEventNeedsDelivery(event));
     const terminalRoom = Math.max(0, TRAINER_EVENTS_ARCHIVE_LIMIT - pending.length);
@@ -568,7 +569,17 @@
       ...pending.slice(-TRAINER_EVENTS_ARCHIVE_LIMIT),
       ...(terminalRoom ? terminal.slice(-terminalRoom) : [])
     ].map((event) => event?.eventId || event?.archivedAt).filter(Boolean));
-    return list.filter((event) => keep.has(event?.eventId || event?.archivedAt)).slice(-TRAINER_EVENTS_ARCHIVE_LIMIT);
+    const trimmed = list.filter((event) => keep.has(event?.eventId || event?.archivedAt)).slice(-TRAINER_EVENTS_ARCHIVE_LIMIT);
+    while (trimmed.length && trainerEventArchiveBytes(trimmed) > TRAINER_EVENTS_ARCHIVE_MAX_BYTES) trimmed.shift();
+    return trimmed;
+  }
+
+  function trainerEventArchiveBytes(events) {
+    try {
+      return JSON.stringify(events || []).length * 2;
+    } catch (error) {
+      return Number.POSITIVE_INFINITY;
+    }
   }
 
   function archiveTrainerEvent(event) {
@@ -663,7 +674,7 @@
     // A "beacon" send is best-effort: the browser accepted the payload but the
     // server never confirmed it, so it is NOT terminal — keep it pending and
     // re-send it via fetch on the next load/flush (the server dedupes by eventId).
-    if (status === "accepted" || status === "blocked") return false;
+    if (["accepted", "blocked", "local-only", "not-configured"].includes(status)) return false;
     if (event?.kind === "delete_player") return false;
     const attempts = Math.max(0, Math.round(readNumber(delivery.attempts, 0)));
     if (attempts >= TRAINER_EVENTS_MAX_ATTEMPTS && status !== "queued") return false;
@@ -695,6 +706,8 @@
       accepted: counts.accepted || 0,
       failed: counts.failed || 0,
       blocked: counts.blocked || 0,
+      localOnly: counts["local-only"] || 0,
+      notConfigured: counts["not-configured"] || 0,
       beacon: counts.beacon || 0,
       pending: pendingTrainerEvents(null).length
     };
@@ -702,10 +715,37 @@
 
   function canSendTrainerEvent() {
     if (typeof window === "undefined") return false;
+    if (trainerEventTransportDisabledReason) return false;
     if (window.FF_STATIC_LEARNING_HUB) return false;
+    // This static learning-hub build has no functions. Network transport is an
+    // explicit opt-in so pages remain local-first until a real API is deployed.
+    if (window.FF_TRAINER_EVENTS_ENABLED !== true) return false;
     const protocol = window.location?.protocol || "";
     if (protocol && protocol !== "https:" && protocol !== "http:") return false;
     return Boolean(typeof window.fetch === "function" || window.navigator?.sendBeacon);
+  }
+
+  function disableTrainerEventTransport(reason = "not_configured") {
+    trainerEventTransportDisabledReason = String(reason || "not_configured");
+    if (trainerEventAutoFlushTimer && typeof window.clearTimeout === "function") {
+      window.clearTimeout(trainerEventAutoFlushTimer);
+    }
+    trainerEventAutoFlushTimer = 0;
+    const archive = readTrainerEventArchive();
+    const next = archive.map((event) => {
+      const status = event?.delivery?.status || "queued";
+      if (["accepted", "blocked", "local-only", "not-configured"].includes(status) || event?.kind === "delete_player") return event;
+      return compactEvent({
+        ...event,
+        delivery: {
+          ...(event.delivery && typeof event.delivery === "object" ? event.delivery : {}),
+          status: "not-configured",
+          error: trainerEventTransportDisabledReason
+        }
+      });
+    });
+    writeTrainerEventArchive(next);
+    return trainerEventTransportDisabledReason;
   }
 
   function dispatchTrainerEventDelivery(detail) {
@@ -760,6 +800,11 @@
         keepalive: Boolean(options.keepalive)
       });
       const data = await response.json().catch(() => ({}));
+      if (response.status === 404 || response.status === 405) {
+        const reason = disableTrainerEventTransport(`http_${response.status}`);
+        dispatchTrainerEventDelivery({ transport: "fetch", events, ok: false, notConfigured: true, error: reason });
+        return { ok: false, sent: 0, failed: events.length, notConfigured: true, error: reason };
+      }
       const acceptedAt = nowIso();
       if (data?.batch && Array.isArray(data.results)) {
         const reported = new Set();
@@ -851,6 +896,13 @@
     if (!pending.length) {
       return { ok: true, sent: 0, failed: 0, pending: 0, summary: trainerEventDeliverySummary() };
     }
+    if (!canSendTrainerEvent()) {
+      updateTrainerEventsDelivery(pending.map((event) => event.eventId), {
+        status: trainerEventTransportDisabledReason ? "not-configured" : "local-only",
+        error: trainerEventTransportDisabledReason || "network_disabled"
+      });
+      return { ok: true, sent: 0, failed: 0, pending: pendingTrainerEvents(null).length, suppressed: true, summary: trainerEventDeliverySummary() };
+    }
     const result = options.transport === "beacon"
       ? postTrainerEventsBeacon(pending)
       : await postTrainerEventsFetch(pending, { keepalive: Boolean(options.keepalive) });
@@ -875,8 +927,9 @@
       client: input.client || { source: "FFTrainerEvents.deletePlayer" }
     }));
     if (!canSendTrainerEvent() || typeof window.fetch !== "function") {
-      updateTrainerEventDelivery(event.eventId, { status: "failed", error: "fetch_unavailable" });
-      return { ok: false, event, error: "fetch_unavailable" };
+      const error = trainerEventTransportDisabledReason || "network_disabled";
+      updateTrainerEventDelivery(event.eventId, { status: trainerEventTransportDisabledReason ? "not-configured" : "local-only", error });
+      return { ok: false, event, error };
     }
     const headers = { "Content-Type": "application/json" };
     if (input.adminToken) headers["X-Trainer-Admin-Token"] = String(input.adminToken);
@@ -908,6 +961,15 @@
 
   function sendTrainerEvent(kindOrPayload, payload = {}) {
     const event = buildTrainerEvent(kindOrPayload, payload);
+    if (!canSendTrainerEvent()) {
+      event.delivery = {
+        status: trainerEventTransportDisabledReason ? "not-configured" : "local-only",
+        attempts: 0,
+        lastAttemptAt: null,
+        acceptedAt: null,
+        error: trainerEventTransportDisabledReason || "network_disabled"
+      };
+    }
     const archived = archiveTrainerEvent(event);
     postTrainerEvent(archived);
     return archived;

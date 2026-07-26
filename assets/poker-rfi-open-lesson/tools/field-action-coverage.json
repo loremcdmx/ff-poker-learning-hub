@@ -1,0 +1,3289 @@
+{
+  "schema": "ff-rfi-field-action-coverage-v3",
+  "status": "ready",
+  "generatedThrough": "2026-07-25",
+  "windowStart": "2023-09-01",
+  "windowEnd": "2026-07-25",
+  "table": "7-max",
+  "exactCellMinimum": 50,
+  "sourceRows": 36504,
+  "sourceCoverageStates": 216,
+  "aggregatedRows": 20280,
+  "completeStates": 30,
+  "passingStates": 30,
+  "failingStates": [],
+  "sourceSha256": "12271ff6005957d0fe58fd24066195dfc90e04544228af207e4ce3296daeed3b",
+  "extractionSqlSha256": null,
+  "extractionTemplates": [
+    {
+      "path": "tools/q_ff_rfi_field_actions.sql",
+      "sha256": "9e06fa18c5889fd12e00cab250af6dc17ad1d543f4ef67a4cbf65351c6093cde",
+      "role": "canonical-structured-cube"
+    },
+    {
+      "path": "tools/q_ff_rfi_missing_cards_recovery.sql",
+      "sha256": "56a80f377f72dfb1f52e42b9157509419ed1c04dd30dfc1045503051e2540533",
+      "role": "l3top-missing-card-recovery"
+    },
+    {
+      "path": "tools/q_ff_rfi_coin_party_publication.sql",
+      "sha256": "0b6acbf4de9db67c4c69751ee7d465fa01bfbcfe06253eae7c9a5342d5507959",
+      "role": "current-coin-party-publication-supplement"
+    }
+  ],
+  "replacement": {
+    "strategy": "exact-same-window-l3top-replacement-with-l3-delta",
+    "replacedCohort": "l3top",
+    "deltaAppliedCohort": "l3",
+    "l3Delta": {
+      "exactCells": 9126,
+      "stateCount": 54,
+      "counters": {
+        "opportunities": 911152,
+        "raises_total": 239165,
+        "regular_raise": 232966,
+        "open_shove": 6199,
+        "limp": 8770,
+        "fold_other": 663217,
+        "shove_allin_flag": 6028,
+        "shove_effective_amount_only": 171,
+        "regular_three_bb_open": 20626,
+        "normal_three_bb_as_shove": 0,
+        "non_exact_r_effective_allin": 1044
+      },
+      "knownCardDelta": 911152,
+      "nonnegativePerCell": true,
+      "appliedExactly": true,
+      "eligibleCoverageChanged": false
+    }
+  },
+  "composition": null,
+  "membershipSha256": "fade4601523caf87ab7c0a4b759b6d79161f6df44f2e8da2781a90184e5dec2d",
+  "actionJobIds": [
+    "mcp_ch_job_56a7b449640d4c349de05aabb8c7266c",
+    "mcp_ch_job_5666d8cdaa0b4948bf3590e17d8bf84d",
+    "mcp_ch_job_c3e99be74bfe4a58899c127bf7788671",
+    "mcp_ch_job_a33728d567894179adca67b5e8a5bcb3",
+    "mcp_ch_job_ee654e01fec1471790d6e34b2caf1c15",
+    "mcp_ch_job_8870a5aba6134e63a005e72771c0eb57",
+    "mcp_ch_job_aaf3243f703a4f5f873083b62ee759cb",
+    "mcp_ch_job_14238c749c9c4c1c915b801461fa2fbe",
+    "mcp_ch_job_0b0d39e1b59a440fbbf89ed4b573b892",
+    "mcp_ch_job_7fb8505f397445a9a54c095beb6aaba3"
+  ],
+  "stackAggregation": {
+    "70+": [
+      "70+"
+    ],
+    "30-70": [
+      "30-70"
+    ],
+    "20-30": [
+      "20-30"
+    ],
+    "15-20": [
+      "15-20"
+    ],
+    "<15": [
+      "12-15",
+      "10-12",
+      "8-10",
+      "6-8",
+      "<6"
+    ]
+  },
+  "actionCountReconciliation": {
+    "source": {
+      "opportunities": 65334010,
+      "regularRaise": 17785457,
+      "openShove": 1508912,
+      "limp": 1031064,
+      "foldOther": 45008577
+    },
+    "aggregated": {
+      "opportunities": 65334010,
+      "regularRaise": 17785457,
+      "openShove": 1508912,
+      "limp": 1031064,
+      "foldOther": 45008577
+    }
+  },
+  "classifierSanity": {
+    "70+": {
+      "openShoves": 1351,
+      "shoveAllinFlag": 1336,
+      "shoveEffectiveAmountOnly": 15,
+      "regularThreeBbOpens": 635194,
+      "normalThreeBbAsShove": 0,
+      "nonExactREffectiveAllin": 78955
+    },
+    "30-70": {
+      "openShoves": 11916,
+      "shoveAllinFlag": 11664,
+      "shoveEffectiveAmountOnly": 252,
+      "regularThreeBbOpens": 665554,
+      "normalThreeBbAsShove": 0,
+      "nonExactREffectiveAllin": 259725
+    },
+    "20-30": {
+      "openShoves": 86375,
+      "shoveAllinFlag": 84386,
+      "shoveEffectiveAmountOnly": 1989,
+      "regularThreeBbOpens": 210720,
+      "normalThreeBbAsShove": 0,
+      "nonExactREffectiveAllin": 127721
+    },
+    "15-20": {
+      "openShoves": 250942,
+      "shoveAllinFlag": 245550,
+      "shoveEffectiveAmountOnly": 5392,
+      "regularThreeBbOpens": 68416,
+      "normalThreeBbAsShove": 0,
+      "nonExactREffectiveAllin": 58733
+    },
+    "<15": {
+      "openShoves": 1158328,
+      "shoveAllinFlag": 1125400,
+      "shoveEffectiveAmountOnly": 32928,
+      "regularThreeBbOpens": 36182,
+      "normalThreeBbAsShove": 0,
+      "nonExactREffectiveAllin": 43872
+    }
+  },
+  "knownCards": {
+    "eligible": 74722772,
+    "known": 65334010,
+    "lookupMismatch": 725832,
+    "firstObservedAt": "2023-09-01 00:01:00",
+    "lastObservedAt": "2026-07-25 23:55:11",
+    "pct": 87.435206
+  },
+  "positionOpportunities": {
+    "l3top": {
+      "EP": 1799953,
+      "MP": 1378199,
+      "HJ": 1022512,
+      "CO": 724508,
+      "BTN": 474609,
+      "SB": 250641
+    },
+    "l3": {
+      "EP": 7316811,
+      "MP": 5618293,
+      "HJ": 4177905,
+      "CO": 2974554,
+      "BTN": 1958588,
+      "SB": 1047272
+    },
+    "l2": {
+      "EP": 7646186,
+      "MP": 5957669,
+      "HJ": 4496319,
+      "CO": 3234071,
+      "BTN": 2127951,
+      "SB": 1129603
+    },
+    "l1": {
+      "EP": 3713018,
+      "MP": 2915249,
+      "HJ": 2210782,
+      "CO": 1589751,
+      "BTN": 1033791,
+      "SB": 535775
+    }
+  },
+  "sourceCoverage": [
+    {
+      "cohort": "l3top",
+      "stack": "70+",
+      "position": "EP",
+      "eligible": 672058,
+      "known": 636237,
+      "lookupMismatch": 6906,
+      "firstObservedAt": "2023-09-01 08:36:44",
+      "lastObservedAt": "2026-07-25 23:43:10"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "70+",
+      "position": "MP",
+      "eligible": 496516,
+      "known": 469938,
+      "lookupMismatch": 4814,
+      "firstObservedAt": "2023-09-01 08:41:29",
+      "lastObservedAt": "2026-07-25 23:19:25"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "70+",
+      "position": "HJ",
+      "eligible": 350671,
+      "known": 331681,
+      "lookupMismatch": 3196,
+      "firstObservedAt": "2023-09-01 10:02:07",
+      "lastObservedAt": "2026-07-25 23:39:38"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "70+",
+      "position": "CO",
+      "eligible": 231035,
+      "known": 218416,
+      "lookupMismatch": 1932,
+      "firstObservedAt": "2023-09-01 08:03:09",
+      "lastObservedAt": "2026-07-25 23:38:49"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "70+",
+      "position": "BTN",
+      "eligible": 134523,
+      "known": 127433,
+      "lookupMismatch": 866,
+      "firstObservedAt": "2023-09-01 08:45:22",
+      "lastObservedAt": "2026-07-25 23:30:17"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "70+",
+      "position": "SB",
+      "eligible": 53697,
+      "known": 51144,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 12:02:37",
+      "lastObservedAt": "2026-07-25 22:11:56"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "30-70",
+      "position": "EP",
+      "eligible": 730050,
+      "known": 695814,
+      "lookupMismatch": 8154,
+      "firstObservedAt": "2023-09-01 08:31:02",
+      "lastObservedAt": "2026-07-25 23:29:39"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "30-70",
+      "position": "MP",
+      "eligible": 565930,
+      "known": 539133,
+      "lookupMismatch": 6037,
+      "firstObservedAt": "2023-09-01 08:30:04",
+      "lastObservedAt": "2026-07-25 22:54:27"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "30-70",
+      "position": "HJ",
+      "eligible": 424091,
+      "known": 404171,
+      "lookupMismatch": 4381,
+      "firstObservedAt": "2023-09-01 12:18:11",
+      "lastObservedAt": "2026-07-25 23:27:32"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "30-70",
+      "position": "CO",
+      "eligible": 301552,
+      "known": 287483,
+      "lookupMismatch": 2914,
+      "firstObservedAt": "2023-09-01 13:06:02",
+      "lastObservedAt": "2026-07-25 23:25:08"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "30-70",
+      "position": "BTN",
+      "eligible": 192270,
+      "known": 183486,
+      "lookupMismatch": 1497,
+      "firstObservedAt": "2023-09-01 08:02:58",
+      "lastObservedAt": "2026-07-25 22:47:20"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "30-70",
+      "position": "SB",
+      "eligible": 89406,
+      "known": 85466,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 15:42:02",
+      "lastObservedAt": "2026-07-25 22:52:48"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "20-30",
+      "position": "EP",
+      "eligible": 222889,
+      "known": 213413,
+      "lookupMismatch": 2343,
+      "firstObservedAt": "2023-09-01 11:38:02",
+      "lastObservedAt": "2026-07-25 23:05:51"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "20-30",
+      "position": "MP",
+      "eligible": 176515,
+      "known": 169015,
+      "lookupMismatch": 1815,
+      "firstObservedAt": "2023-09-01 15:50:21",
+      "lastObservedAt": "2026-07-25 23:05:03"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "20-30",
+      "position": "HJ",
+      "eligible": 137831,
+      "known": 132060,
+      "lookupMismatch": 1455,
+      "firstObservedAt": "2023-09-01 11:30:23",
+      "lastObservedAt": "2026-07-25 21:41:12"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "20-30",
+      "position": "CO",
+      "eligible": 104861,
+      "known": 100545,
+      "lookupMismatch": 1114,
+      "firstObservedAt": "2023-09-01 11:29:33",
+      "lastObservedAt": "2026-07-25 21:30:57"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "20-30",
+      "position": "BTN",
+      "eligible": 75867,
+      "known": 72649,
+      "lookupMismatch": 712,
+      "firstObservedAt": "2023-09-01 11:27:50",
+      "lastObservedAt": "2026-07-25 21:01:58"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "20-30",
+      "position": "SB",
+      "eligible": 43827,
+      "known": 42061,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 18:50:18",
+      "lastObservedAt": "2026-07-25 22:17:21"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "15-20",
+      "position": "EP",
+      "eligible": 108159,
+      "known": 103887,
+      "lookupMismatch": 1037,
+      "firstObservedAt": "2023-09-01 14:03:03",
+      "lastObservedAt": "2026-07-25 23:09:58"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "15-20",
+      "position": "MP",
+      "eligible": 84423,
+      "known": 81061,
+      "lookupMismatch": 817,
+      "firstObservedAt": "2023-09-01 19:34:33",
+      "lastObservedAt": "2026-07-25 21:42:17"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "15-20",
+      "position": "HJ",
+      "eligible": 64725,
+      "known": 62141,
+      "lookupMismatch": 599,
+      "firstObservedAt": "2023-09-01 16:42:05",
+      "lastObservedAt": "2026-07-25 21:41:48"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "15-20",
+      "position": "CO",
+      "eligible": 49598,
+      "known": 47697,
+      "lookupMismatch": 508,
+      "firstObservedAt": "2023-09-01 17:39:03",
+      "lastObservedAt": "2026-07-25 23:07:28"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "15-20",
+      "position": "BTN",
+      "eligible": 38155,
+      "known": 36781,
+      "lookupMismatch": 386,
+      "firstObservedAt": "2023-09-01 12:16:19",
+      "lastObservedAt": "2026-07-25 20:40:15"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "15-20",
+      "position": "SB",
+      "eligible": 26835,
+      "known": 25919,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 19:38:44",
+      "lastObservedAt": "2026-07-25 23:07:27"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "12-15",
+      "position": "EP",
+      "eligible": 58301,
+      "known": 56115,
+      "lookupMismatch": 549,
+      "firstObservedAt": "2023-09-01 19:45:30",
+      "lastObservedAt": "2026-07-25 19:37:20"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "12-15",
+      "position": "MP",
+      "eligible": 45527,
+      "known": 43857,
+      "lookupMismatch": 433,
+      "firstObservedAt": "2023-09-01 19:44:48",
+      "lastObservedAt": "2026-07-25 19:23:40"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "12-15",
+      "position": "HJ",
+      "eligible": 35042,
+      "known": 33768,
+      "lookupMismatch": 305,
+      "firstObservedAt": "2023-09-01 20:42:35",
+      "lastObservedAt": "2026-07-25 18:11:12"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "12-15",
+      "position": "CO",
+      "eligible": 26274,
+      "known": 25337,
+      "lookupMismatch": 249,
+      "firstObservedAt": "2023-09-01 22:09:15",
+      "lastObservedAt": "2026-07-25 21:17:42"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "12-15",
+      "position": "BTN",
+      "eligible": 20702,
+      "known": 19997,
+      "lookupMismatch": 246,
+      "firstObservedAt": "2023-09-01 23:22:41",
+      "lastObservedAt": "2026-07-25 23:11:07"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "12-15",
+      "position": "SB",
+      "eligible": 16252,
+      "known": 15719,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 17:30:54",
+      "lastObservedAt": "2026-07-25 20:19:29"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "10-12",
+      "position": "EP",
+      "eligible": 32773,
+      "known": 31587,
+      "lookupMismatch": 339,
+      "firstObservedAt": "2023-09-01 21:25:06",
+      "lastObservedAt": "2026-07-25 23:05:43"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "10-12",
+      "position": "MP",
+      "eligible": 25698,
+      "known": 24763,
+      "lookupMismatch": 227,
+      "firstObservedAt": "2023-09-01 20:43:53",
+      "lastObservedAt": "2026-07-25 22:26:47"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "10-12",
+      "position": "HJ",
+      "eligible": 19802,
+      "known": 19112,
+      "lookupMismatch": 162,
+      "firstObservedAt": "2023-09-01 20:43:13",
+      "lastObservedAt": "2026-07-25 21:19:01"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "10-12",
+      "position": "CO",
+      "eligible": 15026,
+      "known": 14518,
+      "lookupMismatch": 152,
+      "firstObservedAt": "2023-09-02 12:03:02",
+      "lastObservedAt": "2026-07-25 20:28:37"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "10-12",
+      "position": "BTN",
+      "eligible": 11433,
+      "known": 11065,
+      "lookupMismatch": 139,
+      "firstObservedAt": "2023-09-02 00:28:56",
+      "lastObservedAt": "2026-07-25 20:19:50"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "10-12",
+      "position": "SB",
+      "eligible": 9867,
+      "known": 9594,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-02 08:55:10",
+      "lastObservedAt": "2026-07-25 23:06:43"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "8-10",
+      "position": "EP",
+      "eligible": 26020,
+      "known": 25074,
+      "lookupMismatch": 239,
+      "firstObservedAt": "2023-09-01 12:20:54",
+      "lastObservedAt": "2026-07-25 23:37:54"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "8-10",
+      "position": "MP",
+      "eligible": 20518,
+      "known": 19746,
+      "lookupMismatch": 169,
+      "firstObservedAt": "2023-09-01 20:05:30",
+      "lastObservedAt": "2026-07-25 23:37:00"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "8-10",
+      "position": "HJ",
+      "eligible": 16067,
+      "known": 15526,
+      "lookupMismatch": 143,
+      "firstObservedAt": "2023-09-02 07:13:30",
+      "lastObservedAt": "2026-07-25 20:38:51"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "8-10",
+      "position": "CO",
+      "eligible": 12353,
+      "known": 11954,
+      "lookupMismatch": 114,
+      "firstObservedAt": "2023-09-02 12:49:43",
+      "lastObservedAt": "2026-07-25 14:25:29"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "8-10",
+      "position": "BTN",
+      "eligible": 9429,
+      "known": 9148,
+      "lookupMismatch": 104,
+      "firstObservedAt": "2023-09-01 18:26:41",
+      "lastObservedAt": "2026-07-25 21:30:31"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "8-10",
+      "position": "SB",
+      "eligible": 8454,
+      "known": 8219,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-02 01:49:38",
+      "lastObservedAt": "2026-07-25 20:13:34"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "6-8",
+      "position": "EP",
+      "eligible": 18749,
+      "known": 18087,
+      "lookupMismatch": 161,
+      "firstObservedAt": "2023-09-01 17:09:48",
+      "lastObservedAt": "2026-07-25 16:16:11"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "6-8",
+      "position": "MP",
+      "eligible": 14915,
+      "known": 14406,
+      "lookupMismatch": 122,
+      "firstObservedAt": "2023-09-02 10:42:33",
+      "lastObservedAt": "2026-07-25 16:07:33"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "6-8",
+      "position": "HJ",
+      "eligible": 11721,
+      "known": 11351,
+      "lookupMismatch": 84,
+      "firstObservedAt": "2023-09-01 20:31:47",
+      "lastObservedAt": "2026-07-25 16:08:36"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "6-8",
+      "position": "CO",
+      "eligible": 9055,
+      "known": 8790,
+      "lookupMismatch": 81,
+      "firstObservedAt": "2023-09-01 20:30:59",
+      "lastObservedAt": "2026-07-25 18:20:54"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "6-8",
+      "position": "BTN",
+      "eligible": 7009,
+      "known": 6806,
+      "lookupMismatch": 83,
+      "firstObservedAt": "2023-09-02 06:36:15",
+      "lastObservedAt": "2026-07-25 20:42:51"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "6-8",
+      "position": "SB",
+      "eligible": 6216,
+      "known": 6071,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-02 08:40:00",
+      "lastObservedAt": "2026-07-25 19:12:04"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "<6",
+      "position": "EP",
+      "eligible": 20656,
+      "known": 19739,
+      "lookupMismatch": 177,
+      "firstObservedAt": "2023-09-01 12:35:00",
+      "lastObservedAt": "2026-07-25 22:39:15"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "<6",
+      "position": "MP",
+      "eligible": 16988,
+      "known": 16280,
+      "lookupMismatch": 150,
+      "firstObservedAt": "2023-09-01 12:33:22",
+      "lastObservedAt": "2026-07-25 21:43:21"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "<6",
+      "position": "HJ",
+      "eligible": 13283,
+      "known": 12702,
+      "lookupMismatch": 106,
+      "firstObservedAt": "2023-09-01 12:32:03",
+      "lastObservedAt": "2026-07-25 15:24:44"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "<6",
+      "position": "CO",
+      "eligible": 10165,
+      "known": 9768,
+      "lookupMismatch": 78,
+      "firstObservedAt": "2023-09-01 12:31:21",
+      "lastObservedAt": "2026-07-25 10:08:04"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "<6",
+      "position": "BTN",
+      "eligible": 7506,
+      "known": 7244,
+      "lookupMismatch": 112,
+      "firstObservedAt": "2023-09-01 21:35:49",
+      "lastObservedAt": "2026-07-25 19:39:02"
+    },
+    {
+      "cohort": "l3top",
+      "stack": "<6",
+      "position": "SB",
+      "eligible": 6627,
+      "known": 6448,
+      "lookupMismatch": 1,
+      "firstObservedAt": "2023-09-02 15:51:33",
+      "lastObservedAt": "2026-07-25 15:25:26"
+    },
+    {
+      "cohort": "l3",
+      "stack": "70+",
+      "position": "EP",
+      "eligible": 3116813,
+      "known": 2473417,
+      "lookupMismatch": 30488,
+      "firstObservedAt": "2023-09-01 00:07:41",
+      "lastObservedAt": "2026-07-25 23:43:10"
+    },
+    {
+      "cohort": "l3",
+      "stack": "70+",
+      "position": "MP",
+      "eligible": 2309676,
+      "known": 1827919,
+      "lookupMismatch": 21735,
+      "firstObservedAt": "2023-09-01 00:18:05",
+      "lastObservedAt": "2026-07-25 23:31:10"
+    },
+    {
+      "cohort": "l3",
+      "stack": "70+",
+      "position": "HJ",
+      "eligible": 1637586,
+      "known": 1293216,
+      "lookupMismatch": 14703,
+      "firstObservedAt": "2023-09-01 00:17:34",
+      "lastObservedAt": "2026-07-25 23:52:20"
+    },
+    {
+      "cohort": "l3",
+      "stack": "70+",
+      "position": "CO",
+      "eligible": 1084399,
+      "known": 855071,
+      "lookupMismatch": 8948,
+      "firstObservedAt": "2023-09-01 00:17:07",
+      "lastObservedAt": "2026-07-25 23:42:22"
+    },
+    {
+      "cohort": "l3",
+      "stack": "70+",
+      "position": "BTN",
+      "eligible": 630910,
+      "known": 502267,
+      "lookupMismatch": 3910,
+      "firstObservedAt": "2023-09-01 00:16:27",
+      "lastObservedAt": "2026-07-25 23:39:35"
+    },
+    {
+      "cohort": "l3",
+      "stack": "70+",
+      "position": "SB",
+      "eligible": 255272,
+      "known": 207106,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 08:07:22",
+      "lastObservedAt": "2026-07-25 22:43:46"
+    },
+    {
+      "cohort": "l3",
+      "stack": "30-70",
+      "position": "EP",
+      "eligible": 3353396,
+      "known": 2867446,
+      "lookupMismatch": 37111,
+      "firstObservedAt": "2023-09-01 00:25:25",
+      "lastObservedAt": "2026-07-25 23:47:16"
+    },
+    {
+      "cohort": "l3",
+      "stack": "30-70",
+      "position": "MP",
+      "eligible": 2608855,
+      "known": 2230027,
+      "lookupMismatch": 27839,
+      "firstObservedAt": "2023-09-01 00:43:39",
+      "lastObservedAt": "2026-07-25 23:51:39"
+    },
+    {
+      "cohort": "l3",
+      "stack": "30-70",
+      "position": "HJ",
+      "eligible": 1958791,
+      "known": 1674249,
+      "lookupMismatch": 20189,
+      "firstObservedAt": "2023-09-01 00:17:12",
+      "lastObservedAt": "2026-07-25 23:27:57"
+    },
+    {
+      "cohort": "l3",
+      "stack": "30-70",
+      "position": "CO",
+      "eligible": 1394997,
+      "known": 1192888,
+      "lookupMismatch": 13710,
+      "firstObservedAt": "2023-09-01 00:03:29",
+      "lastObservedAt": "2026-07-25 23:43:10"
+    },
+    {
+      "cohort": "l3",
+      "stack": "30-70",
+      "position": "BTN",
+      "eligible": 889845,
+      "known": 764233,
+      "lookupMismatch": 6868,
+      "firstObservedAt": "2023-09-01 00:01:42",
+      "lastObservedAt": "2026-07-25 23:25:41"
+    },
+    {
+      "cohort": "l3",
+      "stack": "30-70",
+      "position": "SB",
+      "eligible": 412727,
+      "known": 355780,
+      "lookupMismatch": 6,
+      "firstObservedAt": "2023-09-01 00:01:00",
+      "lastObservedAt": "2026-07-25 23:42:17"
+    },
+    {
+      "cohort": "l3",
+      "stack": "20-30",
+      "position": "EP",
+      "eligible": 1030702,
+      "known": 907304,
+      "lookupMismatch": 10814,
+      "firstObservedAt": "2023-09-01 00:02:37",
+      "lastObservedAt": "2026-07-25 23:54:27"
+    },
+    {
+      "cohort": "l3",
+      "stack": "20-30",
+      "position": "MP",
+      "eligible": 817191,
+      "known": 719467,
+      "lookupMismatch": 8427,
+      "firstObservedAt": "2023-09-01 00:09:01",
+      "lastObservedAt": "2026-07-25 23:53:49"
+    },
+    {
+      "cohort": "l3",
+      "stack": "20-30",
+      "position": "HJ",
+      "eligible": 635979,
+      "known": 560351,
+      "lookupMismatch": 6393,
+      "firstObservedAt": "2023-09-01 00:04:18",
+      "lastObservedAt": "2026-07-25 23:13:24"
+    },
+    {
+      "cohort": "l3",
+      "stack": "20-30",
+      "position": "CO",
+      "eligible": 485805,
+      "known": 428304,
+      "lookupMismatch": 5074,
+      "firstObservedAt": "2023-09-01 00:12:38",
+      "lastObservedAt": "2026-07-25 23:40:15"
+    },
+    {
+      "cohort": "l3",
+      "stack": "20-30",
+      "position": "BTN",
+      "eligible": 348827,
+      "known": 308544,
+      "lookupMismatch": 3271,
+      "firstObservedAt": "2023-09-01 00:06:37",
+      "lastObservedAt": "2026-07-25 22:44:21"
+    },
+    {
+      "cohort": "l3",
+      "stack": "20-30",
+      "position": "SB",
+      "eligible": 203591,
+      "known": 180684,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 00:32:57",
+      "lastObservedAt": "2026-07-25 22:43:34"
+    },
+    {
+      "cohort": "l3",
+      "stack": "15-20",
+      "position": "EP",
+      "eligible": 493362,
+      "known": 438863,
+      "lookupMismatch": 4835,
+      "firstObservedAt": "2023-09-01 00:06:43",
+      "lastObservedAt": "2026-07-25 23:53:03"
+    },
+    {
+      "cohort": "l3",
+      "stack": "15-20",
+      "position": "MP",
+      "eligible": 386611,
+      "known": 344099,
+      "lookupMismatch": 3745,
+      "firstObservedAt": "2023-09-01 00:05:54",
+      "lastObservedAt": "2026-07-25 23:52:33"
+    },
+    {
+      "cohort": "l3",
+      "stack": "15-20",
+      "position": "HJ",
+      "eligible": 298094,
+      "known": 265547,
+      "lookupMismatch": 2962,
+      "firstObservedAt": "2023-09-01 01:49:14",
+      "lastObservedAt": "2026-07-25 23:52:04"
+    },
+    {
+      "cohort": "l3",
+      "stack": "15-20",
+      "position": "CO",
+      "eligible": 228191,
+      "known": 203883,
+      "lookupMismatch": 2266,
+      "firstObservedAt": "2023-09-01 01:44:05",
+      "lastObservedAt": "2026-07-25 23:07:28"
+    },
+    {
+      "cohort": "l3",
+      "stack": "15-20",
+      "position": "BTN",
+      "eligible": 174487,
+      "known": 156515,
+      "lookupMismatch": 1818,
+      "firstObservedAt": "2023-09-01 00:54:49",
+      "lastObservedAt": "2026-07-25 22:38:07"
+    },
+    {
+      "cohort": "l3",
+      "stack": "15-20",
+      "position": "SB",
+      "eligible": 122293,
+      "known": 110043,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 03:14:16",
+      "lastObservedAt": "2026-07-25 23:17:56"
+    },
+    {
+      "cohort": "l3",
+      "stack": "12-15",
+      "position": "EP",
+      "eligible": 263446,
+      "known": 236361,
+      "lookupMismatch": 2383,
+      "firstObservedAt": "2023-09-01 00:01:47",
+      "lastObservedAt": "2026-07-25 23:11:07"
+    },
+    {
+      "cohort": "l3",
+      "stack": "12-15",
+      "position": "MP",
+      "eligible": 205281,
+      "known": 184331,
+      "lookupMismatch": 1885,
+      "firstObservedAt": "2023-09-01 00:01:01",
+      "lastObservedAt": "2026-07-25 23:10:40"
+    },
+    {
+      "cohort": "l3",
+      "stack": "12-15",
+      "position": "HJ",
+      "eligible": 156939,
+      "known": 141333,
+      "lookupMismatch": 1355,
+      "firstObservedAt": "2023-09-01 00:06:59",
+      "lastObservedAt": "2026-07-25 22:32:16"
+    },
+    {
+      "cohort": "l3",
+      "stack": "12-15",
+      "position": "CO",
+      "eligible": 118775,
+      "known": 107217,
+      "lookupMismatch": 1154,
+      "firstObservedAt": "2023-09-01 12:29:53",
+      "lastObservedAt": "2026-07-25 23:55:11"
+    },
+    {
+      "cohort": "l3",
+      "stack": "12-15",
+      "position": "BTN",
+      "eligible": 93059,
+      "known": 84222,
+      "lookupMismatch": 1068,
+      "firstObservedAt": "2023-09-01 00:23:20",
+      "lastObservedAt": "2026-07-25 23:11:07"
+    },
+    {
+      "cohort": "l3",
+      "stack": "12-15",
+      "position": "SB",
+      "eligible": 73830,
+      "known": 67113,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 11:17:33",
+      "lastObservedAt": "2026-07-25 22:11:51"
+    },
+    {
+      "cohort": "l3",
+      "stack": "10-12",
+      "position": "EP",
+      "eligible": 145705,
+      "known": 131865,
+      "lookupMismatch": 1340,
+      "firstObservedAt": "2023-09-01 01:06:12",
+      "lastObservedAt": "2026-07-25 23:05:43"
+    },
+    {
+      "cohort": "l3",
+      "stack": "10-12",
+      "position": "MP",
+      "eligible": 113996,
+      "known": 103351,
+      "lookupMismatch": 1024,
+      "firstObservedAt": "2023-09-01 01:11:48",
+      "lastObservedAt": "2026-07-25 22:26:47"
+    },
+    {
+      "cohort": "l3",
+      "stack": "10-12",
+      "position": "HJ",
+      "eligible": 87282,
+      "known": 79256,
+      "lookupMismatch": 712,
+      "firstObservedAt": "2023-09-01 00:21:57",
+      "lastObservedAt": "2026-07-25 23:21:36"
+    },
+    {
+      "cohort": "l3",
+      "stack": "10-12",
+      "position": "CO",
+      "eligible": 66580,
+      "known": 60668,
+      "lookupMismatch": 596,
+      "firstObservedAt": "2023-09-01 01:10:43",
+      "lastObservedAt": "2026-07-25 23:13:59"
+    },
+    {
+      "cohort": "l3",
+      "stack": "10-12",
+      "position": "BTN",
+      "eligible": 51409,
+      "known": 47061,
+      "lookupMismatch": 574,
+      "firstObservedAt": "2023-09-01 12:34:56",
+      "lastObservedAt": "2026-07-25 23:13:26"
+    },
+    {
+      "cohort": "l3",
+      "stack": "10-12",
+      "position": "SB",
+      "eligible": 43728,
+      "known": 40233,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 18:41:12",
+      "lastObservedAt": "2026-07-25 23:18:41"
+    },
+    {
+      "cohort": "l3",
+      "stack": "8-10",
+      "position": "EP",
+      "eligible": 114686,
+      "known": 104459,
+      "lookupMismatch": 1011,
+      "firstObservedAt": "2023-09-01 00:10:36",
+      "lastObservedAt": "2026-07-25 23:49:21"
+    },
+    {
+      "cohort": "l3",
+      "stack": "8-10",
+      "position": "MP",
+      "eligible": 90318,
+      "known": 82251,
+      "lookupMismatch": 735,
+      "firstObservedAt": "2023-09-01 00:10:21",
+      "lastObservedAt": "2026-07-25 23:48:38"
+    },
+    {
+      "cohort": "l3",
+      "stack": "8-10",
+      "position": "HJ",
+      "eligible": 70301,
+      "known": 64171,
+      "lookupMismatch": 605,
+      "firstObservedAt": "2023-09-01 00:10:01",
+      "lastObservedAt": "2026-07-25 23:48:14"
+    },
+    {
+      "cohort": "l3",
+      "stack": "8-10",
+      "position": "CO",
+      "eligible": 54131,
+      "known": 49667,
+      "lookupMismatch": 449,
+      "firstObservedAt": "2023-09-01 00:09:43",
+      "lastObservedAt": "2026-07-25 22:49:17"
+    },
+    {
+      "cohort": "l3",
+      "stack": "8-10",
+      "position": "BTN",
+      "eligible": 41280,
+      "known": 38106,
+      "lookupMismatch": 496,
+      "firstObservedAt": "2023-09-01 00:09:29",
+      "lastObservedAt": "2026-07-25 22:48:44"
+    },
+    {
+      "cohort": "l3",
+      "stack": "8-10",
+      "position": "SB",
+      "eligible": 37131,
+      "known": 34389,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 00:09:11",
+      "lastObservedAt": "2026-07-25 22:54:53"
+    },
+    {
+      "cohort": "l3",
+      "stack": "6-8",
+      "position": "EP",
+      "eligible": 80686,
+      "known": 74220,
+      "lookupMismatch": 673,
+      "firstObservedAt": "2023-09-01 01:19:33",
+      "lastObservedAt": "2026-07-25 22:38:25"
+    },
+    {
+      "cohort": "l3",
+      "stack": "6-8",
+      "position": "MP",
+      "eligible": 64731,
+      "known": 59602,
+      "lookupMismatch": 511,
+      "firstObservedAt": "2023-09-01 01:18:10",
+      "lastObservedAt": "2026-07-25 21:37:27"
+    },
+    {
+      "cohort": "l3",
+      "stack": "6-8",
+      "position": "HJ",
+      "eligible": 50739,
+      "known": 46776,
+      "lookupMismatch": 394,
+      "firstObservedAt": "2023-09-01 00:12:00",
+      "lastObservedAt": "2026-07-25 21:36:09"
+    },
+    {
+      "cohort": "l3",
+      "stack": "6-8",
+      "position": "CO",
+      "eligible": 38982,
+      "known": 36073,
+      "lookupMismatch": 315,
+      "firstObservedAt": "2023-09-01 00:11:40",
+      "lastObservedAt": "2026-07-25 22:21:21"
+    },
+    {
+      "cohort": "l3",
+      "stack": "6-8",
+      "position": "BTN",
+      "eligible": 29889,
+      "known": 27804,
+      "lookupMismatch": 364,
+      "firstObservedAt": "2023-09-01 00:11:26",
+      "lastObservedAt": "2026-07-25 23:19:58"
+    },
+    {
+      "cohort": "l3",
+      "stack": "6-8",
+      "position": "SB",
+      "eligible": 27078,
+      "known": 25366,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 19:36:07",
+      "lastObservedAt": "2026-07-25 21:29:11"
+    },
+    {
+      "cohort": "l3",
+      "stack": "<6",
+      "position": "EP",
+      "eligible": 90460,
+      "known": 82876,
+      "lookupMismatch": 779,
+      "firstObservedAt": "2023-09-01 00:32:15",
+      "lastObservedAt": "2026-07-25 22:39:15"
+    },
+    {
+      "cohort": "l3",
+      "stack": "<6",
+      "position": "MP",
+      "eligible": 73289,
+      "known": 67246,
+      "lookupMismatch": 626,
+      "firstObservedAt": "2023-09-01 00:12:22",
+      "lastObservedAt": "2026-07-25 23:20:28"
+    },
+    {
+      "cohort": "l3",
+      "stack": "<6",
+      "position": "HJ",
+      "eligible": 57658,
+      "known": 53006,
+      "lookupMismatch": 467,
+      "firstObservedAt": "2023-09-01 05:08:39",
+      "lastObservedAt": "2026-07-25 20:35:41"
+    },
+    {
+      "cohort": "l3",
+      "stack": "<6",
+      "position": "CO",
+      "eligible": 44011,
+      "known": 40783,
+      "lookupMismatch": 335,
+      "firstObservedAt": "2023-09-01 00:27:10",
+      "lastObservedAt": "2026-07-25 23:19:30"
+    },
+    {
+      "cohort": "l3",
+      "stack": "<6",
+      "position": "BTN",
+      "eligible": 31955,
+      "known": 29836,
+      "lookupMismatch": 410,
+      "firstObservedAt": "2023-09-01 05:07:28",
+      "lastObservedAt": "2026-07-25 23:18:46"
+    },
+    {
+      "cohort": "l3",
+      "stack": "<6",
+      "position": "SB",
+      "eligible": 28112,
+      "known": 26558,
+      "lookupMismatch": 1,
+      "firstObservedAt": "2023-09-01 01:21:47",
+      "lastObservedAt": "2026-07-25 23:17:52"
+    },
+    {
+      "cohort": "l2",
+      "stack": "70+",
+      "position": "EP",
+      "eligible": 2992338,
+      "known": 2512775,
+      "lookupMismatch": 33961,
+      "firstObservedAt": "2023-09-01 00:11:16",
+      "lastObservedAt": "2026-07-25 23:52:33"
+    },
+    {
+      "cohort": "l2",
+      "stack": "70+",
+      "position": "MP",
+      "eligible": 2245463,
+      "known": 1883471,
+      "lookupMismatch": 24659,
+      "firstObservedAt": "2023-09-01 00:10:37",
+      "lastObservedAt": "2026-07-25 23:51:50"
+    },
+    {
+      "cohort": "l2",
+      "stack": "70+",
+      "position": "HJ",
+      "eligible": 1606997,
+      "known": 1346844,
+      "lookupMismatch": 16622,
+      "firstObservedAt": "2023-09-01 00:26:57",
+      "lastObservedAt": "2026-07-25 23:11:22"
+    },
+    {
+      "cohort": "l2",
+      "stack": "70+",
+      "position": "CO",
+      "eligible": 1071094,
+      "known": 898004,
+      "lookupMismatch": 10390,
+      "firstObservedAt": "2023-09-01 00:08:16",
+      "lastObservedAt": "2026-07-25 23:31:10"
+    },
+    {
+      "cohort": "l2",
+      "stack": "70+",
+      "position": "BTN",
+      "eligible": 621926,
+      "known": 525846,
+      "lookupMismatch": 4670,
+      "firstObservedAt": "2023-09-01 00:35:55",
+      "lastObservedAt": "2026-07-25 23:05:55"
+    },
+    {
+      "cohort": "l2",
+      "stack": "70+",
+      "position": "SB",
+      "eligible": 251367,
+      "known": 216344,
+      "lookupMismatch": 3,
+      "firstObservedAt": "2023-09-01 01:04:42",
+      "lastObservedAt": "2026-07-25 23:05:01"
+    },
+    {
+      "cohort": "l2",
+      "stack": "30-70",
+      "position": "EP",
+      "eligible": 3569016,
+      "known": 3121260,
+      "lookupMismatch": 41318,
+      "firstObservedAt": "2023-09-01 00:02:56",
+      "lastObservedAt": "2026-07-25 23:55:09"
+    },
+    {
+      "cohort": "l2",
+      "stack": "30-70",
+      "position": "MP",
+      "eligible": 2822584,
+      "known": 2468790,
+      "lookupMismatch": 31756,
+      "firstObservedAt": "2023-09-01 00:01:00",
+      "lastObservedAt": "2026-07-25 23:54:27"
+    },
+    {
+      "cohort": "l2",
+      "stack": "30-70",
+      "position": "HJ",
+      "eligible": 2159029,
+      "known": 1890180,
+      "lookupMismatch": 23230,
+      "firstObservedAt": "2023-09-01 00:02:36",
+      "lastObservedAt": "2026-07-25 23:43:22"
+    },
+    {
+      "cohort": "l2",
+      "stack": "30-70",
+      "position": "CO",
+      "eligible": 1557893,
+      "known": 1365828,
+      "lookupMismatch": 16216,
+      "firstObservedAt": "2023-09-01 00:01:15",
+      "lastObservedAt": "2026-07-25 23:52:26"
+    },
+    {
+      "cohort": "l2",
+      "stack": "30-70",
+      "position": "BTN",
+      "eligible": 994986,
+      "known": 875937,
+      "lookupMismatch": 8171,
+      "firstObservedAt": "2023-09-01 00:05:43",
+      "lastObservedAt": "2026-07-25 23:54:49"
+    },
+    {
+      "cohort": "l2",
+      "stack": "30-70",
+      "position": "SB",
+      "eligible": 453158,
+      "known": 401542,
+      "lookupMismatch": 3,
+      "firstObservedAt": "2023-09-01 00:18:41",
+      "lastObservedAt": "2026-07-25 23:34:57"
+    },
+    {
+      "cohort": "l2",
+      "stack": "20-30",
+      "position": "EP",
+      "eligible": 1074663,
+      "known": 961202,
+      "lookupMismatch": 11760,
+      "firstObservedAt": "2023-09-01 00:23:37",
+      "lastObservedAt": "2026-07-25 23:53:49"
+    },
+    {
+      "cohort": "l2",
+      "stack": "20-30",
+      "position": "MP",
+      "eligible": 861718,
+      "known": 771222,
+      "lookupMismatch": 9247,
+      "firstObservedAt": "2023-09-01 00:35:05",
+      "lastObservedAt": "2026-07-25 23:52:54"
+    },
+    {
+      "cohort": "l2",
+      "stack": "20-30",
+      "position": "HJ",
+      "eligible": 680267,
+      "known": 609062,
+      "lookupMismatch": 7244,
+      "firstObservedAt": "2023-09-01 00:47:12",
+      "lastObservedAt": "2026-07-25 23:52:00"
+    },
+    {
+      "cohort": "l2",
+      "stack": "20-30",
+      "position": "CO",
+      "eligible": 525987,
+      "known": 471757,
+      "lookupMismatch": 5538,
+      "firstObservedAt": "2023-09-01 00:28:12",
+      "lastObservedAt": "2026-07-25 23:14:09"
+    },
+    {
+      "cohort": "l2",
+      "stack": "20-30",
+      "position": "BTN",
+      "eligible": 382075,
+      "known": 343588,
+      "lookupMismatch": 3682,
+      "firstObservedAt": "2023-09-01 00:26:35",
+      "lastObservedAt": "2026-07-25 23:06:53"
+    },
+    {
+      "cohort": "l2",
+      "stack": "20-30",
+      "position": "SB",
+      "eligible": 224822,
+      "known": 203445,
+      "lookupMismatch": 1,
+      "firstObservedAt": "2023-09-01 02:05:33",
+      "lastObservedAt": "2026-07-25 23:01:00"
+    },
+    {
+      "cohort": "l2",
+      "stack": "15-20",
+      "position": "EP",
+      "eligible": 502760,
+      "known": 452511,
+      "lookupMismatch": 4946,
+      "firstObservedAt": "2023-09-01 00:13:33",
+      "lastObservedAt": "2026-07-25 23:49:44"
+    },
+    {
+      "cohort": "l2",
+      "stack": "15-20",
+      "position": "MP",
+      "eligible": 398283,
+      "known": 358471,
+      "lookupMismatch": 4001,
+      "firstObservedAt": "2023-09-01 00:50:39",
+      "lastObservedAt": "2026-07-25 23:48:01"
+    },
+    {
+      "cohort": "l2",
+      "stack": "15-20",
+      "position": "HJ",
+      "eligible": 310227,
+      "known": 279637,
+      "lookupMismatch": 3006,
+      "firstObservedAt": "2023-09-01 00:27:03",
+      "lastObservedAt": "2026-07-25 23:43:26"
+    },
+    {
+      "cohort": "l2",
+      "stack": "15-20",
+      "position": "CO",
+      "eligible": 238315,
+      "known": 215141,
+      "lookupMismatch": 2509,
+      "firstObservedAt": "2023-09-01 00:17:03",
+      "lastObservedAt": "2026-07-25 23:24:58"
+    },
+    {
+      "cohort": "l2",
+      "stack": "15-20",
+      "position": "BTN",
+      "eligible": 182889,
+      "known": 165860,
+      "lookupMismatch": 2062,
+      "firstObservedAt": "2023-09-01 00:13:33",
+      "lastObservedAt": "2026-07-25 23:46:13"
+    },
+    {
+      "cohort": "l2",
+      "stack": "15-20",
+      "position": "SB",
+      "eligible": 130976,
+      "known": 119656,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 01:28:46",
+      "lastObservedAt": "2026-07-25 22:48:44"
+    },
+    {
+      "cohort": "l2",
+      "stack": "12-15",
+      "position": "EP",
+      "eligible": 262312,
+      "known": 237392,
+      "lookupMismatch": 2552,
+      "firstObservedAt": "2023-09-01 00:19:18",
+      "lastObservedAt": "2026-07-25 23:39:07"
+    },
+    {
+      "cohort": "l2",
+      "stack": "12-15",
+      "position": "MP",
+      "eligible": 205447,
+      "known": 185823,
+      "lookupMismatch": 1984,
+      "firstObservedAt": "2023-09-01 00:18:03",
+      "lastObservedAt": "2026-07-25 22:36:01"
+    },
+    {
+      "cohort": "l2",
+      "stack": "12-15",
+      "position": "HJ",
+      "eligible": 157404,
+      "known": 142628,
+      "lookupMismatch": 1472,
+      "firstObservedAt": "2023-09-01 00:17:35",
+      "lastObservedAt": "2026-07-25 23:47:41"
+    },
+    {
+      "cohort": "l2",
+      "stack": "12-15",
+      "position": "CO",
+      "eligible": 119661,
+      "known": 108865,
+      "lookupMismatch": 1153,
+      "firstObservedAt": "2023-09-01 01:08:04",
+      "lastObservedAt": "2026-07-25 23:46:55"
+    },
+    {
+      "cohort": "l2",
+      "stack": "12-15",
+      "position": "BTN",
+      "eligible": 93224,
+      "known": 85171,
+      "lookupMismatch": 1167,
+      "firstObservedAt": "2023-09-01 01:46:23",
+      "lastObservedAt": "2026-07-25 22:50:48"
+    },
+    {
+      "cohort": "l2",
+      "stack": "12-15",
+      "position": "SB",
+      "eligible": 77638,
+      "known": 71412,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 00:52:15",
+      "lastObservedAt": "2026-07-25 23:45:43"
+    },
+    {
+      "cohort": "l2",
+      "stack": "10-12",
+      "position": "EP",
+      "eligible": 139936,
+      "known": 127530,
+      "lookupMismatch": 1296,
+      "firstObservedAt": "2023-09-01 02:15:12",
+      "lastObservedAt": "2026-07-25 23:05:49"
+    },
+    {
+      "cohort": "l2",
+      "stack": "10-12",
+      "position": "MP",
+      "eligible": 110280,
+      "known": 100560,
+      "lookupMismatch": 1031,
+      "firstObservedAt": "2023-09-01 05:06:48",
+      "lastObservedAt": "2026-07-25 23:12:31"
+    },
+    {
+      "cohort": "l2",
+      "stack": "10-12",
+      "position": "HJ",
+      "eligible": 85636,
+      "known": 78141,
+      "lookupMismatch": 794,
+      "firstObservedAt": "2023-09-01 01:51:16",
+      "lastObservedAt": "2026-07-25 23:12:02"
+    },
+    {
+      "cohort": "l2",
+      "stack": "10-12",
+      "position": "CO",
+      "eligible": 65356,
+      "known": 59851,
+      "lookupMismatch": 604,
+      "firstObservedAt": "2023-09-01 00:03:25",
+      "lastObservedAt": "2026-07-25 20:14:31"
+    },
+    {
+      "cohort": "l2",
+      "stack": "10-12",
+      "position": "BTN",
+      "eligible": 50411,
+      "known": 46379,
+      "lookupMismatch": 635,
+      "firstObservedAt": "2023-09-01 00:16:00",
+      "lastObservedAt": "2026-07-25 21:54:06"
+    },
+    {
+      "cohort": "l2",
+      "stack": "10-12",
+      "position": "SB",
+      "eligible": 44143,
+      "known": 40821,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 00:04:06",
+      "lastObservedAt": "2026-07-25 23:09:48"
+    },
+    {
+      "cohort": "l2",
+      "stack": "8-10",
+      "position": "EP",
+      "eligible": 107012,
+      "known": 98031,
+      "lookupMismatch": 921,
+      "firstObservedAt": "2023-09-01 01:16:15",
+      "lastObservedAt": "2026-07-25 21:39:18"
+    },
+    {
+      "cohort": "l2",
+      "stack": "8-10",
+      "position": "MP",
+      "eligible": 85452,
+      "known": 78301,
+      "lookupMismatch": 747,
+      "firstObservedAt": "2023-09-01 00:05:17",
+      "lastObservedAt": "2026-07-25 22:46:03"
+    },
+    {
+      "cohort": "l2",
+      "stack": "8-10",
+      "position": "HJ",
+      "eligible": 66634,
+      "known": 61152,
+      "lookupMismatch": 591,
+      "firstObservedAt": "2023-09-01 01:33:34",
+      "lastObservedAt": "2026-07-25 23:09:26"
+    },
+    {
+      "cohort": "l2",
+      "stack": "8-10",
+      "position": "CO",
+      "eligible": 51241,
+      "known": 47170,
+      "lookupMismatch": 406,
+      "firstObservedAt": "2023-09-01 00:54:31",
+      "lastObservedAt": "2026-07-25 23:11:32"
+    },
+    {
+      "cohort": "l2",
+      "stack": "8-10",
+      "position": "BTN",
+      "eligible": 39111,
+      "known": 36133,
+      "lookupMismatch": 452,
+      "firstObservedAt": "2023-09-01 01:32:06",
+      "lastObservedAt": "2026-07-25 22:26:21"
+    },
+    {
+      "cohort": "l2",
+      "stack": "8-10",
+      "position": "SB",
+      "eligible": 35768,
+      "known": 33381,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 12:04:26",
+      "lastObservedAt": "2026-07-25 22:11:04"
+    },
+    {
+      "cohort": "l2",
+      "stack": "6-8",
+      "position": "EP",
+      "eligible": 72321,
+      "known": 66651,
+      "lookupMismatch": 642,
+      "firstObservedAt": "2023-09-01 01:52:50",
+      "lastObservedAt": "2026-07-25 23:13:59"
+    },
+    {
+      "cohort": "l2",
+      "stack": "6-8",
+      "position": "MP",
+      "eligible": 58343,
+      "known": 53935,
+      "lookupMismatch": 509,
+      "firstObservedAt": "2023-09-01 12:35:19",
+      "lastObservedAt": "2026-07-25 23:13:26"
+    },
+    {
+      "cohort": "l2",
+      "stack": "6-8",
+      "position": "HJ",
+      "eligible": 46212,
+      "known": 42798,
+      "lookupMismatch": 348,
+      "firstObservedAt": "2023-09-01 09:46:39",
+      "lastObservedAt": "2026-07-25 22:32:19"
+    },
+    {
+      "cohort": "l2",
+      "stack": "6-8",
+      "position": "CO",
+      "eligible": 35595,
+      "known": 32989,
+      "lookupMismatch": 284,
+      "firstObservedAt": "2023-09-01 01:26:58",
+      "lastObservedAt": "2026-07-25 22:10:09"
+    },
+    {
+      "cohort": "l2",
+      "stack": "6-8",
+      "position": "BTN",
+      "eligible": 26426,
+      "known": 24628,
+      "lookupMismatch": 306,
+      "firstObservedAt": "2023-09-01 12:37:14",
+      "lastObservedAt": "2026-07-25 18:36:00"
+    },
+    {
+      "cohort": "l2",
+      "stack": "6-8",
+      "position": "SB",
+      "eligible": 23866,
+      "known": 22509,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 14:04:45",
+      "lastObservedAt": "2026-07-25 22:41:37"
+    },
+    {
+      "cohort": "l2",
+      "stack": "<6",
+      "position": "EP",
+      "eligible": 74526,
+      "known": 68834,
+      "lookupMismatch": 654,
+      "firstObservedAt": "2023-09-01 00:13:08",
+      "lastObservedAt": "2026-07-25 23:26:27"
+    },
+    {
+      "cohort": "l2",
+      "stack": "<6",
+      "position": "MP",
+      "eligible": 61616,
+      "known": 57096,
+      "lookupMismatch": 500,
+      "firstObservedAt": "2023-09-01 01:11:52",
+      "lastObservedAt": "2026-07-25 23:26:02"
+    },
+    {
+      "cohort": "l2",
+      "stack": "<6",
+      "position": "HJ",
+      "eligible": 49291,
+      "known": 45877,
+      "lookupMismatch": 357,
+      "firstObservedAt": "2023-09-01 00:08:41",
+      "lastObservedAt": "2026-07-25 23:25:34"
+    },
+    {
+      "cohort": "l2",
+      "stack": "<6",
+      "position": "CO",
+      "eligible": 36938,
+      "known": 34466,
+      "lookupMismatch": 259,
+      "firstObservedAt": "2023-09-01 00:08:10",
+      "lastObservedAt": "2026-07-25 21:41:45"
+    },
+    {
+      "cohort": "l2",
+      "stack": "<6",
+      "position": "BTN",
+      "eligible": 26030,
+      "known": 24409,
+      "lookupMismatch": 294,
+      "firstObservedAt": "2023-09-01 18:28:52",
+      "lastObservedAt": "2026-07-25 21:11:28"
+    },
+    {
+      "cohort": "l2",
+      "stack": "<6",
+      "position": "SB",
+      "eligible": 21557,
+      "known": 20493,
+      "lookupMismatch": 1,
+      "firstObservedAt": "2023-09-01 08:47:35",
+      "lastObservedAt": "2026-07-25 19:23:27"
+    },
+    {
+      "cohort": "l1",
+      "stack": "70+",
+      "position": "EP",
+      "eligible": 1366118,
+      "known": 1212246,
+      "lookupMismatch": 14980,
+      "firstObservedAt": "2023-09-01 00:05:03",
+      "lastObservedAt": "2026-07-25 23:14:27"
+    },
+    {
+      "cohort": "l1",
+      "stack": "70+",
+      "position": "MP",
+      "eligible": 1034476,
+      "known": 917907,
+      "lookupMismatch": 11110,
+      "firstObservedAt": "2023-09-01 00:05:24",
+      "lastObservedAt": "2026-07-25 22:54:01"
+    },
+    {
+      "cohort": "l1",
+      "stack": "70+",
+      "position": "HJ",
+      "eligible": 745225,
+      "known": 661680,
+      "lookupMismatch": 7685,
+      "firstObservedAt": "2023-09-01 00:07:03",
+      "lastObservedAt": "2026-07-25 22:26:43"
+    },
+    {
+      "cohort": "l1",
+      "stack": "70+",
+      "position": "CO",
+      "eligible": 496187,
+      "known": 440880,
+      "lookupMismatch": 4722,
+      "firstObservedAt": "2023-09-01 00:37:30",
+      "lastObservedAt": "2026-07-25 22:25:23"
+    },
+    {
+      "cohort": "l1",
+      "stack": "70+",
+      "position": "BTN",
+      "eligible": 284877,
+      "known": 254598,
+      "lookupMismatch": 2116,
+      "firstObservedAt": "2023-09-01 00:12:00",
+      "lastObservedAt": "2026-07-25 21:54:03"
+    },
+    {
+      "cohort": "l1",
+      "stack": "70+",
+      "position": "SB",
+      "eligible": 112311,
+      "known": 101553,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 00:28:47",
+      "lastObservedAt": "2026-07-25 21:46:26"
+    },
+    {
+      "cohort": "l1",
+      "stack": "30-70",
+      "position": "EP",
+      "eligible": 1731763,
+      "known": 1559353,
+      "lookupMismatch": 19445,
+      "firstObservedAt": "2023-09-01 00:05:00",
+      "lastObservedAt": "2026-07-25 23:44:36"
+    },
+    {
+      "cohort": "l1",
+      "stack": "30-70",
+      "position": "MP",
+      "eligible": 1380360,
+      "known": 1243549,
+      "lookupMismatch": 14956,
+      "firstObservedAt": "2023-09-01 00:05:38",
+      "lastObservedAt": "2026-07-25 23:43:47"
+    },
+    {
+      "cohort": "l1",
+      "stack": "30-70",
+      "position": "HJ",
+      "eligible": 1061688,
+      "known": 956694,
+      "lookupMismatch": 11018,
+      "firstObservedAt": "2023-09-01 00:04:31",
+      "lastObservedAt": "2026-07-25 23:43:21"
+    },
+    {
+      "cohort": "l1",
+      "stack": "30-70",
+      "position": "CO",
+      "eligible": 768393,
+      "known": 693244,
+      "lookupMismatch": 7668,
+      "firstObservedAt": "2023-09-01 00:05:23",
+      "lastObservedAt": "2026-07-25 23:42:54"
+    },
+    {
+      "cohort": "l1",
+      "stack": "30-70",
+      "position": "BTN",
+      "eligible": 487264,
+      "known": 440726,
+      "lookupMismatch": 3952,
+      "firstObservedAt": "2023-09-01 00:09:21",
+      "lastObservedAt": "2026-07-25 23:42:06"
+    },
+    {
+      "cohort": "l1",
+      "stack": "30-70",
+      "position": "SB",
+      "eligible": 217882,
+      "known": 198662,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 00:01:28",
+      "lastObservedAt": "2026-07-25 23:02:58"
+    },
+    {
+      "cohort": "l1",
+      "stack": "20-30",
+      "position": "EP",
+      "eligible": 500587,
+      "known": 457978,
+      "lookupMismatch": 5099,
+      "firstObservedAt": "2023-09-01 00:05:04",
+      "lastObservedAt": "2026-07-25 23:49:04"
+    },
+    {
+      "cohort": "l1",
+      "stack": "20-30",
+      "position": "MP",
+      "eligible": 403776,
+      "known": 369705,
+      "lookupMismatch": 4070,
+      "firstObservedAt": "2023-09-01 00:01:54",
+      "lastObservedAt": "2026-07-25 23:48:23"
+    },
+    {
+      "cohort": "l1",
+      "stack": "20-30",
+      "position": "HJ",
+      "eligible": 320385,
+      "known": 293615,
+      "lookupMismatch": 3145,
+      "firstObservedAt": "2023-09-01 00:03:22",
+      "lastObservedAt": "2026-07-25 23:50:12"
+    },
+    {
+      "cohort": "l1",
+      "stack": "20-30",
+      "position": "CO",
+      "eligible": 247595,
+      "known": 227121,
+      "lookupMismatch": 2360,
+      "firstObservedAt": "2023-09-01 00:01:48",
+      "lastObservedAt": "2026-07-25 23:49:48"
+    },
+    {
+      "cohort": "l1",
+      "stack": "20-30",
+      "position": "BTN",
+      "eligible": 179793,
+      "known": 165508,
+      "lookupMismatch": 1605,
+      "firstObservedAt": "2023-09-01 01:05:00",
+      "lastObservedAt": "2026-07-25 23:16:29"
+    },
+    {
+      "cohort": "l1",
+      "stack": "20-30",
+      "position": "SB",
+      "eligible": 104933,
+      "known": 97154,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 00:12:13",
+      "lastObservedAt": "2026-07-25 23:09:40"
+    },
+    {
+      "cohort": "l1",
+      "stack": "15-20",
+      "position": "EP",
+      "eligible": 228991,
+      "known": 210545,
+      "lookupMismatch": 2175,
+      "firstObservedAt": "2023-09-01 00:43:06",
+      "lastObservedAt": "2026-07-25 23:12:20"
+    },
+    {
+      "cohort": "l1",
+      "stack": "15-20",
+      "position": "MP",
+      "eligible": 181814,
+      "known": 167160,
+      "lookupMismatch": 1621,
+      "firstObservedAt": "2023-09-01 00:50:55",
+      "lastObservedAt": "2026-07-25 23:37:43"
+    },
+    {
+      "cohort": "l1",
+      "stack": "15-20",
+      "position": "HJ",
+      "eligible": 140933,
+      "known": 129713,
+      "lookupMismatch": 1339,
+      "firstObservedAt": "2023-09-01 00:46:52",
+      "lastObservedAt": "2026-07-25 23:36:45"
+    },
+    {
+      "cohort": "l1",
+      "stack": "15-20",
+      "position": "CO",
+      "eligible": 108510,
+      "known": 100135,
+      "lookupMismatch": 1031,
+      "firstObservedAt": "2023-09-01 01:22:26",
+      "lastObservedAt": "2026-07-25 23:22:43"
+    },
+    {
+      "cohort": "l1",
+      "stack": "15-20",
+      "position": "BTN",
+      "eligible": 81936,
+      "known": 75883,
+      "lookupMismatch": 847,
+      "firstObservedAt": "2023-09-01 00:14:00",
+      "lastObservedAt": "2026-07-25 23:21:03"
+    },
+    {
+      "cohort": "l1",
+      "stack": "15-20",
+      "position": "SB",
+      "eligible": 59402,
+      "known": 55254,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 01:48:23",
+      "lastObservedAt": "2026-07-25 23:20:39"
+    },
+    {
+      "cohort": "l1",
+      "stack": "12-15",
+      "position": "EP",
+      "eligible": 117113,
+      "known": 108160,
+      "lookupMismatch": 1002,
+      "firstObservedAt": "2023-09-01 00:08:31",
+      "lastObservedAt": "2026-07-25 23:22:33"
+    },
+    {
+      "cohort": "l1",
+      "stack": "12-15",
+      "position": "MP",
+      "eligible": 91934,
+      "known": 84974,
+      "lookupMismatch": 796,
+      "firstObservedAt": "2023-09-01 00:07:41",
+      "lastObservedAt": "2026-07-25 23:22:13"
+    },
+    {
+      "cohort": "l1",
+      "stack": "12-15",
+      "position": "HJ",
+      "eligible": 70619,
+      "known": 65352,
+      "lookupMismatch": 626,
+      "firstObservedAt": "2023-09-01 00:06:36",
+      "lastObservedAt": "2026-07-25 23:05:04"
+    },
+    {
+      "cohort": "l1",
+      "stack": "12-15",
+      "position": "CO",
+      "eligible": 53805,
+      "known": 49889,
+      "lookupMismatch": 467,
+      "firstObservedAt": "2023-09-01 00:05:18",
+      "lastObservedAt": "2026-07-25 23:21:35"
+    },
+    {
+      "cohort": "l1",
+      "stack": "12-15",
+      "position": "BTN",
+      "eligible": 41409,
+      "known": 38586,
+      "lookupMismatch": 487,
+      "firstObservedAt": "2023-09-01 01:32:16",
+      "lastObservedAt": "2026-07-25 22:53:54"
+    },
+    {
+      "cohort": "l1",
+      "stack": "12-15",
+      "position": "SB",
+      "eligible": 34266,
+      "known": 32176,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 07:25:02",
+      "lastObservedAt": "2026-07-25 21:41:15"
+    },
+    {
+      "cohort": "l1",
+      "stack": "10-12",
+      "position": "EP",
+      "eligible": 63426,
+      "known": 58907,
+      "lookupMismatch": 554,
+      "firstObservedAt": "2023-09-01 00:02:38",
+      "lastObservedAt": "2026-07-25 23:25:46"
+    },
+    {
+      "cohort": "l1",
+      "stack": "10-12",
+      "position": "MP",
+      "eligible": 49813,
+      "known": 46252,
+      "lookupMismatch": 444,
+      "firstObservedAt": "2023-09-01 10:49:17",
+      "lastObservedAt": "2026-07-25 23:07:14"
+    },
+    {
+      "cohort": "l1",
+      "stack": "10-12",
+      "position": "HJ",
+      "eligible": 38432,
+      "known": 35664,
+      "lookupMismatch": 299,
+      "firstObservedAt": "2023-09-01 07:03:30",
+      "lastObservedAt": "2026-07-25 23:24:27"
+    },
+    {
+      "cohort": "l1",
+      "stack": "10-12",
+      "position": "CO",
+      "eligible": 28961,
+      "known": 27013,
+      "lookupMismatch": 262,
+      "firstObservedAt": "2023-09-01 02:07:24",
+      "lastObservedAt": "2026-07-25 21:42:13"
+    },
+    {
+      "cohort": "l1",
+      "stack": "10-12",
+      "position": "BTN",
+      "eligible": 22213,
+      "known": 20814,
+      "lookupMismatch": 290,
+      "firstObservedAt": "2023-09-01 08:31:40",
+      "lastObservedAt": "2026-07-25 23:14:44"
+    },
+    {
+      "cohort": "l1",
+      "stack": "10-12",
+      "position": "SB",
+      "eligible": 19386,
+      "known": 18203,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 01:09:05",
+      "lastObservedAt": "2026-07-25 21:22:51"
+    },
+    {
+      "cohort": "l1",
+      "stack": "8-10",
+      "position": "EP",
+      "eligible": 48403,
+      "known": 45236,
+      "lookupMismatch": 424,
+      "firstObservedAt": "2023-09-01 01:24:23",
+      "lastObservedAt": "2026-07-25 23:25:30"
+    },
+    {
+      "cohort": "l1",
+      "stack": "8-10",
+      "position": "MP",
+      "eligible": 38406,
+      "known": 35851,
+      "lookupMismatch": 303,
+      "firstObservedAt": "2023-09-01 00:08:09",
+      "lastObservedAt": "2026-07-25 23:24:44"
+    },
+    {
+      "cohort": "l1",
+      "stack": "8-10",
+      "position": "HJ",
+      "eligible": 30274,
+      "known": 28271,
+      "lookupMismatch": 257,
+      "firstObservedAt": "2023-09-01 00:06:53",
+      "lastObservedAt": "2026-07-25 22:54:48"
+    },
+    {
+      "cohort": "l1",
+      "stack": "8-10",
+      "position": "CO",
+      "eligible": 22674,
+      "known": 21162,
+      "lookupMismatch": 190,
+      "firstObservedAt": "2023-09-01 04:49:18",
+      "lastObservedAt": "2026-07-25 22:40:37"
+    },
+    {
+      "cohort": "l1",
+      "stack": "8-10",
+      "position": "BTN",
+      "eligible": 17231,
+      "known": 16210,
+      "lookupMismatch": 211,
+      "firstObservedAt": "2023-09-01 03:53:37",
+      "lastObservedAt": "2026-07-25 14:47:01"
+    },
+    {
+      "cohort": "l1",
+      "stack": "8-10",
+      "position": "SB",
+      "eligible": 15664,
+      "known": 14836,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 09:54:07",
+      "lastObservedAt": "2026-07-25 23:48:24"
+    },
+    {
+      "cohort": "l1",
+      "stack": "6-8",
+      "position": "EP",
+      "eligible": 32137,
+      "known": 30098,
+      "lookupMismatch": 278,
+      "firstObservedAt": "2023-09-01 00:09:14",
+      "lastObservedAt": "2026-07-25 23:00:39"
+    },
+    {
+      "cohort": "l1",
+      "stack": "6-8",
+      "position": "MP",
+      "eligible": 25996,
+      "known": 24373,
+      "lookupMismatch": 194,
+      "firstObservedAt": "2023-09-01 00:45:48",
+      "lastObservedAt": "2026-07-25 22:49:57"
+    },
+    {
+      "cohort": "l1",
+      "stack": "6-8",
+      "position": "HJ",
+      "eligible": 20706,
+      "known": 19417,
+      "lookupMismatch": 148,
+      "firstObservedAt": "2023-09-01 16:29:50",
+      "lastObservedAt": "2026-07-25 22:54:34"
+    },
+    {
+      "cohort": "l1",
+      "stack": "6-8",
+      "position": "CO",
+      "eligible": 15972,
+      "known": 15027,
+      "lookupMismatch": 126,
+      "firstObservedAt": "2023-09-01 00:42:53",
+      "lastObservedAt": "2026-07-25 13:47:23"
+    },
+    {
+      "cohort": "l1",
+      "stack": "6-8",
+      "position": "BTN",
+      "eligible": 11678,
+      "known": 11026,
+      "lookupMismatch": 153,
+      "firstObservedAt": "2023-09-01 04:48:29",
+      "lastObservedAt": "2026-07-25 18:06:48"
+    },
+    {
+      "cohort": "l1",
+      "stack": "6-8",
+      "position": "SB",
+      "eligible": 10024,
+      "known": 9600,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 13:28:59",
+      "lastObservedAt": "2026-07-25 22:13:57"
+    },
+    {
+      "cohort": "l1",
+      "stack": "<6",
+      "position": "EP",
+      "eligible": 32421,
+      "known": 30495,
+      "lookupMismatch": 284,
+      "firstObservedAt": "2023-09-01 04:17:18",
+      "lastObservedAt": "2026-07-25 20:50:17"
+    },
+    {
+      "cohort": "l1",
+      "stack": "<6",
+      "position": "MP",
+      "eligible": 27074,
+      "known": 25478,
+      "lookupMismatch": 184,
+      "firstObservedAt": "2023-09-01 04:16:40",
+      "lastObservedAt": "2026-07-25 21:54:02"
+    },
+    {
+      "cohort": "l1",
+      "stack": "<6",
+      "position": "HJ",
+      "eligible": 21620,
+      "known": 20376,
+      "lookupMismatch": 151,
+      "firstObservedAt": "2023-09-01 11:41:12",
+      "lastObservedAt": "2026-07-25 21:46:59"
+    },
+    {
+      "cohort": "l1",
+      "stack": "<6",
+      "position": "CO",
+      "eligible": 16208,
+      "known": 15280,
+      "lookupMismatch": 115,
+      "firstObservedAt": "2023-09-01 16:33:17",
+      "lastObservedAt": "2026-07-25 04:33:18"
+    },
+    {
+      "cohort": "l1",
+      "stack": "<6",
+      "position": "BTN",
+      "eligible": 11024,
+      "known": 10440,
+      "lookupMismatch": 107,
+      "firstObservedAt": "2023-09-01 02:35:27",
+      "lastObservedAt": "2026-07-25 21:52:05"
+    },
+    {
+      "cohort": "l1",
+      "stack": "<6",
+      "position": "SB",
+      "eligible": 8685,
+      "known": 8337,
+      "lookupMismatch": 0,
+      "firstObservedAt": "2023-09-01 04:18:47",
+      "lastObservedAt": "2026-07-25 22:18:48"
+    }
+  ],
+  "coverage": [
+    {
+      "stack": "70+",
+      "position": "EP",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1819,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 7234,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 7375,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 3548,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "70+",
+      "position": "MP",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1343,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 5281,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 5406,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 2573,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "70+",
+      "position": "HJ",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 927,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 3660,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 3812,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1847,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "70+",
+      "position": "CO",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 589,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 2339,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 2457,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1181,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "70+",
+      "position": "BTN",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 330,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1292,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1380,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 637,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "70+",
+      "position": "SB",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 112,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 535,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 545,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 241,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "30-70",
+      "position": "EP",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1961,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 8410,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 9036,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 4560,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "30-70",
+      "position": "MP",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1507,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 6431,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 7163,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 3613,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "30-70",
+      "position": "HJ",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1123,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 4740,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 5348,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 2739,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "30-70",
+      "position": "CO",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 777,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 3326,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 3804,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1925,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "30-70",
+      "position": "BTN",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 467,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 2064,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 2355,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1161,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "30-70",
+      "position": "SB",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 203,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 931,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1002,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 518,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "20-30",
+      "position": "EP",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 575,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 2621,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 2776,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1311,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "20-30",
+      "position": "MP",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 453,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 2004,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 2173,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1027,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "20-30",
+      "position": "HJ",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 340,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1561,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1714,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 782,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "20-30",
+      "position": "CO",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 257,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1179,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1308,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 576,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "20-30",
+      "position": "BTN",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 184,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 810,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 904,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 443,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "20-30",
+      "position": "SB",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 91,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 454,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 533,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 239,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "15-20",
+      "position": "EP",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 276,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1212,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1275,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 579,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "15-20",
+      "position": "MP",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 214,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 937,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 987,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 446,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "15-20",
+      "position": "HJ",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 150,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 711,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 771,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 351,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "15-20",
+      "position": "CO",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 112,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 556,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 571,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 244,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "15-20",
+      "position": "BTN",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 81,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 398,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 433,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 175,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "15-20",
+      "position": "SB",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 55,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 265,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 295,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 131,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "<15",
+      "position": "EP",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 410,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1800,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1691,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 758,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "<15",
+      "position": "MP",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 323,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1398,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1341,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 601,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "<15",
+      "position": "HJ",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 241,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1056,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 1009,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 444,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "<15",
+      "position": "CO",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 173,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 786,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 780,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 332,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "<15",
+      "position": "BTN",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 131,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 582,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 557,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 255,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "stack": "<15",
+      "position": "SB",
+      "passesGate": true,
+      "cohorts": {
+        "l3top": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 106,
+          "missing": 0
+        },
+        "l3": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 479,
+          "missing": 0
+        },
+        "l2": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 448,
+          "missing": 0
+        },
+        "l1": {
+          "rows": 169,
+          "complete": 169,
+          "minN": 208,
+          "missing": 0
+        }
+      }
+    }
+  ]
+}

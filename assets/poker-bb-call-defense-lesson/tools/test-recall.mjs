@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const context = { window: {} };
+vm.runInNewContext(fs.readFileSync(path.resolve(root, "../poker-trainer-shell/simulator-snapshot.js"), "utf8"), context);
 for (const file of ["range-data.js", "data.js", "recall.js"]) {
   vm.runInNewContext(fs.readFileSync(path.join(root, file), "utf8"), context);
 }
@@ -13,16 +14,16 @@ for (const file of ["range-data.js", "data.js", "recall.js"]) {
 const Data = context.window.PokerBbCallData;
 const Recall = context.window.PokerBbCallRecall;
 const Raw = context.window.PokerBbCallRangeData;
-const validCodes = new Set(["R", "B", "C", "F"]);
+const validCodes = new Set(["R", "B", "C", "M", "F"]);
 
 assert.ok(Data);
 assert.ok(Recall);
 assert.ok(Raw);
-assert.deepEqual(Array.from(Recall.states), ["F", "C", "B", "R"]);
+assert.deepEqual(Array.from(Recall.states), ["F", "M", "C", "B", "R"]);
 assert.equal(Recall.normalizeState("unknown"), "F");
 assert.equal(Recall.normalizeState("B"), "B");
-assert.equal(Recall.normalizeState("M"), "F");
-assert.equal(Recall.nextState("F"), "C");
+assert.equal(Recall.normalizeState("M"), "M");
+assert.equal(Recall.nextState("F"), "M");
 assert.equal(Recall.nextState("R"), "F");
 
 let sawSourceRaiseCallMix = false;
@@ -53,7 +54,9 @@ for (const sizeKey of ["2_0", "2_5", "3_0"]) {
 
     const empty = Recall.gradeDraft({}, expected);
     const sourceFolds = Object.values(expected).filter((code) => code === "F").length;
-    const sourceFoldCombos = Object.entries(expected).reduce((total, [hand, code]) => total + (code === "F" ? Recall.handComboCount(hand) : 0), 0);
+    const sourceFoldCombos = Object.entries(expected).reduce((total, [hand, code]) => {
+      return total + Math.round(Recall.handComboCount(hand) * Recall.matchingComboFraction("F", code));
+    }, 0);
     assert.equal(empty.correct, sourceFolds, `${sizeKey}:${position}:empty draft`);
     assert.equal(empty.correctCombos, sourceFoldCombos, `${sizeKey}:${position}:empty combo draft`);
     assert.equal(
@@ -79,8 +82,8 @@ for (const [scenarioKey, codes] of Object.entries(Raw.scenarios)) {
     const memoryCode = Recall.normalizeState(Data.rangeCellFor(sizeKey, position, hand).code);
     assert.equal(
       memoryCode,
-      sourceCode === "B" ? "B" : "F",
-      `${scenarioKey}:${hand}:raise/call stays mixed, call/fold becomes a memory fold`
+      sourceCode,
+      `${scenarioKey}:${hand}:both source mixes stay exact in memory`
     );
     rawRaiseCallMixes += sourceCode === "B" ? 1 : 0;
     rawCallFoldMixes += sourceCode === "M" ? 1 : 0;
@@ -90,7 +93,7 @@ assert.equal(rawRaiseCallMixes, 87);
 assert.equal(rawCallFoldMixes, 7);
 assert.equal(Data.rangeCellFor("2_0", "BTN", "A2s").code, "B");
 assert.equal(Data.rangeCellFor("2_0", "BTN", "A5s").code, "B");
-assert.equal(Data.rangeCellFor("2_0", "BTN", "94o").code, "F");
+assert.equal(Data.rangeCellFor("2_0", "BTN", "94o").code, "M");
 assert.equal(Recall.handComboCount("AA"), 6);
 assert.equal(Recall.handComboCount("A5s"), 4);
 assert.equal(Recall.handComboCount("K4o"), 12);
@@ -102,17 +105,17 @@ assert.equal(Recall.matchingComboFraction("F", "R"), 0);
 
 const mixedExpected = { A5s: "B", T6o: "M", K4o: "C", AA: "R", "72o": "F" };
 const mixedGrade = Recall.gradeDraft({ A5s: "F", T6o: "F", K4o: "R", AA: "R", "72o": "C" }, mixedExpected);
-assert.equal(mixedGrade.correct, 2);
+assert.equal(mixedGrade.correct, 1);
 assert.equal(mixedGrade.totalCombos, 46);
-assert.equal(mixedGrade.correctCombos, 18);
-assert.equal(mixedGrade.wrongCombos, 28);
-assert.equal(mixedGrade.missedDefenseCombos, 4);
+assert.equal(mixedGrade.correctCombos, 12);
+assert.equal(mixedGrade.wrongCombos, 34);
+assert.equal(mixedGrade.missedDefenseCombos, 10);
 assert.equal(mixedGrade.extraDefenseCombos, 12);
 assert.equal(mixedGrade.wrongActionCombos, 12);
-assert.equal(mixedGrade.missedDefense.length, 1);
+assert.equal(mixedGrade.missedDefense.length, 2);
 assert.equal(mixedGrade.extraDefense.length, 1);
 assert.equal(mixedGrade.wrongAction.length, 1);
-assert.deepEqual(Array.from(mixedGrade.missedDefense, (error) => error.hand), ["A5s"]);
+assert.deepEqual(Array.from(mixedGrade.missedDefense, (error) => error.hand), ["A5s", "T6o"]);
 assert.deepEqual(Array.from(mixedGrade.extraDefense, (error) => error.hand), ["72o"]);
 assert.deepEqual(Array.from(mixedGrade.wrongAction, (error) => error.hand), ["K4o"]);
 assert.equal(mixedGrade.wrongAction[0].wrongActionCombos, 12);
@@ -122,7 +125,7 @@ assert.equal(Recall.reviewState("B", "F"), "error");
 assert.equal(Recall.reviewState("C", "M"), "error");
 assert.equal(Recall.errorType("F", "B"), "missed");
 assert.equal(Recall.errorType("C", "B"), "action");
-assert.equal(Recall.errorType("F", "M"), "");
+assert.equal(Recall.errorType("F", "M"), "missed");
 assert.equal(Recall.errorType("C", "F"), "extra");
 assert.equal(Recall.errorType("C", "M"), "extra");
 assert.equal(Recall.errorType("B", "F"), "extra");
@@ -136,10 +139,10 @@ const btnMinraiseExpected = {
 };
 const btnMinraiseGrade = Recall.gradeDraft({ A5s: "C", K4o: "F", "94o": "C", AA: "C" }, btnMinraiseExpected);
 assert.equal(btnMinraiseGrade.totalCombos, 34);
-assert.equal(btnMinraiseGrade.correctCombos, 2);
-assert.equal(btnMinraiseGrade.wrongCombos, 32);
+assert.equal(btnMinraiseGrade.correctCombos, 8);
+assert.equal(btnMinraiseGrade.wrongCombos, 26);
 assert.equal(btnMinraiseGrade.missedDefenseCombos, 12);
-assert.equal(btnMinraiseGrade.extraDefenseCombos, 12);
+assert.equal(btnMinraiseGrade.extraDefenseCombos, 6);
 assert.equal(btnMinraiseGrade.wrongActionCombos, 8);
 assert.equal(btnMinraiseGrade.missedDefenseCombos + btnMinraiseGrade.extraDefenseCombos + btnMinraiseGrade.wrongActionCombos, btnMinraiseGrade.wrongCombos);
 assert.deepEqual(Array.from(btnMinraiseGrade.missedDefense, (error) => error.hand), ["K4o"]);

@@ -93,6 +93,10 @@
     openSizeBb: "#reactionSizeTabs",
     depthBand: "#reactionDepthTabs"
   };
+
+  function datasetKey(name) {
+    return name.replace(/\.json$/, "").replaceAll("-", "_");
+  }
   const reactionRanks = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"];
 
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -253,7 +257,7 @@
       state.loading = Promise.resolve(hydrateData(window.PokerRestealBundle));
       return state.loading;
     }
-    state.loading = Promise.all(files.map(async (name) => [name.replace(".json", ""), await fetchJson(name)]))
+    state.loading = Promise.all(files.map(async (name) => [datasetKey(name), await fetchJson(name)]))
       .then((entries) => hydrateData(Object.fromEntries(entries)))
       .catch((error) => {
         state.loading = null;
@@ -514,7 +518,20 @@
     paintMatrix($("#handMatrix"), results, controls.threshold);
     const pushed = [...results.values()].filter((item) => item.ev >= controls.threshold);
     const pushedCombos = pushed.reduce((sum, item) => sum + Engine.totalCombos(item.hand), 0);
-    $("#pushPct").textContent = pct(pushedCombos / 1326, 1);
+    const pushedShare = pushedCombos / 1326;
+    const boundaryNote = $("#modelBoundaryNote");
+    $("#pushPct").textContent = pct(pushedShare, 1);
+    if (pushedShare >= 0.95) {
+      const boundaryExtent = pushedShare >= 0.999 ? "весь диапазон" : "почти весь диапазон";
+      const source = usesFieldProfile
+        ? "частично опирается на наблюдаемую частоту паса, но результат по рукам всё равно рассчитывает модель"
+        : `целиком следует фиксированным допущениям: опен ${controls.openPct}% и продолжение ${controls.callPct}%`;
+      boundaryNote.hidden = false;
+      boundaryNote.innerHTML = `<strong>Граница учебной модели</strong><span>При стеке ${number(controls.stack, 0)} BB и опене ${number(controls.openSize, 1)} BB ${boundaryExtent} проходит выбранный EV-фильтр. Этот результат ${source}. Это стресс-тест допущений, а не наблюдаемая частота поля, не точный чарт и не совет пушить любые две.</span>`;
+    } else {
+      boundaryNote.hidden = true;
+      boundaryNote.replaceChildren();
+    }
     $("#matrixStatus").textContent = usesFieldProfile
       ? `Матрица обновлена: ${opponentLabel(state.opponent)} · опен ${controls.openPct}% · модель продолжения ${controls.callPct}%.`
       : "Матрица обновлена: свои настройки.";
@@ -582,9 +599,12 @@
   }
 
   function renderControlButtons() {
+    const fieldProfile = state.matrixSource === "field" && state.opponent !== "custom";
     const groups = [
       ["stack", [25, 30, 35, 40], (value) => `${value} BB`],
-      ["openSize", [2, 2.2, 2.5, 3], (value) => `${number(value)} BB`]
+      // The observed fold/call profile is the exact BB vs BTN / 2 BB slice.
+      // Do not let a larger pot silently reuse that 2 BB response frequency.
+      ["openSize", fieldProfile ? [2] : [2, 2.2, 2.5, 3], (value) => `${number(value)} BB`]
     ];
     for (const [key, values, label] of groups) {
       const root = $(`[data-control="${key}"]`);
@@ -696,6 +716,7 @@
       Object.assign(state.controls, state.customControls);
     } else {
       state.matrixSource = "field";
+      state.controls.openSize = 2;
       const metrics = fieldMetrics(key);
       state.controls.openPct = Math.round(metrics.open * 100);
       state.controls.callPct = Math.max(1, Math.round(metrics.call * 100));

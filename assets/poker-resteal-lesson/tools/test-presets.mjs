@@ -13,8 +13,8 @@ const ranking = ranks.hands.map((hand, i) => ({ hand, score: ranks.equity_vs_ran
   .sort((a, b) => b.score - a.score).map((item) => item.hand);
 const equityFor = (hero, villain) => equityData.equity[index.get(hero)][index.get(villain)];
 
-function run(openPct, callPct, threshold) {
-  const results = equityData.hands.map((hand) => engine.theoreticalHand({ hand, openPct, callPct, threshold, stack: 40, openSize: 2, ante: 1, bounty: 0, ranking, equityFor }));
+function run(openPct, callPct, threshold, stack = 40, openSize = 2) {
+  const results = equityData.hands.map((hand) => engine.theoreticalHand({ hand, openPct, callPct, threshold, stack, openSize, ante: 1, bounty: 0, ranking, equityFor }));
   const pushed = results.filter((item) => item.ev >= threshold);
   return {
     pct: pushed.reduce((sum, item) => sum + engine.totalCombos(item.hand), 0) / 1326,
@@ -34,6 +34,9 @@ assert.ok(worst.pct >= 0.12 && worst.pct <= 0.22, `worst-case range ${worst.pct}
 for (const pair of ["22", "33", "44", "55", "66", "77", "88", "99", "TT", "JJ", "QQ", "KK", "AA"]) {
   assert.ok(worst.byHand.get(pair).ev >= 0, `${pair} remains non-negative in worst case`);
 }
+
+const extrapolated = run(50, 12, 0.5, 25, 2.5);
+assert.equal(extrapolated.pct, 1, "25 BB / 2.5 BB / 50% / 12% reaches the explicit model-boundary warning state");
 
 const wisdomExpected = {
   QJo: { equity: 34, pass: 80, call: 20, bust: 13, win: 7, ev: 2.0 },
@@ -101,4 +104,4 @@ const passiveFishQJo = engine.fieldHand({
 assert.equal(passiveFishQJo.foldEquity, 0.5515);
 assert.ok(Math.abs(passiveFishQJo.ev - (-0.8196)) < 0.001, `exact BB/BTN passive-fish QJo EV ${passiveFishQJo.ev}`);
 
-console.log(`PASS resteal presets: standard ${(standard.pct * 100).toFixed(1)}%, worst ${(worst.pct * 100).toFixed(1)}%, field FE anchors`);
+console.log(`PASS resteal presets: standard ${(standard.pct * 100).toFixed(1)}%, worst ${(worst.pct * 100).toFixed(1)}%, boundary ${(extrapolated.pct * 100).toFixed(1)}%, field FE anchors`);

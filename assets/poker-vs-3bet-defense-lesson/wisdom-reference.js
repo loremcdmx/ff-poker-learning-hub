@@ -3,9 +3,23 @@
 
   const root = window;
   const documentRoot = document;
-  const data = root.FF_VS3BET_FIELD_DATA;
+  const rawData = root.FF_VS3BET_FIELD_DATA;
+  const data = root.FFVs3BetFieldDataReadiness?.ready ? rawData : null;
+  const observedConfidence = root.FFObservedFrequencyConfidence;
+  const enabledComparisonKeys = new Set(data?.meta?.enabledComparisonKeys || []);
   const host = documentRoot.querySelector("[data-vs3-wisdom-reference]");
   if (!host) return;
+  if (!data) {
+    host.replaceChildren();
+    root.FFVs3BetWisdomReference = Object.freeze({
+      schemaVersion: 1,
+      available: false,
+      state: () => ({}),
+      setState: () => ({}),
+      refresh: () => {}
+    });
+    return;
+  }
 
   const actions = [
     { key: "fold", totalKey: "folds", index: 1, label: "Пас", tone: "is-fold" },
@@ -13,26 +27,28 @@
     { key: "fourbet", totalKey: "fourbets", index: 3, label: "4-бет", tone: "is-fourbet" },
     { key: "jam", totalKey: "jams", index: 4, label: "4-бет пуш", tone: "is-jam" }
   ];
+  function cohortLabel(key) {
+    const cohort = data?.meta?.cohorts?.[key];
+    const ranks = Array.isArray(cohort?.ranks) ? cohort.ranks.filter(Number.isFinite) : [];
+    const rankLabel = ranks.length ? `R${Math.min(...ranks)}–${Math.max(...ranks)}` : "";
+    return [cohort?.label || key, rankLabel].filter(Boolean).join(" · ");
+  }
+
   const labels = {
-    cohort: {
-      novice: "Новички · R15–18",
-      league3: "Лига 3 · R11–14",
-      league2: "Лига 2 · R6–10",
-      league1: "Лига 1 · R1–5"
-    },
+    cohort: Object.fromEntries((data?.meta?.cohortOrder || []).map((key) => [key, cohortLabel(key)])),
     relation: { IP: "В позиции · IP", OOP: "Без позиции · OOP" },
     stack: { "20-30": "20–30 BB", "31-50": "31–50 BB", "51-80": "51–80 BB", "80+": "80+ BB" },
-    size: { "2.5": "2,5x", "3": "3x", "4": "4x" }
+    size: { all: "Все сайзы", "<6": "до 6 BB", "6-8": "6–8 BB", "8-10": "8–10 BB", "10+": "10+ BB" }
   };
   const positions = data?.meta?.heroPositions || ["EP", "MP", "HJ", "CO", "BTN", "SB"];
   const stacks = data?.meta?.stackBands || ["20-30", "31-50", "51-80", "80+"];
   const cohorts = data?.meta?.cohortOrder || ["novice", "league3", "league2", "league1"];
   const relations = data?.meta?.relations || ["IP", "OOP"];
-  const sizes = data?.meta?.sizeBuckets || ["2.5", "3", "4"];
+  const sizes = data?.meta?.sizeBuckets || ["all", "<6", "6-8", "8-10", "10+"];
   const state = {
     cohort: cohorts.includes("league3") ? "league3" : cohorts[0],
     relation: relations.includes("IP") ? "IP" : relations[0],
-    size: sizes.includes("3") ? "3" : sizes[0],
+    size: sizes.includes("all") ? "all" : sizes[0],
     position: positions.includes("BTN") ? "BTN" : positions[0],
     stack: stacks.includes("31-50") ? "31-50" : stacks[0],
     hand: data?.meta?.hands?.includes("AQs") ? "AQs" : data?.meta?.hands?.[0]
@@ -68,8 +84,13 @@
     return [state.cohort, position, state.relation, stack, state.size].join("|");
   }
 
+  function comparisonKey(position = state.position, stack = state.stack) {
+    return [position, state.relation, stack, state.size].join("|");
+  }
+
   function chart(position = state.position, stack = state.stack) {
     if (!relationAllowed(state.relation, position)) return null;
+    if (!enabledComparisonKeys.has(comparisonKey(position, stack))) return null;
     return data?.charts?.[chartKey(position, stack)] || null;
   }
 
@@ -80,8 +101,10 @@
   }
 
   function occurrenceProfile(current) {
+    const allSizesKey = [state.cohort, state.position, state.relation, state.stack, "all"].join("|");
+    const source = data?.charts?.[allSizesKey] || current;
     const scores = data.meta.hands.map((hand, index) => (
-      count(current?.cells?.[index]?.[0]) / startingHandComboCount(hand)
+      count(source?.cells?.[index]?.[0]) / startingHandComboCount(hand)
     ));
     const positive = scores.filter((score) => score > 0).sort((left, right) => left - right);
     const referenceIndex = Math.max(0, Math.floor((positive.length - 1) * .9));
@@ -105,7 +128,7 @@
   }
 
   function createMixBar(mix, className) {
-    const bar = element("span", ["vs3-mix-bar", className].filter(Boolean).join(" "));
+    const bar = element("span", className);
     bar.setAttribute("aria-hidden", "true");
     actions.forEach((action) => {
       const segment = element("i", `vs3-action-segment ${action.tone}`);
@@ -115,23 +138,12 @@
     return bar;
   }
 
-  function applyMixSurface(node, mix) {
-    let cumulative = 0;
-    actions.forEach((action) => {
-      cumulative += count(mix[action.key]);
-      node.style.setProperty(`--vs3-${action.key}-end`, `${Math.min(100, cumulative)}%`);
-    });
-  }
-
   function dominantTone(mix) {
     return actions.reduce((best, action) => mix[action.key] > mix[best.key] ? action : best, actions[0]).tone;
   }
 
   function sampleClass(n) {
-    const thresholds = data.meta.sampleThresholds;
-    if (n < thresholds.unavailableBelow) return "is-unavailable";
-    if (n < thresholds.lowConfidenceBelow) return "is-low-sample";
-    return "is-measured";
+    return observedConfidence?.canRenderExact?.(n) === true ? "is-measured" : "is-unavailable";
   }
 
   function sampleNote(n) {
@@ -161,13 +173,13 @@
     filters.append(
       createFilterGroup("cohort", "Лига игрока", cohorts),
       createFilterGroup("relation", "Где Hero окажется постфлоп", relations),
-      createFilterGroup("size", "Размер 3-бета", sizes)
+      createFilterGroup("size", "3-бет до", sizes)
     );
     return filters;
   }
 
   function createLegend() {
-    const legend = element("div", "vs3-action-legend");
+    const legend = element("div", "vs3-wisdom-legend");
     actions.forEach((action) => {
       const item = element("span", action.tone);
       item.append(element("i", ""), element("b", "", action.label));
@@ -258,9 +270,9 @@
     copy.append(
       element("h3", "", `${state.position} · ${labels.stack[state.stack]}`),
       element("p", "", `${labels.cohort[state.cohort]} · ${labels.relation[state.relation]} · ${labels.size[state.size]}`),
-      element("p", "vs3-wisdom-occurrence-note", "Высота ячейки — как часто рука доходит до этого спота. Цвет и нижняя полоса — действие.")
+      element("p", "vs3-wisdom-occurrence-note", "Высота цвета — как часто рука встречается среди опенов. Учтено, что пары, suited и offsuit раздают с разной частотой.")
     );
-    header.append(copy, createLegend());
+    header.append(copy);
 
     const scroll = element("div", "vs3-matrix-scroll vs3-wisdom-matrix-scroll");
     scroll.tabIndex = 0;
@@ -272,23 +284,24 @@
       const n = count(cell[0]);
       const mix = actionMix(cell);
       const availability = sampleClass(n);
-      const available = Boolean(n);
-      const occurrenceFrequency = occurrence[index] || 0;
-      const button = element("button", `vs3-range-cell vs3-wisdom-range-cell ff-range-cell ${available ? dominantTone(mix) : ""} ${availability}`);
+      const available = observedConfidence?.canRenderExact?.(n) === true;
+      const occurrenceFrequency = available ? (occurrence[index] || 0) : 0;
+      const button = element("button", `vs3-field-range-cell vs3-wisdom-range-cell ff-range-cell has-occurrence-weight ${available ? dominantTone(mix) : ""} ${availability}`);
       button.type = "button";
       button.dataset.vs3WisdomHand = hand;
       button.dataset.vs3OccurrenceFrequency = occurrenceFrequency.toFixed(1);
-      button.style.setProperty("--vs3-open-fill", `${visualOccurrenceFill(occurrenceFrequency)}%`);
+      button.style.setProperty("--vs3-field-occurrence-fill", `${visualOccurrenceFill(occurrenceFrequency)}%`);
       button.setAttribute("aria-pressed", String(hand === state.hand));
       button.setAttribute(
         "aria-label",
         available
-          ? `${hand}: относительная встречаемость ${formatPercent(occurrenceFrequency)}; пас ${formatPercent(mix.fold)}, колл ${formatPercent(mix.call)}, 4-бет ${formatPercent(mix.fourbet)}, пуш ${formatPercent(mix.jam)}.`
-          : `${hand}: нет отдельного среза.`
+          ? `${hand}: относительная встречаемость среди опенов ${formatPercent(occurrenceFrequency)}. Показать разбивку действий.`
+          : `${hand}: нет устойчивого отдельного среза.`
       );
-      const fill = element("span", "vs3-open-weight-fill");
-      applyMixSurface(fill, mix);
-      button.append(fill, element("strong", "", hand), createMixBar(mix, "vs3-cell-mix"));
+      button.append(
+        element("span", "vs3-field-occurrence-fill"),
+        element("strong", "", hand)
+      );
       grid.append(button);
     });
     scroll.append(grid);
@@ -296,69 +309,37 @@
     return matrix;
   }
 
-  function recommendationMix(hand) {
-    const result = root.FFVs3BetRangeExplorer?.strategyFor?.({
-      position: state.position,
-      relation: state.relation,
-      stack: state.stack,
-      size: state.size,
-      cohort: "reference",
-      hand
-    });
-    return result?.mix || null;
-  }
-
-  function createComparisonRow(label, note, mix, className) {
-    const row = element("tr", `vs3-comparison-row ${className}`);
-    const layer = element("th", "vs3-comparison-layer");
-    layer.scope = "row";
-    layer.append(element("strong", "", label), element("span", "", note));
-    row.append(layer);
-    const primary = mix
-      ? actions.reduce((best, action) => mix[action.key] > mix[best.key] ? action : best, actions[0]).key
-      : "";
-    actions.forEach((action) => {
-      const cell = element("td", `${action.tone} ${action.key === primary ? "is-primary" : ""}`);
-      cell.dataset.label = action.label;
-      cell.append(element("strong", "", mix ? formatPercent(mix[action.key]) : "—"));
-      row.append(cell);
-    });
-    return row;
-  }
-
-  function createComparisonTable(fieldMix) {
-    const table = element("table", "vs3-comparison-table");
-    const head = element("thead", "");
-    const headRow = element("tr", "");
-    ["Линия", "Пас", "Колл", "4-бет", "Пуш"].forEach((label) => headRow.append(element("th", "", label)));
-    head.append(headRow);
-    const body = element("tbody", "");
-    body.append(
-      createComparisonRow("Наш чарт", "рекомендация", recommendationMix(state.hand), "is-reference"),
-      createComparisonRow("Поле", labels.cohort[state.cohort], fieldMix, "is-measured")
-    );
-    table.append(head, body);
-    return table;
-  }
-
   function createHandDetail(current) {
     const index = data.meta.hands.indexOf(state.hand);
     const cell = current.cells?.[index] || [0, 0, 0, 0, 0];
     const n = count(cell[0]);
-    const available = Boolean(n);
+    const available = observedConfidence?.canRenderExact?.(n) === true;
     const detail = element("aside", `vs3-wisdom-hand-detail ${sampleClass(n)}`);
     const head = element("header", "vs3-wisdom-hand-head");
     const copy = element("div", "");
-    copy.append(element("span", "vs3-wisdom-detail-kicker", "Сравнение выбранной руки"), element("h3", "", state.hand));
+    copy.append(element("span", "vs3-wisdom-detail-kicker", "Выбранная рука"), element("h3", "", state.hand));
     head.append(copy);
     detail.append(head);
     if (!available) {
-      detail.append(createComparisonTable(null));
+      detail.append(element("p", "vs3-field-no-sample", "Для этой руки нет устойчивого отдельного среза."));
       return detail;
     }
 
     const mix = actionMix(cell);
-    detail.append(createComparisonTable(mix));
+    const list = element("div", "vs3-wisdom-hand-actions");
+    actions.forEach((action) => {
+      const item = element("div", action.tone);
+      item.append(
+        element("span", "", action.label),
+        element("strong", "", formatPercent(mix[action.key]))
+      );
+      list.append(item);
+    });
+    detail.append(
+      createMixBar(mix, "vs3-field-detail-mix"),
+      list,
+      element("p", "vs3-wisdom-boundary", "Это наблюдаемая игра поля, а не рекомендация. За правильной стратегией выбери «Наш чарт».")
+    );
     return detail;
   }
 
@@ -425,7 +406,7 @@
 
   function render({ preserveScroll = false, focusTarget = null, revealChart = false } = {}) {
     if (!data?.meta || !data?.charts) {
-      host.replaceChildren(element("p", "vs3-loading", "Данные поля не загрузились. Обнови страницу."));
+      host.replaceChildren(element("p", "vs3-loading vs3-data-unavailable", "Сводка поля временно скрыта. Она вернётся после полной сверки всех периодов и групп."));
       return;
     }
     const previousTableScroll = preserveScroll ? host.querySelector(".vs3-wisdom-table-scroll")?.scrollLeft || 0 : 0;
@@ -487,7 +468,7 @@
       if (sizes.includes(next.size)) state.size = next.size;
       if (positions.includes(next.position)) state.position = next.position;
       if (stacks.includes(next.stack)) state.stack = next.stack;
-      if (data.meta.hands.includes(next.hand)) state.hand = next.hand;
+      if (data?.meta?.hands?.includes(next.hand)) state.hand = next.hand;
       selectAvailableCell();
       render();
       return { ...state };

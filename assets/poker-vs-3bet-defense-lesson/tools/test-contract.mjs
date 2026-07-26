@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -8,12 +9,15 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../../..");
 const files = {
   html: "vs-3bet-defense-lesson.html",
+  confidence: "assets/poker-kit/observed-frequency-confidence.js",
+  snapshot: "assets/poker-trainer-shell/simulator-snapshot.js",
   controller: "assets/poker-trainer-shell/simulator-continuation.js",
   continuations: "assets/poker-vs-3bet-defense-lesson/continuations.js",
   model: "assets/poker-vs-3bet-defense-lesson/range-model.js",
   rfiData: "assets/poker-rfi-open-lesson/data.js",
   data: "assets/poker-vs-3bet-defense-lesson/data.js",
   fieldData: "assets/poker-vs-3bet-defense-lesson/data/vs3bet-field-data.js",
+  fieldDataReadiness: "assets/poker-vs-3bet-defense-lesson/field-data-readiness.js",
   wisdomReference: "assets/poker-vs-3bet-defense-lesson/wisdom-reference.js",
   explorer: "assets/poker-vs-3bet-defense-lesson/range-explorer.js",
   explorerCss: "assets/poker-vs-3bet-defense-lesson/range-explorer.css",
@@ -28,7 +32,7 @@ const source = Object.fromEntries(await Promise.all(Object.entries(files).map(as
 
 const context = { window: {}, console };
 vm.createContext(context);
-for (const key of ["controller", "continuations", "rfiData", "model", "data", "fieldData"]) {
+for (const key of ["confidence", "snapshot", "controller", "continuations", "rfiData", "fieldData", "fieldDataReadiness", "model", "data"]) {
   vm.runInContext(source[key], context, { filename: files[key] });
 }
 
@@ -37,32 +41,80 @@ const model = context.window.FF_VS3BET_RANGE_MODEL;
 const continuationApi = context.window.FFTrainerSimulatorContinuation;
 const continuationRegistry = context.window.FF_VS3BET_CONTINUATIONS;
 const fieldData = context.window.FF_VS3BET_FIELD_DATA;
+const fieldDataReadiness = context.window.FFVs3BetFieldDataReadiness;
 const rfiData = context.window.PokerRfiData;
+const preflopPotBb = context.window.FFTrainerSimulatorSnapshot.preflopPotBb;
+const assetHash = (value) => createHash("sha256")
+  .update(value.replace(/\r\n/g, "\n").replace(/\r/g, "\n"))
+  .digest("hex")
+  .slice(0, 12);
 
 assert.equal(data.schemaVersion, 1);
 assert.equal(data.key, "vs-3bet-defense");
+assert.equal(data.meta.scope.length, 6, "vs-3bet scope includes its strategy-source boundary");
+assert.equal(
+  data.meta.scope.at(-1),
+  "полевые частоты описывают сыгранные решения и не являются solver-чартом",
+  "the final visible scope item preserves the observed-field-versus-solver boundary"
+);
+assert.match(source.sharedLesson, /asArray\(meta\.scope\)\.forEach/, "shared lesson renders every authored scope item");
+assert.doesNotMatch(source.sharedLesson, /asArray\(meta\.scope\)\.slice\(0,\s*5\)/, "scope rendering cannot truncate the final disclaimer");
 assert.equal(data.wisdom.length, 3);
-assert.deepEqual(Array.from(data.cohorts, (cohort) => cohort.key), ["league1", "league2", "league3", "rank15_17"]);
-assert.equal(data.cohorts.slice(0, 3).reduce((sum, cohort) => sum + cohort.sample, 0), 6557996);
-for (const cohort of data.cohorts) {
-  const actionTotal = cohort.actions.reduce((sum, action) => sum + action.pct, 0);
-  assert(Math.abs(actionTotal - 100) < 0.02, `${cohort.key} fold/call/4-bet reconciles to 100%`);
-}
-assert.equal(data.cohorts[0].actions[2].pct, 16.30);
-assert.equal(data.cohorts[2].actions[0].pct, 59.96);
-assert.equal(data.cohorts[3].sample, 861445);
-assert.equal(data.cohorts[3].players, 953);
+assert.doesNotMatch(source.data, /rank15_17|R15–17|monthly aggregate/, "legacy cohort and monthly aggregate labels cannot diverge from the field cube");
 assert.doesNotMatch(source.data, /42,6 → 21,0%/);
-assert.equal(fieldData.version, "vs3bet-field-cube-20260725-v7");
-assert.equal(fieldData.meta.windowEndExclusive, "2026-07-22T00:00:00Z");
-assert.equal(fieldData.meta.hands.length, 169);
-assert.equal(Object.keys(fieldData.charts).length, 480, "all valid chart slices are public");
-assert.deepEqual(Array.from(fieldData.meta.sizeBuckets), ["2.5", "3", "4"]);
-assert.deepEqual(Array.from(fieldData.meta.cohorts.novice.ranks), [15, 16, 17, 18]);
-assert.deepEqual(Array.from(fieldData.meta.cohorts.league3.ranks), [11, 12, 13, 14]);
-assert.equal(fieldData.summaries.league3.opportunities, 2087200);
-assert.equal(fieldData.meta.filters.squeezeExcluded, true);
-assert.match(fieldData.meta.aggregation, /descriptive|integer|count/i);
+assert.equal(fieldData.meta.samplePolicy.exactFrequencyMinimumN, 50);
+assert.equal(fieldData.meta.samplePolicy.smoothing, false);
+if (fieldDataReadiness.ready) {
+  assert.equal(data.status, "ready");
+  assert.equal(fieldData.status, "ready");
+  assert.equal(fieldData.version, "vs3bet-field-cube-20260722-v6");
+  assert.equal(data.meta.observedDataStatus, "ready");
+  assert.deepEqual(Array.from(data.meta.cohortOrder), ["league1", "league2", "league3", "novice"]);
+  assert.deepEqual(Array.from(data.cohorts, (cohort) => cohort.key), ["league1", "league2", "league3", "novice"]);
+  assert.match(data.meta.sampleNote, /наблюдаемую игру поля/i);
+  assert(Object.keys(fieldData.charts).length > 0, "ready hand charts are copied into the public payload");
+  assert.deepEqual(Object.keys(fieldData.summaries).sort(), ["league1", "league2", "league3", "novice"]);
+  assert(fieldData.meta.enabledComparisonKeys.length > 0);
+} else {
+  assert.equal(data.status, "methodology_only");
+  assert.deepEqual(Array.from(data.cohorts), [], "unverified cohort summaries are not copied into the lesson payload");
+  assert.deepEqual(Array.from(data.meta.cohortOrder), [], "unverified cohort labels cannot leak into field UI");
+  assert.equal(data.meta.observedDataStatus, "unavailable");
+  assert.match(data.meta.sampleNote, /старые полевые частоты скрыты/i);
+  assert.equal(fieldData.version, "vs3bet-field-methodology-only-20260722-v1");
+  assert.equal(fieldData.status, "methodology_only");
+  assert.equal(fieldData.meta.publicationGate, "full_window_latest_first_four_cohorts_n50_169");
+  assert.deepEqual(Object.keys(fieldData.charts), [], "rejected hand charts are absent from the public payload");
+  assert.deepEqual(Object.keys(fieldData.summaries), [], "rejected cohort summaries are absent from the public payload");
+  assert.deepEqual(Array.from(fieldData.meta.enabledComparisonKeys), []);
+}
+assert.match(
+  source.html,
+  new RegExp(`poker-vs-3bet-defense-lesson/data/vs3bet-field-data\\.js\\?v=${assetHash(source.fieldData)}`),
+  "field-data cache token matches the exact aggregate bytes"
+);
+assert.match(
+  source.html,
+  new RegExp(`poker-vs-3bet-defense-lesson/field-data-readiness\\.js\\?v=${assetHash(source.fieldDataReadiness)}`),
+  "field-data readiness cache token matches the exact runtime bytes"
+);
+assert.match(
+  source.html,
+  new RegExp(`poker-vs-3bet-defense-lesson/range-explorer\\.js\\?v=${assetHash(source.explorer)}`),
+  "range-explorer cache token matches the exact runtime bytes"
+);
+assert.match(source.fieldExplorer, /enabledComparisonKeys/);
+assert.match(source.wisdomReference, /enabledComparisonKeys/);
+assert.match(source.explorer, /enabledComparisonKeys/);
+assert.match(source.fieldExplorer, /FFVs3BetFieldDataReadiness\?\.ready/);
+assert.match(source.wisdomReference, /FFVs3BetFieldDataReadiness\?\.ready/);
+assert.match(source.explorer, /FFVs3BetFieldDataReadiness\?\.ready/);
+for (const token of [
+  "function fieldComparisonReady()",
+  "enabledComparisonKeys.has(fieldComparisonKey())",
+  "Для этого фильтра полевой срез не опубликован",
+  "соседний стек или размер 3-бета сюда не подставляется",
+]) assert.ok(source.explorer.includes(token), `exact field-comparison gate: ${token}`);
 
 let auditedFieldCells = 0;
 for (const [chartKey, chart] of Object.entries(fieldData.charts)) {
@@ -73,10 +125,11 @@ for (const [chartKey, chart] of Object.entries(fieldData.charts)) {
     `${chartKey} action totals reconcile to all opportunities`
   );
   assert.equal(
-    totals.opportunities,
+    totals.sourceOpportunities,
     totals.knownOpportunities + totals.missingOpportunities,
-    `${chartKey} known and hidden-card opportunities reconcile`
+    `${chartKey} known and hidden-card opportunities reconcile to the unfiltered source total`
   );
+  assert.equal(totals.opportunities, totals.knownOpportunities, `${chartKey} public chart denominator uses only known-card decisions`);
   assert.equal(chart.cells.length, 169, `${chartKey} has all 169 hand cells`);
   const knownByAction = [0, 0, 0, 0, 0];
   for (const cell of chart.cells) {
@@ -91,9 +144,9 @@ for (const [chartKey, chart] of Object.entries(fieldData.charts)) {
   assert(knownByAction[2] <= totals.calls, `${chartKey} known-card calls do not exceed the all-card total`);
   assert(knownByAction[3] <= totals.fourbets, `${chartKey} known-card 4-bets do not exceed the all-card total`);
   assert(knownByAction[4] <= totals.jams, `${chartKey} known-card jams do not exceed the all-card total`);
-  assert(Math.abs(totals.knownCoveragePct - totals.knownOpportunities / totals.opportunities * 100) < 0.001, `${chartKey} coverage percentage is exact`);
+  assert(Math.abs(totals.knownCoveragePct - totals.knownOpportunities / totals.sourceOpportunities * 100) < 0.001, `${chartKey} coverage percentage is exact`);
 }
-assert.equal(auditedFieldCells, 480 * 169, "the entire 480-slice / 169-hand field cube is reconciled");
+assert.equal(auditedFieldCells, 800 * 169, "the entire 800-slice / 169-hand field cube is reconciled");
 
 for (const [cohortKey, totals] of Object.entries(fieldData.summaries)) {
   assert.equal(
@@ -115,7 +168,11 @@ assert.deepEqual(Array.from(model.positions), ["EP", "MP", "HJ", "CO", "BTN", "S
 assert.deepEqual(Array.from(model.relations), ["IP", "OOP"]);
 assert.deepEqual(Array.from(model.stacks, (stack) => stack.key), ["20-30", "31-50", "51-80", "80+"]);
 assert.deepEqual(Array.from(model.sizes), [2.5, 3, 4]);
-assert.deepEqual(Array.from(model.cohorts, (cohort) => cohort.key), ["reference", "league1", "league2", "league3", "novice"]);
+assert.deepEqual(
+  Array.from(model.cohorts, (cohort) => cohort.key),
+  fieldDataReadiness.ready ? ["reference", "league1", "league2", "league3", "novice"] : ["reference"],
+  "field-derived teaching layers exist only when the checked-in aggregate passes readiness"
+);
 assert.equal(model.hands.length, 169);
 assert.equal(new Set(model.hands).size, 169);
 assert.deepEqual(Object.keys(rfiData.sourceFrequencies), ["EP", "MP", "HJ", "CO", "BTN"]);
@@ -400,7 +457,7 @@ for (const position of model.positions) {
     }
   }
 }
-assert.equal(scenarioCount, 600);
+assert.equal(scenarioCount, 120 * model.cohorts.length, "scenario grid covers every currently available cohort layer");
 assert(jamCellCount > 0, "short-stack scenarios contain a distinct 4-bet jam component");
 
 const scenarioFingerprint = (scenario) => model.hands
@@ -497,7 +554,17 @@ let minimumCorrectFrequency = 100;
 for (const spot of data.practice) {
   assert.equal(spot.options.filter((option) => option.correct).length, 1, `${spot.id} has exactly one teaching answer`);
   assert.equal(spot.table.heroCards.length, 2, `${spot.id} has hero cards`);
-  assert.equal(spot.table.pot, "1 BB", `${spot.id} keeps only the carried BB ante in the pot label`);
+  assert.equal(
+    Number.parseFloat(spot.table.pot),
+    preflopPotBb({
+      anteBb: 1,
+      contributions: [
+        { position: spot.practiceMeta.heroPosition, amountBb: spot.practiceMeta.openToBb },
+        { position: spot.practiceMeta.villainPosition, amountBb: spot.practiceMeta.threeBetToBb }
+      ]
+    }),
+    `${spot.id} includes blinds, BB ante, Hero open and villain 3-bet exactly once`
+  );
   assert.equal(spot.practiceMeta.family, "vs3bet-defense");
   assert.equal(spot.practiceMeta.sourceStatus, "exact-baseline-plus-transparent-heuristics");
   assert.equal(spot.practiceMeta.hand, spot.hand);
@@ -546,17 +613,7 @@ for (const position of model.positions) {
 assert.equal(model.practiceSpotIds({ position: "BTN", relation: "OOP" }).length, 0);
 assert.equal(model.practiceSpotIds({ position: "SB", relation: "IP" }).length, 0);
 
-const defaultLeaks = model.leaks.compare({
-  position: "CO",
-  relation: "IP",
-  stack: "31-50",
-  size: 3,
-  cohort: "novice",
-  threshold: 1
-});
-assert(defaultLeaks.groups.underdefend.length > 0, "novice layer produces underdefense examples");
-assert(defaultLeaks.groups.overdefend.length > 0, "novice layer produces overdefense examples");
-assert(defaultLeaks.groups.missedAggression.length > 0, "novice layer produces missed 4-bet examples");
+assert.match(source.explorer, /Сравнение ошибок временно скрыто/, "unverified field errors render a learner-safe fail-closed state");
 
 assert.equal(continuationRegistry.spotIds.length, 1);
 const continuationSpot = data.practice.find((spot) => spot.id === continuationRegistry.spotIds[0]);
@@ -571,44 +628,42 @@ const stepOrder = Array.from(
   (match) => match[1]
 );
 assert.deepEqual(stepOrder, ["deal", "wisdom", "field", "practice"]);
-assert.match(source.html, />3\. Чарты и поле</);
+assert.match(source.html, />3\. Чарты</);
 assert.match(source.html, />4\. Практика</);
 assert.doesNotMatch(source.html, /data-step="leaks"/);
 assert.doesNotMatch(source.html, /id="leaksTab"/);
 assert.match(source.html, /data-vs3-target-overview/);
-assert.match(source.html, /data-vs3-wisdom-reference/);
 assert.doesNotMatch(source.html, /data-wisdom-carousel/);
 assert.match(source.html, /data-vs3-range-explorer/);
-assert.match(source.html, /data-vs3-field-explorer/);
-assert.match(source.html, /data-vs3-leaks/);
 assert.match(source.html, /data-vs3-practice-filters/);
 assert.match(source.html, /data-vs3-practice-expected/);
 assert.match(source.html, /practice-hud-rail/);
 assert.match(source.html, /Начни со всех ситуаций/);
-assert.match(source.html, /data-vs3-reg-view-tabs/);
-assert.match(source.html, /Сравни, как начинающие и сильные игроки разыгрывают один и тот же спот/);
+assert.doesNotMatch(source.html, /data-vs3-reg-view-tabs/);
+assert.doesNotMatch(source.html, /data-vs3-wisdom-reference/);
+assert.doesNotMatch(source.html, /data-vs3-field-explorer/);
+assert.doesNotMatch(source.html, /data-vs3-leaks/);
+assert.doesNotMatch(source.html, /id="vs3RegFieldPanel"/);
+assert.doesNotMatch(source.html, /Как играет поле|Сводка поля|Руки поля|Реальные раздачи FF|Новички против топов|игрокам рангов/);
+assert.doesNotMatch(source.html, /wisdom-reference\.js|field-explorer\.js/);
+assert.match(source.fieldExplorer, /if \(!data\)[\s\S]*regSwitcher\.hidden = true[\s\S]*return;/, "unverified field controls fail closed before rendering");
+assert.match(source.fieldExplorer, /chartsTab\.textContent = "3\. Чарты и поле"/, "a verified cube restores the field tab label");
 assert.doesNotMatch(source.html, /Где поле защищается лишне или недостаточно/);
 assert.doesNotMatch(source.html, /Сначала открой наш чарт/);
 assert.doesNotMatch(source.html, /Это фактические решения поля, а не совет/);
 assert.doesNotMatch(source.html, /Как играют реги/);
+assert.doesNotMatch(source.html, /игрокам рангов 15–17/);
 assert.doesNotMatch(source.fieldExplorer, /vs3-error-context/);
-assert.equal(Array.from(source.html.matchAll(/data-vs3-reg-view="(target|field)"/g)).length, 2);
-assert.equal(Array.from(source.html.matchAll(/data-vs3-reg-view-panel="(target|field)"/g)).length, 2);
-assert.equal(Array.from(source.html.matchAll(/class="vs3-reg-tab" type="button" role="tab"/g)).length, 2);
-assert.equal(Array.from(source.html.matchAll(/data-vs3-field-tool="(summary|hands|errors)"/g)).length, 3);
-assert.match(source.html, /id="vs3RegTargetTab"[^>]+aria-controls="vs3RegTargetPanel"[^>]+aria-selected="true"[^>]+tabindex="0"/);
-assert.match(source.html, /id="vs3RegFieldTab"[^>]+aria-controls="vs3RegFieldPanel"[^>]+aria-selected="false"[^>]+tabindex="-1"/);
-assert.match(source.html, /id="vs3RegTargetPanel"[^>]+aria-labelledby="vs3RegTargetTab"/);
-assert.match(source.html, /id="vs3RegFieldPanel"[^>]+aria-labelledby="vs3RegFieldTab"[^>]+hidden/);
-const regTabMarkup = Array.from(source.html.matchAll(/<button class="vs3-reg-tab"[^>]*>/g), (match) => match[0]);
-assert.equal(regTabMarkup.filter((markup) => /aria-selected="true"/.test(markup)).length, 1);
-assert.equal(regTabMarkup.filter((markup) => /tabindex="0"/.test(markup)).length, 1);
-assert(regTabMarkup.every((markup) => !/data-step-target/.test(markup)), "internal tabs must not trigger lesson navigation");
+assert.doesNotMatch(source.fieldExplorer, /Чаще встречаются лишних пасов/);
+assert.match(source.fieldExplorer, /Поле чаще пасует лишний раз/);
+assert.doesNotMatch(source.model, /League 1 реже/);
+assert.equal(Array.from(source.html.matchAll(/data-vs3-reg-view-panel="target"/g)).length, 1);
+assert.equal(Array.from(source.html.matchAll(/data-vs3-reg-view-panel="field"/g)).length, 0);
 const mainHostIndex = source.html.indexOf("data-vs3-target-overview");
 const chartPanelIndex = source.html.indexOf('id="chartsPanel"');
 const practicePanelIndex = source.html.indexOf('id="practicePanel"');
 assert(mainHostIndex > 0 && mainHostIndex < chartPanelIndex, "target overview lives on step 2 Главное");
-for (const marker of ["data-vs3-range-explorer", "data-vs3-reg-view-tabs", "data-vs3-wisdom-reference", "data-vs3-field-explorer", "data-vs3-leaks"]) {
+for (const marker of ["data-vs3-range-explorer"]) {
   const markerIndex = source.html.indexOf(marker);
   assert(markerIndex > chartPanelIndex && markerIndex < practicePanelIndex, `${marker} lives inside unified step 3`);
 }
@@ -618,12 +673,12 @@ const expectedScriptOrder = [
   "simulator-continuation.js",
   "poker-vs-3bet-defense-lesson/continuations.js",
   "poker-rfi-open-lesson/data.js",
+  "poker-kit/observed-frequency-confidence.js",
+  "poker-vs-3bet-defense-lesson/data/vs3bet-field-data.js",
+  "poker-vs-3bet-defense-lesson/field-data-readiness.js",
   "poker-vs-3bet-defense-lesson/range-model.js",
   "poker-vs-3bet-defense-lesson/data.js",
-  "poker-vs-3bet-defense-lesson/data/vs3bet-field-data.js",
   "poker-vs-3bet-defense-lesson/range-explorer.js",
-  "poker-vs-3bet-defense-lesson/wisdom-reference.js",
-  "poker-vs-3bet-defense-lesson/field-explorer.js",
   "poker-field-lesson/lesson.js"
 ];
 for (let index = 1; index < expectedScriptOrder.length; index += 1) {
@@ -635,8 +690,8 @@ for (let index = 1; index < expectedScriptOrder.length; index += 1) {
 const finalCourseLink = source.html.match(/<a href="([^"]+)" data-footer-next>([^<]+)<\/a>/);
 assert.deepEqual(
   finalCourseLink?.slice(1),
-  ["/", "Завершить курс →"],
-  "the final lesson returns to the learning hub instead of looping to check-raise"
+  ["/poker-simulator", "Перейти к свободной игре →"],
+  "the final lesson hands off to free play instead of looping to check-raise"
 );
 assert.doesNotMatch(
   source.html,
@@ -714,15 +769,31 @@ assert.match(source.explorer, /Если мы пасуем чаще .* даже �
 assert.doesNotMatch(source.explorer, /solver-MDF/);
 assert.match(source.explorer, /profitBoundary/);
 assert.match(source.explorer, /targets:/);
+assert.match(source.explorer, /function strategyFor\(next = \{\}\)/);
+assert.match(source.explorer, /strategyFor,/);
 assert.match(source.explorer, /mix\.missing \? "is-missing" : dominantAction\(mix\)\.tone/);
 assert.match(source.explorer, /button\.disabled = mix\.missing/);
-assert.match(source.explorer, /const fieldData = root\.FF_VS3BET_FIELD_DATA/);
-assert.doesNotMatch(source.explorer, /FIELD_SIZE_BUCKETS|"<6"|"6-8"|"8-10"/);
-assert.match(source.explorer, /return state\.size/);
-assert.match(source.fieldExplorer, /"2\.5": "2,5x"/);
-assert.match(source.fieldExplorer, /size: \{ label: "Размер 3-бета"/);
-assert.match(source.wisdomReference, /"2\.5": "2,5x"/);
+assert.match(
+  source.explorer,
+  /const availableOptions = key === "relation"[\s\S]*filter\(\(option\) => relationAllowed\(option\.key\)\)/,
+  "structurally impossible relation choices are omitted instead of rendered disabled"
+);
+assert.match(
+  source.explorer,
+  /const rows = \[\{ key: "", label: anyLabel \}, \.\.\.filterOptions\[key\]\]\.filter[\s\S]*practicePositionAllowed\(option\.key\)/,
+  "practice position choices form a contextual catalog for the selected scope"
+);
+assert.doesNotMatch(
+  source.explorer,
+  /button\.disabled = unavailable|setAttribute\("aria-disabled", "true"\)/,
+  "learner-facing VS3 selectors never render dead disabled choices"
+);
+assert.match(source.explorer, /const rawFieldData = root\.FF_VS3BET_FIELD_DATA/);
+assert.match(source.explorer, /"2\.5": "<6"/);
+assert.match(source.explorer, /"3": "6-8"/);
+assert.match(source.explorer, /"4": "8-10"/);
 assert.match(source.explorer, /function measuredFieldRow/);
+assert.match(source.explorer, /object\.label \|\| object\.name \|\| LABELS/, "field-sourced cohort labels outrank fallback UI labels");
 assert.match(source.explorer, /vs3-comparison-table/);
 assert.match(source.explorer, /Реальные решения FF/);
 assert.doesNotMatch(source.explorer, /Слабые выборки скрыты|Мало данных|Ориентир/);
@@ -732,8 +803,6 @@ assert.match(source.explorerCss, /\.is-fold[\s\S]*--vs3-cell-surface/);
 assert.match(source.explorerCss, /\.vs3-range-cell\.is-missing/);
 assert.match(source.explorerCss, /\.vs3-comparison-table/);
 assert.match(source.explorerCss, /\.vs3-comparison-delta\.is-more/);
-assert.match(source.explorer, /function strategyFor\(next = \{\}\)/);
-assert.match(source.explorer, /strategyFor,/);
 assert.match(source.explorerCss, /\.vs3-field-range-cell\.is-unavailable[\s\S]*background: #121016/);
 assert.match(source.explorerCss, /\.vs3-field-occurrence-fill[\s\S]*height: var\(--vs3-field-occurrence-fill/);
 assert.match(source.explorerCss, /\.vs3-field-range-cell\.has-occurrence-weight[\s\S]*background: #151219/);
@@ -753,36 +822,32 @@ assert.doesNotMatch(source.wisdomReference, /vs3-wisdom-defense|Крупно —
 assert.match(source.wisdomReference, /data\.meta\.hands\.forEach/);
 assert.match(source.wisdomReference, /function startingHandComboCount/);
 assert.match(source.wisdomReference, /return value\.endsWith\("s"\) \? 4 : 12/);
-assert.match(source.wisdomReference, /count\(current\?\.cells\?\.\[index\]\?\.\[0\]\) \/ startingHandComboCount\(hand\)/);
-assert.doesNotMatch(source.wisdomReference, /\[state\.cohort, state\.position, state\.relation, state\.stack, "all"\]/);
+assert.match(source.wisdomReference, /count\(source\?\.cells\?\.\[index\]\?\.\[0\]\) \/ startingHandComboCount\(hand\)/);
+assert.match(source.wisdomReference, /\[state\.cohort, state\.position, state\.relation, state\.stack, "all"\]/);
 assert.match(source.wisdomReference, /dataset\.vs3OccurrenceFrequency/);
 assert.match(source.wisdomReference, /vs3-range-grid vs3-wisdom-range-grid ff-range-grid/);
-assert.match(source.wisdomReference, /vs3-range-cell vs3-wisdom-range-cell ff-range-cell/);
-assert.match(source.wisdomReference, /--vs3-open-fill/);
-assert.match(source.wisdomReference, /vs3-open-weight-fill/);
-assert.match(source.wisdomReference, /createMixBar\(mix, "vs3-cell-mix"\)/);
-assert.match(source.wisdomReference, /function applyMixSurface/);
-assert.match(source.wisdomReference, /FFVs3BetRangeExplorer/);
-assert.match(source.wisdomReference, /vs3-comparison-table/);
-assert.match(source.wisdomReference, /"Наш чарт"/);
-assert.match(source.wisdomReference, /"Поле"/);
-assert.match(source.wisdomReference, /Высота ячейки — как часто рука доходит до этого спота/);
-assert.doesNotMatch(source.wisdomReference, /Это наблюдаемая игра поля, а не рекомендация/);
+assert.match(source.wisdomReference, /vs3-field-range-cell vs3-wisdom-range-cell ff-range-cell/);
+assert.match(source.wisdomReference, /--vs3-field-occurrence-fill/);
+assert.match(source.wisdomReference, /Высота цвета — как часто рука встречается среди опенов/);
+assert.match(source.wisdomReference, /Это наблюдаемая игра поля, а не рекомендация/);
 assert.doesNotMatch(source.wisdomReference, /5 051 115 решений/);
 assert.doesNotMatch(source.wisdomReference, /FF_VS3BET_RANGE_MODEL|scenario\.summary/);
 assert.match(source.fieldExplorer, /Высота — встречаемость среди опенов с учётом комбо\. Цвет — главное действие/);
-assert.match(source.fieldExplorer, /unavailableBelow/);
-assert.match(source.fieldExplorer, /function filterValueAvailable\(key, value\)[\s\S]*Boolean\(chart\(next\)\)/, "filter choices are only available when the refreshed cube has an exact slice");
-assert.match(source.fieldExplorer, /function availableFilterValues\(key, config\)[\s\S]*key !== "position"[\s\S]*config\.values\.filter\(\(value\) => filterValueAvailable\(key, value\)\)/, "position rows omit controls that cannot produce a valid exact slice without hiding the IP\/OOP switch");
-assert.match(source.fieldExplorer, /function selectionForFilter\(key, value\)[\s\S]*value === "OOP" \? "CO" : "BTN"[\s\S]*Boolean\(chart\(\{ \.\.\.next, position \}\)\)/, "switching IP\/OOP moves an incompatible edge position to a real chart instead of leaving a dead control");
+assert.match(source.fieldExplorer, /observedConfidence\?\.canRenderExact/);
+assert.match(source.fieldExplorer, /function comparisonAvailable\(selection = state\)[\s\S]*enabledComparisonKeys\.has\(comparisonKey\(selection\)\)/, "filter choices use the build-time 169-hand common-cohort allowlist");
+assert.match(source.fieldExplorer, /const publishedStates = Array\.from\(enabledComparisonKeys\)[\s\S]*Boolean\(data\?\.charts\?\.\[chartKey\(selection\)\]\)/, "field filters are derived only from complete published cohort charts");
+assert.match(source.fieldExplorer, /function valuesForFilter\(key\)[\s\S]*upstream\.every/, "field filters form a contextual catalog instead of a Cartesian selector");
+assert.match(source.fieldExplorer, /function availableFilterValues\(key, config\)[\s\S]*key !== "relation"[\s\S]*publishedStates\.some/, "the relation switch stays usable while every other filter remains source-backed");
+assert.match(source.fieldExplorer, /function selectionForFilter\(key, value\)[\s\S]*value === "OOP" \? "CO" : "BTN"[\s\S]*Boolean\(chart\(\{ \.\.\.next, position \}\)\)/, "switching IP\/OOP moves an incompatible edge position to a published chart");
 assert.match(source.fieldExplorer, /availableFilterValues\(key, config\)\.forEach/, "only usable field-filter controls are rendered");
-assert.doesNotMatch(source.fieldExplorer, /button\.disabled = unavailable/, "dead filter buttons are removed instead of remaining permanently disabled");
+assert.match(source.fieldExplorer, /function reconcileFilters\(changedKey = ""\)/, "downstream choices reconcile to a complete chart");
+assert.doesNotMatch(source.fieldExplorer, /button\.disabled = unavailable|filterValueAvailable/, "sparse field dimensions never become learner-facing disabled controls");
 assert.match(source.fieldExplorer, /dataset\.vs3ErrorMatrix/);
 assert.match(source.fieldExplorer, /dataset\.vs3ErrorDetail/);
 assert.match(source.fieldExplorer, /dataset\.vs3ErrorRanking/);
 assert.match(source.fieldExplorer, /dataset\.vs3ErrorHand/);
 assert.match(source.fieldExplorer, /wilsonInterval/);
-assert.match(source.fieldExplorer, /sampleThresholds\.lowConfidenceBelow/);
+assert.match(source.fieldExplorer, /const rankable = observedConfidence\?\.canRenderExact\?\.\(n\) === true/);
 assert.match(source.fieldExplorer, /referenceSizeMultiplier/);
 assert.match(source.fieldExplorer, /Самые частые ошибки/);
 assert.doesNotMatch(source.fieldExplorer, /Слабые выборки скрыты|Мало данных|Ориентир/);
@@ -799,7 +864,7 @@ assert.match(source.fieldExplorer, /showFieldSection\(next, options = \{\}\)/);
 assert.match(source.fieldExplorer, /\["ArrowLeft", "ArrowRight", "Home", "End"\]/);
 assert.match(source.fieldExplorer, /panel\.hidden = !selected/);
 assert.doesNotMatch(source.fieldExplorer, /errorsHost\?\.setAttribute\("aria-live", selected \? "polite" : "off"\)/);
-assert.match(source.html, /data-vs3-leaks aria-live="off"/);
+assert.doesNotMatch(source.html, /data-vs3-leaks/);
 assert.match(source.explorerCss, /\.vs3-error-layout[\s\S]*grid-template-columns: minmax\(610px/);
 assert.match(source.explorerCss, /\.vs3-error-range-cell\.is-underdefense/);
 assert.match(source.explorerCss, /\.vs3-error-range-cell\.is-overdefense/);
@@ -812,6 +877,8 @@ assert.match(source.explorerCss, /\.vs3-cell-mix[\s\S]*height: 6px/);
 assert.match(source.explorerCss, /@media \(max-width: 760px\)[\s\S]*\.vs3-matrix-scroll[\s\S]*justify-content: flex-start[\s\S]*overflow-scrolling: touch/, "mobile matrices scroll inside their card instead of shrinking labels below the readable cell size");
 assert.match(source.explorerCss, /@media \(max-width: 760px\)[\s\S]*\.vs3-range-grid[\s\S]*--vs3-range-cell-size: 31px[\s\S]*min-width: calc\(var\(--vs3-range-cell-size\) \* 13 \+ 48px\)/, "mobile matrices keep a readable 31px cell and expose the full 13x13 grid through internal scrolling");
 assert.match(source.explorerCss, /\.vs3-reg-switcher[\s\S]*grid-template-columns: repeat\(2/);
+assert.match(source.explorer, /function resolvedFieldSizeBucket\(\)[\s\S]*enabledComparisonKeys\.has\(fieldComparisonKeyFor\(exactBucket\)\)[\s\S]*enabledComparisonKeys\.has\(fieldComparisonKeyFor\("all"\)\)/, "hand comparison falls back to the validated all-sizing slice when the selected exact sizing lacks common N50 coverage");
+assert.match(source.explorer, /if \(bucket === "all"\) return "все размеры 3-бета"/, "an all-sizing fallback is named explicitly instead of masquerading as the selected exact sizing");
 assert.match(source.explorerCss, /\.vs3-field-tool\[open\]/);
 assert.match(source.explorerCss, /\.vs3-reg-tab small \{ display: none; \}/);
 assert.match(source.explorerCss, /\.vs3-reg-panel\[hidden\][^}]*display: none !important/);
@@ -820,13 +887,14 @@ assert.match(source.sharedLesson, /saved\.step === "leaks"/);
 assert.match(source.sharedLesson, /has\("regView"\)/);
 assert.match(source.sharedLesson, /--practice-correct-pct/);
 assert.match(source.sharedLesson, /FFFieldLessonPracticeExtension/);
-assert.match(source.research, /mcp_bq_80039683391746b3bc0cda01a00f1260/);
-assert.match(source.research, /mcp_ch_job_1dc4dcea6c5644578ddb72c9f90a32f2/);
-assert.match(source.research, /5 051 115/);
-assert.match(source.research, /is_face_squeeze=0/);
-assert.match(source.research, /98\.4%/);
+assert.match(source.research, /Статус публикации: куб закарантинен/);
+assert.match(source.research, /latest-версию каждой `hand_player_id`/);
+assert.match(source.research, /169\/169 рук с `N >= 50`/);
+assert.match(source.research, /запрещать smoothing, prior, interpolation/);
+assert.match(source.research, /не release evidence/);
+assert.match(source.research, /squeeze\/cold-call/);
 assert.match(source.research, /учебной адаптацией/);
-assert.match(source.research, /не являются измеренными hand-level/);
+assert.match(source.research, /не являются измеренными hand-level[\s\S]*учебную модель/);
 assert.match(source.transcript, /JJ.*call 50 \/ 4-bet 50/);
 assert.match(source.transcript, /## BTN[\s\S]*Call 100:[\s\S]*97s/);
 

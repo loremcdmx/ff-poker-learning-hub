@@ -5,12 +5,13 @@
   const doc = document;
   const serverModeRe = /[?&]rooms?=/;
   const assets = Object.freeze({
+    onlineHealth: "/api/rooms",
     onlineCss: "assets/poker-simulator/simulator-online-lobby.css?v=5ffb4fd8cdc1",
     multiplayerTransport: "assets/poker-simulator/simulator-multiplayer.js?v=f8c2f23aba0c",
     multiplayerAdapter: "assets/poker-simulator/simulator-multiplayer-adapter.js?v=c5915af6350a",
     multiplayerStepInterp: "assets/poker-simulator/simulator-mp-step-interp.js?v=df2187468438",
     multiplayerRuntime: "assets/poker-simulator/simulator-multiplayer-runtime.js?v=1263c98a8545",
-    onlineLobby: "assets/poker-simulator/simulator-online-lobby.js?v=dd5a27d8d540"
+    onlineLobby: "assets/poker-simulator/simulator-online-lobby.js?v=4d8cec7d8b5c"
   });
   const serverScripts = [
     assets.multiplayerTransport,
@@ -24,7 +25,9 @@
   ];
 
   let onlinePromise = null;
+  let onlineHealthPromise = null;
   let onlineLoaded = false;
+  let onlineAvailable = false;
   let serverPromise = null;
   let practicePromise = null;
   let replayingOnlineIntent = false;
@@ -34,8 +37,17 @@
     else fn();
   }
 
+  function onlineRuntimeEnabled() {
+    // The standalone learning hub is a static build and has no multiplayer
+    // backend. A stale/deep ?room= link must not bypass the disabled lobby and
+    // boot the multiplayer runtime anyway. Non-static deployments keep their
+    // existing direct-room behaviour unless they explicitly disable online.
+    if (root.FF_STATIC_LEARNING_HUB === true) return false;
+    return root.FF_ONLINE_LOBBY_ENABLED !== false;
+  }
+
   function isServerMode() {
-    return serverModeRe.test(root.location?.search || "");
+    return onlineRuntimeEnabled() && serverModeRe.test(root.location?.search || "");
   }
 
   function refWithoutQuery(ref) {
@@ -119,6 +131,46 @@
     });
   }
 
+  function setOnlineEntryVisible(visible) {
+    ready(() => {
+      const tabs = doc.getElementById("sim-start-tabs");
+      const lobby = doc.getElementById("online-lobby");
+      if (tabs) {
+        tabs.hidden = !visible;
+        tabs.setAttribute?.("aria-hidden", visible ? "false" : "true");
+      }
+      if (lobby) {
+        lobby.hidden = !visible;
+        lobby.setAttribute?.("aria-hidden", visible ? "false" : "true");
+      }
+    });
+  }
+
+  function checkOnlineHealth() {
+    if (isServerMode()) return Promise.resolve(true);
+    if (onlineHealthPromise) return onlineHealthPromise;
+    if (!onlineRuntimeEnabled() || root.FF_ONLINE_LOBBY_ENABLED !== true || typeof root.fetch !== "function") {
+      setOnlineEntryVisible(false);
+      return Promise.resolve(false);
+    }
+    onlineHealthPromise = root.fetch(assets.onlineHealth, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      credentials: "same-origin",
+      cache: "no-store"
+    }).then(async (response) => {
+      const data = await response.json().catch(() => null);
+      onlineAvailable = Boolean(response.ok && data && data.ok !== false && Array.isArray(data.rooms));
+      setOnlineEntryVisible(onlineAvailable);
+      return onlineAvailable;
+    }).catch(() => {
+      onlineAvailable = false;
+      setOnlineEntryVisible(false);
+      return false;
+    });
+    return onlineHealthPromise;
+  }
+
   function loadServerMode() {
     if (!serverPromise) {
       suppressServerStartShell();
@@ -131,7 +183,11 @@
   function loadOnlineLobby() {
     if (isServerMode()) return loadServerMode();
     if (!onlinePromise) {
-      onlinePromise = loadStyle(assets.onlineCss)
+      onlinePromise = checkOnlineHealth()
+        .then((available) => {
+          if (!available) throw new Error("Online backend is not configured");
+          return loadStyle(assets.onlineCss);
+        })
         .then(() => loadScripts(onlineScripts))
         .then(() => {
           onlineLoaded = true;
@@ -186,6 +242,12 @@
   }
 
   if (isServerMode()) suppressServerStartShell();
+  else {
+    setOnlineEntryVisible(false);
+    ready(() => {
+      if (root.FF_ONLINE_LOBBY_ENABLED === true) checkOnlineHealth();
+    });
+  }
   doc.addEventListener("pointerover", warmOnlineLobby, true);
   doc.addEventListener("focusin", warmOnlineLobby, true);
   doc.addEventListener("click", handleOnlineActivation, true);
@@ -193,9 +255,12 @@
 
   root.PokerSimulatorFeatureLoader = {
     assets,
+    onlineRuntimeEnabled,
     isServerMode,
     readyForBoot,
     loadPracticePack,
+    checkOnlineHealth,
+    isOnlineAvailable: () => onlineAvailable,
     loadOnlineLobby,
     loadServerMode
   };
