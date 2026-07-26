@@ -1,11 +1,9 @@
 -- Strict observed-field cube for Hero RFI -> faces the first non-squeeze 3-bet -> decision.
--- Refresh window: [2025-07-01 00:00:00, 2026-07-21 00:00:00) UTC.
+-- Refresh window: [2025-07-01 00:00:00, 2026-07-22 00:00:00) UTC.
 --
--- The cube deliberately stores the absolute 3-bet-to amount in BB buckets.
--- The source does not expose Hero's original RFI size faithfully on Hero's row:
--- preflop_2bet_and_blind_facing_amount_bb is the amount Hero faced before RFI,
--- not the RFI amount. Do not turn these buckets into multipliers without a
--- separate action-history/opponent-row reconstruction.
+-- Hero's own RFI total is stored in preflop_raise_and_blind_made_amount_bb.
+-- The public filters use the observed 3-bet / RFI ratio, matching the lesson
+-- chart controls: 2.5x=[2.25,2.75), 3x=[2.75,3.5), 4x=[3.5,4.5).
 --
 -- Replace {{RANK_INTERVAL_ROWS}} in query 2 with query 1 rendered as
 -- (user_id,rang,'rank_start_at','rank_end_at') tuples.
@@ -15,12 +13,12 @@ SELECT
   h.user_id,
   h.rang,
   FORMAT_TIMESTAMP('%F %T', GREATEST(h.rang_start_at, TIMESTAMP '2025-07-01 00:00:00+00'), 'UTC') AS rank_start_at,
-  FORMAT_TIMESTAMP('%F %T', LEAST(COALESCE(h.rang_end_at, TIMESTAMP '2026-07-21 00:00:00+00'), TIMESTAMP '2026-07-21 00:00:00+00'), 'UTC') AS rank_end_at
+  FORMAT_TIMESTAMP('%F %T', LEAST(COALESCE(h.rang_end_at, TIMESTAMP '2026-07-22 00:00:00+00'), TIMESTAMP '2026-07-22 00:00:00+00'), 'UTC') AS rank_end_at
 FROM `analytics_mcp_readonly.mcp__check_rank_history` AS h
 JOIN `analytics_mcp_readonly.mcp__check_users` AS u USING (user_id)
 WHERE h.rang BETWEEN 1 AND 18
-  AND h.rang_start_at < TIMESTAMP '2026-07-21 00:00:00+00'
-  AND COALESCE(h.rang_end_at, TIMESTAMP '2026-07-21 00:00:00+00') > TIMESTAMP '2025-07-01 00:00:00+00'
+  AND h.rang_start_at < TIMESTAMP '2026-07-22 00:00:00+00'
+  AND COALESCE(h.rang_end_at, TIMESTAMP '2026-07-22 00:00:00+00') > TIMESTAMP '2025-07-01 00:00:00+00'
   AND u.is_real_player = TRUE
 ORDER BY h.user_id, h.rang_start_at;
 
@@ -50,6 +48,7 @@ latest_versions AS
         h.preflop_aggressor_position,
         h.preflop_effective_stack_size_bb,
         h.amt_preflop_3bet_facing_bb,
+        h.preflop_raise_and_blind_made_amount_bb,
         h.holecards_str,
         h.preflop_face_3bet_action,
         h.preflop_action,
@@ -74,6 +73,9 @@ latest_versions AS
     )
     AND h.preflop_effective_stack_size_bb >= 20
     AND h.amt_preflop_3bet_facing_bb >= 3
+    AND h.preflop_raise_and_blind_made_amount_bb > 0
+    AND h.amt_preflop_3bet_facing_bb / h.preflop_raise_and_blind_made_amount_bb >= 2.25
+    AND h.amt_preflop_3bet_facing_bb / h.preflop_raise_and_blind_made_amount_bb < 4.5
   GROUP BY h.hand_player_id
 ),
 latest AS
@@ -86,16 +88,17 @@ latest AS
     v.x.4 AS preflop_aggressor_position,
     v.x.5 AS effective_stack_bb,
     v.x.6 AS threebet_to_bb,
-    v.x.7 AS holecards_str,
-    v.x.8 AS face_action,
-    v.x.9 AS preflop_action,
-    v.x.10 AS is_allin
+    v.x.7 AS open_to_bb,
+    v.x.8 AS holecards_str,
+    v.x.9 AS face_action,
+    v.x.10 AS preflop_action,
+    v.x.11 AS is_allin
   FROM latest_versions AS v
   INNER JOIN rank_intervals AS r ON v.x.1 = r.user_id
   WHERE v.x.2 >= r.rank_start_at
     AND v.x.2 < r.rank_end_at
     AND v.x.2 >= toDateTime('2025-07-01 00:00:00')
-    AND v.x.2 < toDateTime('2026-07-21 00:00:00')
+    AND v.x.2 < toDateTime('2026-07-22 00:00:00')
     AND v.x.1 IS NOT NULL
 ),
 classified AS
@@ -134,10 +137,9 @@ classified AS
       '80+'
     ) AS stack_band,
     multiIf(
-      threebet_to_bb < 6, '<6',
-      threebet_to_bb < 8, '6-8',
-      threebet_to_bb < 10, '8-10',
-      '10+'
+      threebet_to_bb / open_to_bb < 2.75, '2.5',
+      threebet_to_bb / open_to_bb < 3.5, '3',
+      '4'
     ) AS threebet_to_bucket,
     ifNull(nullIf(holecards_str, ''), '__MISSING__') AS holecards_str,
     user_id,

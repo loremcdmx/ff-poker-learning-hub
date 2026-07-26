@@ -11,6 +11,23 @@
   flex-direction: column;
 }
 
+.vs-3bet-defense-lesson .vs3-intro-decision-stack {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+
+.vs-3bet-defense-lesson .vs3-intro-decision-stack > .decision-feedback {
+  min-height: 0;
+  padding: 15px 18px 17px;
+  border-top: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.vs-3bet-defense-lesson .vs3-intro-decision-stack > .decision-feedback h3 {
+  max-width: 38ch;
+}
+
 .vs-3bet-defense-lesson .scope-disclosure {
   margin-top: auto;
   border: 1px solid var(--line);
@@ -2160,43 +2177,45 @@
   padding: clamp(18px, 2.6vw, 30px);
 }
 
-.vs-3bet-defense-lesson .vs3-practice-filter-card .vs3-section-head { align-items: center; }
-
-.vs-3bet-defense-lesson .vs3-practice-count {
-  max-width: 44ch;
-  margin: 0;
-  padding: 10px 12px;
-  border: 1px solid rgba(87, 214, 154, .2);
-  border-radius: 11px;
-  color: var(--lesson-good);
-  background: rgba(87, 214, 154, .055);
-  font-size: 11px;
-  font-weight: 760;
-  line-height: 1.45;
-  text-align: right;
+.vs-3bet-defense-lesson .vs3-practice-filter-card .vs3-section-head {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
 }
 
 .vs-3bet-defense-lesson [data-vs3-practice-filters] .vs3-filter-grid { margin-top: 16px; }
 
 .vs-3bet-defense-lesson .vs3-practice-builder {
   display: grid;
-  gap: 12px;
+  gap: 14px;
   margin-top: 16px;
+}
+
+.vs-3bet-defense-lesson .vs3-practice-group-title {
+  margin: 0;
+  color: var(--soft);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
 }
 
 .vs-3bet-defense-lesson .vs3-practice-presets {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid rgba(255, 255, 255, .09);
+  border-radius: 14px;
+  background: rgba(5, 5, 9, .38);
 }
 
 .vs-3bet-defense-lesson .vs3-practice-preset {
-  min-height: 50px;
-  padding: 10px 14px;
-  border: 1px solid rgba(255, 255, 255, .105);
-  border-radius: 11px;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
   color: var(--muted);
-  background: rgba(255, 255, 255, .028);
+  background: transparent;
   font: inherit;
   font-size: 12px;
   font-weight: 860;
@@ -2234,6 +2253,14 @@
 .vs-3bet-defense-lesson .vs3-practice-details[open] > summary {
   border-bottom: 1px solid rgba(255, 255, 255, .07);
   background: rgba(255, 255, 255, .025);
+}
+
+.vs-3bet-defense-lesson .vs3-practice-details-note {
+  margin: 0;
+  padding: 12px 12px 0;
+  color: var(--soft);
+  font-size: 10px;
+  line-height: 1.45;
 }
 
 .vs-3bet-defense-lesson .vs3-practice-optional-grid {
@@ -2628,7 +2655,71 @@
   .vs-3bet-defense-lesson .vs3-error-range-cell strong { font-size: 10px; }
 }
 
+/* The opening decision uses one table only: keep the shared renderer, but give
+   its teaching spot a denser laptop composition than the multi-table shell. */
+@media (min-width: 821px) and (max-width: 1180px) {
+  .vs-3bet-defense-lesson [data-step="deal"] .deal-shell {
+    gap: 16px;
+    padding: 24px;
+  }
+
+  .vs-3bet-defense-lesson [data-step="deal"] .deal-copy [data-lesson-title] {
+    margin-bottom: 12px;
+    font-size: clamp(40px, 4vw, 48px);
+  }
+
+  .vs-3bet-defense-lesson [data-step="deal"] .vs3-intro-decision-stack {
+    gap: 10px;
+  }
+
+  .vs-3bet-defense-lesson [data-step="deal"] .vs3-intro-decision-stack > .decision-feedback {
+    padding: 12px 16px 14px;
+  }
+}
+
+@media (min-width: 821px) and (max-width: 1280px) {
+  .vs-3bet-defense-lesson [data-intro-table].lesson-table-host {
+    min-height: 402px;
+    padding-bottom: 84px;
+  }
+
+  .vs-3bet-defense-lesson [data-intro-table] .ff-shell-simulator-snapshot,
+  .vs-3bet-defense-lesson [data-intro-table] .ff-shell-simulator-snapshot.table-grid,
+  .vs-3bet-defense-lesson [data-intro-table] .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-shell {
+    height: 318px;
+    min-height: 318px;
+  }
+
+  .vs-3bet-defense-lesson [data-intro-table] .ff-shell-simulator-snapshot.table-grid[data-count="1"] .table-shell {
+    --ff-shell-snapshot-chip-size: 21px !important;
+    --hero-card-cap: 66px !important;
+    --hero-card-width: 66px !important;
+    --seat-h: 50px !important;
+    --seat-w: 132px !important;
+    --sim-1t-hero-card: 66px !important;
+    --sim-1t-seat-h: 50px !important;
+    --sim-1t-seat-w: 132px !important;
+  }
+
+  .vs-3bet-defense-lesson [data-intro-table] .seat--0 { --seat-top: 94.5%; }
+  .vs-3bet-defense-lesson [data-intro-table] .seat--1 { --seat-left: 7.5%; --seat-top: 74%; }
+  .vs-3bet-defense-lesson [data-intro-table] .seat--2 { --seat-left: 7.5%; --seat-top: 26%; }
+  .vs-3bet-defense-lesson [data-intro-table] .seat--3 { --seat-top: 5.5%; }
+  .vs-3bet-defense-lesson [data-intro-table] .seat--4 { --seat-left: 92.5%; --seat-top: 26%; }
+  .vs-3bet-defense-lesson [data-intro-table] .seat--5 { --seat-left: 92.5%; --seat-top: 74%; }
+
+  .vs-3bet-defense-lesson [data-intro-table] .seat.is-hero .hero-felt-bet {
+    left: calc(50% + 92px) !important;
+    top: calc(50% + var(--hero-marker-ty, -8px) - var(--hero-card-pocket-y, 0px) - 22px) !important;
+  }
+}
+
 @media (max-width: 590px) {
+  .vs-3bet-defense-lesson [data-intro-table].lesson-table-host {
+    min-height: 314px;
+    padding-bottom: 4px;
+  }
+
   .vs-3bet-defense-lesson .vs3-comparison-table,
   .vs-3bet-defense-lesson .vs3-comparison-table tbody,
   .vs-3bet-defense-lesson .vs3-comparison-table tr,

@@ -1,126 +1,125 @@
 {
-  "version": "vs3bet-field-cube-20260721-v5",
-  "csvRows": 137245,
+  "version": "vs3bet-field-cube-20260725-v7",
+  "csvRows": 103288,
   "duplicateRows": 0,
-  "chartCount": 800,
-  "publicChartCount": 800,
-  "structurallyValidChartCount": 800,
+  "chartCount": 480,
+  "publicChartCount": 480,
+  "structurallyValidChartCount": 480,
   "missingStructurallyValidCharts": 0,
   "missingStructurallyValidChartKeys": [],
   "structurallyEmptyPublishedCharts": 0,
   "firstHandAt": "2025-07-01T00:00:49",
-  "lastHandAt": "2026-07-20T23:19:54",
+  "lastHandAt": "2026-07-21T23:54:56",
   "global": {
-    "opportunities": 9828126,
-    "folds": 5752082,
-    "calls": 2747395,
-    "fourbets": 544168,
-    "jams": 784481,
-    "knownOpportunities": 8519897,
-    "missingOpportunities": 1308229,
-    "knownCoveragePct": 86.689
+    "opportunities": 5958573,
+    "folds": 3697945,
+    "calls": 1521595,
+    "fourbets": 328071,
+    "jams": 410962,
+    "knownOpportunities": 5103330,
+    "missingOpportunities": 855243,
+    "knownCoveragePct": 85.647
   },
   "byCohort": {
     "novice": {
-      "opportunities": 1395357,
-      "folds": 823114,
-      "calls": 420075,
-      "fourbets": 68314,
-      "jams": 83854,
-      "knownOpportunities": 1170773,
-      "missingOpportunities": 224584,
-      "knownCoveragePct": 83.905,
-      "foldPct": 58.989,
-      "callPct": 30.105,
-      "fourbetPct": 4.896,
-      "jamPct": 6.01
+      "opportunities": 797431,
+      "folds": 510171,
+      "calls": 207996,
+      "fourbets": 36921,
+      "jams": 42343,
+      "knownOpportunities": 660515,
+      "missingOpportunities": 136916,
+      "knownCoveragePct": 82.83,
+      "foldPct": 63.977,
+      "callPct": 26.083,
+      "fourbetPct": 4.63,
+      "jamPct": 5.31
     },
     "league3": {
-      "opportunities": 3485206,
-      "folds": 2129661,
-      "calls": 931962,
-      "fourbets": 175304,
-      "jams": 248279,
-      "knownOpportunities": 2923971,
-      "missingOpportunities": 561235,
-      "knownCoveragePct": 83.897,
-      "foldPct": 61.106,
-      "callPct": 26.741,
-      "fourbetPct": 5.03,
-      "jamPct": 7.124
+      "opportunities": 2087200,
+      "folds": 1358548,
+      "calls": 498009,
+      "fourbets": 102174,
+      "jams": 128469,
+      "knownOpportunities": 1721811,
+      "missingOpportunities": 365389,
+      "knownCoveragePct": 82.494,
+      "foldPct": 65.089,
+      "callPct": 23.86,
+      "fourbetPct": 4.895,
+      "jamPct": 6.155
     },
     "league2": {
-      "opportunities": 3610144,
-      "folds": 2068684,
-      "calls": 1005886,
-      "fourbets": 211439,
-      "jams": 324135,
-      "knownOpportunities": 3191999,
-      "missingOpportunities": 418145,
-      "knownCoveragePct": 88.417,
-      "foldPct": 57.302,
-      "callPct": 27.863,
-      "fourbetPct": 5.857,
-      "jamPct": 8.978
+      "opportunities": 2223157,
+      "folds": 1342901,
+      "calls": 576980,
+      "fourbets": 131353,
+      "jams": 171923,
+      "knownOpportunities": 1942139,
+      "missingOpportunities": 281018,
+      "knownCoveragePct": 87.36,
+      "foldPct": 60.405,
+      "callPct": 25.953,
+      "fourbetPct": 5.908,
+      "jamPct": 7.733
     },
     "league1": {
-      "opportunities": 1337419,
-      "folds": 730623,
-      "calls": 389472,
-      "fourbets": 89111,
-      "jams": 128213,
-      "knownOpportunities": 1233154,
-      "missingOpportunities": 104265,
-      "knownCoveragePct": 92.204,
-      "foldPct": 54.629,
-      "callPct": 29.121,
-      "fourbetPct": 6.663,
-      "jamPct": 9.587
+      "opportunities": 850785,
+      "folds": 486325,
+      "calls": 238610,
+      "fourbets": 57623,
+      "jams": 68227,
+      "knownOpportunities": 778865,
+      "missingOpportunities": 71920,
+      "knownCoveragePct": 91.547,
+      "foldPct": 57.162,
+      "callPct": 28.046,
+      "fourbetPct": 6.773,
+      "jamPct": 8.019
     }
   },
   "dimensionTotals": {
     "heroPosition": {
-      "EP": 702318,
-      "MP": 2778670,
-      "HJ": 1965302,
-      "CO": 2025832,
-      "BTN": 1953999,
-      "SB": 402005
+      "EP": 386649,
+      "MP": 1553052,
+      "HJ": 1158258,
+      "CO": 1313780,
+      "BTN": 1495315,
+      "SB": 51519
     },
     "relation": {
-      "IP": 4228440,
-      "OOP": 5599686
+      "IP": 3201251,
+      "OOP": 2757322
     },
     "stackBand": {
-      "20-30": 772683,
-      "31-50": 2164946,
-      "51-80": 2767312,
-      "80+": 4123185
+      "20-30": 321772,
+      "31-50": 1135051,
+      "51-80": 1697879,
+      "80+": 2803871
     },
     "sizeBucket": {
-      "<6": 5911325,
-      "6-8": 2859093,
-      "8-10": 693594,
-      "10+": 364114
+      "3": 2733404,
+      "4": 929551,
+      "2.5": 2295618
     }
   },
   "cellCoverage": {
-    "nonEmptyCells": 96917,
-    "unavailableCells": 38283,
-    "lowConfidenceCells": 43426,
-    "strongCells": 32208
+    "nonEmptyCells": 54404,
+    "unavailableCells": 26716,
+    "lowConfidenceCells": 26140,
+    "strongCells": 15881
   },
   "defaultSlice": {
-    "key": "league3|BTN|IP|31-50|all",
+    "key": "league3|BTN|IP|31-50|3",
     "totals": {
-      "opportunities": 170164,
-      "folds": 123459,
-      "calls": 27671,
-      "fourbets": 3055,
-      "jams": 15979,
-      "knownOpportunities": 147342,
-      "missingOpportunities": 22822,
-      "knownCoveragePct": 86.588,
+      "opportunities": 66121,
+      "folds": 49939,
+      "calls": 8881,
+      "fourbets": 966,
+      "jams": 6335,
+      "knownOpportunities": 55831,
+      "missingOpportunities": 10290,
+      "knownCoveragePct": 84.438,
       "exactCellCount": 169
     },
     "populatedHands": 169,
@@ -128,18 +127,21 @@
   },
   "provenance": {
     "rankIntervals": {
-      "rows": 9621,
-      "queryJobId": "mcp_bq_job_27f28569d524423381552c6f1c152d0d",
-      "sha256": "beda893b3542eb266f75a12e62637aa8f21f55856d3f5497a7a2059cb7a8bccc",
+      "rows": 19699,
+      "queryJobId": "mcp_bq_job_e9147a172e0a455faa21292b7aa80a4d",
+      "sha256": "64b309058fabffe1d2f25e4a7d68f4aae84867d96a3faa9a743c4b0c39f78cd6",
       "storage": "External private build input; individual user_id rank histories are not shipped as a public lesson asset."
     },
     "handCube": {
-      "rows": 137245,
+      "rows": 103288,
       "queryJobIds": [
-        "mcp_ch_job_7c8e3feb3b9d498e8052f14d51024a7e"
+        "mcp_ch_job_f86ea4d27fed4b6496e0deb4588d15ed",
+        "mcp_ch_job_eef6cc26b8474a7fa3a889013ccab002",
+        "mcp_ch_job_6230a8486d6f42c88d2d22e295d1a7f5",
+        "mcp_ch_job_25530dec09974baf8a67ab6fbc7bcadc"
       ],
-      "sha256": "bfc45290b48aa7d7ec596b3d5727073b0a554ec199327a078091ed196bde3275",
-      "sourceQueryTemplateSha256": "1062df6b19cd411d8c54d96b44e678a1bfde153725938e33c61bdf15e0376276"
+      "sha256": "b8ed793da346550c5020adc71c8fa5f1a8530bf7c092880db2cdeeebeac935a9",
+      "sourceQueryTemplateSha256": "3be414c250b31d9c6deb8c952cb3cc1ca1b02a95ed2307ecf438ff6a61b23787"
     }
   }
 }

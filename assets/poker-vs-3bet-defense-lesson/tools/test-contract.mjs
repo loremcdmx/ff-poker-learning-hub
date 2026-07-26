@@ -53,13 +53,14 @@ assert.equal(data.cohorts[2].actions[0].pct, 59.96);
 assert.equal(data.cohorts[3].sample, 861445);
 assert.equal(data.cohorts[3].players, 953);
 assert.doesNotMatch(source.data, /42,6 → 21,0%/);
-assert.equal(fieldData.version, "vs3bet-field-cube-20260721-v5");
-assert.equal(fieldData.meta.windowEndExclusive, "2026-07-21T00:00:00Z");
+assert.equal(fieldData.version, "vs3bet-field-cube-20260725-v7");
+assert.equal(fieldData.meta.windowEndExclusive, "2026-07-22T00:00:00Z");
 assert.equal(fieldData.meta.hands.length, 169);
-assert.equal(Object.keys(fieldData.charts).length, 800, "all valid chart slices are public");
+assert.equal(Object.keys(fieldData.charts).length, 480, "all valid chart slices are public");
+assert.deepEqual(Array.from(fieldData.meta.sizeBuckets), ["2.5", "3", "4"]);
 assert.deepEqual(Array.from(fieldData.meta.cohorts.novice.ranks), [15, 16, 17, 18]);
 assert.deepEqual(Array.from(fieldData.meta.cohorts.league3.ranks), [11, 12, 13, 14]);
-assert.equal(fieldData.summaries.league3.opportunities, 3485206);
+assert.equal(fieldData.summaries.league3.opportunities, 2087200);
 assert.equal(fieldData.meta.filters.squeezeExcluded, true);
 assert.match(fieldData.meta.aggregation, /descriptive|integer|count/i);
 
@@ -92,7 +93,7 @@ for (const [chartKey, chart] of Object.entries(fieldData.charts)) {
   assert(knownByAction[4] <= totals.jams, `${chartKey} known-card jams do not exceed the all-card total`);
   assert(Math.abs(totals.knownCoveragePct - totals.knownOpportunities / totals.opportunities * 100) < 0.001, `${chartKey} coverage percentage is exact`);
 }
-assert.equal(auditedFieldCells, 800 * 169, "the entire 800-slice / 169-hand field cube is reconciled");
+assert.equal(auditedFieldCells, 480 * 169, "the entire 480-slice / 169-hand field cube is reconciled");
 
 for (const [cohortKey, totals] of Object.entries(fieldData.summaries)) {
   assert.equal(
@@ -276,14 +277,21 @@ const introScenario = model.scenario({
   cohort: "reference"
 });
 assert.deepEqual(
-  JSON.parse(JSON.stringify(introScenario.cells.JJ)),
-  { fold: 0, call: 0, fourbet: 72, jam: 28 },
-  "the intro JJ cell stays tied to the canonical reference scenario"
+  JSON.parse(JSON.stringify(introScenario.cells["98s"])),
+  { fold: 15.31, call: 79.41, fourbet: 3.8, jam: 1.48 },
+  "the intro 98s cell stays tied to the canonical reference scenario"
 );
-assert.equal(data.intro.id, "intro-jj-co-vs-btn");
-assert.equal(data.intro.options.find((option) => option.correct)?.key, "fourbet");
-assert.equal(data.intro.options.find((option) => option.key === "jam")?.acceptableMix, true);
-assert.doesNotMatch(data.intro.answer, /колл сохраняет/i);
+assert.equal(data.intro.id, "intro-98s-co-vs-btn");
+assert.equal(data.intro.hand, "98s");
+assert.deepEqual(
+  JSON.parse(JSON.stringify(data.intro.table.heroCards)),
+  ["9c", "8c"],
+  "the intro table renders the suited 98 cards"
+);
+assert.equal(data.intro.options.find((option) => option.correct)?.key, "call");
+assert.equal(data.intro.options.find((option) => option.key === "fourbet")?.acceptableMix, true);
+assert.equal(data.intro.options.find((option) => option.key === "fold")?.acceptableMix, undefined);
+assert.match(data.intro.answer, /колл.*79,4%/i);
 
 const coIpScenario = model.scenario({
   position: "CO",
@@ -305,8 +313,8 @@ assert.notDeepEqual(
   "IP and OOP filters produce visibly different action frequencies for the same hand"
 );
 assert(
-  source.html.indexOf("data-intro-table") < source.html.indexOf("data-intro-feedback"),
-  "the intro feedback must live after the table so stale CSS cannot overlap it with the deal table"
+  source.html.indexOf("data-intro-feedback") < source.html.indexOf("data-intro-table"),
+  "the intro prompt must live above the deal table so the task is visible before the action area"
 );
 assert(
   source.html.indexOf("data-practice-table") < source.html.indexOf("data-practice-feedback"),
@@ -314,8 +322,8 @@ assert(
 );
 assert.doesNotMatch(
   source.explorerCss,
-  /\.decision-panel \.decision-feedback[\s\S]{0,140}order:\s*1/,
-  "decision panel feedback must not be reordered above the table by responsive CSS"
+  /\.vs3-intro-decision-stack\s*>\s*\.decision-feedback[\s\S]{0,180}position:\s*absolute/,
+  "the intro prompt must stay in normal flow above the deal table"
 );
 assert.doesNotMatch(
   source.explorerCss,
@@ -613,8 +621,8 @@ const expectedScriptOrder = [
   "poker-vs-3bet-defense-lesson/range-model.js",
   "poker-vs-3bet-defense-lesson/data.js",
   "poker-vs-3bet-defense-lesson/data/vs3bet-field-data.js",
-  "poker-vs-3bet-defense-lesson/wisdom-reference.js",
   "poker-vs-3bet-defense-lesson/range-explorer.js",
+  "poker-vs-3bet-defense-lesson/wisdom-reference.js",
   "poker-vs-3bet-defense-lesson/field-explorer.js",
   "poker-field-lesson/lesson.js"
 ];
@@ -644,9 +652,14 @@ assert.match(source.explorer, /function openFrequencyFor/);
 assert.match(source.explorer, /function visualOpenFill/);
 assert.match(source.explorer, /function practiceFilterPayload/);
 assert.match(source.explorer, /function renderPracticeExpected/);
-assert.match(source.explorer, /Любые/);
-assert.match(source.explorer, /Только в позиции/);
-assert.match(source.explorer, /Только без позиции/);
+assert.match(source.explorer, /Все ситуации/);
+assert.match(source.explorer, /createPracticePreset\("В позиции", "IP"\)/);
+assert.match(source.explorer, /createPracticePreset\("Без позиции", "OOP"\)/);
+assert.match(source.explorer, /Точная настройка/);
+assert.match(source.explorer, /practiceStartButton\.textContent = ids\.length \? "Начать практику"/);
+assert.doesNotMatch(source.html, /data-vs3-practice-scope|Считаем доступные раздачи/);
+assert.match(source.html, /Бесконечная практика против 3-бета/);
+assert.match(source.html, /без лимита раздач/);
 assert.match(source.explorer, /FFFieldLessonPracticeExtension/);
 assert.match(source.explorer, /Math\.max\(10, Math\.min\(100, frequency\)\)/);
 assert.match(source.explorer, /data-vs3-open-frequency|dataset\.vs3OpenFrequency/);
@@ -704,9 +717,11 @@ assert.match(source.explorer, /targets:/);
 assert.match(source.explorer, /mix\.missing \? "is-missing" : dominantAction\(mix\)\.tone/);
 assert.match(source.explorer, /button\.disabled = mix\.missing/);
 assert.match(source.explorer, /const fieldData = root\.FF_VS3BET_FIELD_DATA/);
-assert.match(source.explorer, /"2\.5": "<6"/);
-assert.match(source.explorer, /"3": "6-8"/);
-assert.match(source.explorer, /"4": "8-10"/);
+assert.doesNotMatch(source.explorer, /FIELD_SIZE_BUCKETS|"<6"|"6-8"|"8-10"/);
+assert.match(source.explorer, /return state\.size/);
+assert.match(source.fieldExplorer, /"2\.5": "2,5x"/);
+assert.match(source.fieldExplorer, /size: \{ label: "Размер 3-бета"/);
+assert.match(source.wisdomReference, /"2\.5": "2,5x"/);
 assert.match(source.explorer, /function measuredFieldRow/);
 assert.match(source.explorer, /vs3-comparison-table/);
 assert.match(source.explorer, /Реальные решения FF/);
@@ -717,6 +732,8 @@ assert.match(source.explorerCss, /\.is-fold[\s\S]*--vs3-cell-surface/);
 assert.match(source.explorerCss, /\.vs3-range-cell\.is-missing/);
 assert.match(source.explorerCss, /\.vs3-comparison-table/);
 assert.match(source.explorerCss, /\.vs3-comparison-delta\.is-more/);
+assert.match(source.explorer, /function strategyFor\(next = \{\}\)/);
+assert.match(source.explorer, /strategyFor,/);
 assert.match(source.explorerCss, /\.vs3-field-range-cell\.is-unavailable[\s\S]*background: #121016/);
 assert.match(source.explorerCss, /\.vs3-field-occurrence-fill[\s\S]*height: var\(--vs3-field-occurrence-fill/);
 assert.match(source.explorerCss, /\.vs3-field-range-cell\.has-occurrence-weight[\s\S]*background: #151219/);
@@ -736,14 +753,21 @@ assert.doesNotMatch(source.wisdomReference, /vs3-wisdom-defense|Крупно —
 assert.match(source.wisdomReference, /data\.meta\.hands\.forEach/);
 assert.match(source.wisdomReference, /function startingHandComboCount/);
 assert.match(source.wisdomReference, /return value\.endsWith\("s"\) \? 4 : 12/);
-assert.match(source.wisdomReference, /count\(source\?\.cells\?\.\[index\]\?\.\[0\]\) \/ startingHandComboCount\(hand\)/);
-assert.match(source.wisdomReference, /\[state\.cohort, state\.position, state\.relation, state\.stack, "all"\]/);
+assert.match(source.wisdomReference, /count\(current\?\.cells\?\.\[index\]\?\.\[0\]\) \/ startingHandComboCount\(hand\)/);
+assert.doesNotMatch(source.wisdomReference, /\[state\.cohort, state\.position, state\.relation, state\.stack, "all"\]/);
 assert.match(source.wisdomReference, /dataset\.vs3OccurrenceFrequency/);
 assert.match(source.wisdomReference, /vs3-range-grid vs3-wisdom-range-grid ff-range-grid/);
-assert.match(source.wisdomReference, /vs3-field-range-cell vs3-wisdom-range-cell ff-range-cell/);
-assert.match(source.wisdomReference, /--vs3-field-occurrence-fill/);
-assert.match(source.wisdomReference, /Высота цвета — как часто рука встречается среди опенов/);
-assert.match(source.wisdomReference, /Это наблюдаемая игра поля, а не рекомендация/);
+assert.match(source.wisdomReference, /vs3-range-cell vs3-wisdom-range-cell ff-range-cell/);
+assert.match(source.wisdomReference, /--vs3-open-fill/);
+assert.match(source.wisdomReference, /vs3-open-weight-fill/);
+assert.match(source.wisdomReference, /createMixBar\(mix, "vs3-cell-mix"\)/);
+assert.match(source.wisdomReference, /function applyMixSurface/);
+assert.match(source.wisdomReference, /FFVs3BetRangeExplorer/);
+assert.match(source.wisdomReference, /vs3-comparison-table/);
+assert.match(source.wisdomReference, /"Наш чарт"/);
+assert.match(source.wisdomReference, /"Поле"/);
+assert.match(source.wisdomReference, /Высота ячейки — как часто рука доходит до этого спота/);
+assert.doesNotMatch(source.wisdomReference, /Это наблюдаемая игра поля, а не рекомендация/);
 assert.doesNotMatch(source.wisdomReference, /5 051 115 решений/);
 assert.doesNotMatch(source.wisdomReference, /FF_VS3BET_RANGE_MODEL|scenario\.summary/);
 assert.match(source.fieldExplorer, /Высота — встречаемость среди опенов с учётом комбо\. Цвет — главное действие/);

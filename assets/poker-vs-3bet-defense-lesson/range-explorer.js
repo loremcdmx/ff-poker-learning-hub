@@ -11,7 +11,6 @@
   const explorerHost = documentRoot.querySelector("[data-vs3-range-explorer]");
   const leaksHost = documentRoot.querySelector("[data-vs3-leaks]");
   const practiceFiltersHost = documentRoot.querySelector("[data-vs3-practice-filters]");
-  const practiceScopeHost = documentRoot.querySelector("[data-vs3-practice-scope]");
   const practiceStartButton = documentRoot.querySelector("[data-practice-start]");
   const practiceExpectedHost = documentRoot.querySelector("[data-vs3-practice-expected]");
 
@@ -56,12 +55,6 @@
     size: { label: "Размер 3-бета", preferred: "3" },
     cohort: { label: "Сравнить с", preferred: "reference" }
   };
-
-  const FIELD_SIZE_BUCKETS = Object.freeze({
-    "2.5": "<6",
-    "3": "6-8",
-    "4": "8-10"
-  });
 
   const FIELD_COHORTS = Object.freeze([
     { key: "league1", label: "Лига 1", ranks: "R1–5" },
@@ -170,6 +163,29 @@
     } catch (error) {
       return { cells: {}, error };
     }
+  }
+
+  function strategyFor(next = {}) {
+    const hand = clean(next.hand) || state.hand;
+    if (typeof model?.scenario !== "function") {
+      return { hand, mix: normalizeMix(null) };
+    }
+    let scenario;
+    try {
+      scenario = model.scenario(filterPayload({
+        position: next.position ?? state.position,
+        relation: next.relation ?? state.relation,
+        stack: next.stack ?? state.stack,
+        size: next.size ?? state.size,
+        cohort: next.cohort ?? "reference"
+      }));
+    } catch (error) {
+      scenario = { cells: {}, error };
+    }
+    return {
+      hand,
+      mix: normalizeMix(cellFrom(scenario, hand))
+    };
   }
 
   function ranks() {
@@ -613,12 +629,12 @@
   }
 
   function fieldSizeBucket() {
-    return FIELD_SIZE_BUCKETS[state.size] || "all";
+    return state.size;
   }
 
   function fieldSizeLabel() {
     const bucket = fieldSizeBucket();
-    return bucket === "<6" ? "до 6 BB" : `${bucket.replace("-", "–")} BB`;
+    return bucket === "2.5" ? "2,5x" : `${bucket}x`;
   }
 
   function fieldHandIndex(hand = state.hand) {
@@ -1036,25 +1052,33 @@
 
   function createPracticeFilters() {
     const wrap = element("div", "vs3-practice-builder");
+    wrap.append(element("p", "vs3-practice-group-title", "Где играем после 3-бета"));
     const presets = element("div", "vs3-practice-presets");
     presets.setAttribute("role", "group");
-    presets.setAttribute("aria-label", "Ширина выборки практики");
+    presets.setAttribute("aria-label", "Позиция после 3-бета");
     presets.append(
-      createPracticePreset("Любые", "all"),
-      createPracticePreset("Только в позиции", "IP"),
-      createPracticePreset("Только без позиции", "OOP")
+      createPracticePreset("Все ситуации", "all"),
+      createPracticePreset("В позиции", "IP"),
+      createPracticePreset("Без позиции", "OOP")
     );
     const details = element("details", "vs3-practice-details");
     details.open = practiceState.detailsOpen;
     details.addEventListener("toggle", () => { practiceState.detailsOpen = details.open; });
-    details.append(element("summary", "", "Уточнить позицию, стек или сайз"));
+    details.append(element("summary", "", "Точная настройка"));
     const optional = element("div", "vs3-practice-optional-grid");
     optional.append(
       createPracticeOptionalGroup("position", "Позиция Hero", "Любая"),
       createPracticeOptionalGroup("stack", "Эффективный стек", "Любой"),
       createPracticeOptionalGroup("size", "Размер 3-бета", "Любой")
     );
-    details.append(optional);
+    details.append(
+      element(
+        "p",
+        "vs3-practice-details-note",
+        "Необязательно: ограничь практику конкретной позицией, стеком или размером 3-бета."
+      ),
+      optional
+    );
     wrap.append(presets, details);
     return wrap;
   }
@@ -1102,14 +1126,9 @@
   function renderPracticeSetup() {
     const ids = syncPracticeQueue();
     if (practiceFiltersHost) practiceFiltersHost.replaceChildren(createPracticeFilters());
-    if (practiceScopeHost) {
-      practiceScopeHost.textContent = ids.length
-        ? `${ids.length} ${pluralHands(ids.length)} · ${practiceSelectionLabel()}`
-        : `Нет раздач · ${practiceSelectionLabel()}`;
-    }
     if (practiceStartButton) {
       practiceStartButton.disabled = !ids.length;
-      practiceStartButton.textContent = ids.length ? `Начать: ${ids.length} ${pluralHands(ids.length)}` : "Нет раздач под фильтр";
+      practiceStartButton.textContent = ids.length ? "Начать практику" : "Нет подходящих ситуаций";
     }
   }
 
@@ -1303,6 +1322,7 @@
       return { ...state };
     },
     refresh: renderAll,
+    strategyFor,
     profitBoundary: () => ({ ...threeBetEconomics() }),
     targets: () => asArray(model?.positions).map((position) => {
       const target = targetForPosition(position);

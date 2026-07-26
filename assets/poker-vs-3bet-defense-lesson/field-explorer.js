@@ -26,14 +26,14 @@
     position: { EP: "EP", MP: "MP", HJ: "HJ", CO: "CO", BTN: "BTN", SB: "SB" },
     relation: { IP: "В позиции", OOP: "Без позиции" },
     stack: { "20-30": "20–30 BB", "31-50": "31–50 BB", "51-80": "51–80 BB", "80+": "80+ BB" },
-    size: { all: "Все сайзы", "<6": "до 6 BB", "6-8": "6–8 BB", "8-10": "8–10 BB", "10+": "10+ BB" }
+    size: { "2.5": "2,5x", "3": "3x", "4": "4x" }
   };
   const filters = {
     cohort: { label: "Кто играет", values: data?.meta?.cohortOrder || ["league3"], preferred: "league3" },
     position: { label: "Позиция Hero", values: data?.meta?.heroPositions || ["BTN"], preferred: "BTN" },
     relation: { label: "Против 3-бета", values: data?.meta?.relations || ["IP"], preferred: "IP" },
     stack: { label: "Эффективный стек", values: data?.meta?.stackBands || ["31-50"], preferred: "31-50" },
-    size: { label: "3-бет до", values: data?.meta?.sizeBuckets || ["all"], preferred: "all" }
+    size: { label: "Размер 3-бета", values: data?.meta?.sizeBuckets || ["2.5", "3", "4"], preferred: "3" }
   };
   const state = Object.fromEntries(Object.entries(filters).map(([key, config]) => [key, config.values.includes(config.preferred) ? config.preferred : config.values[0]]));
   state.hand = "AQs";
@@ -198,10 +198,8 @@
   }
 
   function occurrenceProfile(current) {
-    const allSizesKey = [state.cohort, state.position, state.relation, state.stack, "all"].join("|");
-    const source = data?.charts?.[allSizesKey] || current;
     const scores = data.meta.hands.map((hand, index) => (
-      count(source?.cells?.[index]?.[0]) / startingHandComboCount(hand)
+      count(current?.cells?.[index]?.[0]) / startingHandComboCount(hand)
     ));
     const positive = scores.filter((score) => score > 0).sort((left, right) => left - right);
     const reference = positive[Math.max(0, Math.floor((positive.length - 1) * .9))] || 0;
@@ -214,9 +212,7 @@
   }
 
   function referenceSizeMultiplier(size = state.size) {
-    if (size === "<6") return 2.5;
-    if (size === "8-10" || size === "10+") return 4;
-    return 3;
+    return Number(size) || 3;
   }
 
   function referenceScenario() {

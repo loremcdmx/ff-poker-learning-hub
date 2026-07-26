@@ -21,9 +21,9 @@ if (!csvPath || !cubeJobIds.length) throw new Error('Usage: build-vs3bet-field-d
 const rankArgumentIndex = process.argv.indexOf('--rank-intervals');
 const rankPath = rankArgumentIndex >= 0 ? process.argv[rankArgumentIndex + 1] : process.env.FF_VS3BET_RANK_INTERVALS;
 const rankProvenance = {
-  rows: 9621,
-  queryJobId: 'mcp_bq_job_27f28569d524423381552c6f1c152d0d',
-  sha256: 'beda893b3542eb266f75a12e62637aa8f21f55856d3f5497a7a2059cb7a8bccc',
+  rows: 19699,
+  queryJobId: 'mcp_bq_job_e9147a172e0a455faa21292b7aa80a4d',
+  sha256: '64b309058fabffe1d2f25e4a7d68f4aae84867d96a3faa9a743c4b0c39f78cd6',
 };
 
 if (rankArgumentIndex >= 0 && !rankPath) throw new Error('Usage: --rank-intervals <external-rank-intervals.csv>');
@@ -46,8 +46,8 @@ const positionRelations = [
   ['BTN', 'IP'], ['SB', 'OOP'],
 ];
 const stackBands = ['20-30', '31-50', '51-80', '80+'];
-const sourceSizeBuckets = ['<6', '6-8', '8-10', '10+'];
-const sizeBuckets = ['all', ...sourceSizeBuckets];
+const sourceSizeBuckets = ['2.5', '3', '4'];
+const sizeBuckets = [...sourceSizeBuckets];
 const ranks = 'AKQJT98765432'.split('');
 const hands = ranks.flatMap((_, row) => ranks.map((__, column) => {
   if (row === column) return `${ranks[row]}${ranks[column]}`;
@@ -96,7 +96,6 @@ for (const row of rows) {
   dimensionTotals.stackBand[row.stackBand] += row.opportunities;
   dimensionTotals.sizeBucket[row.sizeBucket] += row.opportunities;
   addToChart(chartFor(row.cohort, row.heroPosition, row.relation, row.stackBand, row.sizeBucket), row);
-  addToChart(chartFor(row.cohort, row.heroPosition, row.relation, row.stackBand, 'all'), row);
   firstHandAt = minDate(firstHandAt, row.firstHandAt);
   lastHandAt = maxDate(lastHandAt, row.lastHandAt);
 }
@@ -115,18 +114,18 @@ const missingStructurallyValidChartKeys = [...structurallyValidChartKeys].filter
 assert.equal(chartEntries.length + missingStructurallyValidChartKeys.length, structurallyValidChartCount);
 const cellSamples = chartEntries.flatMap(([, chart]) => chart.cells.map((cell) => cell[0]).filter(Boolean));
 const publicChartEntries = chartEntries.map(([key, chart]) => [key, publicChart(chart)]);
-const defaultKey = keyFor('league3', 'BTN', 'IP', '31-50', 'all');
+const defaultKey = keyFor('league3', 'BTN', 'IP', '31-50', '3');
 const defaultChart = Object.fromEntries(publicChartEntries)[defaultKey] || publicChartEntries[0]?.[1];
 assert(defaultChart, 'no observed charts built');
 
 const payload = {
-  version: 'vs3bet-field-cube-20260721-v5',
+  version: 'vs3bet-field-cube-20260725-v7',
   meta: {
-    generatedOn: '2026-07-21',
+    generatedOn: '2026-07-25',
     source: 'analytics.int_tracker_hand_joined',
     rankSource: 'analytics_mcp_readonly.mcp__check_rank_history',
     windowStartInclusive: '2025-07-01T00:00:00Z',
-    windowEndExclusive: '2026-07-21T00:00:00Z',
+    windowEndExclusive: '2026-07-22T00:00:00Z',
     rankAssignment: 'Exact half-open rank interval at played_at; real players only.',
     cohorts: {
       novice: { label: 'Новички', ranks: [15, 16, 17, 18] },
@@ -156,8 +155,8 @@ const payload = {
       threebetToMinimumBb: 3,
     },
     sizeBoundary: {
-      measuredField: 'Absolute 3-bet-to amount in BB: <6, 6-8, 8-10, 10+.',
-      omitted: 'RFI-to amount and 3-bet multiplier are omitted: Hero-row preflop_2bet_and_blind_facing_amount_bb is not Hero RFI size.',
+      measuredField: 'Observed 3-bet / Hero RFI ratio: 2.5x=[2.25,2.75), 3x=[2.75,3.5), 4x=[3.5,4.5).',
+      omitted: 'Ratios outside the three chart controls are omitted so the field and recommendation tabs address the same measured scenarios.',
     },
     actionContract: {
       fold: "preflop_face_3bet_action='F'",
