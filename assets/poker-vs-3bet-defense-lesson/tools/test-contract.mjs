@@ -157,7 +157,12 @@ for (const position of model.positions) {
       targetPlans.set(`${position}/${stack.key}/${size}`, plan);
       assert.deepEqual(
         JSON.parse(JSON.stringify(plan.filters)),
-        { position, stack: stack.key, size },
+        {
+          position,
+          relation: position === "SB" ? "OOP" : "IP",
+          stack: stack.key,
+          size
+        },
         `${position}/${stack.key}/${size} reports the exact selected filters`
       );
       const total = ["fold", "call", "fourbet", "jam"].reduce((sum, action) => {
@@ -165,7 +170,7 @@ for (const position of model.positions) {
         return sum + plan.mix[action];
       }, 0);
       assert(Math.abs(total - 100) < 0.001, `${position}/${stack.key}/${size} target actions reconcile to 100%`);
-      assert(plan.mix.fold >= 50, `${position}/${stack.key}/${size} does not manufacture the implausible 20–30% fold targets`);
+      assert(plan.mix.fold >= 45, `${position}/${stack.key}/${size} does not manufacture the implausible 20–30% fold targets`);
       assert(plan.mix.fold <= 80, `${position}/${stack.key}/${size} keeps a plausible recommendation rather than a pure-fold range`);
       if (stack.key === "51-80" || stack.key === "80+") {
         assert.equal(plan.mix.jam, 0, `${position}/${stack.key}/${size} does not label deep 4-bets as open jams`);
@@ -174,29 +179,93 @@ for (const position of model.positions) {
   }
 }
 assert.equal(targetPlanCount, 72, "all position / stack / size target combinations are audited");
+const mixSignature = (mix) => ["fold", "call", "fourbet", "jam"]
+  .map((action) => `${action}:${mix[action].toFixed(4)}`)
+  .join("|");
 for (const position of model.positions) {
   for (const stack of model.stacks) {
-    const small = targetPlans.get(`${position}/${stack.key}/2.5`).mix.fold;
-    const neutral = targetPlans.get(`${position}/${stack.key}/3`).mix.fold;
-    const large = targetPlans.get(`${position}/${stack.key}/4`).mix.fold;
+    const plansBySize = model.sizes.map((size) => targetPlans.get(`${position}/${stack.key}/${size}`));
+    const [smallPlan, neutralPlan, largePlan] = plansBySize;
+    const small = smallPlan.mix.fold;
+    const neutral = neutralPlan.mix.fold;
+    const large = largePlan.mix.fold;
     assert(small < neutral, `${position}/${stack.key} defends wider against 2.5x than against 3x`);
     assert(neutral < large, `${position}/${stack.key} folds more against 4x than against 3x`);
+    assert.equal(
+      new Set(plansBySize.map((plan) => mixSignature(plan.mix))).size,
+      model.sizes.length,
+      `${position}/${stack.key} exposes a distinct aggregate for every selected 3-bet size`
+    );
+    assert.notEqual(
+      smallPlan.mix.fourbet,
+      neutralPlan.mix.fourbet,
+      `${position}/${stack.key} ordinary 4-bet frequency changes between 2.5x and 3x`
+    );
+    assert.notEqual(
+      neutralPlan.mix.fourbet,
+      largePlan.mix.fourbet,
+      `${position}/${stack.key} ordinary 4-bet frequency changes between 3x and 4x`
+    );
+    if (stack.key === "20-30" || stack.key === "31-50") {
+      assert.equal(
+        new Set(plansBySize.map((plan) => plan.mix.jam.toFixed(4))).size,
+        model.sizes.length,
+        `${position}/${stack.key} 4-bet jam frequency changes with the incoming 3-bet size`
+      );
+    }
+  }
+  for (const size of model.sizes) {
+    assert.notEqual(
+      mixSignature(targetPlans.get(`${position}/51-80/${size}`).mix),
+      mixSignature(targetPlans.get(`${position}/80+/${size}`).mix),
+      `${position}/${size} keeps 51–80 BB distinct from 80+ BB`
+    );
+  }
+}
+for (const position of ["EP", "MP", "HJ", "CO"]) {
+  for (const stack of model.stacks) {
+    for (const size of model.sizes) {
+      const ipPlan = model.targetPlan({
+        position,
+        relation: "IP",
+        stack: stack.key,
+        size,
+        openFrequencies: rfiData.sourceFrequencies[position]
+      });
+      const oopPlan = model.targetPlan({
+        position,
+        relation: "OOP",
+        stack: stack.key,
+        size,
+        openFrequencies: rfiData.sourceFrequencies[position]
+      });
+      assert.notEqual(
+        mixSignature(ipPlan.mix),
+        mixSignature(oopPlan.mix),
+        `${position}/${stack.key}/${size} exposes a distinct aggregate when IP/OOP changes`
+      );
+    }
   }
 }
 assert.deepEqual(
   JSON.parse(JSON.stringify(targetPlans.get("EP/80+/3").mix)),
-  { fold: 62.37, call: 24.2, fourbet: 13.43, jam: 0 },
-  "EP 80+ BB versus 3x preserves the exact defense matrix weighted by the hands that EP opens"
+  { fold: 57.56, call: 29.69, fourbet: 12.75, jam: 0 },
+  "EP 80+ BB versus 3x applies the selected IP node to the exact matrix and EP open weights"
 );
 assert.deepEqual(
   JSON.parse(JSON.stringify(targetPlans.get("EP/20-30/3").mix)),
-  { fold: 65.27, call: 21.3, fourbet: 3.76, jam: 9.67 },
-  "the shallow-stack plan trims speculative calls and moves 72% of the aggressive response into the jam bucket"
+  { fold: 61.04, call: 26.13, fourbet: 3.57, jam: 9.26 },
+  "the shallow-stack plan trims speculative calls and moves the selected IP response into the jam bucket"
 );
 assert.deepEqual(
   JSON.parse(JSON.stringify(targetPlans.get("BTN/80+/3").mix)),
-  { fold: 67.79, call: 24.76, fourbet: 7.45, jam: 0 },
-  "BTN 80+ BB versus 3x is independently aggregated from BTN open frequencies"
+  { fold: 67.3, call: 25.62, fourbet: 7.08, jam: 0 },
+  "BTN 80+ BB versus 3x is independently aggregated from BTN open frequencies and the IP node"
+);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(targetPlans.get("SB/80+/3").mix)),
+  { fold: 65, call: 27, fourbet: 8, jam: 0 },
+  "SB 80+ BB versus 3x preserves the source-conditioned SB versus BB aggregate"
 );
 
 const introScenario = model.scenario({
@@ -326,6 +395,12 @@ for (const position of model.positions) {
 assert.equal(scenarioCount, 600);
 assert(jamCellCount > 0, "short-stack scenarios contain a distinct 4-bet jam component");
 
+const scenarioFingerprint = (scenario) => model.hands
+  .map((hand) => {
+    const cell = scenario.cells[hand];
+    return `${hand}:${cell.fold.toFixed(2)},${cell.call.toFixed(2)},${cell.fourbet.toFixed(2)},${cell.jam.toFixed(2)}`;
+  })
+  .join("|");
 for (const position of model.positions) {
   for (const relation of validRelations(position)) {
     for (const stack of model.stacks) {
@@ -336,6 +411,11 @@ for (const position of model.positions) {
         size,
         cohort: "reference"
       }));
+      assert.equal(
+        new Set(scenarios.map(scenarioFingerprint)).size,
+        model.sizes.length,
+        `${position}/${relation}/${stack.key} changes the full 169-cell chart for every incoming 3-bet size`
+      );
       for (const hand of model.hands) {
         const hasAggressiveComponent = scenarios.some((scenario) => (
           scenario.cells[hand].fourbet + scenario.cells[hand].jam >= 1
@@ -348,6 +428,52 @@ for (const position of model.positions) {
           `${position}/${relation}/${stack.key}/${hand} never continues more often versus a meaningfully larger 3-bet`
         );
       }
+    }
+    for (const size of model.sizes) {
+      const mediumDeep = model.scenario({
+        position,
+        relation,
+        stack: "51-80",
+        size,
+        cohort: "reference"
+      });
+      const deepest = model.scenario({
+        position,
+        relation,
+        stack: "80+",
+        size,
+        cohort: "reference"
+      });
+      assert.notEqual(
+        scenarioFingerprint(mediumDeep),
+        scenarioFingerprint(deepest),
+        `${position}/${relation}/${size} changes the full 169-cell chart between 51–80 and 80+ BB`
+      );
+    }
+  }
+}
+for (const position of ["EP", "MP", "HJ", "CO"]) {
+  for (const stack of model.stacks) {
+    for (const size of model.sizes) {
+      const ipScenario = model.scenario({
+        position,
+        relation: "IP",
+        stack: stack.key,
+        size,
+        cohort: "reference"
+      });
+      const oopScenario = model.scenario({
+        position,
+        relation: "OOP",
+        stack: stack.key,
+        size,
+        cohort: "reference"
+      });
+      assert.notEqual(
+        scenarioFingerprint(ipScenario),
+        scenarioFingerprint(oopScenario),
+        `${position}/${stack.key}/${size} changes the full 169-cell chart when IP/OOP changes`
+      );
     }
   }
 }
@@ -524,8 +650,12 @@ assert.match(source.explorer, /Только без позиции/);
 assert.match(source.explorer, /FFFieldLessonPracticeExtension/);
 assert.match(source.explorer, /Math\.max\(10, Math\.min\(100, frequency\)\)/);
 assert.match(source.explorer, /data-vs3-open-frequency|dataset\.vs3OpenFrequency/);
-assert.match(source.explorer, /Высота — как часто открываем руку\. Полоса снизу — пас, колл, 4-бет и пуш/);
+assert.match(source.explorer, /Высота — как часто открываем руку\. Цвет заполнения — точная смесь паса, колла, 4-бета и пуша/);
 assert.match(source.explorer, /минимальная полоса 10%/);
+assert.match(source.explorer, /function applyMixSurface/);
+assert.match(source.explorer, /vs3-matrix-summary-bar/);
+assert.match(source.explorerCss, /\.vs3-matrix-summary-bar[\s\S]*display: flex/);
+assert.match(source.explorerCss, /--vs3-fold-end/);
 assert.match(source.explorerCss, /\.vs3-open-weight-fill[\s\S]*height: var\(--vs3-open-fill/);
 assert.match(source.explorer, /vs3-range-grid ff-range-grid/);
 assert.match(source.explorer, /vs3-range-cell ff-range-cell/);
@@ -563,6 +693,8 @@ assert.match(source.model, /riskBb \/ \(riskBb \+ TARGET_POLICY\.potBeforeThreeB
 assert.doesNotMatch(source.model, /safetyMarginPct|maxFoldPct|targetBluffEvBb/);
 assert.match(source.explorer, /model\?\.targetEconomics/);
 assert.match(source.explorer, /model\?\.targetPlan/);
+assert.match(source.explorer, /dataset\.vs3ScenarioSignature/);
+assert.match(source.explorer, /vs3-matrix-summary-metrics/);
 assert.doesNotMatch(source.explorer, /exactOpenWeightedTarget/);
 assert.match(source.explorer, /Автоприбыль начинается выше/);
 assert.match(source.explorer, /Если мы пасуем чаще .* даже нулевой блеф уже плюсует сразу/);

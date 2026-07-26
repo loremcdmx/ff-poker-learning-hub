@@ -222,9 +222,11 @@
       ]
     },
     "51-80": {
-      sourceStatus: "heuristic-neutral",
-      rationale: "51–80 BB — нейтральная учебная глубина.",
-      transfers: []
+      sourceStatus: "heuristic",
+      rationale: "При 51–80 BB пограничные коллы реализуют немного хуже, чем в самом глубоком стеке.",
+      transfers: [
+        { from: "call", to: "fold", share: 0.03, eligibility: "marginal-call" }
+      ]
     },
     "80+": {
       sourceStatus: "heuristic-neutral",
@@ -542,29 +544,7 @@
   const TARGET_POLICY = deepFreeze({
     openBb: 2,
     bbPosted: 1,
-    potBeforeThreeBet: 4.5,
-    sizeTransfers: {
-      2.5: [
-        { from: "fold", to: "call", share: 0.08 }
-      ],
-      3: [],
-      4: [
-        { from: "call", to: "fold", share: 0.20 },
-        { from: "call", to: "fourbet", share: 0.05 }
-      ]
-    },
-    stackTransfers: {
-      "20-30": [
-        { from: "call", to: "fold", share: 0.12 },
-        { from: "fourbet", to: "jam", share: 0.72 }
-      ],
-      "31-50": [
-        { from: "call", to: "fold", share: 0.04 },
-        { from: "fourbet", to: "jam", share: 0.28 }
-      ],
-      "51-80": [],
-      "80+": []
-    }
+    potBeforeThreeBet: 4.5
   });
 
   function targetEconomics(sizeValue) {
@@ -583,40 +563,54 @@
     });
   }
 
-  function applyAggregateTransfers(input, transfers) {
+  function applyAggregateAdjustments(input, adjustments) {
     const mix = cloneCell(input);
-    transfers.forEach((transfer) => {
-      const share = Math.min(1, Math.max(0, Number(transfer.share) || 0));
-      const amount = mix[transfer.from] * share;
-      mix[transfer.from] -= amount;
-      mix[transfer.to] += amount;
+    adjustments.forEach((adjustment) => {
+      (adjustment.transfers || []).forEach((transfer) => {
+        const share = Math.min(1, Math.max(0, Number(transfer.share) || 0));
+        const amount = mix[transfer.from] * share;
+        mix[transfer.from] -= amount;
+        mix[transfer.to] += amount;
+      });
     });
     return normalizeCell(mix);
   }
 
   function targetPlan(input = {}) {
     const position = normalizePosition(input.position || "CO");
+    const relation = normalizeRelation(input.relation, position);
     const stack = normalizeStack(input.stack);
     const size = normalizeSize(input.size);
+    const scenarioOutput = scenario({
+      position,
+      relation,
+      stack: stack.key,
+      size,
+      cohort: "reference"
+    });
     const exactOpenedRange = position === "SB"
       ? null
       : summarizeOpenedRange(exactBaselines[position].cells, input.openFrequencies);
     const baseline = exactOpenedRange || normalizeCell(exactBaselines[position].summaryTarget);
     const economics = targetEconomics(size);
-    const sizedMix = applyAggregateTransfers(baseline, TARGET_POLICY.sizeTransfers[size]);
-    const mix = applyAggregateTransfers(sizedMix, TARGET_POLICY.stackTransfers[stack.key]);
+    const adjustments = scenarioOutput.provenance.adaptation.adjustments;
+    const mix = position === "SB"
+      ? applyAggregateAdjustments(baseline, adjustments)
+      : summarizeOpenedRange(scenarioOutput.cells, input.openFrequencies)
+        || normalizeCell(scenarioOutput.summary.comboWeighted);
 
     return deepFreeze({
-      filters: { position, stack: stack.key, size },
+      filters: { position, relation, stack: stack.key, size },
       mix,
       baseline: { ...baseline },
       economics,
       source: exactOpenedRange
-        ? "Точная матрица × частота опена"
-        : "Точная матрица · SB против BB",
+        ? "Матрица текущего спота × частота опена"
+        : "Матрица текущего спота · SB против BB",
       adaptation: {
-        size: TARGET_POLICY.sizeTransfers[size],
-        stack: TARGET_POLICY.stackTransfers[stack.key],
+        relation: adjustments.find((item) => item.dimension === "relation")?.transfers || [],
+        size: adjustments.find((item) => item.dimension === "size")?.transfers || [],
+        stack: adjustments.find((item) => item.dimension === "stack")?.transfers || [],
         boundary: "Сайз и стек — прозрачная учебная адаптация; красная линия авто-прибыли не используется как целевая частота."
       }
     });

@@ -259,7 +259,7 @@
   }
 
   function createMixBar(mix, className) {
-    const bar = element("span", className);
+    const bar = element("span", ["vs3-mix-bar", className].filter(Boolean).join(" "));
     bar.setAttribute("aria-hidden", "true");
     ACTIONS.forEach((action) => {
       const segment = element("i", `vs3-action-segment ${action.tone}`);
@@ -267,6 +267,14 @@
       bar.append(segment);
     });
     return bar;
+  }
+
+  function applyMixSurface(node, mix) {
+    let cumulative = 0;
+    ACTIONS.forEach((action) => {
+      cumulative += number(mix[action.key]);
+      node.style.setProperty(`--vs3-${action.key}-end`, `${Math.min(100, cumulative)}%`);
+    });
   }
 
   let filterRenderId = 0;
@@ -356,9 +364,10 @@
     };
   }
 
-  function targetForPosition(position) {
+  function targetForPosition(position, relation = relationForPosition(position)) {
     const plan = model?.targetPlan?.({
       position,
+      relation,
       stack: state.stack,
       size: Number(state.size),
       openFrequencies: rfiData?.sourceFrequencies?.[position] || null
@@ -366,7 +375,7 @@
     const displayMix = roundedActionTotals(plan?.mix);
     return {
       position,
-      relation: relationForPosition(position),
+      relation,
       source: plan?.source || "Наша рекомендация",
       mix: displayMix,
       economics: plan?.economics || null
@@ -536,6 +545,14 @@
 
   function createMatrix(scenario) {
     const card = element("section", "vs3-matrix-card ff-chart-panel");
+    const aggregate = targetForPosition(state.position, state.relation).mix;
+    card.dataset.vs3ScenarioSignature = [
+      state.position,
+      state.relation,
+      state.stack,
+      state.size,
+      ...ACTIONS.map((action) => `${action.key}:${aggregate[action.key].toFixed(1)}`)
+    ].join("|");
     const head = element("header", "vs3-matrix-head ff-chart-head");
     const copy = element("div", "");
     copy.append(
@@ -545,11 +562,23 @@
         "p",
         "vs3-open-weight-note",
         rfiData?.sourceFrequencies?.[state.position]
-          ? "Высота — как часто открываем руку. Полоса снизу — пас, колл, 4-бет и пуш."
+          ? "Высота — как часто открываем руку. Цвет заполнения — точная смесь паса, колла, 4-бета и пуша."
           : "Для SB показаны частоты паса, колла, 4-бета и пуша."
       )
     );
     head.append(copy, createLegend());
+
+    const summary = element("div", "vs3-matrix-summary");
+    const metrics = element("div", "vs3-matrix-summary-metrics");
+    ACTIONS.forEach((action) => {
+      const item = element("span", `vs3-matrix-summary-metric ${action.tone}`);
+      item.append(
+        element("small", "", action.label),
+        element("strong", "", formatPercent(aggregate[action.key]))
+      );
+      metrics.append(item);
+    });
+    summary.append(metrics, createMixBar({ ...aggregate, missing: false }, "vs3-matrix-summary-bar"));
 
     const scroll = element("div", "vs3-matrix-scroll");
     scroll.tabIndex = 0;
@@ -574,11 +603,12 @@
       button.style.setProperty("--vs3-open-fill", `${visualOpenFill(openFrequency)}%`);
       const fill = element("span", "vs3-open-weight-fill");
       fill.setAttribute("aria-hidden", "true");
+      applyMixSurface(fill, mix);
       button.append(fill, element("strong", "", hand), createMixBar(mix, "vs3-cell-mix"));
       grid.append(button);
     });
     scroll.append(grid);
-    card.append(head, scroll);
+    card.append(head, summary, scroll);
     return card;
   }
 

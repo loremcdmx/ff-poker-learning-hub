@@ -599,6 +599,7 @@ footer {
 }
 
 footer a { color: #aebcb3; text-underline-offset: 4px; }
+.footer-links { display: flex; align-items: center; gap: 18px; }
 
 @media (max-width: 900px) {
   .trainer-grid { grid-template-columns: 1fr; max-width: 640px; margin-inline: auto; }

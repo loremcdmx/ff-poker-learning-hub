@@ -42,6 +42,35 @@ The combined comparison shows that the source's right-side abstract `≈43%` blo
 
 final result: passed
 
+---
+
+# Design QA — vs-3bet size-switch matrix readability
+
+Problem screenshot: `/var/folders/3x/hpz4jz_d1tb79j8fjbk1z0tw0000gn/T/TemporaryItems/NSIRD_screencaptureui_3aehJJ/Снимок экрана — 2026-07-22 в 3.30.28 AM.png`
+
+Before capture: `/tmp/vs3-size-before-20260725.png`
+
+Implementation screenshots: `/tmp/vs3-size-after-20260725.png`, `/tmp/vs3-size-tablet-20260725.png`, and `/tmp/vs3-size-mobile-20260725.png`
+
+Viewport and state:
+
+- Desktop: 1440 × 1000, CO, in position, 31–50 BB, 3x.
+- Tablet: 952 × 907, CO, in position, 31–50 BB, 4x.
+- Mobile: 390 × 844, CO, in position, 31–50 BB, 4x.
+
+## Findings
+
+No actionable P0/P1/P2 mismatch remains.
+
+- The four detached summary lines are now one bounded stacked bar whose segment widths add to the aggregate strategy.
+- A matrix cell no longer hides the exact mix behind one dominant surface color. Its full visible fill uses the same proportional fold, call, 4-bet and 4-bet-push composition as the summary, while fill height still communicates how often the hand is opened.
+- Size changes are source-backed rather than decorative. For CO in position at 31–50 BB the aggregate changes from `60.0 / 32.2 / 5.6 / 2.2` at 2.5x to `61.2 / 30.7 / 5.8 / 2.3` at 3x and `67.3 / 23.3 / 6.8 / 2.6` at 4x.
+- Exact hand changes are visible without forcing every cell to change. AQs remains `4 / 96 / 0 / 0` at 2.5x and 3x, then becomes `23.04 / 72.96 / 2.88 / 1.12` at 4x.
+- Desktop and tablet have zero document overflow. Mobile also has zero document overflow and keeps the existing deliberate matrix-local horizontal scroll (`129 px`) rather than clipping the page.
+- The exact route produced no console warnings or runtime errors.
+
+final result: passed
+
 # Design QA — flop check-raise K92 value range
 
 Source visual truth: `/var/folders/3x/hpz4jz_d1tb79j8fjbk1z0tw0000gn/T/TemporaryItems/NSIRD_screencaptureui_pKXGoJ/Снимок экрана — 2026-07-19 в 10.03.50 PM.png`

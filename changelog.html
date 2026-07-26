@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0910">
+  <title>Чейнджлог тренажёров · FF Learning Hub</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #09080d;
+      --panel: #121018;
+      --panel-strong: #181421;
+      --line: rgba(255, 255, 255, 0.12);
+      --text: #f4f1ec;
+      --muted: #aaa4b4;
+      --accent: #ffe25b;
+      --green: #58d6a7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        radial-gradient(circle at 85% 0%, rgba(98, 64, 145, 0.2), transparent 34rem),
+        var(--bg);
+      color: var(--text);
+      font: 16px/1.6 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .changelog-shell {
+      width: min(1040px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 72px;
+    }
+
+    .changelog-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 34px;
+    }
+
+    .changelog-nav a {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(18, 16, 24, 0.82);
+      text-decoration: none;
+      font-weight: 750;
+    }
+
+    .changelog-nav a:hover,
+    .changelog-nav a:focus-visible {
+      border-color: rgba(255, 226, 91, 0.72);
+      outline: none;
+    }
+
+    .changelog-hero {
+      margin-bottom: 28px;
+      padding: clamp(24px, 5vw, 52px);
+      border: 1px solid rgba(255, 226, 91, 0.3);
+      border-radius: 28px;
+      background:
+        linear-gradient(135deg, rgba(255, 226, 91, 0.08), transparent 48%),
+        var(--panel);
+    }
+
+    .changelog-eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .changelog-hero h1 {
+      margin: 0;
+      font-size: clamp(2rem, 6vw, 4.6rem);
+      line-height: 0.98;
+      letter-spacing: -0.055em;
+    }
+
+    .changelog-hero p:last-child {
+      max-width: 720px;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.18rem);
+    }
+
+    .changelog-content {
+      padding: clamp(22px, 5vw, 54px);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: rgba(18, 16, 24, 0.88);
+    }
+
+    .changelog-content h2 {
+      margin: 52px 0 14px;
+      padding-top: 28px;
+      border-top: 1px solid var(--line);
+      font-size: clamp(1.55rem, 4vw, 2.45rem);
+      line-height: 1.12;
+      letter-spacing: -0.035em;
+    }
+
+    .changelog-content h2:first-child {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .changelog-content h3 {
+      margin: 34px 0 10px;
+      color: var(--accent);
+      font-size: 1.22rem;
+    }
+
+    .changelog-content h4 {
+      margin: 26px 0 8px;
+      font-size: 1.05rem;
+    }
+
+    .changelog-content p {
+      margin: 10px 0;
+      color: var(--muted);
+    }
+
+    .changelog-content ul {
+      display: grid;
+      gap: 8px;
+      margin: 14px 0 22px;
+      padding-left: 1.25rem;
+    }
+
+    .changelog-content li {
+      padding-left: 0.25rem;
+    }
+
+    .changelog-content li::marker {
+      color: var(--green);
+    }
+
+    .changelog-content code {
+      padding: 0.12em 0.38em;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      background: var(--panel-strong);
+      color: #fff0a8;
+      font: 0.9em/1.3 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .changelog-error {
+      color: #ff8d98;
+    }
+
+    @media (max-width: 620px) {
+      .changelog-shell {
+        width: min(100% - 20px, 1040px);
+        padding-top: 10px;
+      }
+
+      .changelog-nav {
+        align-items: stretch;
+        flex-direction: column;
+        margin-bottom: 12px;
+      }
+
+      .changelog-nav a {
+        justify-content: center;
+      }
+
+      .changelog-hero,
+      .changelog-content {
+        border-radius: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="changelog-shell">
+    <nav class="changelog-nav" aria-label="Навигация">
+      <a href="/">← Все тренажёры</a>
+      <a href="/docs/standalone-trainer-changelog.md" download>Скачать Markdown</a>
+    </nav>
+
+    <header class="changelog-hero">
+      <p class="changelog-eyebrow">FF Learning Hub · история релизов</p>
+      <h1>Чейнджлог тренажёров</h1>
+      <p>Что изменилось в уроках, практике, чартах и общем покерном симуляторе.</p>
+    </header>
+
+    <article id="changelogContent" class="changelog-content" aria-live="polite">
+      <p>Загружаем историю релизов…</p>
+    </article>
+  </main>
+
+  <script>
+    (() => {
+      const target = document.getElementById("changelogContent");
+      const source = "/docs/standalone-trainer-changelog.md?release=20260725";
+
+      function appendInline(parent, text) {
+        text.split(/(`[^`]+`)/g).filter(Boolean).forEach((part) => {
+          if (part.startsWith("`") && part.endsWith("`")) {
+            const code = document.createElement("code");
+            code.textContent = part.slice(1, -1);
+            parent.append(code);
+          } else {
+            parent.append(document.createTextNode(part));
+          }
+        });
+      }
+
+      function renderMarkdown(markdown) {
+        const fragment = document.createDocumentFragment();
+        let list = null;
+        let paragraph = [];
+
+        function flushParagraph() {
+          if (!paragraph.length) return;
+          const node = document.createElement("p");
+          appendInline(node, paragraph.join(" ").replace(/\s+/g, " ").trim());
+          fragment.append(node);
+          paragraph = [];
+        }
+
+        function flushList() {
+          if (!list) return;
+          fragment.append(list);
+          list = null;
+        }
+
+        markdown.split(/\r?\n/).forEach((line, index) => {
+          const heading = line.match(/^(#{1,4})\s+(.+)$/);
+          const item = line.match(/^\s*-\s+(.+)$/);
+
+          if (heading) {
+            flushParagraph();
+            flushList();
+            if (index === 0 && heading[1].length === 1) return;
+            const level = Math.min(4, Math.max(2, heading[1].length));
+            const node = document.createElement(`h${level}`);
+            appendInline(node, heading[2]);
+            fragment.append(node);
+            return;
+          }
+
+          if (item) {
+            flushParagraph();
+            if (!list) list = document.createElement("ul");
+            const node = document.createElement("li");
+            appendInline(node, item[1]);
+            list.append(node);
+            return;
+          }
+
+          if (!line.trim()) {
+            flushParagraph();
+            flushList();
+            return;
+          }
+
+          flushList();
+          paragraph.push(line.trim());
+        });
+
+        flushParagraph();
+        flushList();
+        target.replaceChildren(fragment);
+      }
+
+      fetch(source)
+        .then((response) => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response.text();
+        })
+        .then(renderMarkdown)
+        .catch(() => {
+          const message = document.createElement("p");
+          message.className = "changelog-error";
+          message.textContent = "История релизов временно не загрузилась.";
+          target.replaceChildren(message);
+        });
+    })();
+  </script>
+</body>
+</html>
