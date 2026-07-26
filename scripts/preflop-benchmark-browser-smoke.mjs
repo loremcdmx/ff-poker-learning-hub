@@ -16,6 +16,7 @@ const minimumStackSteps = {
 };
 const viewports = [
   { name: "desktop", width: 1440, height: 900 },
+  { name: "wide-short", width: 1485, height: 605 },
   { name: "polish", width: 1280, height: 800 },
   { name: "comment", width: 1155, height: 870 },
   { name: "laptop", width: 1280, height: 720 },
@@ -97,6 +98,7 @@ try {
         const status = rect("#introTableHost .action-status");
         const card = rect("#introTableHost .seat.is-hero .poker-deck-card");
         const tableCard = rect(".table-card");
+        const tableShell = rect("#introTableHost .table-shell");
         const introPanel = rect(".benchmark-intro");
         const introCopy = rect(".benchmark-intro .intro-copy");
         const introVisual = rect(".benchmark-intro .intro-table-visual");
@@ -162,6 +164,8 @@ try {
           maxSeatHeight: Math.max(...seatPanels.map((seat) => seat.height)),
           maxSeatWidth: Math.max(...seatPanels.map((seat) => seat.width)),
           introPanelHeight: introPanel?.height || 0,
+          tableCardHeight: tableCard?.height || 0,
+          tablePlaneHeight: tableShell?.height || 0,
           introIsSplit: Boolean(introCopy && introVisual && introCopy.right <= introVisual.left + 1),
           introUnusedBottom: introPanel && tableCard ? introPanel.bottom - tableCard.bottom : 0,
           tableCardContainsActions: contains(tableCard, actionBar),
@@ -198,6 +202,10 @@ try {
       if (viewport.width >= 921) assert.equal(introGeometry.introIsSplit, true, `${route} keeps the compact split intro at ${viewport.name}: ${JSON.stringify(introGeometry)}`);
       if (viewport.name === "reported") assert(introGeometry.introPanelHeight <= 620, `${route} keeps the reported intro compact: ${JSON.stringify(introGeometry)}`);
       if (viewport.name === "reported") assert(introGeometry.introUnusedBottom <= 40, `${route} keeps the reported intro tightly cropped: ${JSON.stringify(introGeometry)}`);
+      if (route === "/vs-one-raiser-positions-lesson" && viewport.name === "wide-short") {
+        assert(introGeometry.tablePlaneHeight >= 350, `free-position intro preserves table depth at wide-short: ${JSON.stringify(introGeometry)}`);
+        assert(introGeometry.tableCardHeight >= 500, `free-position intro gives the table enough vertical room at wide-short: ${JSON.stringify(introGeometry)}`);
+      }
       if (viewport.name === "reported") {
         await page.screenshot({ path: `/private/tmp/${route.slice(1)}-intro-reported.png`, fullPage: false });
         await page.locator("#introTableHost").screenshot({ path: `/private/tmp/${route.slice(1)}-table-reported.png` });
@@ -215,47 +223,57 @@ try {
         assert.equal(await page.locator("#wisdomSlides .slide").count(), 2, "free-position main lesson keeps only two distinct wisdom slides");
         assert.equal(await page.locator("#wisdomCounter").innerText(), "1 из 2", "free-position carousel renumbers the first slide after removing the repeated filter slide");
         assert.equal((await page.locator("#wisdomSlides").innerText()).includes("Сначала реши: продолжать ли вообще"), false, "free-position main lesson removes the repeated continuation-filter slide");
-        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-action-compare-grid > *").count(), 169, "free-position main wisdom compares the full 13x13 action range");
-        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-action-compare-grid .is-unavailable").count(), 0, "free-position main wisdom has no missing cohort comparisons");
-        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-action-band").count(), 338, "free-position main wisdom shows both cohorts in every hand cell");
-        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-action-cohorts > span").count(), 2, "free-position main wisdom directly labels both cohort colors");
-        const actionComparisonText = await page.locator("#wisdomSlides .slide.active .wisdom-action-card").innerText();
-        assert(actionComparisonText.includes("Какие руки уходят в «колл»") && actionComparisonText.includes("Первая лига") && actionComparisonText.includes("Ранги 15–18") && actionComparisonText.includes("6%") && actionComparisonText.includes("8%"), "free-position main wisdom keeps the exact 28-32 BB default-spot call comparison beside the chart");
-        const actionComparisonGeometry = await page.locator("#wisdomSlides .slide.active .wisdom-action-card").evaluate((card) => {
+        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-strategy-facet").count(), 2, "free-position main wisdom separates the two cohorts into direct-labelled facets");
+        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-strategy-grid > *").count(), 338, "free-position main wisdom renders two complete 13x13 strategy ranges");
+        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-strategy-grid .is-unavailable").count(), 0, "free-position main wisdom has no missing cohort comparisons");
+        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-strategy-shift").count(), 3, "free-position main wisdom directly compares call, 3-bet, and jam totals");
+        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-strategy-card .ff-chart-legend > span").count(), 4, "free-position main wisdom uses one shared semantic action legend");
+        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-action-band, #wisdomSlides .slide.active .wisdom-push-band").count(), 0, "free-position main wisdom removes cohort-colored overlays");
+        const actionComparisonText = await page.locator("#wisdomSlides .slide.active .wisdom-strategy-card").innerText();
+        assert(actionComparisonText.includes("Как две группы делят продолжение") && actionComparisonText.includes("Первая лига") && actionComparisonText.includes("Ранги 15–18") && actionComparisonText.includes("Колл") && actionComparisonText.includes("3-бет") && actionComparisonText.includes("3-бет пуш") && actionComparisonText.includes("6%") && actionComparisonText.includes("8%"), "free-position main wisdom explains the exact full-strategy comparison beside the charts");
+        const actionComparisonGeometry = await page.locator("#wisdomSlides .slide.active .wisdom-strategy-card").evaluate((card) => {
           const outer = card.getBoundingClientRect();
-          const grid = card.querySelector(".wisdom-action-compare-grid")?.getBoundingClientRect();
+          const facets = [...card.querySelectorAll(".wisdom-strategy-facet")].map((node) => node.getBoundingClientRect());
+          const grids = [...card.querySelectorAll(".wisdom-strategy-grid")].map((node) => node.getBoundingClientRect());
+          const cells = [...card.querySelectorAll(".wisdom-strategy-grid .ff-range-cell:first-child")].map((node) => node.getBoundingClientRect());
           return {
             overflowX: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
-            gridInsideCard: Boolean(grid && grid.left >= outer.left - 1 && grid.right <= outer.right + 1 && grid.top >= outer.top - 1 && grid.bottom <= outer.bottom + 1),
+            gridsInsideCard: grids.length === 2 && grids.every((grid) => grid.left >= outer.left - 1 && grid.right <= outer.right + 1 && grid.top >= outer.top - 1 && grid.bottom <= outer.bottom + 1),
+            gridsInsideFacets: grids.length === facets.length && grids.every((grid, index) => grid.left >= facets[index].left - 1 && grid.right <= facets[index].right + 1 && grid.top >= facets[index].top - 1 && grid.bottom <= facets[index].bottom + 1),
+            facetsStacked: facets.length === 2 && Math.abs(facets[0].top - facets[1].top) > 2,
+            minCellWidth: Math.min(...cells.map((cell) => cell.width)),
             cardScrollOverflow: Math.max(0, card.scrollWidth - card.clientWidth),
           };
         });
         assert.equal(actionComparisonGeometry.overflowX, 0, `free-position main wisdom has no page overflow at ${viewport.name}`);
         assert.equal(actionComparisonGeometry.cardScrollOverflow, 0, `free-position main wisdom has no card overflow at ${viewport.name}`);
-        assert.equal(actionComparisonGeometry.gridInsideCard, true, `free-position main wisdom keeps the 13x13 chart inside its card at ${viewport.name}`);
-        if (viewport.name === "reported") await page.screenshot({ path: "/private/tmp/vs-one-raiser-positions-wisdom-action-reported.png", fullPage: true });
+        assert.equal(actionComparisonGeometry.gridsInsideCard, true, `free-position main wisdom keeps both 13x13 charts inside its card at ${viewport.name}`);
+        assert.equal(actionComparisonGeometry.gridsInsideFacets, true, `free-position main wisdom keeps each chart inside its labelled facet at ${viewport.name}`);
+        assert(actionComparisonGeometry.minCellWidth >= (viewport.name === "mobile" ? 19 : 22), `free-position main wisdom keeps every strategy cell readable at ${viewport.name}: ${JSON.stringify(actionComparisonGeometry)}`);
+        if (viewport.name === "mobile") assert.equal(actionComparisonGeometry.facetsStacked, true, "free-position main wisdom stacks the two strategy facets on mobile");
+        if (viewport.name === "wide-short") assert.equal(actionComparisonGeometry.facetsStacked, false, "free-position main wisdom keeps the two strategy facets aligned on wide screens");
+        if (viewport.name === "reported") await page.screenshot({ path: "/private/tmp/vs-one-raiser-positions-wisdom-strategy-reported.png", fullPage: true });
         await page.locator("#wisdomNext").click();
         assert.equal(await page.locator("#wisdomCounter").innerText(), "2 из 2", "free-position carousel renumbers the short-stack slide as the second and final thought");
-        assert((await page.locator("#wisdomSlides .slide.active").innerText()).includes("Часть коллов должна стать пушами"), "free-position carousel moves directly from the range chart to the short-stack lesson");
-        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-push-compare-grid > *").count(), 169, "free-position short-stack wisdom compares the full 13x13 push range");
-        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-push-compare-grid .is-unavailable").count(), 0, "free-position short-stack wisdom has no missing cohort comparisons");
-        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-push-band").count(), 338, "free-position short-stack wisdom shows both cohorts in every hand cell");
-        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-push-cohorts > span").count(), 2, "free-position short-stack wisdom directly labels both cohort colors");
-        const freePositionPushText = await page.locator("#wisdomSlides .slide.active .wisdom-push-card").innerText();
-        assert(freePositionPushText.includes("Кто пушит какие руки") && freePositionPushText.includes("18–22 BB") && freePositionPushText.includes("Первая лига") && freePositionPushText.includes("Ранги 15–18") && freePositionPushText.includes("9%") && freePositionPushText.includes("6%"), "free-position short-stack wisdom keeps the exact 18-22 BB push totals beside the range chart");
-        const freePositionPushGeometry = await page.locator("#wisdomSlides .slide.active .wisdom-push-card").evaluate((card) => {
+        assert((await page.locator("#wisdomSlides .slide.active").innerText()).includes("Пуш появляется как отдельная ветка"), "free-position carousel moves directly from the range chart to the short-stack lesson");
+        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-strategy-grid > *").count(), 338, "free-position short-stack wisdom renders both complete strategy ranges");
+        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-strategy-grid .is-unavailable").count(), 0, "free-position short-stack wisdom has no missing cohort comparisons");
+        assert.equal(await page.locator("#wisdomSlides .slide.active .wisdom-strategy-card .ff-chart-legend > span").count(), 4, "free-position short-stack wisdom keeps semantic action colors");
+        const freePositionPushText = await page.locator("#wisdomSlides .slide.active .wisdom-strategy-card").innerText();
+        assert(freePositionPushText.includes("Какие руки становятся пушем") && freePositionPushText.includes("18–22 BB") && freePositionPushText.includes("Первая лига") && freePositionPushText.includes("Ранги 15–18") && freePositionPushText.includes("9%") && freePositionPushText.includes("6%"), "free-position short-stack wisdom keeps the exact 18-22 BB push comparison beside the full strategy charts");
+        const freePositionPushGeometry = await page.locator("#wisdomSlides .slide.active .wisdom-strategy-card").evaluate((card) => {
           const outer = card.getBoundingClientRect();
-          const grid = card.querySelector(".wisdom-push-compare-grid")?.getBoundingClientRect();
+          const grids = [...card.querySelectorAll(".wisdom-strategy-grid")].map((node) => node.getBoundingClientRect());
           return {
             overflowX: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
-            gridInsideCard: Boolean(grid && grid.left >= outer.left - 1 && grid.right <= outer.right + 1 && grid.top >= outer.top - 1 && grid.bottom <= outer.bottom + 1),
+            gridsInsideCard: grids.length === 2 && grids.every((grid) => grid.left >= outer.left - 1 && grid.right <= outer.right + 1 && grid.top >= outer.top - 1 && grid.bottom <= outer.bottom + 1),
             cardScrollOverflow: Math.max(0, card.scrollWidth - card.clientWidth),
           };
         });
         assert.equal(freePositionPushGeometry.overflowX, 0, `free-position short-stack wisdom has no page overflow at ${viewport.name}`);
         assert.equal(freePositionPushGeometry.cardScrollOverflow, 0, `free-position short-stack wisdom has no card overflow at ${viewport.name}`);
-        assert.equal(freePositionPushGeometry.gridInsideCard, true, `free-position short-stack wisdom keeps the 13x13 chart inside its card at ${viewport.name}`);
-        if (viewport.name === "reported") await page.screenshot({ path: "/private/tmp/vs-one-raiser-positions-wisdom-push-reported.png", fullPage: true });
+        assert.equal(freePositionPushGeometry.gridsInsideCard, true, `free-position short-stack wisdom keeps both 13x13 charts inside its card at ${viewport.name}`);
+        if (viewport.name === "reported") await page.screenshot({ path: "/private/tmp/vs-one-raiser-positions-wisdom-push-strategy-reported.png", fullPage: true });
         assert.equal(await page.locator("#wisdomNext").isDisabled(), true, "free-position carousel disables next on the second and final slide");
       }
       if (route === "/sb-unopened-lesson") {

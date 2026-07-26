@@ -79,6 +79,19 @@
     --poker-card-width: 64px;
   }
 }
+
+@media (min-width: 1380px) {
+  .preflop-benchmark-lesson[data-trainer="vs_raise_free"] .table-card {
+    width: min(100%, 760px);
+    padding: 14px;
+  }
+
+  .preflop-benchmark-lesson[data-trainer="vs_raise_free"] .lesson-table-host {
+    --trainer-table-plane-height: clamp(350px, 50cqw, 380px);
+    --shell-action-gutter: 88px;
+    padding: 16px 12px var(--shell-action-gutter);
+  }
+}
 .preflop-benchmark-lesson .lesson-table-host .ff-shell-simulator-snapshot.table-grid[data-count="1"] :is(.bet-marker, .hero-felt-bet) {
   --poker-chip-size: 14px;
 }
@@ -308,28 +321,49 @@
 .preflop-benchmark-lesson .wisdom-push-band.is-league { top: 0; width: var(--league-jam); background: var(--benchmark-jam); }
 .preflop-benchmark-lesson .wisdom-push-band.is-novice { bottom: 0; width: var(--novice-jam); background: var(--wisdom-novice-push); }
 .preflop-benchmark-lesson .wisdom-push-compare-grid .ff-range-cell b { color: var(--text); text-shadow: 0 1px 2px rgba(0,0,0,.92); }
-.preflop-benchmark-lesson .wisdom-action-card {
-  --wisdom-league-action: var(--benchmark-call);
-  --wisdom-novice-action: #b083f0;
+.preflop-benchmark-lesson .wisdom-strategy-card { gap: 10px; }
+.preflop-benchmark-lesson .wisdom-strategy-head { align-items: center; }
+.preflop-benchmark-lesson .wisdom-strategy-head .ff-chart-legend { flex-wrap: wrap; justify-content: flex-end; max-width: 280px; }
+.preflop-benchmark-lesson .wisdom-strategy-shifts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; }
+.preflop-benchmark-lesson .wisdom-strategy-shift { --wisdom-strategy-action: var(--benchmark-call); display: grid; grid-template-columns: 8px minmax(0,1fr) auto; align-items: center; gap: 3px 6px; min-width: 0; padding: 8px 9px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.035); }
+.preflop-benchmark-lesson .wisdom-strategy-shift.is-raise { --wisdom-strategy-action: var(--benchmark-raise); }
+.preflop-benchmark-lesson .wisdom-strategy-shift.is-shove { --wisdom-strategy-action: var(--benchmark-jam); }
+.preflop-benchmark-lesson .wisdom-strategy-shift > i { grid-row: 1 / span 2; width: 8px; height: 22px; border-radius: 3px; background: var(--wisdom-strategy-action); }
+.preflop-benchmark-lesson .wisdom-strategy-shift > b { min-width: 0; color: var(--muted); font-size: 9px; line-height: 1.1; }
+.preflop-benchmark-lesson .wisdom-strategy-card .wisdom-strategy-shift > strong { margin: 0; color: var(--text); font-size: 13px; line-height: 1; white-space: nowrap; }
+.preflop-benchmark-lesson .wisdom-strategy-shift > small { grid-column: 3; color: var(--muted); font-size: 9px; font-weight: 800; text-align: right; }
+.preflop-benchmark-lesson .wisdom-strategy-difference { display: flex; align-items: center; justify-content: flex-end; gap: 7px; min-height: 20px; color: var(--muted); font-size: 10px; }
+.preflop-benchmark-lesson .wisdom-strategy-difference i { width: 13px; height: 13px; border: 2px solid var(--brand-yellow); border-radius: 4px; box-shadow: 0 0 0 1px rgba(255,223,81,.12); }
+.preflop-benchmark-lesson .wisdom-strategy-difference b { color: var(--text); }
+.preflop-benchmark-lesson .wisdom-strategy-pair { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; min-width: 0; }
+.preflop-benchmark-lesson .wisdom-strategy-facet { display: grid; gap: 8px; min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.025); }
+.preflop-benchmark-lesson .wisdom-strategy-facet.is-benchmark { border-color: rgba(255,223,81,.36); background: linear-gradient(180deg,rgba(255,223,81,.055),transparent 38%),rgba(255,255,255,.025); }
+.preflop-benchmark-lesson .wisdom-strategy-facet > header { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+.preflop-benchmark-lesson .wisdom-strategy-facet > header span { color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+.preflop-benchmark-lesson .wisdom-strategy-facet.is-benchmark > header span { color: var(--brand-yellow); }
+.preflop-benchmark-lesson .wisdom-strategy-card .wisdom-strategy-facet > header strong { margin: 2px 0 0; color: var(--text); font-size: 14px; line-height: 1; }
+.preflop-benchmark-lesson .wisdom-strategy-facet > header > b { color: var(--text); font-size: 10px; white-space: nowrap; }
+.preflop-benchmark-lesson .wisdom-strategy-grid { width: 100%; margin: 0; gap: 2px; }
+.preflop-benchmark-lesson .wisdom-strategy-grid .ff-range-cell { cursor: default; border-radius: 3px; font-size: clamp(6px,.54vw,9px); }
+.preflop-benchmark-lesson .wisdom-strategy-grid .ff-range-cell.is-cohort-difference { z-index: 1; outline: 2px solid var(--brand-yellow); outline-offset: -2px; box-shadow: inset 0 0 0 1px rgba(9,7,12,.78),0 0 8px rgba(255,223,81,.14); }
+
+@media (min-width: 1301px) {
+  .preflop-benchmark-lesson[data-trainer="vs_raise_free"] .slide.has-range-chart {
+    grid-template-columns: minmax(350px,.68fr) minmax(680px,1.32fr);
+    gap: clamp(30px,3vw,48px);
+  }
+
+  .preflop-benchmark-lesson[data-trainer="vs_raise_free"] .slide.has-range-chart .slide-copy h2 {
+    font-size: clamp(40px,4.1vw,64px);
+  }
 }
-.preflop-benchmark-lesson .wisdom-action-card.is-fold { --wisdom-league-action: var(--benchmark-fold); }
-.preflop-benchmark-lesson .wisdom-action-card.is-call { --wisdom-league-action: var(--benchmark-call); }
-.preflop-benchmark-lesson .wisdom-action-card.is-raise { --wisdom-league-action: var(--benchmark-raise); }
-.preflop-benchmark-lesson .wisdom-action-card.is-shove { --wisdom-league-action: var(--benchmark-jam); }
-.preflop-benchmark-lesson .wisdom-action-cohorts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
-.preflop-benchmark-lesson .wisdom-action-cohorts > span { display: grid; grid-template-columns: 10px minmax(0,1fr) auto; align-items: center; gap: 7px; min-width: 0; padding: 8px 9px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.035); }
-.preflop-benchmark-lesson .wisdom-action-cohorts i { width: 9px; height: 9px; border-radius: 3px; }
-.preflop-benchmark-lesson .wisdom-action-cohorts .is-league i { background: var(--wisdom-league-action); }
-.preflop-benchmark-lesson .wisdom-action-cohorts .is-novice i { background: var(--wisdom-novice-action); }
-.preflop-benchmark-lesson .wisdom-action-cohorts b { min-width: 0; color: var(--muted); font-size: 10px; line-height: 1.2; }
-.preflop-benchmark-lesson .wisdom-action-card .wisdom-action-cohorts strong { margin: 0; color: var(--text); font-size: 15px; line-height: 1; }
-.preflop-benchmark-lesson .wisdom-action-compare-grid .wisdom-action-cell { border-color: rgba(255,255,255,.12); background: rgba(255,255,255,.025); }
-.preflop-benchmark-lesson .wisdom-action-cell.is-league-gap { border-color: color-mix(in srgb, var(--wisdom-league-action) 72%, var(--line)); }
-.preflop-benchmark-lesson .wisdom-action-cell.is-novice-gap { border-color: color-mix(in srgb, var(--wisdom-novice-action) 72%, var(--line)); }
-.preflop-benchmark-lesson .wisdom-action-band { position: absolute; left: 0; z-index: 1; height: 50%; }
-.preflop-benchmark-lesson .wisdom-action-band.is-league { top: 0; width: var(--league-action); background: var(--wisdom-league-action); }
-.preflop-benchmark-lesson .wisdom-action-band.is-novice { bottom: 0; width: var(--novice-action); background: var(--wisdom-novice-action); }
-.preflop-benchmark-lesson .wisdom-action-compare-grid .ff-range-cell b { color: var(--text); text-shadow: 0 1px 2px rgba(0,0,0,.92); }
+
+@media (min-width: 981px) and (max-width: 1300px) {
+  .preflop-benchmark-lesson[data-trainer="vs_raise_free"] .slide.has-range-chart {
+    grid-template-columns: 1fr;
+    padding-bottom: 86px;
+  }
+}
 .preflop-benchmark-lesson .wisdom-proof-rows { display: grid; gap: 13px; margin-top: 15px; }
 .preflop-benchmark-lesson .wisdom-proof-row > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .preflop-benchmark-lesson .wisdom-proof-row > div span { color: var(--text); font-weight: 750; }
@@ -684,7 +718,8 @@
   .preflop-benchmark-lesson .wisdom-range-totals { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .preflop-benchmark-lesson .wisdom-range-total b { text-overflow: clip; }
   .preflop-benchmark-lesson .wisdom-push-cohorts { grid-template-columns: 1fr; }
-  .preflop-benchmark-lesson .wisdom-action-cohorts { grid-template-columns: 1fr; }
+  .preflop-benchmark-lesson .wisdom-strategy-head .ff-chart-legend { justify-content: flex-start; max-width: none; }
+  .preflop-benchmark-lesson .wisdom-strategy-pair { grid-template-columns: 1fr; }
   .preflop-benchmark-lesson .wisdom-metric-row { align-items: flex-start; flex-direction: column; gap: 5px; }
   .preflop-benchmark-lesson .filter-row { grid-template-columns: 1fr; gap: 5px; }
   .preflop-benchmark-lesson .benchmark-chart-panel,
